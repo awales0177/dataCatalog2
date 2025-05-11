@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catalog Admin Console</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .file-list {
+            margin-bottom: 20px;
+        }
+        .file-item {
+            padding: 10px;
+            border: 1px solid #ddd;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .file-item:hover {
+            background-color: #f0f0f0;
+        }
+        .editor {
+            margin-top: 20px;
+        }
+        textarea {
+            width: 100%;
+            height: 400px;
+            font-family: monospace;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .error {
+            color: red;
+            margin-top: 10px;
+        }
+        .success {
+            color: green;
+            margin-top: 10px;
+        }
+        .auto-save-status {
+            font-size: 0.8em;
+            color: #666;
+            margin-left: 10px;
+        }
+        .editor-container {
+            position: relative;
+        }
+        .validation-error {
+            color: #dc3545;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+        .save-indicator {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            display: none;
+        }
+        .saving {
+            background-color: #ffc107;
+            color: #000;
+        }
+        .saved {
+            background-color: #28a745;
+            color: #fff;
+        }
+        .error {
+            background-color: #dc3545;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Catalog Admin Console</h1>
+        <div class="file-list" id="fileList">
+            <h2>Available Files</h2>
+            <!-- Files will be listed here -->
+        </div>
+        <div class="editor">
+            <h2>Edit File</h2>
+            <div class="editor-container">
+                <textarea id="jsonEditor" spellcheck="false"></textarea>
+                <div id="saveIndicator" class="save-indicator"></div>
+            </div>
+            <div class="editor-controls">
+                <button onclick="saveFile()">Save Changes</button>
+                <span class="auto-save-status">Auto-save: <span id="autoSaveStatus">Enabled</span></span>
+                <button onclick="toggleAutoSave()">Toggle Auto-save</button>
+            </div>
+            <div id="validationError" class="validation-error"></div>
+            <div id="message"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentFile = null;
+        let autoSaveEnabled = true;
+        let autoSaveInterval = 5000; // 5 seconds
+        let saveTimeout = null;
+        let lastSavedContent = '';
+        const API_URL = 'http://localhost:8000/api';
+
+        // Debounce function
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // Show save indicator
+        function showSaveIndicator(status) {
+            const indicator = document.getElementById('saveIndicator');
+            indicator.style.display = 'block';
+            indicator.className = 'save-indicator ' + status;
+            
+            switch(status) {
+                case 'saving':
+                    indicator.textContent = 'Saving...';
+                    break;
+                case 'saved':
+                    indicator.textContent = 'Saved';
+                    setTimeout(() => {
+                        indicator.style.display = 'none';
+                    }, 2000);
+                    break;
+                case 'error':
+                    indicator.textContent = 'Error';
+                    break;
+            }
+        }
+
+        // Validate JSON
+        function validateJSON(jsonString) {
+            try {
+                JSON.parse(jsonString);
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        // Auto-save function
+        const autoSave = debounce(async function() {
+            if (!currentFile || !autoSaveEnabled) return;
+            
+            const content = document.getElementById('jsonEditor').value;
+            if (content === lastSavedContent) return;
+            
+            if (!validateJSON(content)) {
+                showMessage('Invalid JSON format', 'error');
+                return;
+            }
+
+            showSaveIndicator('saving');
+            try {
+                await saveFileContent(content);
+                lastSavedContent = content;
+                showSaveIndicator('saved');
+            } catch (error) {
+                showSaveIndicator('error');
+                showMessage('Auto-save failed: ' + error.message, 'error');
+            }
+        }, 1000);
+
+        // Toggle auto-save
+        function toggleAutoSave() {
+            autoSaveEnabled = !autoSaveEnabled;
+            document.getElementById('autoSaveStatus').textContent = 
+                autoSaveEnabled ? 'Enabled' : 'Disabled';
+        }
+
+        // Save file content
+        async function saveFileContent(content) {
+            const jsonData = JSON.parse(content);
+            const response = await fetch(`${API_URL}/admin/${currentFile}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Basic ' + btoa('admin:admin')
+                },
+                body: JSON.stringify({ data: jsonData })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.detail || 'Failed to save file');
+            }
+        }
+
+        // Modified save function
+        async function saveFile() {
+            if (!currentFile) {
+                showMessage('No file selected', 'error');
+                return;
+            }
+
+            const content = document.getElementById('jsonEditor').value;
+            if (!validateJSON(content)) {
+                showMessage('Invalid JSON format', 'error');
+                return;
+            }
+
+            showSaveIndicator('saving');
+            try {
+                await saveFileContent(content);
+                lastSavedContent = content;
+                showSaveIndicator('saved');
+                showMessage('File saved successfully', 'success');
+            } catch (error) {
+                showSaveIndicator('error');
+                showMessage('Error saving file: ' + error.message, 'error');
+            }
+        }
+
+        // Modified load file function
+        async function loadFile(fileName) {
+            try {
+                const response = await fetch(`${API_URL}/${fileName}`);
+                const data = await response.json();
+                const content = JSON.stringify(data, null, 2);
+                document.getElementById('jsonEditor').value = content;
+                lastSavedContent = content;
+                currentFile = fileName;
+                showMessage(`Loaded ${fileName}`, 'success');
+                
+                // Clear any existing validation errors
+                document.getElementById('validationError').textContent = '';
+            } catch (error) {
+                showMessage('Error loading file: ' + error.message, 'error');
+            }
+        }
+
+        // Add event listener for auto-save
+        document.getElementById('jsonEditor').addEventListener('input', function() {
+            const content = this.value;
+            if (!validateJSON(content)) {
+                document.getElementById('validationError').textContent = 'Invalid JSON format';
+            } else {
+                document.getElementById('validationError').textContent = '';
+                autoSave();
+            }
+        });
+
+        // Function to fetch and display available files
+        async function loadFiles() {
+            try {
+                const response = await fetch(`${API_URL}/admin/files`, {
+                    headers: {
+                        'Authorization': 'Basic ' + btoa('admin:admin')
+                    }
+                });
+                const data = await response.json();
+                const fileList = document.getElementById('fileList');
+                fileList.innerHTML = '<h2>Available Files</h2>';
+                
+                data.files.forEach(file => {
+                    const div = document.createElement('div');
+                    div.className = 'file-item';
+                    div.textContent = file;
+                    div.onclick = () => loadFile(file);
+                    fileList.appendChild(div);
+                });
+            } catch (error) {
+                showMessage('Error loading files: ' + error.message, 'error');
+            }
+        }
+
+        // Function to show messages
+        function showMessage(message, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = message;
+            messageDiv.className = type;
+        }
+
+        // Load files when the page loads
+        loadFiles();
+    </script>
+</body>
+</html> 
