@@ -22,11 +22,13 @@ import {
   Apps as AppsIcon,
   MenuBook as MenuBookIcon,
   LibraryBooks as LibraryBooksIcon,
+  AccountTree as AccountTreeIcon,
 } from '@mui/icons-material';
 import { menuItems } from '../data/menuItems';
 
 // Map of icon names to components
 const iconMap = {
+  AccountTreeIcon: AccountTreeIcon,
   StorageIcon: StorageIcon,
   DescriptionIcon: DescriptionIcon,
   DomainIcon: DomainIcon,
@@ -107,7 +109,7 @@ const Sidebar = ({ currentTheme, onSearch, domains = [], selectedDomain, onDomai
             }}
           >
             <ListItemIcon sx={{ color: currentTheme.textSecondary }}>
-              {React.createElement(iconMap[item.icon])}
+              {item.icon === "AccountTreeIcon" ? <AccountTreeIcon /> : React.createElement(iconMap[item.icon])}
             </ListItemIcon>
             <ListItemText 
               primary={item.name} 

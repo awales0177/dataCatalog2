@@ -54,6 +54,7 @@ import {
   ChevronLeft as ChevronLeftIcon,
   ChevronRight as ChevronRightIcon,
   GitHub as GitHubIcon,
+  AccountTree as AccountTreeIcon,
 } from '@mui/icons-material';
 import lotusRed from './imgs/lotus-red.svg';
 import lotusWhite from './imgs/lotus-white.svg';
@@ -862,13 +863,7 @@ function AppContent() {
               minWidth: isDrawerCollapsed ? 0 : 40,
               marginRight: isDrawerCollapsed ? 0 : 2,
             }}>
-              {item.icon === 'DashboardIcon' && <DashboardIcon />}
-              {item.icon === 'DescriptionIcon' && <DescriptionIcon />}
-              {item.icon === 'DomainIcon' && <DomainIcon />}
-              {item.icon === 'StorageIcon' && <StorageIcon />}
-              {item.icon === 'AppsIcon' && <AppsIcon />}
-              {item.icon === 'MenuBookIcon' && <MenuBookIcon />}
-              {item.icon === 'LibraryBooksIcon' && <LibraryBooksIcon />}
+              {React.createElement(item.icon)}
             </ListItemIcon>
             {!isDrawerCollapsed && (
               <>
@@ -888,7 +883,18 @@ function AppContent() {
 
   return (
     <ThemeContext.Provider value={{ currentTheme, darkMode, setDarkMode }}>
-      <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      <Box sx={{ 
+        display: 'flex', 
+        flexDirection: 'column', 
+        minHeight: '100vh',
+        bgcolor: currentTheme.background,
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        overflow: 'auto'
+      }}>
         <Box 
           sx={{ 
             bgcolor: '#FF9800',
