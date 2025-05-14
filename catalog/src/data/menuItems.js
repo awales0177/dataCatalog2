@@ -10,15 +10,15 @@ import {
 export const menuItems = {
   items: [
     {
-      id: 1,
-      name: "Data Models",
-      path: "/models",
+      id: "models",
+      name: "Data Specifications",
+      path: "/specifications",
       icon: AccountTreeIcon
     },
     {
       id: 2,
-      name: "Data Contracts",
-      path: "/contracts",
+      name: "Product Agreements",
+      path: "/agreements",
       icon: DescriptionIcon
     },
     {

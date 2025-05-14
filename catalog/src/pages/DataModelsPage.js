@@ -21,7 +21,7 @@ import Pagination from '../components/Pagination';
 
 const ITEMS_PER_PAGE = 12;
 
-const DataModelsPage = () => {
+const DataSpecificationsPage = () => {
   const { currentTheme } = useContext(ThemeContext);
   const [allModels, setAllModels] = useState([]);
   const [filteredModels, setFilteredModels] = useState([]);
@@ -34,21 +34,21 @@ const DataModelsPage = () => {
   const [selectedQuality, setSelectedQuality] = useState('all');
 
   useEffect(() => {
-    const loadModels = async () => {
+    const loadSpecifications = async () => {
       try {
-        const data = await fetchData('models');
+        const data = await fetchData('specifications');
         setAllModels(data.models || []);
         setFilteredModels(data.models || []);
         setError(null);
       } catch (err) {
-        setError('Failed to load models');
-        console.error('Error loading models:', err);
+        setError('Failed to load specifications');
+        console.error('Error loading specifications:', err);
       } finally {
         setLoading(false);
       }
     };
 
-    loadModels();
+    loadSpecifications();
   }, []);
 
   useEffect(() => {
@@ -132,17 +132,17 @@ const DataModelsPage = () => {
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
       <Typography variant="h4" sx={{ mb: 1, color: currentTheme.text }}>
-        Data Models
+        Data Specifications
       </Typography>
       <Typography variant="body1" sx={{ mb: 4, color: currentTheme.textSecondary }}>
-        Explore and manage your data models. View model details, quality metrics, and relationships between different data structures.
+        Explore and manage your data specifications. View specification details, quality metrics, and relationships between different data structures.
       </Typography>
 
       <Box sx={{ mb: 4 }}>
         <TextField
           fullWidth
           variant="outlined"
-          placeholder="Search data models..."
+          placeholder="Search data specifications..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           InputProps={{
@@ -215,4 +215,4 @@ const DataModelsPage = () => {
   );
 };
 
-export default DataModelsPage; 
+export default DataSpecificationsPage; 

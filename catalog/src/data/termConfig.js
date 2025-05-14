@@ -1,16 +1,16 @@
 export const termConfig = {
   // Main Categories
   dataModels: {
-    displayName: "Data Models",
+    displayName: "Data Specifications",
     description: "Structured representations of data entities and their relationships",
     icon: "StorageIcon",
     shortDescription: "Data structure definitions"
   },
-  dataContracts: {
-    displayName: "Data Contracts",
-    description: "Formal agreements defining data quality, format, and usage requirements",
+  dataAgreements: {
+    displayName: "Product Agreements",
+    description: "Product agreements and compliance",
     icon: "DescriptionIcon",
-    shortDescription: "Data quality agreements"
+    shortDescription: "Product agreements"
   },
   dataDomains: {
     displayName: "Data Domains",
@@ -39,10 +39,10 @@ export const termConfig = {
 
   // Roles and Teams
   modelMaintainer: {
-    displayName: "Model Maintainer",
-    description: "Person responsible for the ongoing maintenance and updates of a data model",
+    displayName: "Specification Maintainer",
+    description: "Person responsible for the ongoing maintenance and updates of a data specification",
     icon: "PersonIcon",
-    shortDescription: "Model maintenance owner"
+    shortDescription: "Specification maintenance owner"
   },
   producerTeam: {
     displayName: "Producer Team",
@@ -65,29 +65,29 @@ export const termConfig = {
 
   // Data Model Properties
   modelId: {
-    displayName: "Model ID",
-    description: "Unique identifier for the data model",
-    shortDescription: "Model identifier"
+    displayName: "Specification ID",
+    description: "Unique identifier for the data specification",
+    shortDescription: "Specification identifier"
   },
   modelName: {
-    displayName: "Model Name",
-    description: "Full name of the data model",
-    shortDescription: "Model name"
+    displayName: "Specification Name",
+    description: "Full name of the data specification",
+    shortDescription: "Specification name"
   },
   modelShortName: {
     displayName: "Short Name",
-    description: "Abbreviated identifier for the data model",
-    shortDescription: "Model short code"
+    description: "Abbreviated identifier for the data specification",
+    shortDescription: "Specification short code"
   },
   modelVersion: {
     displayName: "Version",
-    description: "Current version of the data model",
-    shortDescription: "Model version"
+    description: "Current version of the data specification",
+    shortDescription: "Specification version"
   },
   modelStatus: {
     displayName: "Status",
-    description: "Current state of the data model (Draft, Active, Deprecated)",
-    shortDescription: "Model status"
+    description: "Current state of the data specification (Draft, Active, Deprecated)",
+    shortDescription: "Specification status"
   },
   modelTags: {
     displayName: "Tags",
@@ -95,31 +95,31 @@ export const termConfig = {
     shortDescription: "Model categories"
   },
 
-  // Contract Properties
-  contractId: {
-    displayName: "Contract ID",
-    description: "Unique identifier for the data contract",
-    shortDescription: "Contract identifier"
+  // Agreement Properties
+  agreementId: {
+    displayName: "Agreement ID",
+    description: "Unique identifier for the data agreement",
+    shortDescription: "Agreement identifier"
   },
-  contractName: {
-    displayName: "Contract Name",
-    description: "Full name of the data contract",
-    shortDescription: "Contract name"
+  agreementName: {
+    displayName: "Agreement Name",
+    description: "Full name of the data agreement",
+    shortDescription: "Agreement name"
   },
-  contractVersion: {
+  agreementVersion: {
     displayName: "Version",
-    description: "Current version of the data contract",
-    shortDescription: "Contract version"
+    description: "Current version of the data agreement",
+    shortDescription: "Agreement version"
   },
-  contractStatus: {
+  agreementStatus: {
     displayName: "Status",
-    description: "Current state of the data contract",
-    shortDescription: "Contract status"
+    description: "Current state of the data agreement",
+    shortDescription: "Agreement status"
   },
-  contractType: {
+  agreementType: {
     displayName: "Type",
-    description: "Category of the data contract (Quality, Schema, Usage)",
-    shortDescription: "Contract category"
+    description: "Type of the data agreement",
+    shortDescription: "Agreement type"
   },
 
   // Domain Properties
@@ -216,10 +216,10 @@ export const allTerms = Object.keys(termConfig);
 
 // Export categories for grouping
 export const categories = {
-  mainCategories: ['dataModels', 'dataContracts', 'dataDomains', 'applications', 'lexicons', 'referenceData'],
+  mainCategories: ['dataModels', 'dataAgreements', 'dataDomains', 'applications', 'lexicons', 'referenceData'],
   roles: ['modelMaintainer', 'producerTeam', 'validator', 'consumerTeam'],
   modelProperties: ['modelId', 'modelName', 'modelShortName', 'modelVersion', 'modelStatus', 'modelTags'],
-  contractProperties: ['contractId', 'contractName', 'contractVersion', 'contractStatus', 'contractType'],
+  agreementProperties: ['agreementId', 'agreementName', 'agreementVersion', 'agreementStatus', 'agreementType'],
   domainProperties: ['domainId', 'domainName', 'domainDescription'],
   applicationProperties: ['applicationId', 'applicationName', 'applicationType'],
   lexiconProperties: ['termId', 'termName', 'termDefinition'],

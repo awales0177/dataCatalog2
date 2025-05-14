@@ -35,15 +35,15 @@ import lotusWhite from '../imgs/lotus-white.svg';
 const features = [
   {
     icon: StorageIcon,
-    title: "Data Models",
-    description: "Create, manage, and discover data models with comprehensive schema information and quality metrics.",
-    path: "/models"
+    title: "Data Specifications",
+    description: "Create, manage, and discover data specifications with comprehensive schema information and quality metrics.",
+    path: "/specifications"
   },
   {
     icon: DescriptionIcon,
-    title: "Data Contracts",
-    description: "Define and enforce data contracts to ensure data quality and consistency across your organization.",
-    path: "/contracts"
+    title: "Product Agreements",
+    description: "Define and enforce product agreements to ensure data quality and consistency across your organization.",
+    path: "/agreements"
   },
   {
     icon: DomainIcon,

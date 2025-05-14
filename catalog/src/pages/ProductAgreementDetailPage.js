@@ -33,33 +33,43 @@ import {
   Group as GroupIcon,
   Code as CodeIcon,
   Warning as WarningIcon,
+  ShoppingBasket as ShoppingBasketIcon,
+  Roofing as RoofingIcon,
+  Factory as FactoryIcon,
+  Add as AddIcon,
+  Edit as UpdateIcon,
+  Delete as DeleteIcon,
+  CheckCircle as FinalizeIcon,
+  Create as CreateIcon,
+  RemoveCircle as DecomIcon,
+  Build as FixIcon,
+  Rocket as RocketIcon,
 } from '@mui/icons-material';
 import { formatDate } from '../utils/dateUtils';
-import { fetchContracts, fetchModels } from '../services/api';
+import { fetchAgreements, fetchModels } from '../services/api';
 
-const ContractDetailPage = ({ currentTheme }) => {
+const ProductAgreementDetailPage = ({ currentTheme }) => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [contract, setContract] = React.useState(null);
+  const [agreement, setAgreement] = React.useState(null);
   const [model, setModel] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState(null);
 
-  const calculateVersionDifference = (contractVersion, modelVersion) => {
-    if (!contractVersion || !modelVersion) return null;
+  const calculateVersionDifference = (agreementVersion, modelVersion) => {
+    if (!agreementVersion || !modelVersion) return null;
 
     const parseVersion = (version) => {
       const [major, minor, patch] = version.split('.').map(Number);
       return { major, minor, patch };
     };
 
-    const contract = parseVersion(contractVersion);
     const model = parseVersion(modelVersion);
+    const agreement = parseVersion(agreementVersion);
 
-    // Calculate difference in each component
-    const majorDiff = model.major - contract.major;
-    const minorDiff = model.minor - contract.minor;
-    const patchDiff = model.patch - contract.patch;
+    const majorDiff = model.major - agreement.major;
+    const minorDiff = model.minor - agreement.minor;
+    const patchDiff = model.patch - agreement.patch;
 
     // Calculate health percentage based on specific drops
     const majorDrop = majorDiff * 30; // 30% drop per major version
@@ -82,34 +92,138 @@ const ContractDetailPage = ({ currentTheme }) => {
     };
   };
 
+  const getTodoItemIcon = (text) => {
+    const lowerText = text.toLowerCase();
+    
+    // Add/Implement related keywords
+    if (lowerText.includes('add') || 
+        lowerText.includes('implement') || 
+        lowerText.includes('create') || 
+        lowerText.includes('new') || 
+        lowerText.includes('introduce') || 
+        lowerText.includes('setup') || 
+        lowerText.includes('set up') || 
+        lowerText.includes('establish') || 
+        lowerText.includes('initiate') || 
+        lowerText.includes('launch')) {
+      return { icon: AddIcon, color: '#4caf50' }; // Green
+    } 
+    // Update related keywords
+    else if (lowerText.includes('update') || 
+             lowerText.includes('modify') || 
+             lowerText.includes('change') || 
+             lowerText.includes('revise') || 
+             lowerText.includes('adjust') || 
+             lowerText.includes('enhance') || 
+             lowerText.includes('improve') || 
+             lowerText.includes('upgrade') || 
+             lowerText.includes('refactor') || 
+             lowerText.includes('optimize')) {
+      return { icon: UpdateIcon, color: '#2196f3' }; // Blue
+    } 
+    // Delete/Remove related keywords
+    else if (lowerText.includes('delete') || 
+             lowerText.includes('remove') || 
+             lowerText.includes('drop') || 
+             lowerText.includes('eliminate') || 
+             lowerText.includes('clean up') || 
+             lowerText.includes('cleanup') || 
+             lowerText.includes('purge') || 
+             lowerText.includes('clear') || 
+             lowerText.includes('strip') || 
+             lowerText.includes('uninstall')) {
+      return { icon: DeleteIcon, color: '#f44336' }; // Red
+    } 
+    // Finalize/Complete related keywords
+    else if (lowerText.includes('finalize') || 
+             lowerText.includes('complete') || 
+             lowerText.includes('finish') || 
+             lowerText.includes('conclude') || 
+             lowerText.includes('resolve') || 
+             lowerText.includes('close') || 
+             lowerText.includes('end') || 
+             lowerText.includes('wrap up') || 
+             lowerText.includes('wrapup') || 
+             lowerText.includes('final')) {
+      return { icon: FinalizeIcon, color: '#9c27b0' }; // Purple
+    } 
+    // Create related keywords
+    else if (lowerText.includes('create') || 
+             lowerText.includes('build') || 
+             lowerText.includes('develop') || 
+             lowerText.includes('design') || 
+             lowerText.includes('construct') || 
+             lowerText.includes('generate') || 
+             lowerText.includes('produce') || 
+             lowerText.includes('compose') || 
+             lowerText.includes('author') || 
+             lowerText.includes('draft')) {
+      return { icon: CreateIcon, color: '#ff9800' }; // Orange
+    } 
+    // Decom/Deprecate related keywords
+    else if (lowerText.includes('decom') || 
+             lowerText.includes('decommission') || 
+             lowerText.includes('decommissioning') || 
+             lowerText.includes('decomission') || 
+             lowerText.includes('decomissioning') || 
+             lowerText.includes('deprecate') || 
+             lowerText.includes('deprecated') || 
+             lowerText.includes('sunset') || 
+             lowerText.includes('retire') || 
+             lowerText.includes('phase out') || 
+             lowerText.includes('phaseout') || 
+             lowerText.includes('discontinue') || 
+             lowerText.includes('abandon') || 
+             lowerText.includes('obsolete')) {
+      return { icon: DecomIcon, color: '#795548' }; // Brown
+    } 
+    // Fix related keywords
+    else if (lowerText.includes('fix') || 
+             lowerText.includes('repair') || 
+             lowerText.includes('resolve') || 
+             lowerText.includes('debug') || 
+             lowerText.includes('troubleshoot') || 
+             lowerText.includes('patch') || 
+             lowerText.includes('correct') || 
+             lowerText.includes('address') || 
+             lowerText.includes('solve') || 
+             lowerText.includes('mend')) {
+      return { icon: FixIcon, color: '#e91e63' }; // Pink
+    } 
+    // Default for unknown actions
+    else {
+      return { icon: RocketIcon, color: '#673ab7' }; // Deep Purple
+    }
+  };
+
   React.useEffect(() => {
-    const loadContractAndModel = async () => {
+    const loadAgreementAndModel = async () => {
       try {
-        const [contractsData, modelsData] = await Promise.all([
-          fetchContracts(),
-          fetchModels()
-        ]);
-        
-        const foundContract = contractsData.contracts.find(c => c.id === id);
-        if (foundContract) {
-          setContract(foundContract);
-          // Find the associated model
-          const foundModel = modelsData.models.find(m => m.shortName === foundContract.modelShortName);
-          if (foundModel) {
-            setModel(foundModel);
-          }
-        } else {
-          setError('Contract not found');
+        const data = await fetchAgreements();
+        const agreement = data.agreements.find(c => c.id === id);
+        if (!agreement) {
+          setError('Agreement not found');
+          return;
         }
+
+        const modelData = await fetchModels();
+        const model = modelData.models.find(m => m.shortName === agreement.modelShortName);
+        if (!model) {
+          setError('Associated model not found');
+          return;
+        }
+
+        setAgreement(agreement);
+        setModel(model);
       } catch (error) {
-        console.error('Error fetching contract and model:', error);
-        setError('Failed to load contract and model');
+        console.error('Error loading agreement:', error);
+        setError('Failed to load agreement details');
       } finally {
         setLoading(false);
       }
     };
 
-    loadContractAndModel();
+    loadAgreementAndModel();
   }, [id]);
 
   if (loading) {
@@ -130,7 +244,7 @@ const ContractDetailPage = ({ currentTheme }) => {
     );
   }
 
-  if (!contract) {
+  if (!agreement) {
     return null;
   }
 
@@ -149,9 +263,9 @@ const ContractDetailPage = ({ currentTheme }) => {
     }
   };
 
-  const statusColor = getStatusColor(contract.status);
+  const statusColor = getStatusColor(agreement.status);
 
-  const versionDiff = model ? calculateVersionDifference(contract.deliveredVersion, model.version) : null;
+  const versionDiff = model ? calculateVersionDifference(agreement.deliveredVersion, model.version) : null;
 
   return (
     <Box sx={{ p: 3, maxWidth: 1200, margin: '0 auto' }}>
@@ -168,7 +282,7 @@ const ContractDetailPage = ({ currentTheme }) => {
         <Box sx={{ flex: 1 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
             <Typography variant="h4" sx={{ color: currentTheme.text }}>
-              {contract.name}
+              {agreement.name}
             </Typography>
             <Box
               sx={{
@@ -181,13 +295,13 @@ const ContractDetailPage = ({ currentTheme }) => {
                 fontWeight: 500,
               }}
             >
-              {contract.status.split('_').map(word => 
+              {agreement.status.split('_').map(word => 
                 word.charAt(0).toUpperCase() + word.slice(1)
               ).join(' ')}
             </Box>
           </Box>
           <Typography variant="body1" sx={{ color: currentTheme.textSecondary }}>
-            {contract.description}
+            {agreement.description}
           </Typography>
         </Box>
       </Box>
@@ -246,7 +360,7 @@ const ContractDetailPage = ({ currentTheme }) => {
                 Current Model Version
               </Typography>
               <Typography variant="body2" sx={{ color: currentTheme.text }}>
-                v{contract.deliveredVersion}
+                v{agreement.deliveredVersion}
               </Typography>
             </Box>
             <Box sx={{ textAlign: 'right' }}>
@@ -289,10 +403,10 @@ const ContractDetailPage = ({ currentTheme }) => {
                   Producer
                 </Typography>
                 <Typography variant="h6" sx={{ color: currentTheme.text }}>
-                  {contract.producer}
+                  {agreement.producer}
                 </Typography>
                 <Typography variant="body2" sx={{ color: currentTheme.textSecondary, mt: 1 }}>
-                  {contract.producerLead}
+                  {agreement.producerLead}
                 </Typography>
               </Box>
 
@@ -305,7 +419,7 @@ const ContractDetailPage = ({ currentTheme }) => {
                   Model
                 </Typography>
                 <Typography variant="h6" sx={{ color: currentTheme.text }}>
-                  {contract.modelShortName}
+                  {agreement.modelShortName}
                 </Typography>
               </Box>
 
@@ -318,10 +432,10 @@ const ContractDetailPage = ({ currentTheme }) => {
                   Consumer
                 </Typography>
                 <Typography variant="h6" sx={{ color: currentTheme.text }}>
-                  {contract.consumer}
+                  {agreement.consumer}
                 </Typography>
                 <Typography variant="body2" sx={{ color: currentTheme.textSecondary, mt: 1 }}>
-                  {contract.consumerLead}
+                  {agreement.consumerLead}
                 </Typography>
               </Box>
             </Box>
@@ -357,16 +471,16 @@ const ContractDetailPage = ({ currentTheme }) => {
                     <TableRow>
                       <TableCell sx={{ color: currentTheme.text, borderBottom: `1px solid ${currentTheme.border}` }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <WrenchIcon sx={{ 
+                          <RoofingIcon sx={{ 
                             fontSize: 20, 
                             color: currentTheme.primary,
                             opacity: 0.8
                           }} />
-                          <Typography>Model Maintainer</Typography>
+                          <Typography>Parent System</Typography>
                         </Box>
                       </TableCell>
                       <TableCell sx={{ color: currentTheme.text, borderBottom: `1px solid ${currentTheme.border}` }}>
-                        {model.specMaintainer}
+                        {agreement.parentSystem}
                       </TableCell>
                     </TableRow>
                   )}
@@ -378,11 +492,26 @@ const ContractDetailPage = ({ currentTheme }) => {
                           color: currentTheme.primary,
                           opacity: 0.8
                         }} />
-                        <Typography>Producer Team</Typography>
+                        <Typography>Specification Maintainer</Typography>
                       </Box>
                     </TableCell>
                     <TableCell sx={{ color: currentTheme.text, borderBottom: `1px solid ${currentTheme.border}` }}>
-                      {contract.producer}
+                      {agreement.specificationMaintainer}
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell sx={{ color: currentTheme.text, borderBottom: `1px solid ${currentTheme.border}` }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <FactoryIcon sx={{ 
+                          fontSize: 20, 
+                          color: currentTheme.primary,
+                          opacity: 0.8
+                        }} />
+                        <Typography>Data Producer</Typography>
+                      </Box>
+                    </TableCell>
+                    <TableCell sx={{ color: currentTheme.text, borderBottom: `1px solid ${currentTheme.border}` }}>
+                      {agreement.dataProducer}
                     </TableCell>
                   </TableRow>
                   <TableRow>
@@ -393,31 +522,78 @@ const ContractDetailPage = ({ currentTheme }) => {
                           color: currentTheme.primary,
                           opacity: 0.8
                         }} />
-                        <Typography>Validator</Typography>
+                        <Typography>Data Validator</Typography>
                       </Box>
                     </TableCell>
                     <TableCell sx={{ color: currentTheme.text, borderBottom: `1px solid ${currentTheme.border}` }}>
-                      {contract.validator}
+                      {agreement.dataValidator}
                     </TableCell>
                   </TableRow>
                   <TableRow>
                     <TableCell sx={{ color: currentTheme.text, borderBottom: 'none' }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <GroupIcon sx={{ 
+                        <ShoppingBasketIcon sx={{ 
                           fontSize: 20, 
                           color: currentTheme.primary,
                           opacity: 0.8
                         }} />
-                        <Typography>Consumer Team</Typography>
+                        <Typography>Data Consumer</Typography>
                       </Box>
                     </TableCell>
                     <TableCell sx={{ color: currentTheme.text, borderBottom: 'none' }}>
-                      {contract.consumer}
+                      {agreement.dataConsumer}
                     </TableCell>
                   </TableRow>
                 </TableBody>
               </Table>
             </TableContainer>
+          </Paper>
+
+          <Paper 
+            elevation={0}
+            sx={{ 
+              p: 3,
+              bgcolor: currentTheme.card,
+              border: `1px solid ${currentTheme.border}`,
+              borderRadius: 2,
+              mb: 3,
+            }}
+          >
+            <Typography variant="h6" sx={{ color: currentTheme.text, mb: 2 }}>
+              TODO
+            </Typography>
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary, mb: 1 }}>
+                Last Updated: {formatDate(agreement.todo?.date)}
+              </Typography>
+              <Box component="ul" sx={{ m: 0, pl: 2 }}>
+                {agreement.todo?.items?.map((item, index) => {
+                  const { icon: Icon, color } = getTodoItemIcon(item);
+                  return (
+                    <Box 
+                      key={index}
+                      component="li" 
+                      sx={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: 1,
+                        mb: 0.5,
+                        listStyle: 'none',
+                        pl: 0
+                      }}
+                    >
+                      <Icon sx={{ color, fontSize: 20 }} />
+                      <Typography 
+                        variant="body2" 
+                        sx={{ color: currentTheme.text }}
+                      >
+                        {item}
+                      </Typography>
+                    </Box>
+                  );
+                })}
+              </Box>
+            </Box>
           </Paper>
 
           <Paper 
@@ -461,13 +637,13 @@ const ContractDetailPage = ({ currentTheme }) => {
                 </Box>
               </AccordionSummary>
               <AccordionDetails sx={{ px: 0 }}>
-                {contract.changelog.map((entry, index) => (
+                {agreement.changelog.map((entry, index) => (
                   <Box 
                     key={entry.version}
                     sx={{ 
-                      mb: index !== contract.changelog.length - 1 ? 2 : 0,
-                      pb: index !== contract.changelog.length - 1 ? 2 : 0,
-                      borderBottom: index !== contract.changelog.length - 1 ? `1px solid ${currentTheme.border}` : 'none',
+                      mb: index !== agreement.changelog.length - 1 ? 2 : 0,
+                      pb: index !== agreement.changelog.length - 1 ? 2 : 0,
+                      borderBottom: index !== agreement.changelog.length - 1 ? `1px solid ${currentTheme.border}` : 'none',
                     }}
                   >
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
@@ -508,15 +684,24 @@ const ContractDetailPage = ({ currentTheme }) => {
             }}
           >
             <Typography variant="h6" sx={{ color: currentTheme.text, mb: 2 }}>
-              Contract Information
+              Agreement Information
             </Typography>
             
             <Box sx={{ mb: 2 }}>
               <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
-                Contract Version
+                Agreement Version
               </Typography>
               <Typography variant="body1" sx={{ color: currentTheme.text }}>
-                v{contract.contractVersion}
+                v{agreement.agreementVersion}
+              </Typography>
+            </Box>
+
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
+                Model Name
+              </Typography>
+              <Typography variant="body1" sx={{ color: currentTheme.text }}>
+                {agreement.modelShortName}
               </Typography>
             </Box>
 
@@ -525,7 +710,7 @@ const ContractDetailPage = ({ currentTheme }) => {
                 Model Version Delivered
               </Typography>
               <Typography variant="body1" sx={{ color: currentTheme.text }}>
-                v{contract.deliveredVersion}
+                v{agreement.deliveredVersion}
               </Typography>
             </Box>
 
@@ -540,9 +725,52 @@ const ContractDetailPage = ({ currentTheme }) => {
                   opacity: 0.8
                 }} />
                 <Typography variant="body1" sx={{ color: currentTheme.text }}>
-                  {contract.deliveryFrequency}
+                  {agreement.deliveryFrequency}
                 </Typography>
               </Box>
+            </Box>
+
+            <Divider sx={{ my: 2 }} />
+
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
+                File Format
+              </Typography>
+              <Typography variant="body1" sx={{ color: currentTheme.text }}>
+                {agreement.fileFormat || 'Not specified'}
+              </Typography>
+            </Box>
+
+            <Divider sx={{ my: 2 }} />
+
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
+                Access Level
+              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Chip
+                  label={agreement.restricted ? 'Restricted' : 'Public'}
+                  size="small"
+                  sx={{
+                    bgcolor: agreement.restricted ? alpha('#f44336', 0.1) : alpha('#4caf50', 0.1),
+                    color: agreement.restricted ? '#f44336' : '#4caf50',
+                    '&:hover': {
+                      bgcolor: agreement.restricted ? alpha('#f44336', 0.2) : alpha('#4caf50', 0.2),
+                    }
+                  }}
+                />
+              </Box>
+            </Box>
+
+            <Divider sx={{ my: 2 }} />
+
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
+                Location
+              </Typography>
+              <Typography variant="body1" sx={{ color: currentTheme.text }}>
+                {agreement.location || 'Not specified'}
+              </Typography>
             </Box>
 
             <Divider sx={{ my: 2 }} />
@@ -552,7 +780,18 @@ const ContractDetailPage = ({ currentTheme }) => {
                 Start Date
               </Typography>
               <Typography variant="body1" sx={{ color: currentTheme.text }}>
-                {formatDate(contract.startDate)}
+                {formatDate(agreement.startDate)}
+              </Typography>
+            </Box>
+
+            <Divider sx={{ my: 2 }} />
+
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
+                End Date
+              </Typography>
+              <Typography variant="body1" sx={{ color: currentTheme.text }}>
+                {agreement.endDate ? formatDate(agreement.endDate) : 'Not specified'}
               </Typography>
             </Box>
 
@@ -563,7 +802,7 @@ const ContractDetailPage = ({ currentTheme }) => {
                 Last Updated
               </Typography>
               <Typography variant="body1" sx={{ color: currentTheme.text }}>
-                {formatDate(contract.lastUpdated)}
+                {formatDate(agreement.lastUpdated)}
               </Typography>
             </Box>
 
@@ -574,102 +813,14 @@ const ContractDetailPage = ({ currentTheme }) => {
                 Next Update
               </Typography>
               <Typography variant="body1" sx={{ color: currentTheme.text }}>
-                {formatDate(contract.nextUpdate)}
+                {formatDate(agreement.nextUpdate)}
               </Typography>
             </Box>
           </Paper>
-
-          {model && (
-            <Paper 
-              elevation={0}
-              sx={{ 
-                p: 3,
-                bgcolor: currentTheme.card,
-                border: `1px solid ${currentTheme.border}`,
-                borderRadius: 2,
-                mt: 3,
-              }}
-            >
-              <Typography variant="h6" sx={{ color: currentTheme.text, mb: 2 }}>
-                Model Information
-              </Typography>
-              
-              <Box sx={{ mb: 2 }}>
-                <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
-                  Model Name
-                </Typography>
-                <Typography variant="body1" sx={{ color: currentTheme.text }}>
-                  {model.name}
-                </Typography>
-              </Box>
-
-              <Box sx={{ mb: 2 }}>
-                <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
-                  Current Version
-                </Typography>
-                <Typography variant="body1" sx={{ color: currentTheme.text }}>
-                  v{model.version}
-                </Typography>
-              </Box>
-
-              <Box sx={{ mb: 2 }}>
-                <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
-                  Description
-                </Typography>
-                <Typography variant="body1" sx={{ color: currentTheme.text }}>
-                  {model.description}
-                </Typography>
-              </Box>
-
-              <Divider sx={{ my: 2 }} />
-
-              <Box sx={{ mb: 2 }}>
-                <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
-                  Maintainer
-                </Typography>
-                <Typography variant="body1" sx={{ color: currentTheme.text }}>
-                  {model.specMaintainer}
-                </Typography>
-              </Box>
-
-              <Divider sx={{ my: 2 }} />
-
-              <Box sx={{ mb: 2 }}>
-                <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
-                  Users
-                </Typography>
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
-                  {model.users.map((user, index) => (
-                    <Chip
-                      key={index}
-                      label={user}
-                      size="small"
-                      sx={{
-                        bgcolor: alpha(currentTheme.primary, 0.1),
-                        color: currentTheme.primary,
-                        '&:hover': {
-                          bgcolor: alpha(currentTheme.primary, 0.2),
-                        }
-                      }}
-                    />
-                  ))}
-                </Box>
-              </Box>
-
-              <Box sx={{ mb: 2 }}>
-                <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
-                  Last Updated
-                </Typography>
-                <Typography variant="body1" sx={{ color: currentTheme.text }}>
-                  {formatDate(model.lastUpdated)}
-                </Typography>
-              </Box>
-            </Paper>
-          )}
         </Grid>
       </Grid>
     </Box>
   );
 };
 
-export default ContractDetailPage; 
+export default ProductAgreementDetailPage; 

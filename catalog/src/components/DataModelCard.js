@@ -69,7 +69,7 @@ const DataModelCard = ({ model, currentTheme }) => {
   return (
     <Card 
       elevation={0}
-      onClick={() => navigate(`/models/${model.shortName.toLowerCase()}`)}
+      onClick={() => navigate(`/specifications/${model.shortName.toLowerCase()}`)}
       sx={{ 
         height: '100%',
         borderRadius: 2,

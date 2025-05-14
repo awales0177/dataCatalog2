@@ -60,18 +60,18 @@ import lotusRed from './imgs/lotus-red.svg';
 import lotusWhite from './imgs/lotus-white.svg';
 
 // Import components
-import DataModelsPage from './pages/DataModelsPage';
-import DataContractsPage from './pages/DataContractsPage';
+import DataSpecificationsPage from './pages/DataModelsPage';
+import ProductAgreementsPage from './pages/ProductAgreementsPage';
 import DataDomainsPage from './pages/DataDomainsPage';
 import SplashPage from './pages/SplashPage';
 import ApplicationsPage from './pages/ApplicationsPage';
 import LexiconPage from './pages/LexiconPage';
 import ReferenceDataPage from './pages/ReferenceDataPage';
-import DataModelDetailPage from './pages/DataModelDetailPage';
-import ContractDetailPage from './pages/ContractDetailPage';
+import DataSpecificationDetailPage from './pages/DataModelDetailPage';
+import ProductAgreementDetailPage from './pages/ProductAgreementDetailPage';
 
 // Import data and utilities
-import { fetchTheme, fetchItemCount, fetchModels, fetchContracts } from './services/api';
+import { fetchTheme, fetchItemCount, fetchModels, fetchAgreements } from './services/api';
 import { menuItems } from './data/menuItems';
 
 // Theme context for managing dark/light mode
@@ -370,11 +370,11 @@ const ContractFilters = ({ filters, setFilters, currentTheme }) => {
   useEffect(() => {
     const loadFilterData = async () => {
       try {
-        const data = await fetchContracts();
-        const tags = [...new Set(data.contracts.flatMap(contract => contract.tags))];
-        const owners = [...new Set(data.contracts.map(contract => contract.owner))];
-        const producers = [...new Set(data.contracts.map(contract => contract.producer))];
-        const consumers = [...new Set(data.contracts.map(contract => contract.consumer))];
+        const data = await fetchAgreements();
+        const tags = [...new Set(data.agreements.flatMap(agreement => agreement.tags))];
+        const owners = [...new Set(data.agreements.map(agreement => agreement.owner))];
+        const producers = [...new Set(data.agreements.map(agreement => agreement.producer))];
+        const consumers = [...new Set(data.agreements.map(agreement => agreement.consumer))];
         setAllTags(tags);
         setAllOwners(owners);
         setAllProducers(producers);
@@ -704,7 +704,7 @@ function AppContent() {
     loadData();
   }, []);
 
-  // Add back the useEffect for fetching counts
+  // Update the menu item count fetching
   useEffect(() => {
     const loadMenuCounts = async () => {
       if (!menuData.items || menuData.items.length === 0 || countsLoaded) return;
@@ -712,8 +712,8 @@ function AppContent() {
         const itemsWithCounts = await Promise.all(
           menuData.items.map(async (item) => {
             try {
-              // Use 'dataContracts' for the contracts menu item
-              const endpoint = item.id === 'contracts' ? 'dataContracts' : item.path.slice(1);
+              // Use 'dataContracts' for the agreements menu item
+              const endpoint = item.id === 'agreements' ? 'dataContracts' : item.path.slice(1);
               const count = await fetchItemCount(endpoint);
               return { ...item, count };
             } catch (error) {
@@ -1084,24 +1084,24 @@ function AppContent() {
         >
           <Routes>
             <Route path="/" element={<SplashPage />} />
-            <Route path="/models" element={<DataModelsPage />} />
-            <Route path="/contracts" element={<DataContractsPage />} />
+            <Route path="/specifications" element={<DataSpecificationsPage />} />
+            <Route path="/agreements" element={<ProductAgreementsPage />} />
             <Route path="/domains" element={<DataDomainsPage />} />
             <Route path="/applications" element={<ApplicationsPage />} />
             <Route path="/lexicon" element={<LexiconPage />} />
             <Route path="/reference" element={<ReferenceDataPage />} />
             <Route 
-              path="/models/:shortName" 
+              path="/specifications/:shortName" 
               element={
-                <DataModelDetailPage 
+                <DataSpecificationDetailPage 
                   currentTheme={currentTheme}
                 />
               } 
             />
             <Route 
-              path="/contracts/:id" 
+              path="/agreements/:id" 
               element={
-                <ContractDetailPage 
+                <ProductAgreementDetailPage 
                   currentTheme={currentTheme}
                 />
               } 

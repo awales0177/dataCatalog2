@@ -4,8 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { formatDate } from '../utils/dateUtils';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 
-// DataContractCard component for displaying individual data contract information
-const DataContractCard = ({ contract, currentTheme }) => {
+// ProductAgreementCard component for displaying individual product agreement information
+const ProductAgreementCard = ({ agreement, currentTheme }) => {
   const navigate = useNavigate();
 
   const getStatusColor = (status) => {
@@ -23,10 +23,10 @@ const DataContractCard = ({ contract, currentTheme }) => {
     }
   };
 
-  const statusColor = getStatusColor(contract.status);
+  const statusColor = getStatusColor(agreement.status);
 
   const handleClick = () => {
-    navigate(`/contracts/${contract.id}`);
+    navigate(`/agreements/${agreement.id}`);
   };
 
   return (
@@ -85,7 +85,7 @@ const DataContractCard = ({ contract, currentTheme }) => {
             WebkitBoxOrient: 'vertical',
           }}
         >
-          {contract.name}
+          {agreement.name}
         </Typography>
 
         {/* Flowchart */}
@@ -104,7 +104,7 @@ const DataContractCard = ({ contract, currentTheme }) => {
             flex: 1,
             textAlign: 'center',
           }}>
-            {contract.producer || 'System A'}
+            {agreement.dataProducer || 'System A'}
           </Typography>
 
           {/* Arrow */}
@@ -123,7 +123,7 @@ const DataContractCard = ({ contract, currentTheme }) => {
             flex: 1,
             textAlign: 'center',
           }}>
-            {contract.modelShortName || 'Unknown'}
+            {agreement.modelShortName || 'Unknown'}
           </Typography>
 
           {/* Arrow */}
@@ -142,7 +142,7 @@ const DataContractCard = ({ contract, currentTheme }) => {
             flex: 1,
             textAlign: 'center',
           }}>
-            {contract.consumer || 'System B'}
+            {agreement.dataConsumer || 'System B'}
           </Typography>
         </Box>
 
@@ -153,7 +153,7 @@ const DataContractCard = ({ contract, currentTheme }) => {
           mt: 'auto',
         }}>
           <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
-            {formatDate(contract.lastUpdated)}
+            {formatDate(agreement.lastUpdated)}
           </Typography>
           <Box
             sx={{
@@ -166,7 +166,7 @@ const DataContractCard = ({ contract, currentTheme }) => {
               fontWeight: 500,
             }}
           >
-            {(contract.status || 'unknown').split('_').map(word => 
+            {(agreement.status || 'unknown').split('_').map(word => 
               word.charAt(0).toUpperCase() + word.slice(1)
             ).join(' ')}
           </Box>
@@ -176,4 +176,4 @@ const DataContractCard = ({ contract, currentTheme }) => {
   );
 };
 
-export default DataContractCard; 
+export default ProductAgreementCard; 

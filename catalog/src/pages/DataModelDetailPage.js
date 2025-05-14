@@ -13,6 +13,8 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
+  IconButton,
+  Button,
 } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
@@ -26,44 +28,48 @@ import {
   Construction as WrenchIcon,
   ExpandMore as ExpandMoreIcon,
   History as HistoryIcon,
+  NavigateNext as NavigateNextIcon,
+  NavigateBefore as NavigateBeforeIcon,
+  Email as EmailIcon,
 } from '@mui/icons-material';
 import { formatDate, getQualityColor } from '../utils/themeUtils';
 import verifiedLogo from '../imgs/verified.svg';
-import { fetchData, fetchContractsByModel } from '../services/api';
-import DataContractCard from '../components/DataContractCard';
+import { fetchData, fetchAgreementsByModel } from '../services/api';
+import ProductAgreementCard from '../components/ProductAgreementCard';
 
 const DataModelDetailPage = ({ currentTheme }) => {
   const { shortName } = useParams();
   const navigate = useNavigate();
   const [model, setModel] = React.useState(null);
-  const [contracts, setContracts] = React.useState([]);
+  const [agreements, setAgreements] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState(null);
+  const [currentAgreementIndex, setCurrentAgreementIndex] = React.useState(0);
 
   React.useEffect(() => {
-    const loadModelAndContracts = async () => {
+    const loadModelAndAgreements = async () => {
       try {
-        const [modelData, contractsData] = await Promise.all([
+        const [modelData, agreementsData] = await Promise.all([
           fetchData('models'),
-          fetchContractsByModel(shortName)
+          fetchAgreementsByModel(shortName)
         ]);
         
         const foundModel = modelData.models.find(m => m.shortName.toLowerCase() === shortName.toLowerCase());
         if (foundModel) {
           setModel(foundModel);
-          setContracts(contractsData.contracts || []);
+          setAgreements(agreementsData.agreements || []);
         } else {
           setError('Model not found');
         }
       } catch (error) {
-        console.error('Error fetching model and contracts:', error);
-        setError('Failed to load model and contracts');
+        console.error('Error fetching model and agreements:', error);
+        setError('Failed to load model and agreements');
       } finally {
         setLoading(false);
       }
     };
 
-    loadModelAndContracts();
+    loadModelAndAgreements();
   }, [shortName]);
 
   if (loading) {
@@ -91,6 +97,20 @@ const DataModelDetailPage = ({ currentTheme }) => {
   const score = calculateScore(model);
   const qualityColor = getQualityColor(score, currentTheme.darkMode);
   const tierColor = getTierColor(model.meta?.tier);
+
+  const handleNextAgreement = () => {
+    setCurrentAgreementIndex((prevIndex) => {
+      const nextIndex = prevIndex + 2;
+      return nextIndex >= agreements.length ? 0 : nextIndex;
+    });
+  };
+
+  const handlePrevAgreement = () => {
+    setCurrentAgreementIndex((prevIndex) => {
+      const newIndex = prevIndex - 2;
+      return newIndex < 0 ? Math.max(0, agreements.length - 2) : newIndex;
+    });
+  };
 
   return (
     <Box sx={{ p: 3, maxWidth: 1200, margin: '0 auto' }}>
@@ -233,7 +253,7 @@ const DataModelDetailPage = ({ currentTheme }) => {
             </Box>
           </Paper>
 
-          {contracts.length > 0 && (
+          {agreements.length > 0 && (
             <Paper 
               elevation={0}
               sx={{ 
@@ -244,15 +264,93 @@ const DataModelDetailPage = ({ currentTheme }) => {
               }}
             >
               <Typography variant="h6" sx={{ color: currentTheme.text, mb: 2 }}>
-                Data Contracts
+                Product Agreements
               </Typography>
-              <Grid container spacing={2}>
-                {contracts.map((contract) => (
-                  <Grid item xs={12} sm={6} key={contract.id}>
-                    <DataContractCard contract={contract} currentTheme={currentTheme} />
-                  </Grid>
-                ))}
-              </Grid>
+              {agreements.length > 2 ? (
+                <Box sx={{ position: 'relative' }}>
+                  <Box sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 2,
+                    mb: 2
+                  }}>
+                    <IconButton 
+                      onClick={handlePrevAgreement}
+                      sx={{ 
+                        color: currentTheme.text,
+                        '&:hover': { color: currentTheme.primary }
+                      }}
+                    >
+                      <NavigateBeforeIcon />
+                    </IconButton>
+                    <Box sx={{ 
+                      display: 'flex', 
+                      gap: 2, 
+                      flex: 1,
+                      justifyContent: 'center'
+                    }}>
+                      <Box sx={{ flex: 1, maxWidth: 'calc(50% - 8px)' }}>
+                        <ProductAgreementCard 
+                          agreement={agreements[currentAgreementIndex]} 
+                          currentTheme={currentTheme} 
+                        />
+                      </Box>
+                      {currentAgreementIndex + 1 < agreements.length && (
+                        <Box sx={{ flex: 1, maxWidth: 'calc(50% - 8px)' }}>
+                          <ProductAgreementCard 
+                            agreement={agreements[currentAgreementIndex + 1]} 
+                            currentTheme={currentTheme} 
+                          />
+                        </Box>
+                      )}
+                    </Box>
+                    <IconButton 
+                      onClick={handleNextAgreement}
+                      sx={{ 
+                        color: currentTheme.text,
+                        '&:hover': { color: currentTheme.primary }
+                      }}
+                    >
+                      <NavigateNextIcon />
+                    </IconButton>
+                  </Box>
+                  <Box sx={{ 
+                    display: 'flex', 
+                    justifyContent: 'center', 
+                    gap: 1,
+                    mt: 2
+                  }}>
+                    {Array.from({ length: Math.ceil(agreements.length / 2) }).map((_, index) => (
+                      <Box
+                        key={index}
+                        sx={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: '50%',
+                          bgcolor: index === Math.floor(currentAgreementIndex / 2)
+                            ? currentTheme.primary 
+                            : alpha(currentTheme.primary, 0.2),
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease-in-out',
+                          '&:hover': {
+                            bgcolor: currentTheme.primary,
+                          }
+                        }}
+                        onClick={() => setCurrentAgreementIndex(index * 2)}
+                      />
+                    ))}
+                  </Box>
+                </Box>
+              ) : (
+                <Grid container spacing={2}>
+                  {agreements.map((agreement) => (
+                    <Grid item xs={12} sm={6} key={agreement.id}>
+                      <ProductAgreementCard agreement={agreement} currentTheme={currentTheme} />
+                    </Grid>
+                  ))}
+                </Grid>
+              )}
             </Paper>
           )}
         </Grid>
@@ -268,12 +366,12 @@ const DataModelDetailPage = ({ currentTheme }) => {
             }}
           >
             <Typography variant="h6" sx={{ color: currentTheme.text, mb: 2 }}>
-              Model Information
+              Spec information
             </Typography>
             
             <Box sx={{ mb: 2 }}>
               <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
-                Version
+                Latest Version
               </Typography>
               <Typography variant="body1" sx={{ color: currentTheme.text }}>
                 {model.version}
@@ -297,7 +395,7 @@ const DataModelDetailPage = ({ currentTheme }) => {
             </Box>
 
             <Box sx={{ mb: 2 }}>
-              <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
+              <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary, mb: 1 }}>
                 Specification Maintainer
               </Typography>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -309,6 +407,33 @@ const DataModelDetailPage = ({ currentTheme }) => {
                 <Typography variant="body1" sx={{ color: currentTheme.text }}>
                   {model.specMaintainer}
                 </Typography>
+                {model.maintainerEmail && (
+                  <Tooltip title="Email Maintainer">
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      startIcon={<EmailIcon sx={{ fontSize: 14 }} />}
+                      onClick={() => window.location.href = `mailto:${model.maintainerEmail}`}
+                      sx={{
+                        color: currentTheme.primary,
+                        borderColor: currentTheme.primary,
+                        ml: 1,
+                        py: 0.25,
+                        px: 0.75,
+                        minWidth: 'auto',
+                        fontSize: '0.75rem',
+                        lineHeight: 1,
+                        height: '24px',
+                        '&:hover': {
+                          borderColor: currentTheme.primary,
+                          bgcolor: alpha(currentTheme.primary, 0.1),
+                        }
+                      }}
+                    >
+                      EMAIL
+                    </Button>
+                  </Tooltip>
+                )}
               </Box>
             </Box>
 

@@ -16,16 +16,16 @@ import {
   Search as SearchIcon,
 } from '@mui/icons-material';
 import { ThemeContext } from '../App';
-import { fetchContracts } from '../services/api';
-import DataContractCard from '../components/DataContractCard';
+import { fetchAgreements } from '../services/api';
+import ProductAgreementCard from '../components/ProductAgreementCard';
 import Pagination from '../components/Pagination';
 
 const ITEMS_PER_PAGE = 12;
 
-const DataContractsPage = () => {
+const ProductAgreementsPage = () => {
   const { currentTheme } = useContext(ThemeContext);
-  const [allContracts, setAllContracts] = useState([]);
-  const [filteredContracts, setFilteredContracts] = useState([]);
+  const [allAgreements, setAllAgreements] = useState([]);
+  const [filteredAgreements, setFilteredAgreements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -34,71 +34,68 @@ const DataContractsPage = () => {
   const theme = useTheme();
 
   useEffect(() => {
-    const loadContracts = async () => {
+    const loadAgreements = async () => {
       try {
-        const data = await fetchContracts();
-        const validContracts = (data?.contracts || []).filter(contract => 
-          contract && typeof contract === 'object'
+        console.log('Fetching agreements...');
+        const data = await fetchAgreements();
+        console.log('API Response:', data);
+        const validAgreements = (data?.agreements || []).filter(agreement => 
+          agreement && typeof agreement === 'object'
         );
-        setAllContracts(validContracts);
-        setFilteredContracts(validContracts);
+        console.log('Valid agreements:', validAgreements);
+        setAllAgreements(validAgreements);
+        setFilteredAgreements(validAgreements);
         setError(null);
       } catch (err) {
-        setError('Failed to load contracts');
-        console.error('Error loading contracts:', err);
+        console.error('Error loading agreements:', err);
+        setError('Failed to load agreements');
       } finally {
         setLoading(false);
       }
     };
 
-    loadContracts();
+    loadAgreements();
   }, []);
 
   useEffect(() => {
-    let filtered = [...allContracts];
+    let filtered = [...allAgreements];
 
     if (searchQuery) {
       const searchLower = searchQuery.toLowerCase();
       
-      // Simple string-based search without array methods
-      filtered = filtered.filter(contract => {
-        // Skip invalid contracts
-        if (!contract) return false;
+      filtered = filtered.filter(agreement => {
+        if (!agreement) return false;
 
-        // Build search string manually
         let searchStr = '';
         
-        // Add each field if it exists
-        if (contract.name) searchStr += contract.name + ' ';
-        if (contract.description) searchStr += contract.description + ' ';
-        if (contract.producer) searchStr += contract.producer + ' ';
-        if (contract.consumer) searchStr += contract.consumer + ' ';
-        if (contract.modelShortName) searchStr += contract.modelShortName + ' ';
-        if (contract.status) searchStr += contract.status + ' ';
+        if (agreement.name) searchStr += agreement.name + ' ';
+        if (agreement.description) searchStr += agreement.description + ' ';
+        if (agreement.dataProducer) searchStr += agreement.dataProducer + ' ';
+        if (agreement.dataConsumer) searchStr += agreement.dataConsumer + ' ';
+        if (agreement.modelShortName) searchStr += agreement.modelShortName + ' ';
+        if (agreement.status) searchStr += agreement.status + ' ';
         
-        // Handle tags without using array methods
-        if (contract.tags) {
-          for (let i = 0; i < contract.tags.length; i++) {
-            if (contract.tags[i]) {
-              searchStr += contract.tags[i] + ' ';
+        if (agreement.tags) {
+          for (let i = 0; i < agreement.tags.length; i++) {
+            if (agreement.tags[i]) {
+              searchStr += agreement.tags[i] + ' ';
             }
           }
         }
 
-        // Convert to lowercase and check
         return searchStr.toLowerCase().includes(searchLower);
       });
     }
 
     if (selectedStatus !== 'all') {
-      filtered = filtered.filter(contract => 
-        contract && contract.status === selectedStatus
+      filtered = filtered.filter(agreement => 
+        agreement && agreement.status === selectedStatus
       );
     }
 
-    setFilteredContracts(filtered);
+    setFilteredAgreements(filtered);
     setPage(1);
-  }, [searchQuery, selectedStatus, allContracts]);
+  }, [searchQuery, selectedStatus, allAgreements]);
 
   const handlePageChange = (event, value) => {
     setPage(value);
@@ -133,8 +130,8 @@ const DataContractsPage = () => {
     { id: 'expired', label: 'Expired' }
   ];
 
-  const totalPages = Math.ceil(filteredContracts.length / ITEMS_PER_PAGE);
-  const paginatedContracts = filteredContracts.slice(
+  const totalPages = Math.ceil(filteredAgreements.length / ITEMS_PER_PAGE);
+  const paginatedAgreements = filteredAgreements.slice(
     (page - 1) * ITEMS_PER_PAGE,
     page * ITEMS_PER_PAGE
   );
@@ -160,17 +157,17 @@ const DataContractsPage = () => {
   return (
     <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
       <Typography variant="h4" sx={{ mb: 1, color: currentTheme.text }}>
-        Data Contracts
+        Product Agreements
       </Typography>
       <Typography variant="body1" sx={{ mb: 4, color: currentTheme.textSecondary }}>
-        Manage and monitor data contracts between producers and consumers. Track contract status and compliance across your data ecosystem.
+        Manage and monitor product agreements between producers and consumers. Track agreement status and compliance across your data ecosystem.
       </Typography>
 
       <Box sx={{ mb: 4 }}>
         <TextField
           fullWidth
           variant="outlined"
-          placeholder="Search data contracts..."
+          placeholder="Search product agreements..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           InputProps={{
@@ -221,9 +218,9 @@ const DataContractsPage = () => {
       </Box>
 
       <Grid container spacing={3}>
-        {paginatedContracts.map((contract) => (
-          <Grid item xs={12} sm={6} md={4} lg={3} key={contract.id}>
-            <DataContractCard contract={contract} currentTheme={currentTheme} />
+        {paginatedAgreements.map((agreement) => (
+          <Grid item xs={12} sm={6} md={4} lg={3} key={agreement.id}>
+            <ProductAgreementCard agreement={agreement} currentTheme={currentTheme} />
           </Grid>
         ))}
       </Grid>
@@ -240,4 +237,4 @@ const DataContractsPage = () => {
   );
 };
 
-export default DataContractsPage; 
+export default ProductAgreementsPage; 

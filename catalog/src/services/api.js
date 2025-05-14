@@ -9,15 +9,20 @@ const fetchWithCache = async (endpoint, params = {}, options = {}) => {
   // Return cached data if available and not forcing refresh
   if (!forceRefresh) {
     const cachedData = cacheService.get(cacheKey);
-    if (cachedData) return cachedData;
+    if (cachedData) {
+      console.log('Returning cached data for:', endpoint);
+      return cachedData;
+    }
   }
 
   try {
+    console.log('Fetching data from:', `${API_URL}/${endpoint}`);
     const response = await fetch(`${API_URL}/${endpoint}`);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     const data = await response.json();
+    console.log('API response for', endpoint, ':', data);
     
     // Cache the response
     cacheService.set(cacheKey, data, ttl);
@@ -34,7 +39,7 @@ export const fetchData = (endpoint, options = {}) =>
 
 export const fetchItemCount = async (endpoint, options = {}) => {
   try {
-    const apiEndpoint = endpoint === 'contracts' ? 'dataContracts' : endpoint;
+    const apiEndpoint = endpoint === 'agreements' ? 'dataAgreements' : endpoint;
     const cacheKey = cacheService.generateKey(`count/${apiEndpoint}`);
     
     if (!options.forceRefresh) {
@@ -56,11 +61,15 @@ export const fetchItemCount = async (endpoint, options = {}) => {
   }
 };
 
-export const fetchContracts = (options = {}) => 
-  fetchData('dataContracts', options);
+export const fetchAgreements = async (options = {}) => {
+  console.log('fetchAgreements called with options:', options);
+  const data = await fetchData('dataAgreements', options);
+  console.log('fetchAgreements response:', data);
+  return data;
+};
 
-export const fetchContractsByModel = async (modelShortName, options = {}) => {
-  const cacheKey = cacheService.generateKey(`contracts/by-model/${modelShortName}`);
+export const fetchAgreementsByModel = async (modelShortName, options = {}) => {
+  const cacheKey = cacheService.generateKey(`agreements/by-model/${modelShortName}`);
   
   if (!options.forceRefresh) {
     const cachedData = cacheService.get(cacheKey);
@@ -68,7 +77,7 @@ export const fetchContractsByModel = async (modelShortName, options = {}) => {
   }
 
   try {
-    const response = await fetch(`${API_URL}/contracts/by-model/${modelShortName}`);
+    const response = await fetch(`${API_URL}/agreements/by-model/${modelShortName}`);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -77,7 +86,7 @@ export const fetchContractsByModel = async (modelShortName, options = {}) => {
     cacheService.set(cacheKey, data, options.ttl);
     return data;
   } catch (error) {
-    console.error('Error fetching contracts by model:', error);
+    console.error('Error fetching agreements by model:', error);
     throw error;
   }
 };
