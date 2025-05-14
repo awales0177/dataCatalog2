@@ -25,7 +25,7 @@ app = FastAPI(
     ## Data Structure
     The API serves the following data types:
     * Models: Data model definitions and metadata
-    * Contracts: Data contracts and compliance
+    * Contracts: Product agreements and compliance
     * Domains: Data domains and their relationships
     * Theme: UI theme configuration
     * Menu: Navigation menu structure
@@ -81,9 +81,10 @@ class PartialUpdate(BaseModel):
 
 # File paths
 JSON_FILES = {
-    "dataContracts": "data/dataContracts.json",
+    "dataAgreements": "data/dataAgreements.json",
     "domains": "data/dataDomains.json",
     "models": "data/dataModels.json",
+    "specifications": "data/dataModels.json",  # Alias for specifications
     "theme": "data/theme.json",
     "menu": "data/menuItems.json",
     "applications": "data/applications.json",
@@ -93,9 +94,10 @@ JSON_FILES = {
 
 # Data type to key mapping for counting items
 DATA_TYPE_KEYS = {
-    "dataContracts": "contracts",
+    "dataAgreements": "agreements",
     "domains": "domains",
     "models": "models",
+    "specifications": "models",  # Alias for specifications
     "applications": "applications",
     "lexicon": "terms",
     "reference": "items"
@@ -325,13 +327,13 @@ async def list_files(credentials: HTTPBasicCredentials = Depends(verify_credenti
     return {"files": list(JSON_FILES.keys())}
 
 @app.get(
-    "/api/contracts/by-model/{model_short_name}",
+    "/api/agreements/by-model/{model_short_name}",
     response_model=Dict[str, Any],
-    summary="Get contracts by model",
-    description="Retrieve all contracts associated with a specific data model by its short name",
+    summary="Get agreements by model",
+    description="Retrieve all agreements associated with a specific data model by its short name",
     responses={
         200: {
-            "description": "Successfully retrieved contracts",
+            "description": "Successfully retrieved agreements",
             "content": {
                 "application/json": {
                     "example": {
@@ -340,7 +342,7 @@ async def list_files(credentials: HTTPBasicCredentials = Depends(verify_credenti
                             "shortName": "PROD",
                             "name": "Product Catalog"
                         },
-                        "contracts": [
+                        "agreements": [
                             {
                                 "id": "contract-001",
                                 "name": "Product Data Schema",
@@ -355,21 +357,21 @@ async def list_files(credentials: HTTPBasicCredentials = Depends(verify_credenti
         500: {"description": "Internal server error"}
     }
 )
-async def get_contracts_by_model(model_short_name: str):
+async def get_agreements_by_model(model_short_name: str):
     """
-    Get all contracts associated with a specific data model by its short name.
+    Get all agreements associated with a specific data model by its short name.
     
     Args:
         model_short_name (str): The short name of the model (e.g., 'CUST', 'PROD')
         
     Returns:
-        dict: A dictionary containing the model info and filtered contracts
+        dict: A dictionary containing the model info and filtered agreements
         
     Raises:
         HTTPException: If the model is not found
     """
     try:
-        contracts_data = read_json_file(JSON_FILES['dataContracts'])
+        agreements_data = read_json_file(JSON_FILES['dataAgreements'])
         model_data = read_json_file(JSON_FILES['models'])
 
         # Find the model by short name (case-insensitive)
@@ -380,10 +382,10 @@ async def get_contracts_by_model(model_short_name: str):
                 detail=f"Model with short name '{model_short_name}' not found"
             )
 
-        # Filter contracts by model shortName
-        filtered_contracts = [
-            contract for contract in contracts_data['contracts']
-            if contract.get('modelShortName', '').lower() == model_short_name.lower()
+        # Filter agreements by model shortName
+        filtered_agreements = [
+            agreement for agreement in agreements_data['agreements']
+            if agreement.get('modelShortName', '').lower() == model_short_name.lower()
         ]
         
         return {
@@ -392,7 +394,7 @@ async def get_contracts_by_model(model_short_name: str):
                 "shortName": model['shortName'],
                 "name": model['name']
             },
-            "contracts": filtered_contracts
+            "agreements": filtered_agreements
         }
         
     except Exception as e:

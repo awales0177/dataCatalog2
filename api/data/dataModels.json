@@ -10,6 +10,7 @@
       "lastUpdated": "2024-03-20",
       "owner": "Data Team",
       "specMaintainer": "Jane Smith",
+      "maintainerEmail": "",
       "domain": ["Customer", "Data", "Analytics"],
       "meta": {
         "tier": "gold",
@@ -66,6 +67,7 @@
       "lastUpdated": "2024-03-19",
       "owner": "Product Team",
       "specMaintainer": "Michael Chen",
+      "maintainerEmail": "michael.chen@example.com",
       "domain": ["Product", "Inventory", "E-commerce"],
       "meta": {
         "tier": "silver",
@@ -123,6 +125,7 @@
       "lastUpdated": "2024-03-18",
       "owner": "Operations Team",
       "specMaintainer": "Sarah Johnson",
+      "maintainerEmail": "sarah.johnson@example.com",
       "domain": ["Orders", "Logistics", "Finance", "Customer"],
       "meta": {
         "tier": "bronze",
@@ -182,6 +185,7 @@
       "lastUpdated": "2024-03-15",
       "owner": "Data Team",
       "specMaintainer": "David Wilson",
+      "maintainerEmail": "david.wilson@example.com",
       "domain": ["Customer", "Data", "Legacy"],
       "meta": {
         "tier": "bronze",
@@ -205,6 +209,7 @@
       "lastUpdated": "2024-03-17",
       "owner": "Marketing Team",
       "specMaintainer": "Emily Rodriguez",
+      "maintainerEmail": "emily.rodriguez@example.com",
       "domain": ["Marketing", "Analytics", "Customer"],
       "meta": {
         "tier": "gold",
@@ -228,6 +233,7 @@
       "lastUpdated": "2024-03-16",
       "owner": "Procurement Team",
       "specMaintainer": "Robert Kim",
+      "maintainerEmail": "robert.kim@example.com",
       "domain": ["Supplier", "Procurement", "Finance"],
       "meta": {
         "tier": "silver",
@@ -251,6 +257,7 @@
       "lastUpdated": "2024-03-14",
       "owner": "Healthcare Team",
       "specMaintainer": "Dr. Lisa Patel",
+      "maintainerEmail": "lisa.patel@example.com",
       "domain": ["Healthcare", "Facilities", "Operations"],
       "meta": {
         "tier": "gold",
@@ -274,6 +281,7 @@
       "lastUpdated": "2024-03-13",
       "owner": "Finance Team",
       "specMaintainer": "James Thompson",
+      "maintainerEmail": "james.thompson@example.com",
       "domain": ["Finance", "Compliance", "Analytics"],
       "meta": {
         "tier": "gold",
@@ -301,6 +309,7 @@
       "lastUpdated": "2024-03-12",
       "owner": "Transportation Team",
       "specMaintainer": "Maria Garcia",
+      "maintainerEmail": "maria.garcia@example.com",
       "domain": ["Transportation", "Infrastructure", "Operations"],
       "meta": {
         "tier": "silver",
@@ -324,6 +333,7 @@
       "lastUpdated": "2024-03-11",
       "owner": "Utilities Team",
       "specMaintainer": "Thomas Lee",
+      "maintainerEmail": "thomas.lee@example.com",
       "domain": ["Utilities", "Analytics", "Customer"],
       "meta": {
         "tier": "silver",
@@ -347,6 +357,7 @@
       "lastUpdated": "2024-03-10",
       "owner": "Housing Team",
       "specMaintainer": "Daniel Martinez",
+      "maintainerEmail": "daniel.martinez@example.com",
       "domain": ["Housing", "Development", "Construction"],
       "meta": {
         "tier": "bronze",
@@ -370,6 +381,7 @@
       "lastUpdated": "2024-03-09",
       "owner": "Social Services Team",
       "specMaintainer": "Rachel Anderson",
+      "maintainerEmail": "rachel.anderson@example.com",
       "domain": ["Social", "Healthcare", "Government"],
       "meta": {
         "tier": "silver",
@@ -393,6 +405,7 @@
       "lastUpdated": "2024-03-08",
       "owner": "Recreation Team",
       "specMaintainer": "Kevin Park",
+      "maintainerEmail": "kevin.park@example.com",
       "domain": ["Recreation", "Facilities", "Operations"],
       "meta": {
         "tier": "bronze",
@@ -416,6 +429,7 @@
       "lastUpdated": "2024-03-07",
       "owner": "Cultural Affairs Team",
       "specMaintainer": "Sophia Chen",
+      "maintainerEmail": "sophia.chen@example.com",
       "domain": ["Cultural", "Events", "Marketing"],
       "meta": {
         "tier": "silver",
@@ -439,6 +453,7 @@
       "lastUpdated": "2024-03-06",
       "owner": "Technology Team",
       "specMaintainer": "Alex Wong",
+      "maintainerEmail": "alex.wong@example.com",
       "domain": ["Technology", "Infrastructure", "Security"],
       "meta": {
         "tier": "gold",
@@ -468,6 +483,7 @@
       "lastUpdated": "2024-03-05",
       "owner": "Agriculture Team",
       "specMaintainer": "Emma Davis",
+      "maintainerEmail": "emma.davis@example.com",
       "domain": ["Agriculture", "Operations", "Analytics"],
       "meta": {
         "tier": "bronze",
@@ -491,6 +507,7 @@
       "lastUpdated": "2024-03-04",
       "owner": "Tourism Team",
       "specMaintainer": "Olivia Taylor",
+      "maintainerEmail": "olivia.taylor@example.com",
       "domain": ["Tourism", "Marketing", "Analytics"],
       "meta": {
         "tier": "silver",
@@ -514,6 +531,7 @@
       "lastUpdated": "2024-03-03",
       "owner": "Infrastructure Team",
       "specMaintainer": "William Brown",
+      "maintainerEmail": "william.brown@example.com",
       "domain": ["Infrastructure", "Operations", "Maintenance"],
       "meta": {
         "tier": "gold",
