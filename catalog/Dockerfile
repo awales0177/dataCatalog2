@@ -9,5 +9,8 @@ COPY . .
 # Install dependencies
 RUN npm install
 
+# Expose port 3000
+EXPOSE 3000
+
 # Default command (override with `docker run`)
 CMD ["npm", "run", "start"]
