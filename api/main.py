@@ -11,10 +11,83 @@ from datetime import datetime, timedelta
 import logging
 import threading
 import time
+from time import perf_counter
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Performance metrics
+performance_metrics = {
+    "requests": {
+        "total": 0,
+        "by_endpoint": {},
+        "response_times": []
+    },
+    "cache": {
+        "hits": 0,
+        "misses": 0
+    },
+    "github": {
+        "requests": 0,
+        "errors": 0,
+        "response_times": []
+    }
+}
+
+def log_performance(endpoint: str, start_time: float, cache_hit: bool = None, github_request: bool = False):
+    """Log performance metrics for an API request."""
+    duration = perf_counter() - start_time
+    performance_metrics["requests"]["total"] += 1
+    performance_metrics["requests"]["by_endpoint"][endpoint] = performance_metrics["requests"]["by_endpoint"].get(endpoint, 0) + 1
+    performance_metrics["requests"]["response_times"].append(duration)
+    
+    if cache_hit is not None:
+        if cache_hit:
+            performance_metrics["cache"]["hits"] += 1
+        else:
+            performance_metrics["cache"]["misses"] += 1
+    
+    if github_request:
+        performance_metrics["github"]["requests"] += 1
+        performance_metrics["github"]["response_times"].append(duration)
+
+def get_performance_stats():
+    """Calculate performance statistics."""
+    response_times = performance_metrics["requests"]["response_times"]
+    github_times = performance_metrics["github"]["response_times"]
+    
+    stats = {
+        "total_requests": performance_metrics["requests"]["total"],
+        "requests_by_endpoint": performance_metrics["requests"]["by_endpoint"],
+        "cache": {
+            "hits": performance_metrics["cache"]["hits"],
+            "misses": performance_metrics["cache"]["misses"],
+            "hit_rate": performance_metrics["cache"]["hits"] / (performance_metrics["cache"]["hits"] + performance_metrics["cache"]["misses"]) if (performance_metrics["cache"]["hits"] + performance_metrics["cache"]["misses"]) > 0 else 0
+        },
+        "github": {
+            "total_requests": performance_metrics["github"]["requests"],
+            "errors": performance_metrics["github"]["errors"]
+        }
+    }
+    
+    if response_times:
+        stats["response_times"] = {
+            "avg": sum(response_times) / len(response_times),
+            "min": min(response_times),
+            "max": max(response_times),
+            "p95": sorted(response_times)[int(len(response_times) * 0.95)]
+        }
+    
+    if github_times:
+        stats["github"]["response_times"] = {
+            "avg": sum(github_times) / len(github_times),
+            "min": min(github_times),
+            "max": max(github_times),
+            "p95": sorted(github_times)[int(len(github_times) * 0.95)]
+        }
+    
+    return stats
 
 # API Documentation
 app = FastAPI(
@@ -57,7 +130,7 @@ app.add_middleware(
 # GitHub configuration
 GITHUB_RAW_BASE_URL = "https://raw.githubusercontent.com/awales0177/test_data/main"
 CACHE_DURATION = timedelta(minutes=15)
-PASSTHROUGH_MODE = True  # Can be toggled via environment variable
+PASSTHROUGH_MODE = False  # Can be toggled via environment variable
 
 # Log server configuration
 logger.info("=" * 50)
@@ -70,7 +143,7 @@ logger.info("=" * 50)
 # Cache storage
 cache = {
     "data": {},
-    "last_updated": None
+    "last_updated": {}
 }
 
 # Basic authentication
@@ -103,10 +176,6 @@ class PaginationParams(BaseModel):
     page: int = Field(1, ge=1, description="Page number")
     page_size: int = Field(10, ge=1, le=100, description="Items per page")
 
-class PartialUpdate(BaseModel):
-    path: str = Field(..., description="JSON path to update (e.g., 'models[0].name')")
-    value: Any = Field(..., description="New value to set")
-
 # File paths mapping
 JSON_FILES = {
     "dataAgreements": "dataAgreements.json",
@@ -132,6 +201,7 @@ DATA_TYPE_KEYS = {
 
 def fetch_from_github(file_name: str) -> Dict:
     """Fetch data from GitHub raw content."""
+    start_time = perf_counter()
     if file_name not in JSON_FILES:
         logger.error(f"File {file_name} not found in JSON_FILES mapping")
         raise HTTPException(status_code=404, detail="File not found")
@@ -145,61 +215,75 @@ def fetch_from_github(file_name: str) -> Dict:
             logger.error(f"File not found on GitHub: {url}")
             raise HTTPException(status_code=404, detail="File not found on GitHub")
         if response.status_code != 200:
+            performance_metrics["github"]["errors"] += 1
             logger.error(f"GitHub API error: {response.status_code} - {response.text}")
             raise HTTPException(status_code=500, detail=f"GitHub API error: {response.status_code}")
         
         data = response.json()
         logger.info(f"Successfully fetched and parsed JSON for {file_name}")
+        log_performance("github_fetch", start_time, github_request=True)
         return data
     except requests.exceptions.RequestException as e:
+        performance_metrics["github"]["errors"] += 1
         logger.error(f"Network error fetching from GitHub: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Network error: {str(e)}")
     except json.JSONDecodeError as e:
+        performance_metrics["github"]["errors"] += 1
         logger.error(f"Invalid JSON response from GitHub: {str(e)}")
         raise HTTPException(status_code=500, detail="Invalid JSON response from GitHub")
     except Exception as e:
+        performance_metrics["github"]["errors"] += 1
         logger.error(f"Unexpected error fetching from GitHub: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+def cleanup_stale_cache():
+    """Remove cache entries that are older than CACHE_DURATION."""
+    current_time = datetime.now()
+    stale_files = [
+        file_name for file_name, last_updated in cache["last_updated"].items()
+        if current_time - last_updated > CACHE_DURATION
+    ]
+    
+    for file_name in stale_files:
+        logger.info(f"Removing stale cache for {file_name}")
+        del cache["data"][file_name]
+        del cache["last_updated"][file_name]
+
 def get_cached_data(file_name: str) -> Dict:
     """Get data from cache or fetch from GitHub if cache is expired."""
+    start_time = perf_counter()
     current_time = datetime.now()
     logger.info(f"Getting cached data for {file_name}")
     
+    # Clean up any stale cache entries
+    cleanup_stale_cache()
+    
     # Check if cache is expired or doesn't exist
-    if (cache["last_updated"] is None or 
-        current_time - cache["last_updated"] > CACHE_DURATION or 
+    if (file_name not in cache["last_updated"] or 
+        current_time - cache["last_updated"][file_name] > CACHE_DURATION or 
         file_name not in cache["data"]):
         
-        logger.info(f"Cache miss for {file_name}, fetching from GitHub")
+        logger.info(f"Cache miss or expired for {file_name}, fetching from GitHub")
         # Fetch fresh data from GitHub
         data = fetch_from_github(file_name)
         cache["data"][file_name] = data
-        cache["last_updated"] = current_time
+        cache["last_updated"][file_name] = current_time
         logger.info(f"Cache updated for {file_name}")
+        log_performance("cache_miss", start_time, cache_hit=False)
     else:
-        logger.info(f"Cache hit for {file_name}")
+        logger.info(f"Cache hit for {file_name} (age: {current_time - cache['last_updated'][file_name]})")
+        log_performance("cache_hit", start_time, cache_hit=True)
     
     return cache["data"][file_name]
-
-def update_cache_periodically():
-    """Background thread to update cache periodically."""
-    while True:
-        try:
-            for file_name in JSON_FILES:
-                get_cached_data(file_name)
-            logger.info("Cache updated successfully")
-        except Exception as e:
-            logger.error(f"Error updating cache: {str(e)}")
-        time.sleep(CACHE_DURATION.total_seconds())
 
 @app.get("/api/{file_name}")
 def get_json_file(file_name: str):
     """Get JSON file content with caching or passthrough mode."""
+    start_time = perf_counter()
     logger.info(f"Request for {file_name} - Using {'passthrough' if PASSTHROUGH_MODE else 'cached'} mode")
-    if PASSTHROUGH_MODE:
-        return fetch_from_github(file_name)
-    return get_cached_data(file_name)
+    result = fetch_from_github(file_name) if PASSTHROUGH_MODE else get_cached_data(file_name)
+    log_performance("get_json_file", start_time)
+    return result
 
 @app.get("/api/{file_name}/paginated")
 def get_paginated_json_file(
@@ -239,132 +323,7 @@ def get_count(file_name: str):
     
     return {"count": len(data[key])}
 
-# Start background thread for cache updates
-cache_thread = threading.Thread(target=update_cache_periodically, daemon=True)
-cache_thread.start()
-
-# Admin endpoints
-@app.put(
-    "/api/admin/{file_name}",
-    response_model=Dict[str, str],
-    summary="Update JSON file content",
-    description="Update the content of a specific JSON file (requires admin authentication)",
-    responses={
-        200: {
-            "description": "Successfully updated file",
-            "content": {
-                "application/json": {
-                    "example": {"message": "File updated successfully"}
-                }
-            }
-        },
-        401: {"description": "Unauthorized - Invalid credentials"},
-        404: {"description": "File not found"},
-        500: {"description": "Internal server error"}
-    }
-)
-async def update_json_file(
-    file_name: str,
-    data: JSONData,
-    credentials: HTTPBasicCredentials = Depends(verify_credentials)
-):
-    """
-    Update the content of a specific JSON file.
-    
-    Parameters:
-    - file_name: The name of the file to update (contracts, domains, models, theme, or menu)
-    - data: The new JSON data to store
-    
-    Returns:
-    - Success message
-    """
-    if file_name not in JSON_FILES:
-        raise HTTPException(status_code=404, detail="File not found")
-    write_json_file(JSON_FILES[file_name], data.data)
-    return {"message": "File updated successfully"}
-
-@app.patch(
-    "/api/admin/{file_name}/partial",
-    response_model=Dict[str, str],
-    summary="Partially update JSON file",
-    description="Update a specific path in the JSON file (requires admin authentication)"
-)
-async def partial_update_json_file(
-    file_name: str,
-    update: PartialUpdate,
-    credentials: HTTPBasicCredentials = Depends(verify_credentials)
-):
-    """Update a specific path in the JSON file."""
-    if file_name not in JSON_FILES:
-        raise HTTPException(status_code=404, detail="File not found")
-    
-    try:
-        data = read_json_file(JSON_FILES[file_name])
-        updated_data = update_json_path(data, update.path, update.value)
-        write_json_file(JSON_FILES[file_name], updated_data)
-        return {"message": "File updated successfully"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.get(
-    "/api/admin/files",
-    response_model=FileList,
-    summary="List available files",
-    description="Get a list of all available JSON files (requires admin authentication)",
-    responses={
-        200: {
-            "description": "Successfully retrieved file list",
-            "content": {
-                "application/json": {
-                    "example": {
-                        "files": ["contracts", "domains", "models", "theme"]
-                    }
-                }
-            }
-        },
-        401: {"description": "Unauthorized - Invalid credentials"}
-    }
-)
-async def list_files(credentials: HTTPBasicCredentials = Depends(verify_credentials)):
-    """
-    Get a list of all available JSON files.
-    
-    Returns:
-    - List of available file names
-    """
-    return {"files": list(JSON_FILES.keys())}
-
-@app.get(
-    "/api/agreements/by-model/{model_short_name}",
-    response_model=Dict[str, Any],
-    summary="Get agreements by model",
-    description="Retrieve all agreements associated with a specific data model by its short name",
-    responses={
-        200: {
-            "description": "Successfully retrieved agreements",
-            "content": {
-                "application/json": {
-                    "example": {
-                        "model": {
-                            "id": 1,
-                            "shortName": "PROD",
-                            "name": "Product Catalog"
-                        },
-                        "agreements": [
-                            {
-                                "id": "contract-001",
-                                "name": "Product Data Schema",
-                                "description": "Schema validation for product data"
-                            }
-                        ]
-                    }
-                }
-            }
-        },
-        404: {"description": "Model not found"},
-        500: {"description": "Internal server error"}
-    }
-)
+@app.get("/api/agreements/by-model/{model_short_name}")
 async def get_agreements_by_model(model_short_name: str):
     """
     Get all agreements associated with a specific data model by its short name.
@@ -472,6 +431,31 @@ def write_json_file(file_path: str, data: Dict):
     except Exception as e:
         logger.error(f"Error writing file {data_path}: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+# Debug endpoints
+@app.get("/api/debug/cache")
+def get_cache_status():
+    """Get the current status of the cache."""
+    current_time = datetime.now()
+    cache_status = {
+        "total_files": len(cache["data"]),
+        "files": {}
+    }
+    
+    for file_name, last_updated in cache["last_updated"].items():
+        age = current_time - last_updated
+        cache_status["files"][file_name] = {
+            "last_updated": last_updated.isoformat(),
+            "age_seconds": age.total_seconds(),
+            "is_stale": age > CACHE_DURATION
+        }
+    
+    return cache_status
+
+@app.get("/api/debug/performance")
+def get_performance_metrics():
+    """Get current performance metrics."""
+    return get_performance_stats()
 
 if __name__ == "__main__":
     import uvicorn
