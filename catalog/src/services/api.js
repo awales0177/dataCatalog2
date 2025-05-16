@@ -16,11 +16,25 @@ const fetchWithCache = async (endpoint, params = {}, options = {}) => {
   }
 
   try {
-    console.log('Fetching data from:', `${API_URL}/${endpoint}`);
-    const response = await fetch(`${API_URL}/${endpoint}`);
+    const url = `${API_URL}/${endpoint}`;
+    console.log('Fetching data from:', url);
+    const response = await fetch(url);
+    console.log('Response status:', response.status);
+    console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+    
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const errorText = await response.text();
+      console.error('Error response:', errorText);
+      console.error('Error details:', {
+        url,
+        status: response.status,
+        statusText: response.statusText,
+        headers: Object.fromEntries(response.headers.entries()),
+        body: errorText
+      });
+      throw new Error(`HTTP error! status: ${response.status}, body: ${errorText}`);
     }
+    
     const data = await response.json();
     console.log('API response for', endpoint, ':', data);
     
@@ -30,6 +44,16 @@ const fetchWithCache = async (endpoint, params = {}, options = {}) => {
     return data;
   } catch (error) {
     console.error('Error fetching data:', error);
+    console.error('Error details:', {
+      endpoint,
+      params,
+      options,
+      error: {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      }
+    });
     throw error;
   }
 };
@@ -73,20 +97,50 @@ export const fetchAgreementsByModel = async (modelShortName, options = {}) => {
   
   if (!options.forceRefresh) {
     const cachedData = cacheService.get(cacheKey);
-    if (cachedData) return cachedData;
+    if (cachedData) {
+      console.log('Returning cached agreements for model:', modelShortName);
+      return cachedData;
+    }
   }
 
   try {
-    const response = await fetch(`${API_URL}/agreements/by-model/${modelShortName}`);
+    const url = `${API_URL}/agreements/by-model/${modelShortName}`;
+    console.log('Fetching agreements for model:', modelShortName);
+    console.log('Request URL:', url);
+    
+    const response = await fetch(url);
+    console.log('Response status:', response.status);
+    console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+    
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const errorText = await response.text();
+      console.error('Error response:', errorText);
+      console.error('Error details:', {
+        url,
+        status: response.status,
+        statusText: response.statusText,
+        headers: Object.fromEntries(response.headers.entries()),
+        body: errorText
+      });
+      throw new Error(`HTTP error! status: ${response.status}, body: ${errorText}`);
     }
+    
     const data = await response.json();
+    console.log('Agreements data received:', data);
     
     cacheService.set(cacheKey, data, options.ttl);
     return data;
   } catch (error) {
     console.error('Error fetching agreements by model:', error);
+    console.error('Error details:', {
+      modelShortName,
+      options,
+      error: {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      }
+    });
     throw error;
   }
 };
@@ -96,9 +150,6 @@ export const fetchDomains = (options = {}) =>
 
 export const fetchTheme = (options = {}) => 
   fetchData('theme', options);
-
-export const fetchMenu = (options = {}) => 
-  fetchData('menu', options);
 
 export const fetchModels = (options = {}) => 
   fetchData('models', options);

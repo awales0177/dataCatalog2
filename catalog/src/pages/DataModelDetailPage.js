@@ -49,20 +49,37 @@ const DataModelDetailPage = ({ currentTheme }) => {
   React.useEffect(() => {
     const loadModelAndAgreements = async () => {
       try {
-        const [modelData, agreementsData] = await Promise.all([
-          fetchData('models'),
-          fetchAgreementsByModel(shortName)
-        ]);
+        console.log('Loading model and agreements for:', shortName);
+        console.log('Fetching model data...');
+        const modelData = await fetchData('models');
+        console.log('Model data received:', modelData);
+        
+        console.log('Fetching agreements data...');
+        const agreementsData = await fetchAgreementsByModel(shortName);
+        console.log('Agreements data received:', agreementsData);
         
         const foundModel = modelData.models.find(m => m.shortName.toLowerCase() === shortName.toLowerCase());
         if (foundModel) {
+          console.log('Found model:', foundModel);
           setModel(foundModel);
           setAgreements(agreementsData.agreements || []);
         } else {
+          console.error('Model not found:', {
+            shortName,
+            availableModels: modelData.models.map(m => m.shortName)
+          });
           setError('Model not found');
         }
       } catch (error) {
         console.error('Error fetching model and agreements:', error);
+        console.error('Error details:', {
+          shortName,
+          error: {
+            name: error.name,
+            message: error.message,
+            stack: error.stack
+          }
+        });
         setError('Failed to load model and agreements');
       } finally {
         setLoading(false);

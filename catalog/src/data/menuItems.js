@@ -5,6 +5,7 @@ import {
   Apps as AppsIcon,
   MenuBook as MenuBookIcon,
   LibraryBooks as LibraryBooksIcon,
+  Handshake as HandshakeIcon,
 } from '@mui/icons-material';
 
 export const menuItems = {
@@ -19,7 +20,7 @@ export const menuItems = {
       id: 2,
       name: "Product Agreements",
       path: "/agreements",
-      icon: DescriptionIcon
+      icon: HandshakeIcon
     },
     {
       id: 3,

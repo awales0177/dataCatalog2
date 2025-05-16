@@ -116,18 +116,17 @@ const DataDomainsPage = () => {
           lg: 'repeat(4, 1fr)',
           xl: 'repeat(5, 1fr)'
         },
-        gap: { xs: 1, sm: 1.5, md: 2 },
-        px: { xs: 1, sm: 2 },
-        py: 2
+        gap: { xs: 0.75, sm: 1, md: 1.25 },
+        px: { xs: 0.5, sm: 0.75 },
+        py: 1.5
       }}>
         {filteredDomains.map((domain) => (
-          <Box key={domain.id}>
-            <DomainCard
-              domain={domain}
-              onClick={() => setSelectedDomain(domain)}
-              currentTheme={currentTheme}
-            />
-          </Box>
+          <DomainCard
+            key={domain.id}
+            domain={domain}
+            onClick={() => setSelectedDomain(domain)}
+            currentTheme={currentTheme}
+          />
         ))}
       </Box>
 

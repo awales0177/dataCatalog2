@@ -56,8 +56,8 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState(null);
 
-  const calculateVersionDifference = (agreementVersion, modelVersion) => {
-    if (!agreementVersion || !modelVersion) return null;
+  const calculateVersionDifference = (agreementVersions, modelVersion) => {
+    if (!agreementVersions || !modelVersion) return null;
 
     const parseVersion = (version) => {
       const [major, minor, patch] = version.split('.').map(Number);
@@ -65,30 +65,41 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
     };
 
     const model = parseVersion(modelVersion);
-    const agreement = parseVersion(agreementVersion);
-
-    const majorDiff = model.major - agreement.major;
-    const minorDiff = model.minor - agreement.minor;
-    const patchDiff = model.patch - agreement.patch;
-
-    // Calculate health percentage based on specific drops
-    const majorDrop = majorDiff * 30; // 30% drop per major version
-    const minorDrop = minorDiff * 15;  // 15% drop per minor version
-    const patchDrop = patchDiff * 5;  // 5% drop per patch version
-
-    // Total health drop
-    const totalDrop = majorDrop + minorDrop + patchDrop;
     
-    // Calculate final health (100% - total drop), capped between 0 and 100
-    const health = Math.min(100, Math.max(0, 100 - totalDrop));
+    // Handle multiple versions
+    const versions = Array.isArray(agreementVersions) ? agreementVersions : [agreementVersions];
+    let maxHealth = 100;
+    
+    versions.forEach(agreementVersion => {
+      const agreement = parseVersion(agreementVersion);
+      const majorDiff = model.major - agreement.major;
+      const minorDiff = model.minor - agreement.minor;
+      const patchDiff = model.patch - agreement.patch;
+
+      // Calculate health percentage based on specific drops
+      const majorDrop = majorDiff * 30; // 30% drop per major version
+      const minorDrop = minorDiff * 15;  // 15% drop per minor version
+      const patchDrop = patchDiff * 5;  // 5% drop per patch version
+
+      // Total health drop for this version
+      const totalDrop = majorDrop + minorDrop + patchDrop;
+      
+      // Calculate health for this version (100% - total drop), capped between 0 and 100
+      const versionHealth = Math.min(100, Math.max(0, 100 - totalDrop));
+      
+      // Take the highest health value among all versions
+      maxHealth = Math.max(maxHealth, versionHealth);
+    });
+
+    // Additional 15% drop for each additional version beyond the first
+    const additionalVersionsDrop = (versions.length - 1) * 15;
+    const finalHealth = Math.max(0, maxHealth - additionalVersionsDrop);
 
     return {
-      health,
-      isBehind: totalDrop > 0,
-      majorDiff,
-      minorDiff,
-      patchDiff,
-      totalDrop
+      health: finalHealth,
+      isBehind: finalHealth < 100,
+      versions: versions,
+      modelVersion: modelVersion
     };
   };
 
@@ -326,10 +337,8 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
                 {versionDiff.isBehind && (
                   <Tooltip title={
                     `Version differences:
-                    ${versionDiff.majorDiff > 0 ? `\n• ${versionDiff.majorDiff} major version(s) behind (-${versionDiff.majorDiff * 30}%)` : ''}
-                    ${versionDiff.minorDiff > 0 ? `\n• ${versionDiff.minorDiff} minor version(s) behind (-${versionDiff.minorDiff * 15}%)` : ''}
-                    ${versionDiff.patchDiff > 0 ? `\n• ${versionDiff.patchDiff} patch version(s) behind (-${versionDiff.patchDiff * 5}%)` : ''}
-                    \n\nTotal health drop: -${versionDiff.totalDrop}%`
+                    ${versionDiff.versions.map(v => `v${v}`).join('\n')}
+                    \n\nLatest model version: v${versionDiff.modelVersion}`
                   }>
                     <WarningIcon sx={{ color: '#ff9800', fontSize: 20 }} />
                   </Tooltip>
@@ -357,10 +366,10 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
             </Box>
             <Box sx={{ textAlign: 'right' }}>
               <Typography variant="caption" sx={{ color: currentTheme.textSecondary, display: 'block' }}>
-                Current Model Version
+                Model Versions Delivered
               </Typography>
               <Typography variant="body2" sx={{ color: currentTheme.text }}>
-                v{agreement.deliveredVersion}
+                {versionDiff.versions.map(v => `v${v}`).join(', ')}
               </Typography>
             </Box>
             <Box sx={{ textAlign: 'right' }}>
@@ -368,7 +377,7 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
                 Latest Model Version
               </Typography>
               <Typography variant="body2" sx={{ color: currentTheme.text }}>
-                v{model.version}
+                v{versionDiff.modelVersion}
               </Typography>
             </Box>
           </Box>
@@ -710,7 +719,9 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
                 Model Version Delivered
               </Typography>
               <Typography variant="body1" sx={{ color: currentTheme.text }}>
-                v{agreement.deliveredVersion}
+                {Array.isArray(agreement.deliveredVersion) 
+                  ? agreement.deliveredVersion.map(v => `v${v}`).join(', ')
+                  : `v${agreement.deliveredVersion}`}
               </Typography>
             </Box>
 
