@@ -6,7 +6,10 @@ import {
   Box,
   Chip,
   alpha,
+  IconButton,
+  Tooltip,
 } from '@mui/material';
+import DataObjectIcon from '@mui/icons-material/DataObject';
 
 const ReferenceDataCard = ({ item, currentTheme }) => {
   return (
@@ -18,16 +21,31 @@ const ReferenceDataCard = ({ item, currentTheme }) => {
         transition: 'all 0.2s ease-in-out',
         bgcolor: currentTheme.card,
         border: `1px solid ${currentTheme.border}`,
+        position: 'relative',
         '&:hover': {
           transform: 'translateY(-4px)',
           boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
         },
       }}
     >
-      <CardContent>
-        <Typography variant="h6" sx={{ fontWeight: 600, color: currentTheme.text, mb: 1 }}>
-          {item.name}
-        </Typography>
+      <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+          <Typography variant="h6" sx={{ fontWeight: 600, color: currentTheme.text }}>
+            {item.name}
+          </Typography>
+          <Box
+            sx={{
+              px: 1,
+              py: 0.5,
+              borderRadius: 1,
+              bgcolor: alpha(currentTheme.primary, 0.1),
+              color: currentTheme.primary,
+              fontSize: '0.75rem',
+            }}
+          >
+            v{item.version}
+          </Box>
+        </Box>
 
         <Typography variant="body2" sx={{ color: currentTheme.textSecondary, mb: 2 }}>
           {item.description}
@@ -46,30 +64,40 @@ const ReferenceDataCard = ({ item, currentTheme }) => {
           >
             {item.category}
           </Box>
-          <Box
-            sx={{
-              px: 1,
-              py: 0.5,
-              borderRadius: 1,
-              bgcolor: alpha(currentTheme.primary, 0.1),
-              color: currentTheme.primary,
-              fontSize: '0.75rem',
-            }}
-          >
-            v{item.version}
-          </Box>
         </Box>
 
-        <Typography 
-          variant="caption" 
-          sx={{ 
-            color: currentTheme.textSecondary,
-            mt: 2,
-            display: 'block'
-          }}
-        >
-          Last Updated: {new Date(item.lastUpdated).toLocaleDateString()}
-        </Typography>
+        <Box sx={{ flexGrow: 1 }} />
+
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2 }}>
+          <Typography 
+            variant="caption" 
+            sx={{ 
+              color: currentTheme.textSecondary,
+            }}
+          >
+            {new Date(item.lastUpdated).toLocaleDateString()}
+          </Typography>
+
+          {item.swaggerPage && (
+            <Tooltip title="View Swagger Page">
+              <IconButton
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  window.open(item.swaggerPage, '_blank');
+                }}
+                sx={{
+                  color: currentTheme.textSecondary,
+                  '&:hover': {
+                    color: currentTheme.primary,
+                  }
+                }}
+              >
+                <DataObjectIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          )}
+        </Box>
       </CardContent>
     </Card>
   );

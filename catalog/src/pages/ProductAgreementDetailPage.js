@@ -19,6 +19,7 @@ import {
   TableHead,
   TableRow,
   LinearProgress,
+  IconButton,
 } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
@@ -44,6 +45,7 @@ import {
   RemoveCircle as DecomIcon,
   Build as FixIcon,
   Rocket as RocketIcon,
+  HelpOutline as HelpOutlineIcon,
 } from '@mui/icons-material';
 import { formatDate } from '../utils/dateUtils';
 import { fetchAgreements, fetchModels } from '../services/api';
@@ -69,6 +71,7 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
     // Handle multiple versions
     const versions = Array.isArray(agreementVersions) ? agreementVersions : [agreementVersions];
     let maxHealth = 100;
+    let versionDetails = [];
     
     versions.forEach(agreementVersion => {
       const agreement = parseVersion(agreementVersion);
@@ -89,6 +92,17 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
       
       // Take the highest health value among all versions
       maxHealth = Math.max(maxHealth, versionHealth);
+
+      // Add version details
+      versionDetails.push({
+        version: agreementVersion,
+        health: versionHealth,
+        drops: {
+          major: majorDrop,
+          minor: minorDrop,
+          patch: patchDrop
+        }
+      });
     });
 
     // Additional 15% drop for each additional version beyond the first
@@ -99,7 +113,9 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
       health: finalHealth,
       isBehind: finalHealth < 100,
       versions: versions,
-      modelVersion: modelVersion
+      modelVersion: modelVersion,
+      versionDetails: versionDetails,
+      additionalVersionsDrop: additionalVersionsDrop
     };
   };
 
@@ -336,13 +352,29 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
                 </Typography>
                 {versionDiff.isBehind && (
                   <Tooltip title={
-                    `Version differences:
-                    ${versionDiff.versions.map(v => `v${v}`).join('\n')}
-                    \n\nLatest model version: v${versionDiff.modelVersion}`
+                    `Version differences: ${versionDiff.versionDetails.map(detail => 
+                      `v${detail.version} (Health: ${detail.health}%, Major: -${detail.drops.major}%, Minor: -${detail.drops.minor}%, Patch: -${detail.drops.patch}%)`
+                    ).join(', ')}
+                    ${versionDiff.additionalVersionsDrop > 0 ? 
+                      `, Additional ${versionDiff.additionalVersionsDrop}% drop due to multiple versions` : ''}
+                    , Latest model version: v${versionDiff.modelVersion}`
                   }>
                     <WarningIcon sx={{ color: '#ff9800', fontSize: 20 }} />
                   </Tooltip>
                 )}
+                <Tooltip title={
+                  versionDiff.isBehind ?
+                    `Version health is ${versionDiff.health}% due to: ${versionDiff.versionDetails.map(detail => 
+                      `v${detail.version} (Major: -${detail.drops.major}%, Minor: -${detail.drops.minor}%, Patch: -${detail.drops.patch}%)`
+                    ).join(', ')}
+                    ${versionDiff.additionalVersionsDrop > 0 ? 
+                      `, Additional ${versionDiff.additionalVersionsDrop}% drop due to maintaining multiple versions` : ''}`
+                    : 'Version is up to date!'
+                }>
+                  <IconButton size="small" sx={{ color: currentTheme.textSecondary }}>
+                    <HelpOutlineIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <LinearProgress 

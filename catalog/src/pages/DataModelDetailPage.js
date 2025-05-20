@@ -31,6 +31,7 @@ import {
   NavigateNext as NavigateNextIcon,
   NavigateBefore as NavigateBeforeIcon,
   Email as EmailIcon,
+  HelpOutline as HelpOutlineIcon,
 } from '@mui/icons-material';
 import { formatDate, getQualityColor } from '../utils/themeUtils';
 import verifiedLogo from '../imgs/verified.svg';
@@ -112,7 +113,7 @@ const DataModelDetailPage = ({ currentTheme }) => {
   }
 
   const score = calculateScore(model);
-  const qualityColor = getQualityColor(score, currentTheme.darkMode);
+  const qualityColor = getQualityColor(score.score, currentTheme.darkMode);
   const tierColor = getTierColor(model.meta?.tier);
 
   const handleNextAgreement = () => {
@@ -243,11 +244,22 @@ const DataModelDetailPage = ({ currentTheme }) => {
               </Typography>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                 <Typography variant="body1" sx={{ color: qualityColor, fontWeight: 600, mr: 1 }}>
-                  {score}%
+                  {score.score}%
                 </Typography>
                 <Typography variant="body2" sx={{ color: currentTheme.textSecondary }}>
                   Complete
                 </Typography>
+                <Tooltip 
+                  title={
+                    score.missingFields.length > 0 
+                      ? `Missing fields: ${score.missingFields.join(', ')}`
+                      : 'All fields are complete!'
+                  }
+                >
+                  <IconButton size="small" sx={{ ml: 1, color: currentTheme.textSecondary }}>
+                    <HelpOutlineIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
               </Box>
               <Box
                 sx={{
@@ -261,7 +273,7 @@ const DataModelDetailPage = ({ currentTheme }) => {
                 <Box
                   sx={{
                     height: '100%',
-                    width: `${score}%`,
+                    width: `${score.score}%`,
                     bgcolor: qualityColor,
                     borderRadius: 4,
                   }}
@@ -701,25 +713,31 @@ const calculateScore = (model) => {
   const countFilledFields = (obj) => {
     let filledCount = 0;
     let totalCount = 0;
+    let missingFields = [];
 
     for (const [key, value] of Object.entries(obj)) {
       totalCount++;
       if (value === null || value === undefined || value === "") {
+        missingFields.push(key);
         continue;
       }
       if (typeof value === 'object' && !Array.isArray(value)) {
         const nestedResult = countFilledFields(value);
         filledCount += nestedResult.filled;
         totalCount += nestedResult.total - 1; // Subtract 1 to avoid double counting the parent object
+        missingFields = missingFields.concat(nestedResult.missing.map(field => `${key}.${field}`));
       } else {
         filledCount++;
       }
     }
-    return { filled: filledCount, total: totalCount };
+    return { filled: filledCount, total: totalCount, missing: missingFields };
   };
 
   const result = countFilledFields(model);
-  return Math.round((result.filled / result.total) * 100);
+  return {
+    score: Math.round((result.filled / result.total) * 100),
+    missingFields: result.missing
+  };
 };
 
 // Helper function to get tier color

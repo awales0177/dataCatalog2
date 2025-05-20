@@ -55,6 +55,8 @@ import {
   ChevronRight as ChevronRightIcon,
   GitHub as GitHubIcon,
   AccountTree as AccountTreeIcon,
+  Info as InfoIcon,
+  AutoMode as AutoModeIcon,
 } from '@mui/icons-material';
 import lotusRed from './imgs/lotus-red.svg';
 import lotusWhite from './imgs/lotus-white.svg';
@@ -69,6 +71,7 @@ import LexiconPage from './pages/LexiconPage';
 import ReferenceDataPage from './pages/ReferenceDataPage';
 import DataSpecificationDetailPage from './pages/DataModelDetailPage';
 import ProductAgreementDetailPage from './pages/ProductAgreementDetailPage';
+import InfoSidebar from './components/InfoSidebar';
 
 // Import data and utilities
 import { fetchTheme, fetchItemCount, fetchModels, fetchAgreements } from './services/api';
@@ -673,6 +676,7 @@ function AppContent() {
   const [isDrawerCollapsed, setIsDrawerCollapsed] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
   const [notificationsAnchorEl, setNotificationsAnchorEl] = useState(null);
+  const [infoSidebarOpen, setInfoSidebarOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem('darkMode');
     return saved ? JSON.parse(saved) : false;
@@ -814,6 +818,10 @@ function AppContent() {
     setIsDrawerCollapsed(!isDrawerCollapsed);
   };
 
+  const handleInfoSidebarToggle = () => {
+    setInfoSidebarOpen(!infoSidebarOpen);
+  };
+
   // Check if we're on the splash page
   const isSplashPage = location.pathname === '/';
 
@@ -947,10 +955,10 @@ function AppContent() {
             <Logo currentTheme={currentTheme} />
             <Box sx={{ flexGrow: 1 }} />
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Tooltip title="Home">
+              <Tooltip title={isSplashPage ? "Explore" : "Home"}>
                 <IconButton
                   component={Link}
-                  to="/"
+                  to={isSplashPage ? "/specifications" : "/"}
                   sx={{
                     color: currentTheme.text,
                     '&:hover': {
@@ -958,7 +966,20 @@ function AppContent() {
                     },
                   }}
                 >
-                  <HomeIcon />
+                  {isSplashPage ? <AutoModeIcon /> : <HomeIcon />}
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Information">
+                <IconButton
+                  onClick={handleInfoSidebarToggle}
+                  sx={{
+                    color: currentTheme.text,
+                    '&:hover': {
+                      bgcolor: darkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)',
+                    },
+                  }}
+                >
+                  <InfoIcon />
                 </IconButton>
               </Tooltip>
               <Tooltip title="Toggle dark mode">
@@ -1141,6 +1162,12 @@ function AppContent() {
           <MenuItem onClick={handleMenuClose}>Domain health check failed</MenuItem>
           <MenuItem onClick={handleMenuClose}>System update available</MenuItem>
         </Menu>
+
+        <InfoSidebar
+          open={infoSidebarOpen}
+          onClose={() => setInfoSidebarOpen(false)}
+          currentTheme={currentTheme}
+        />
       </Box>
     </ThemeContext.Provider>
   );
