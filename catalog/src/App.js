@@ -35,31 +35,36 @@ import {
 } from '@mui/material';
 import {
   Menu as MenuIcon,
-  FilterList as FilterIcon,
   Notifications as NotificationsIcon,
   Settings as SettingsIcon,
-  Help as HelpIcon,
   DarkMode as DarkModeIcon,
   LightMode as LightModeIcon,
-  Dashboard as DashboardIcon,
-  Description as DescriptionIcon,
-  Domain as DomainIcon,
-  Storage as StorageIcon,
-  ExpandMore as ExpandMoreIcon,
-  Apps as AppsIcon,
-  MenuBook as MenuBookIcon,
   Home as HomeIcon,
   Add as AddIcon,
-  LibraryBooks as LibraryBooksIcon,
-  ChevronLeft as ChevronLeftIcon,
-  ChevronRight as ChevronRightIcon,
   GitHub as GitHubIcon,
-  AccountTree as AccountTreeIcon,
   Info as InfoIcon,
   AutoMode as AutoModeIcon,
 } from '@mui/icons-material';
+import {
+  FiHome,
+  FiPlus,
+  FiBook,
+  FiChevronLeft,
+  FiChevronRight,
+  FiDatabase,
+  FiLayers,
+  FiGrid,
+  FiBookOpen,
+} from 'react-icons/fi';
+import { MdHandshake, MdDomain } from "react-icons/md";
+import { ImMakeGroup } from "react-icons/im";
+import { AiOutlineAppstore } from "react-icons/ai";
+import { IoBookOutline } from "react-icons/io5";
+import { IoIosApps } from "react-icons/io";
+import { PiGraph } from "react-icons/pi";
 import lotusRed from './imgs/lotus-red.svg';
 import lotusWhite from './imgs/lotus-white.svg';
+import { GoVerified } from "react-icons/go";
 
 // Import components
 import DataSpecificationsPage from './pages/DataModelsPage';
@@ -75,7 +80,6 @@ import InfoSidebar from './components/InfoSidebar';
 
 // Import data and utilities
 import { fetchTheme, fetchItemCount, fetchModels, fetchAgreements } from './services/api';
-import { menuItems } from './data/menuItems';
 
 // Theme context for managing dark/light mode
 export const ThemeContext = createContext();
@@ -117,6 +121,12 @@ const theme = createTheme({
     },
   },
 });
+
+// Function to generate random pastel color
+const getRandomColor = () => {
+  const hue = Math.floor(Math.random() * 360);
+  return `hsl(${hue}, 70%, 65%)`;
+};
 
 // Logo component
 const Logo = ({ currentTheme }) => (
@@ -199,7 +209,7 @@ const ModelFilters = ({ filters, setFilters, currentTheme }) => {
         }}
       >
         <AccordionSummary
-          expandIcon={<ExpandMoreIcon sx={{ color: currentTheme.textSecondary }} />}
+          expandIcon={<FiChevronRight />}
           sx={{ 
             minHeight: '48px',
             '& .MuiAccordionSummary-content': { my: 0 },
@@ -248,7 +258,7 @@ const ModelFilters = ({ filters, setFilters, currentTheme }) => {
         }}
       >
         <AccordionSummary
-          expandIcon={<ExpandMoreIcon sx={{ color: currentTheme.textSecondary }} />}
+          expandIcon={<FiChevronRight />}
           sx={{ 
             minHeight: '48px',
             '& .MuiAccordionSummary-content': { my: 0 },
@@ -304,7 +314,7 @@ const ModelFilters = ({ filters, setFilters, currentTheme }) => {
         }}
       >
         <AccordionSummary
-          expandIcon={<ExpandMoreIcon sx={{ color: currentTheme.textSecondary }} />}
+          expandIcon={<FiChevronRight />}
           sx={{ 
             minHeight: '48px',
             '& .MuiAccordionSummary-content': { my: 0 },
@@ -403,7 +413,7 @@ const ContractFilters = ({ filters, setFilters, currentTheme }) => {
         }}
       >
         <AccordionSummary
-          expandIcon={<ExpandMoreIcon sx={{ color: currentTheme.textSecondary }} />}
+          expandIcon={<FiChevronRight />}
           sx={{ 
             minHeight: '48px',
             '& .MuiAccordionSummary-content': { my: 0 },
@@ -452,7 +462,7 @@ const ContractFilters = ({ filters, setFilters, currentTheme }) => {
         }}
       >
         <AccordionSummary
-          expandIcon={<ExpandMoreIcon sx={{ color: currentTheme.textSecondary }} />}
+          expandIcon={<FiChevronRight />}
           sx={{ 
             minHeight: '48px',
             '& .MuiAccordionSummary-content': { my: 0 },
@@ -509,7 +519,7 @@ const ContractFilters = ({ filters, setFilters, currentTheme }) => {
         }}
       >
         <AccordionSummary
-          expandIcon={<ExpandMoreIcon sx={{ color: currentTheme.textSecondary }} />}
+          expandIcon={<FiChevronRight />}
           sx={{ 
             minHeight: '48px',
             '& .MuiAccordionSummary-content': { my: 0 },
@@ -566,7 +576,7 @@ const ContractFilters = ({ filters, setFilters, currentTheme }) => {
         }}
       >
         <AccordionSummary
-          expandIcon={<ExpandMoreIcon sx={{ color: currentTheme.textSecondary }} />}
+          expandIcon={<FiChevronRight />}
           sx={{ 
             minHeight: '48px',
             '& .MuiAccordionSummary-content': { my: 0 },
@@ -622,7 +632,7 @@ const ContractFilters = ({ filters, setFilters, currentTheme }) => {
         }}
       >
         <AccordionSummary
-          expandIcon={<ExpandMoreIcon sx={{ color: currentTheme.textSecondary }} />}
+          expandIcon={<FiChevronRight />}
           sx={{ 
             minHeight: '48px',
             '& .MuiAccordionSummary-content': { my: 0 },
@@ -670,6 +680,52 @@ const ContractFilters = ({ filters, setFilters, currentTheme }) => {
   );
 };
 
+// Update the menu items with count functionality
+const menuItems = [
+  {
+    name: 'Home',
+    path: '/',
+    icon: <FiHome />,
+    id: 'home'
+  },
+  {
+    name: 'Data Specifications',
+    path: '/specifications',
+    icon: <PiGraph />,
+    id: 'specifications'
+  },
+  {
+    name: 'Product Agreements',
+    path: '/agreements',
+    icon: <MdHandshake />,
+    id: 'agreements'
+  },
+  {
+    name: 'Data Domains',
+    path: '/domains',
+    icon: <MdDomain />,
+    id: 'domains'
+  },
+  {
+    name: 'Applications',
+    path: '/applications',
+    icon: <AiOutlineAppstore />,
+    id: 'applications'
+  },
+  {
+    name: 'Lexicon',
+    path: '/lexicon',
+    icon: <IoBookOutline />,
+    id: 'lexicon'
+  },
+  {
+    name: 'Reference Data',
+    path: '/reference',
+    icon: <IoIosApps />,
+    id: 'reference'
+  },
+];
+
 function AppContent() {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -682,11 +738,41 @@ function AppContent() {
     return saved ? JSON.parse(saved) : false;
   });
   const [themeData, setThemeData] = useState(null);
-  const [menuData, setMenuData] = useState({ items: [] });
+  const [menuData, setMenuData] = useState({ items: menuItems });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [countsLoaded, setCountsLoaded] = useState(false);
   const [dataModels, setDataModels] = useState([]);
+  const [avatarColor] = useState(getRandomColor());
+
+  // Update page title based on current route
+  useEffect(() => {
+    const path = location.pathname;
+    let title = 'Data Catalog';
+    
+    if (path === '/') {
+      title = 'Home';
+    } else if (path === '/specifications') {
+      title = 'Data Specifications';
+    } else if (path === '/agreements') {
+      title = 'Product Agreements';
+    } else if (path === '/domains') {
+      title = 'Data Domains';
+    } else if (path === '/applications') {
+      title = 'Applications';
+    } else if (path === '/lexicon') {
+      title = 'Lexicon';
+    } else if (path === '/reference') {
+      title = 'Reference Data';
+    } else if (path.startsWith('/specifications/')) {
+      const shortName = path.split('/').pop().toUpperCase();
+      title = shortName;
+    } else if (path.startsWith('/agreements/')) {
+      title = 'Product Agreement Details';
+    }
+
+    document.title = title;
+  }, [location.pathname]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -708,16 +794,16 @@ function AppContent() {
     loadData();
   }, []);
 
-  // Update the menu item count fetching
+  // Update the menu count fetching
   useEffect(() => {
     const loadMenuCounts = async () => {
-      if (!menuData.items || menuData.items.length === 0 || countsLoaded) return;
+      if (countsLoaded) return;
       try {
         const itemsWithCounts = await Promise.all(
-          menuData.items.map(async (item) => {
+          menuItems.map(async (item) => {
+            if (item.id === 'home') return item;
             try {
-              // Use 'dataContracts' for the agreements menu item
-              const endpoint = item.id === 'agreements' ? 'dataContracts' : item.path.slice(1);
+              const endpoint = item.id === 'agreements' ? 'dataAgreements' : item.id;
               const count = await fetchItemCount(endpoint);
               return { ...item, count };
             } catch (error) {
@@ -726,7 +812,7 @@ function AppContent() {
             }
           })
         );
-        setMenuData(prev => ({ ...prev, items: itemsWithCounts }));
+        setMenuData({ items: itemsWithCounts });
         setCountsLoaded(true);
         setError(null);
       } catch (err) {
@@ -735,7 +821,7 @@ function AppContent() {
       }
     };
     loadMenuCounts();
-  }, [menuData.items, countsLoaded]);
+  }, [countsLoaded]);
 
   useEffect(() => {
     fetchDataModels();
@@ -826,67 +912,133 @@ function AppContent() {
   const isSplashPage = location.pathname === '/';
 
   const drawer = (
-    <Box sx={{ 
-      height: '100%',
-      display: 'flex',
-      flexDirection: 'column',
-    }}>
-      <Box sx={{ 
-        display: 'flex', 
-        justifyContent: 'flex-end', 
-        p: 1,
-        borderBottom: `1px solid ${currentTheme.border}`,
-      }}>
-        <IconButton 
-          onClick={handleDrawerCollapse}
-          sx={{ 
-            color: currentTheme.text,
-            '&:hover': {
-              bgcolor: darkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)',
-            },
-          }}
-        >
-          {isDrawerCollapsed ? <ChevronRightIcon /> : <ChevronLeftIcon />}
-        </IconButton>
-      </Box>
+    <>
       <List>
-        {menuData.items.map((item) => (
-          <ListItem
-            button
-            key={item.id}
-            component={Link}
-            to={item.path}
+        {(menuData?.items || menuItems).map((item) => (
+          <Tooltip
+            key={item.path}
+            title={item.name}
+            placement="right"
+            arrow
             sx={{
-              color: currentTheme.text,
-              py: 1.5,
-              px: isDrawerCollapsed ? 1 : 2,
-              justifyContent: isDrawerCollapsed ? 'center' : 'flex-start',
-              '&:hover': {
-                bgcolor: darkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)',
-              },
+              display: isDrawerCollapsed ? 'block' : 'none'
             }}
           >
-            <ListItemIcon sx={{ 
-              color: currentTheme.text,
-              minWidth: isDrawerCollapsed ? 0 : 40,
-              marginRight: isDrawerCollapsed ? 0 : 2,
-            }}>
-              {React.createElement(item.icon)}
-            </ListItemIcon>
-            {!isDrawerCollapsed && (
-              <>
-                <ListItemText primary={item.name} />
-                {item.count && (
-                  <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
-                    {item.count}
-                  </Typography>
-                )}
-              </>
-            )}
-          </ListItem>
+            <ListItem
+              button
+              component={Link}
+              to={item.path}
+              selected={location.pathname === item.path}
+              sx={{
+                color: currentTheme.text,
+                py: 1.5,
+                px: isDrawerCollapsed ? 1 : 2,
+                justifyContent: isDrawerCollapsed ? 'center' : 'flex-start',
+                '&.Mui-selected': {
+                  bgcolor: `${currentTheme.primary}20`,
+                  '&:hover': {
+                    bgcolor: `${currentTheme.primary}30`,
+                  },
+                },
+                '&:hover': {
+                  bgcolor: `${currentTheme.primary}10`,
+                },
+              }}
+            >
+              <ListItemIcon sx={{ 
+                color: 'inherit', 
+                minWidth: isDrawerCollapsed ? 0 : 40,
+                marginRight: isDrawerCollapsed ? 0 : 2,
+                '& svg': {
+                  width: item.id === 'home' ? '1.25rem' : '1.45rem',
+                  height: item.id === 'home' ? '1.25rem' : '1.45rem'
+                }
+              }}>
+                {item.icon}
+              </ListItemIcon>
+              {!isDrawerCollapsed && (
+                <>
+                  <ListItemText 
+                    primary={item.name} 
+                    primaryTypographyProps={{
+                      fontSize: '1rem',
+                      fontWeight: 500
+                    }}
+                    sx={{ 
+                      ml: 0,
+                      '& .MuiListItemText-primary': {
+                        margin: 0
+                      }
+                    }}
+                  />
+                  {item.count !== undefined && (
+                    <Typography 
+                      variant="caption" 
+                      sx={{ 
+                        color: currentTheme.textSecondary,
+                        ml: 1,
+                        minWidth: '24px',
+                        textAlign: 'right',
+                        fontSize: '0.875rem'
+                      }}
+                    >
+                      {item.count}
+                    </Typography>
+                  )}
+                </>
+              )}
+            </ListItem>
+          </Tooltip>
         ))}
       </List>
-    </Box>
+
+      {/* Avatar Section */}
+      <Box
+        sx={{
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          p: 2,
+          borderTop: `1px solid ${currentTheme.border}`,
+          bgcolor: currentTheme.card,
+        }}
+      >
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2,
+            justifyContent: isDrawerCollapsed ? 'center' : 'space-between',
+          }}
+        >
+          {!isDrawerCollapsed && (
+            <Box>
+              <Typography
+                variant="subtitle2"
+                sx={{
+                  color: currentTheme.text,
+                  fontSize: '0.875rem',
+                  fontWeight: 500,
+                }}
+              >
+                {process.env.REACT_APP_USERNAME || 'User'}
+              </Typography>
+            </Box>
+          )}
+          <Avatar
+            sx={{
+              width: 32,
+              height: 32,
+              bgcolor: avatarColor,
+              fontSize: '0.875rem',
+            }}
+          >
+            {(process.env.REACT_APP_USERNAME || 'U').charAt(0).toUpperCase()}
+          </Avatar>
+        </Box>
+      </Box>
+    </>
   );
 
   return (
@@ -1048,6 +1200,35 @@ function AppContent() {
               transition: 'width 0.2s ease-in-out',
             }}
           >
+            {/* Floating collapse button */}
+            <Box
+              sx={{
+                position: 'absolute',
+                right: '-14px',
+                top: '20px',
+                zIndex: (theme) => theme.zIndex.drawer + 1,
+              }}
+            >
+              <IconButton 
+                onClick={handleDrawerCollapse}
+                sx={{ 
+                  color: currentTheme.text,
+                  bgcolor: currentTheme.card,
+                  border: `1px solid ${currentTheme.border}`,
+                  width: '28px',
+                  height: '28px',
+                  '&:hover': {
+                    bgcolor: `${currentTheme.primary}10`,
+                  },
+                  '& .MuiSvgIcon-root': {
+                    fontSize: '32px',
+                  },
+                }}
+              >
+                {isDrawerCollapsed ? <FiChevronRight /> : <FiChevronLeft />}
+              </IconButton>
+            </Box>
+
             <Drawer
               variant="temporary"
               open={mobileOpen}
@@ -1063,6 +1244,8 @@ function AppContent() {
                   bgcolor: currentTheme.card,
                   color: currentTheme.text,
                   borderRight: `1px solid ${currentTheme.border}`,
+                  borderTopRightRadius: '16px',
+                  borderBottomRightRadius: '16px',
                 },
               }}
             >
@@ -1081,6 +1264,8 @@ function AppContent() {
                   height: 'calc(100vh - 84px)',
                   top: '84px',
                   transition: 'width 0.2s ease-in-out',
+                  borderTopRightRadius: '16px',
+                  borderBottomRightRadius: '16px',
                 },
               }}
               open

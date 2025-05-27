@@ -33,10 +33,14 @@ import {
   Email as EmailIcon,
   HelpOutline as HelpOutlineIcon,
 } from '@mui/icons-material';
+import { ImMakeGroup } from "react-icons/im";
+import { MdHandshake, MdDomain } from "react-icons/md";
+import { IoIosApps } from "react-icons/io";
 import { formatDate, getQualityColor } from '../utils/themeUtils';
 import verifiedLogo from '../imgs/verified.svg';
 import { fetchData, fetchAgreementsByModel } from '../services/api';
 import ProductAgreementCard from '../components/ProductAgreementCard';
+import { GoVerified } from "react-icons/go";
 
 const DataModelDetailPage = ({ currentTheme }) => {
   const { shortName } = useParams();
@@ -151,17 +155,15 @@ const DataModelDetailPage = ({ currentTheme }) => {
               {model.meta?.verified && (
                 <Tooltip title="Verified Model">
                   <Box
-                    component="img"
-                    src={verifiedLogo}
-                    alt="Verified"
                     sx={{
-                      width: '32px',
-                      height: '32px',
-                      objectFit: 'contain',
-                      filter: currentTheme.darkMode ? 'invert(1)' : 'none',
+                      display: 'flex',
+                      alignItems: 'center',
+                      color: currentTheme.primary,
                       mt: 0.5
                     }}
-                  />
+                  >
+                    <GoVerified size={24} />
+                  </Box>
                 </Tooltip>
               )}
             </Box>
@@ -198,44 +200,86 @@ const DataModelDetailPage = ({ currentTheme }) => {
               {model.extendedDescription}
             </Typography>
 
-            <Box sx={{ mb: 4 }}>
-              <Typography variant="subtitle1" sx={{ mb: 1, color: currentTheme.text, fontWeight: 600 }}>
-                Domains
-              </Typography>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                {model.domain?.map((domain, index) => (
-                  <Chip
-                    key={index}
-                    label={domain}
-                    size="small"
-                    sx={{
-                      bgcolor: alpha(currentTheme.primary, 0.1),
-                      color: currentTheme.primary,
-                      fontWeight: 500,
-                    }}
-                  />
-                ))}
-              </Box>
-            </Box>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mb: 4 }}>
+              <Box sx={{ display: 'flex', gap: 4 }}>
+                {model.domain?.length > 0 && (
+                  <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                    <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary, display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <MdDomain style={{ fontSize: 20, color: currentTheme.primary }} />
+                      Domains
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                      {model.domain.map((domain, index) => (
+                        <Chip
+                          key={index}
+                          label={domain}
+                          size="small"
+                          sx={{
+                            bgcolor: alpha(currentTheme.primary, 0.1),
+                            color: currentTheme.primary,
+                            fontWeight: 500,
+                            '& .MuiChip-label': {
+                              px: 1,
+                            },
+                          }}
+                        />
+                      ))}
+                    </Box>
+                  </Box>
+                )}
 
-            <Box sx={{ mb: 4 }}>
-              <Typography variant="subtitle1" sx={{ mb: 1, color: currentTheme.text, fontWeight: 600 }}>
-                Users
-              </Typography>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                {model.users?.map((user, index) => (
-                  <Chip
-                    key={index}
-                    label={user}
-                    size="small"
-                    sx={{
-                      bgcolor: alpha(currentTheme.primary, 0.1),
-                      color: currentTheme.primary,
-                      fontWeight: 500,
-                    }}
-                  />
-                ))}
+                {model.referenceData?.length > 0 && (
+                  <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                    <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary, display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <IoIosApps style={{ fontSize: 20, color: currentTheme.primary }} />
+                      Reference Data
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                      {model.referenceData.map((ref, index) => (
+                        <Chip
+                          key={index}
+                          label={ref}
+                          size="small"
+                          sx={{
+                            bgcolor: alpha(currentTheme.primary, 0.1),
+                            color: currentTheme.primary,
+                            fontWeight: 500,
+                            '& .MuiChip-label': {
+                              px: 1,
+                            },
+                          }}
+                        />
+                      ))}
+                    </Box>
+                  </Box>
+                )}
               </Box>
+
+              {model.users?.length > 0 && (
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary, display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <MdHandshake style={{ fontSize: 20, color: currentTheme.primary }} />
+                    Users
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                    {model.users.map((user, index) => (
+                      <Chip
+                        key={index}
+                        label={user}
+                        size="small"
+                        sx={{
+                          bgcolor: alpha(currentTheme.primary, 0.1),
+                          color: currentTheme.primary,
+                          fontWeight: 500,
+                          '& .MuiChip-label': {
+                            px: 1,
+                          },
+                        }}
+                      />
+                    ))}
+                  </Box>
+                </Box>
+              )}
             </Box>
 
             <Box sx={{ mb: 3 }}>

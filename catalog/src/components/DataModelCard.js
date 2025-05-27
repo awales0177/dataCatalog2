@@ -16,6 +16,7 @@ import {
 } from '@mui/icons-material';
 import { formatDate, getQualityColor } from '../utils/themeUtils';
 import verifiedLogo from '../imgs/verified.svg';
+import { GoVerified } from "react-icons/go";
 
 // DataModelCard component for displaying individual data model information
 const DataModelCard = ({ model, currentTheme }) => {
@@ -103,16 +104,14 @@ const DataModelCard = ({ model, currentTheme }) => {
           {model.meta?.verified && (
             <Tooltip title="Verified Model">
               <Box
-                component="img"
-                src={verifiedLogo}
-                alt="Verified"
                 sx={{
-                  width: '28px',
-                  height: '28px',
-                  objectFit: 'contain',
-                  filter: currentTheme.darkMode ? 'invert(1)' : 'none'
+                  display: 'flex',
+                  alignItems: 'center',
+                  color: currentTheme.primary,
                 }}
-              />
+              >
+                <GoVerified size={24} />
+              </Box>
             </Tooltip>
           )}
         </Box>
