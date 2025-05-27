@@ -32,6 +32,7 @@ import {
   NavigateBefore as NavigateBeforeIcon,
   Email as EmailIcon,
   HelpOutline as HelpOutlineIcon,
+  Gavel as GavelIcon,
 } from '@mui/icons-material';
 import { ImMakeGroup } from "react-icons/im";
 import { MdHandshake, MdDomain } from "react-icons/md";
@@ -604,6 +605,26 @@ const DataModelDetailPage = ({ currentTheme }) => {
                 >
                   <BuildIcon sx={{ fontSize: 20 }} />
                   <Typography variant="body2">Tools</Typography>
+                </Link>
+              )}
+              {model.resources?.rules && (
+                <Link
+                  href={model.resources.rules}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  sx={{
+                    color: currentTheme.text,
+                    textDecoration: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                    '&:hover': {
+                      color: currentTheme.primary,
+                    },
+                  }}
+                >
+                  <GavelIcon sx={{ fontSize: 20 }} />
+                  <Typography variant="body2">Rules</Typography>
                 </Link>
               )}
               {model.resources?.git && (
