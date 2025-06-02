@@ -1,10 +1,37 @@
 import cacheService from './cache';
 
-const API_URL = window.location.hostname === 'localhost' 
-  ? 'http://localhost:8000/api'
-  : window.location.hostname.startsWith('api.')
-    ? `${window.location.protocol}//${window.location.hostname}`
-    : `${window.location.origin}/api`;
+const determineApiUrl = async () => {
+  if (window.location.hostname === 'localhost') {
+    console.log('Using localhost URL:', 'http://localhost:8000/api');
+    return 'http://localhost:8000/api';
+  }
+
+  // Try api.domainname first
+  const apiDomainUrl = `${window.location.protocol}//api.${window.location.hostname.replace(/^api\./, '')}`;
+  console.log('Trying API domain URL:', apiDomainUrl);
+  try {
+    const response = await fetch(apiDomainUrl);
+    if (response.status !== 200) {
+      console.log('API domain returned non-200 status:', response.status);
+      throw new Error('API domain returned non-200 status');
+    }
+    console.log('Successfully connected to API domain:', apiDomainUrl);
+    return apiDomainUrl;
+  } catch (error) {
+    console.log('API domain not available, falling back to domain/api');
+  }
+
+  // Fall back to domainname/api
+  const fallbackUrl = `${window.location.origin}/api`;
+  console.log('Using fallback URL:', fallbackUrl);
+  return fallbackUrl;
+};
+
+let API_URL = 'http://localhost:8000/api'; // Default value
+determineApiUrl().then(url => {
+  API_URL = url;
+  console.log('API URL determined:', API_URL);
+});
 
 const fetchWithCache = async (endpoint, params = {}, options = {}) => {
   const { forceRefresh = false, ttl } = options;
