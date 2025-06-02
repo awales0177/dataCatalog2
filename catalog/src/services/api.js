@@ -1,6 +1,10 @@
 import cacheService from './cache';
 
-const API_URL = 'http://localhost:8000/api';
+const API_URL = window.location.hostname === 'localhost' 
+  ? 'http://localhost:8000/api'
+  : window.location.hostname.startsWith('api.')
+    ? `${window.location.protocol}//${window.location.hostname}`
+    : `${window.location.origin}/api`;
 
 const fetchWithCache = async (endpoint, params = {}, options = {}) => {
   const { forceRefresh = false, ttl } = options;
