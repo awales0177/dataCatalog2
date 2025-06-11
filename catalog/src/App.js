@@ -84,7 +84,7 @@ import { fetchTheme, fetchItemCount, fetchModels, fetchAgreements } from './serv
 // Theme context for managing dark/light mode
 export const ThemeContext = createContext();
 
-const drawerWidth = 320;
+const drawerWidth = 280;
 const collapsedDrawerWidth = 56;
 
 // Create theme with Inter font
@@ -160,7 +160,7 @@ const Logo = ({ currentTheme }) => (
         letterSpacing: '-0.5px',
       }}
     >
-      Data Catalog
+      Data Hub
     </Typography>
   </Box>
 );
@@ -931,8 +931,8 @@ function AppContent() {
               selected={location.pathname === item.path}
               sx={{
                 color: currentTheme.text,
-                py: 1.5,
-                px: isDrawerCollapsed ? 1 : 2,
+                py: 1.25,
+                px: isDrawerCollapsed ? 1 : 1.5,
                 justifyContent: isDrawerCollapsed ? 'center' : 'flex-start',
                 '&.Mui-selected': {
                   bgcolor: `${currentTheme.primary}20`,
@@ -947,45 +947,49 @@ function AppContent() {
             >
               <ListItemIcon sx={{ 
                 color: 'inherit', 
-                minWidth: isDrawerCollapsed ? 0 : 40,
-                marginRight: isDrawerCollapsed ? 0 : 2,
+                minWidth: isDrawerCollapsed ? 0 : 36,
+                marginRight: isDrawerCollapsed ? 0 : 1.5,
                 '& svg': {
-                  width: item.id === 'home' ? '1.25rem' : '1.45rem',
-                  height: item.id === 'home' ? '1.25rem' : '1.45rem'
+                  width: item.id === 'home' ? '1.2rem' : '1.35rem',
+                  height: item.id === 'home' ? '1.2rem' : '1.35rem'
                 }
               }}>
                 {item.icon}
               </ListItemIcon>
               {!isDrawerCollapsed && (
-                <>
-                  <ListItemText 
-                    primary={item.name} 
-                    primaryTypographyProps={{
-                      fontSize: '1rem',
-                      fontWeight: 500
-                    }}
-                    sx={{ 
-                      ml: 0,
-                      '& .MuiListItemText-primary': {
-                        margin: 0
-                      }
-                    }}
-                  />
-                  {item.count !== undefined && (
-                    <Typography 
-                      variant="caption" 
-                      sx={{ 
-                        color: currentTheme.textSecondary,
-                        ml: 1,
-                        minWidth: '24px',
-                        textAlign: 'right',
-                        fontSize: '0.875rem'
-                      }}
-                    >
-                      {item.count}
-                    </Typography>
-                  )}
-                </>
+                <ListItemText 
+                  primary={
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <Typography 
+                        variant="body2" 
+                        sx={{ 
+                          fontSize: '0.875rem',
+                          fontWeight: 500,
+                        }}
+                      >
+                        {item.name}
+                      </Typography>
+                      {item.count !== undefined && (
+                        <Typography 
+                          variant="caption" 
+                          sx={{ 
+                            color: currentTheme.textSecondary,
+                            ml: 1,
+                            minWidth: '24px',
+                            textAlign: 'right',
+                            fontSize: '0.75rem',
+                            bgcolor: `${currentTheme.primary}15`,
+                            px: 1,
+                            py: 0.25,
+                            borderRadius: '12px',
+                          }}
+                        >
+                          {item.count}
+                        </Typography>
+                      )}
+                    </Box>
+                  }
+                />
               )}
             </ListItem>
           </Tooltip>
