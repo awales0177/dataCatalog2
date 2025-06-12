@@ -122,6 +122,13 @@ const theme = createTheme({
   },
 });
 
+// Add Google Fonts import
+const fontStyle = document.createElement('style');
+fontStyle.textContent = `
+  @import url('https://fonts.googleapis.com/css2?family=Courgette&display=swap');
+`;
+document.head.appendChild(fontStyle);
+
 // Function to generate random pastel color
 const getRandomColor = () => {
   const hue = Math.floor(Math.random() * 360);
@@ -1061,8 +1068,8 @@ function AppContent() {
       }}>
         <Box 
           sx={{ 
-            bgcolor: '#FF9800',
-            color: 'white',
+            bgcolor: '#FFC107',
+            color: 'rgba(0, 0, 0, 0.87)',
             py: 0.25,
             textAlign: 'center',
             fontWeight: 600,
