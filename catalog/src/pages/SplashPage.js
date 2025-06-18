@@ -383,6 +383,41 @@ const SplashPage = () => {
             />
           </Box>
         </Box>
+
+        {/* Powered By Section */}
+        <Box sx={{
+          position: 'absolute',
+          bottom: 80,
+          left: 0,
+          right: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 1,
+          zIndex: 2,
+        }}>
+          <Typography variant="body2" sx={{ 
+            color: currentTheme.textSecondary,
+            opacity: 0.7,
+            fontSize: '0.875rem',
+          }}>
+            Powered by
+          </Typography>
+          <Box
+            component="img"
+            src={darkMode ? lotusWhite : lotusRed}
+            alt="Lotus"
+            sx={{
+              height: '32px',
+              width: 'auto',
+              opacity: 0.7,
+              transition: 'opacity 0.2s ease-in-out',
+              '&:hover': {
+                opacity: 1,
+              },
+            }}
+          />
+        </Box>
       </Box>
     </Box>
   );

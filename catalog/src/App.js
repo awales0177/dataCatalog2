@@ -1117,6 +1117,40 @@ function AppContent() {
             </IconButton>
             <Logo currentTheme={currentTheme} />
             <Box sx={{ flexGrow: 1 }} />
+            
+            {/* UNP Box */}
+            <Box
+              sx={{
+                bgcolor: '#A52A2A',
+                color: '#FFFFFF',
+                px: 2,
+                py: 0.75,
+                borderRadius: '6px',
+                fontWeight: 600,
+                fontSize: '0.875rem',
+                letterSpacing: '0.5px',
+                boxShadow: '0 2px 4px rgba(165, 42, 42, 0.2)',
+                transition: 'all 0.2s ease-in-out',
+                '&:hover': {
+                  transform: 'translateY(-1px)',
+                  boxShadow: '0 4px 8px rgba(165, 42, 42, 0.3)',
+                },
+                mr: 2,
+              }}
+            >
+              UNP
+            </Box>
+
+            {/* Separator */}
+            <Box
+              sx={{
+                width: '1px',
+                height: '24px',
+                bgcolor: currentTheme.border,
+                mx: 1,
+              }}
+            />
+
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Tooltip title={isSplashPage ? "Explore" : "Home"}>
                 <IconButton
