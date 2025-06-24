@@ -588,24 +588,96 @@ const DataModelDetailPage = ({ currentTheme }) => {
                 </Link>
               )}
               {model.resources?.tools && (
-                <Link
-                  href={model.resources.tools}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  sx={{
-                    color: currentTheme.text,
-                    textDecoration: 'none',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1,
-                    '&:hover': {
-                      color: currentTheme.primary,
-                    },
-                  }}
-                >
-                  <BuildIcon sx={{ fontSize: 20 }} />
-                  <Typography variant="body2">Tools</Typography>
-                </Link>
+                typeof model.resources.tools === 'object' && Object.keys(model.resources.tools).length > 0 ? (
+                  <Accordion 
+                    defaultExpanded={false}
+                    sx={{ 
+                      bgcolor: 'transparent',
+                      boxShadow: 'none',
+                      '&:before': {
+                        display: 'none',
+                      },
+                      '&.Mui-expanded': {
+                        margin: 0,
+                      }
+                    }}
+                  >
+                    <AccordionSummary
+                      expandIcon={<ExpandMoreIcon sx={{ color: currentTheme.text, fontSize: 16 }} />}
+                      sx={{
+                        px: 0,
+                        py: 0,
+                        minHeight: 'auto',
+                        '& .MuiAccordionSummary-content': {
+                          margin: 0,
+                        },
+                        '&:hover': {
+                          bgcolor: 'transparent',
+                        }
+                      }}
+                    >
+                      <Box sx={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: 1,
+                        color: currentTheme.text,
+                        '&:hover': {
+                          color: currentTheme.primary,
+                        },
+                      }}>
+                        <BuildIcon sx={{ fontSize: 20 }} />
+                        <Typography variant="body2">Tools ({Object.keys(model.resources.tools).length})</Typography>
+                      </Box>
+                    </AccordionSummary>
+                    <AccordionDetails sx={{ px: 0, py: 1 }}>
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, pl: 3 }}>
+                        {Object.entries(model.resources.tools).map(([toolName, toolUrl], index) => (
+                          <Link
+                            key={index}
+                            href={toolUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            sx={{
+                              color: currentTheme.textSecondary,
+                              textDecoration: 'none',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 1,
+                              fontSize: '0.875rem',
+                              '&:hover': {
+                                color: currentTheme.primary,
+                              },
+                            }}
+                          >
+                            <WrenchIcon sx={{ fontSize: 16, opacity: 0.7 }} />
+                            <Typography variant="body2" sx={{ textTransform: 'capitalize' }}>
+                              {toolName}
+                            </Typography>
+                          </Link>
+                        ))}
+                      </Box>
+                    </AccordionDetails>
+                  </Accordion>
+                ) : (
+                  <Link
+                    href={model.resources.tools}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    sx={{
+                      color: currentTheme.text,
+                      textDecoration: 'none',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1,
+                      '&:hover': {
+                        color: currentTheme.primary,
+                      },
+                    }}
+                  >
+                    <BuildIcon sx={{ fontSize: 20 }} />
+                    <Typography variant="body2">Tools</Typography>
+                  </Link>
+                )
               )}
               {model.resources?.rules && (
                 <Link
