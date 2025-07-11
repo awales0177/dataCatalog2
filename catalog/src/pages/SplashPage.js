@@ -305,118 +305,105 @@ const SplashPage = () => {
         </Box>
 
         {/* Features Carousel */}
-        <Box sx={{ 
-          width: '100%',
-          maxWidth: '1200px',
-          position: 'relative',
-        }}>
-          <Box sx={{ 
+        <Box
+          sx={{
+            width: '100%',
+            maxWidth: '1200px',
+            position: 'relative',
             display: 'flex',
             justifyContent: 'center',
-            alignItems: 'center',
-            gap: 4,
-            mb: 4,
-          }}>
-            <IconButton
-              onClick={handleBack}
-              disabled={activeStep === 0}
-              sx={{ 
-                color: currentTheme.text,
-                '&:hover': {
-                  bgcolor: alpha(currentTheme.primary, 0.1),
-                },
-              }}
-            >
-              <KeyboardArrowLeft sx={{ fontSize: 32 }} />
-            </IconButton>
-
-            <Grid container spacing={3} sx={{ justifyContent: 'center' }}>
-              {features.slice(activeStep * 3, (activeStep + 1) * 3).map((feature, index) => (
-                <Grid item xs={12} md={4} key={index} sx={{ display: 'flex', justifyContent: 'center' }}>
-                  <FeatureCard
-                    icon={feature.icon}
-                    title={feature.title}
-                    description={feature.description}
-                    currentTheme={currentTheme}
-                    onClick={() => navigate(feature.path)}
-                  />
-                </Grid>
-              ))}
-            </Grid>
-
-            <IconButton
-              onClick={handleNext}
-              disabled={activeStep === maxSteps - 1}
-              sx={{ 
-                color: currentTheme.text,
-                '&:hover': {
-                  bgcolor: alpha(currentTheme.primary, 0.1),
-                },
-              }}
-            >
-              <KeyboardArrowRight sx={{ fontSize: 32 }} />
-            </IconButton>
-          </Box>
-
-          <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-            <MobileStepper
-              steps={maxSteps}
-              position="static"
-              activeStep={activeStep}
-              sx={{
-                bgcolor: 'transparent',
-                maxWidth: '200px',
-                '& .MuiMobileStepper-dot': {
-                  bgcolor: currentTheme.textSecondary,
-                  opacity: 0.3,
-                  width: 8,
-                  height: 8,
-                  margin: '0 4px',
-                },
-                '& .MuiMobileStepper-dotActive': {
-                  bgcolor: currentTheme.primary,
-                  opacity: 1,
-                },
-              }}
-              nextButton={null}
-              backButton={null}
-            />
-          </Box>
-        </Box>
-
-        {/* Powered By Section */}
-        <Box sx={{
-          position: 'absolute',
-          bottom: 80,
-          left: 0,
-          right: 0,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: 1,
-          zIndex: 2,
-        }}>
-          <Typography variant="body2" sx={{ 
-            color: currentTheme.textSecondary,
-            opacity: 0.7,
-            fontSize: '0.875rem',
-          }}>
-            Powered by
-          </Typography>
+          }}
+        >
+          {/* Tray Container */}
           <Box
-            component="img"
-            src={darkMode ? lotusWhite : lotusRed}
-            alt="Lotus"
             sx={{
-              height: '32px',
-              width: 'auto',
-              opacity: 0.7,
-              transition: 'opacity 0.2s ease-in-out',
-              '&:hover': {
-                opacity: 1,
-              },
+              width: '100%',
+              borderRadius: '20px', // tighter
+              boxShadow: darkMode
+                ? '0 8px 32px rgba(0,0,0,0.45)'
+                : '0 8px 32px rgba(0,0,0,0.10)',
+              bgcolor: darkMode ? '#23242a' : '#f5f6fa',
+              px: { xs: 1, sm: 2, md: 3 }, // less padding
+              py: { xs: 2, sm: 2.5 }, // less padding
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              transition: 'background 0.3s',
             }}
-          />
+          >
+            <Box sx={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              gap: 3,
+              mb: 2,
+            }}>
+              <IconButton
+                onClick={handleBack}
+                disabled={activeStep === 0}
+                sx={{
+                  color: currentTheme.text,
+                  '&:hover': {
+                    bgcolor: alpha(currentTheme.primary, 0.1),
+                  },
+                }}
+              >
+                <KeyboardArrowLeft sx={{ fontSize: 32 }} />
+              </IconButton>
+
+              <Grid container spacing={2} sx={{ justifyContent: 'center' }}>
+                {features.slice(activeStep * 3, (activeStep + 1) * 3).map((feature, index) => (
+                  <Grid item xs={12} md={4} key={index} sx={{ display: 'flex', justifyContent: 'center' }}>
+                    <FeatureCard
+                      icon={feature.icon}
+                      title={feature.title}
+                      description={feature.description}
+                      currentTheme={currentTheme}
+                      onClick={() => navigate(feature.path)}
+                    />
+                  </Grid>
+                ))}
+              </Grid>
+
+              <IconButton
+                onClick={handleNext}
+                disabled={activeStep === maxSteps - 1}
+                sx={{
+                  color: currentTheme.text,
+                  '&:hover': {
+                    bgcolor: alpha(currentTheme.primary, 0.1),
+                  },
+                }}
+              >
+                <KeyboardArrowRight sx={{ fontSize: 32 }} />
+              </IconButton>
+            </Box>
+
+            <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+              <MobileStepper
+                steps={maxSteps}
+                position="static"
+                activeStep={activeStep}
+                sx={{
+                  bgcolor: 'transparent',
+                  maxWidth: '200px',
+                  '& .MuiMobileStepper-dot': {
+                    bgcolor: currentTheme.textSecondary,
+                    opacity: 0.3,
+                    width: 8,
+                    height: 8,
+                    margin: '0 4px',
+                  },
+                  '& .MuiMobileStepper-dotActive': {
+                    bgcolor: currentTheme.primary,
+                    opacity: 1,
+                  },
+                }}
+                nextButton={null}
+                backButton={null}
+              />
+            </Box>
+          </Box>
         </Box>
       </Box>
     </Box>

@@ -7,6 +7,7 @@ import {
   Chip,
   alpha,
 } from '@mui/material';
+import { formatDate } from '../utils/dateUtils';
 
 const ApplicationCard = ({ application, currentTheme }) => {
   return (
@@ -56,7 +57,7 @@ const ApplicationCard = ({ application, currentTheme }) => {
             display: 'block'
           }}
         >
-          Last Updated: {new Date(application.lastUpdated).toLocaleDateString()}
+          Last Updated: {formatDate(application.lastUpdated)}
         </Typography>
       </CardContent>
     </Card>

@@ -1,8 +1,9 @@
 import React from 'react';
-import { Box, Paper, Typography } from '@mui/material';
+import { Box, Paper, Typography, Chip } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { formatDate } from '../utils/dateUtils';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import ShoppingBasketIcon from '@mui/icons-material/ShoppingBasket';
 
 // ProductAgreementCard component for displaying individual product agreement information
 const ProductAgreementCard = ({ agreement, currentTheme }) => {
@@ -53,19 +54,6 @@ const ProductAgreementCard = ({ agreement, currentTheme }) => {
         },
       }}
     >
-      {/* Status Color Indicator */}
-      <Box
-        sx={{
-          position: 'absolute',
-          top: '12px',
-          right: '12px',
-          width: '8px',
-          height: '8px',
-          backgroundColor: statusColor,
-          borderRadius: '50%',
-        }}
-      />
-
       {/* Content */}
       <Box sx={{ 
         height: '100%',
@@ -88,62 +76,50 @@ const ProductAgreementCard = ({ agreement, currentTheme }) => {
           {agreement.name}
         </Typography>
 
-        {/* Flowchart */}
-        <Box sx={{ 
+        {/* Consumer Chips */}
+        <Box sx={{
           display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: 1,
           mb: 2,
-          flex: 1,
         }}>
-          {/* Producer */}
-          <Typography sx={{
-            color: currentTheme.darkMode ? '#ff8c00' : currentTheme.textSecondary,
-            fontSize: '0.7rem',
-            opacity: currentTheme.darkMode ? 0.9 : 0.7,
-            flex: 1,
-            textAlign: 'center',
-          }}>
-            {agreement.dataProducer || 'System A'}
-          </Typography>
-
-          {/* Arrow */}
-          <ArrowForwardIcon sx={{ 
-            color: currentTheme.darkMode ? '#ff8c00' : currentTheme.textSecondary,
-            mx: 0.75,
-            fontSize: '1rem',
-            opacity: currentTheme.darkMode ? 0.9 : 0.5,
-          }} />
-
-          {/* Model */}
-          <Typography sx={{
-            color: currentTheme.darkMode ? '#ff8c00' : currentTheme.textSecondary,
-            fontSize: '0.7rem',
-            opacity: currentTheme.darkMode ? 0.9 : 0.7,
-            flex: 1,
-            textAlign: 'center',
-          }}>
-            {agreement.modelShortName || 'Unknown'}
-          </Typography>
-
-          {/* Arrow */}
-          <ArrowForwardIcon sx={{ 
-            color: currentTheme.darkMode ? '#ff8c00' : currentTheme.textSecondary,
-            mx: 0.75,
-            fontSize: '1rem',
-            opacity: currentTheme.darkMode ? 0.9 : 0.5,
-          }} />
-
-          {/* Consumer */}
-          <Typography sx={{
-            color: currentTheme.darkMode ? '#ff8c00' : currentTheme.textSecondary,
-            fontSize: '0.7rem',
-            opacity: currentTheme.darkMode ? 0.9 : 0.7,
-            flex: 1,
-            textAlign: 'center',
-          }}>
-            {agreement.dataConsumer || 'System B'}
-          </Typography>
+          {(() => {
+            const consumers = Array.isArray(agreement.dataConsumer)
+              ? agreement.dataConsumer
+              : agreement.dataConsumer
+                ? [agreement.dataConsumer]
+                : [];
+            return consumers.length > 0
+              ? consumers.map((consumer, idx) => (
+                  <Chip
+                    key={idx}
+                    icon={<ShoppingBasketIcon sx={{ color: currentTheme.primary, opacity: 0.8 }} />}
+                    label={consumer}
+                    size="small"
+                    sx={{
+                      bgcolor: currentTheme.card,
+                      color: currentTheme.text,
+                      border: `1px solid ${currentTheme.border}`,
+                      fontWeight: 500,
+                      fontSize: '0.8rem',
+                      opacity: 0.95,
+                    }}
+                  />
+                ))
+              : <Chip
+                  icon={<ShoppingBasketIcon sx={{ color: currentTheme.primary, opacity: 0.8 }} />}
+                  label="No Consumer"
+                  size="small"
+                  sx={{
+                    bgcolor: currentTheme.card,
+                    color: currentTheme.textSecondary,
+                    border: `1px solid ${currentTheme.border}`,
+                    fontWeight: 500,
+                    fontSize: '0.8rem',
+                    opacity: 0.7,
+                  }}
+                />;
+          })()}
         </Box>
 
         <Box sx={{ 

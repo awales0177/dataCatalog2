@@ -9,6 +9,7 @@ import {
   Chip,
   Stack,
 } from '@mui/material';
+import { formatDate } from '../utils/dateUtils';
 import {
   Close as CloseIcon,
   People as PeopleIcon,
@@ -111,7 +112,7 @@ const DomainModal = ({ domain, open, onClose, currentTheme }) => {
               Owner: {domain.owner}
             </Typography>
             <Typography variant="body2" sx={{ color: currentTheme.textSecondary }}>
-              Last Updated: {new Date(domain.lastUpdated).toLocaleDateString()}
+              Last Updated: {formatDate(domain.lastUpdated)}
             </Typography>
           </Box>
         </Box>

@@ -20,8 +20,13 @@ import {
   TableRow,
   LinearProgress,
   IconButton,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  Button,
 } from '@mui/material';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   ArrowBack as ArrowBackIcon,
   History as HistoryIcon,
@@ -46,6 +51,15 @@ import {
   Build as FixIcon,
   Rocket as RocketIcon,
   HelpOutline as HelpOutlineIcon,
+  AccessTime as AccessTimeIcon,
+  Speed as SpeedIcon,
+  Timer as TimerIcon,
+  Update as RefreshIcon,
+  Storage as StorageIcon,
+  Cloud as CloudIcon,
+  Folder as FolderIcon,
+  Description as DescriptionIcon,
+  Upload as UploadIcon,
 } from '@mui/icons-material';
 import { formatDate } from '../utils/dateUtils';
 import { fetchAgreements, fetchModels } from '../services/api';
@@ -57,6 +71,13 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
   const [model, setModel] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState(null);
+
+  // Set document title to "{modelShortName} Agreement"
+  React.useEffect(() => {
+    if (agreement && agreement.modelShortName) {
+      document.title = `${agreement.modelShortName} Agreement`;
+    }
+  }, [agreement && agreement.modelShortName]);
 
   const calculateVersionDifference = (agreementVersions, modelVersion) => {
     if (!agreementVersions || !modelVersion) return null;
@@ -221,6 +242,109 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
     else {
       return { icon: RocketIcon, color: '#673ab7' }; // Deep Purple
     }
+  };
+
+  // Utility function to parse and format delivery frequency
+  const parseDeliveryFrequency = (frequency) => {
+    if (!frequency) return { type: 'unknown', label: 'Not specified', icon: HelpOutlineIcon };
+    if (Array.isArray(frequency)) {
+      return frequency.map(freq => parseDeliveryFrequency(freq));
+    }
+    const lowerFreq = frequency.toLowerCase();
+    if (lowerFreq === 'real-time' || lowerFreq === 'realtime') {
+      return { type: 'real-time', label: 'Real-Time', icon: SpeedIcon, description: 'Continuous data streaming in real-time' };
+    }
+    if (lowerFreq === 'periodic') {
+      return { type: 'periodic', label: 'Periodic', icon: TimerIcon, description: 'Regular scheduled updates at fixed intervals' };
+    }
+    if (lowerFreq === 'feeds') {
+      return { type: 'feeds', label: 'Feeds', icon: RefreshIcon, description: 'Data feeds from external sources' };
+    }
+    if (lowerFreq === 'one-time' || lowerFreq === 'onetime') {
+      return { type: 'one-time', label: 'One-Time', icon: UploadIcon, description: 'Single delivery, no recurring updates' };
+    }
+    if (lowerFreq === 'aperiodic') {
+      return { type: 'aperiodic', label: 'Aperiodic', icon: UpdateIcon, description: 'Irregular updates based on events or triggers' };
+    }
+    if (lowerFreq.includes('min') || lowerFreq.includes('minute')) {
+      const minutes = lowerFreq.match(/(\d+)/)?.[1] || '1';
+      return { type: 'minutes', label: `${minutes} minute${minutes !== '1' ? 's' : ''}`, icon: TimerIcon, description: `Updated every ${minutes} minute${minutes !== '1' ? 's' : ''}` };
+    }
+    if (lowerFreq.includes('hour') || lowerFreq.includes('hr')) {
+      const hours = lowerFreq.match(/(\d+)/)?.[1] || '1';
+      return { type: 'hours', label: `${hours} hour${hours !== '1' ? 's' : ''}`, icon: AccessTimeIcon, description: `Updated every ${hours} hour${hours !== '1' ? 's' : ''}` };
+    }
+    if (lowerFreq.includes('day') || lowerFreq.includes('daily')) {
+      const days = lowerFreq.match(/(\d+)/)?.[1] || '1';
+      return { type: 'days', label: `${days} day${days !== '1' ? 's' : ''}`, icon: ScheduleIcon, description: `Updated every ${days} day${days !== '1' ? 's' : ''}` };
+    }
+    if (lowerFreq.includes('week') || lowerFreq.includes('weekly')) {
+      const weeks = lowerFreq.match(/(\d+)/)?.[1] || '1';
+      return { type: 'weeks', label: `${weeks} week${weeks !== '1' ? 's' : ''}`, icon: ScheduleIcon, description: `Updated every ${weeks} week${weeks !== '1' ? 's' : ''}` };
+    }
+    if (lowerFreq.includes('month') || lowerFreq.includes('monthly')) {
+      const months = lowerFreq.match(/(\d+)/)?.[1] || '1';
+      return { type: 'months', label: `${months} month${months !== '1' ? 's' : ''}`, icon: ScheduleIcon, description: `Updated every ${months} month${months !== '1' ? 's' : ''}` };
+    }
+    if (lowerFreq.includes('year') || lowerFreq.includes('yearly') || lowerFreq.includes('annual')) {
+      const years = lowerFreq.match(/(\d+)/)?.[1] || '1';
+      return { type: 'years', label: `${years} year${years !== '1' ? 's' : ''}`, icon: ScheduleIcon, description: `Updated every ${years} year${years !== '1' ? 's' : ''}` };
+    }
+    if (lowerFreq.includes('on-demand') || lowerFreq.includes('ondemand') || lowerFreq.includes('manual')) {
+      return { type: 'on-demand', label: 'On-demand', icon: RefreshIcon, description: 'Updated manually when requested' };
+    }
+    if (lowerFreq.includes('event') || lowerFreq.includes('trigger')) {
+      return { type: 'event', label: 'Event-driven', icon: RefreshIcon, description: 'Updated based on specific events' };
+    }
+    if (lowerFreq.includes('batch') || lowerFreq.includes('bulk')) {
+      return { type: 'batch', label: 'Batch processing', icon: RefreshIcon, description: 'Updated in batches' };
+    }
+    return { type: 'custom', label: frequency, icon: ScheduleIcon, description: `Custom frequency: ${frequency}` };
+  };
+  // Utility function to parse and format S3 location
+  const parseLocation = (location) => {
+    if (!location) return { label: 'Not specified', icon: HelpOutlineIcon };
+    if (Array.isArray(location)) {
+      return location.map(loc => parseLocation(loc));
+    }
+    const lowerLoc = location.toLowerCase();
+    if (lowerLoc.includes('s3://') || lowerLoc.includes('s3.amazonaws.com')) {
+      return { label: location, icon: StorageIcon, description: 'S3 bucket location' };
+    }
+    if (lowerLoc.match(/^[a-z0-9][a-z0-9.-]*[a-z0-9]$/) && !lowerLoc.includes('/')) {
+      return { label: location, icon: StorageIcon, description: 'S3 bucket name' };
+    }
+    if (lowerLoc.includes('/') && !lowerLoc.includes('://')) {
+      const parts = location.split('/');
+      if (parts.length >= 2) {
+        return { label: location, icon: FolderIcon, description: `S3 object in bucket: ${parts[0]}` };
+      }
+    }
+    if (lowerLoc.includes('us-east') || lowerLoc.includes('us-west') || lowerLoc.includes('eu-') || lowerLoc.includes('ap-')) {
+      return { label: location, icon: CloudIcon, description: 'AWS region' };
+    }
+    if (lowerLoc.includes('cloud') || lowerLoc.includes('storage')) {
+      return { label: location, icon: CloudIcon, description: 'Cloud storage location' };
+    }
+    return { label: location, icon: StorageIcon, description: 'S3 location' };
+  };
+  // Utility function to parse and format data consumer
+  const parseDataConsumer = (consumer) => {
+    if (!consumer) return { label: 'Not specified', icon: ShoppingBasketIcon };
+    if (Array.isArray(consumer)) {
+      return consumer.map(cons => parseDataConsumer(cons));
+    }
+    const lowerCons = consumer.toLowerCase();
+    if (lowerCons.includes('service') || lowerCons.includes('api')) {
+      return { label: consumer, icon: CodeIcon, description: 'Service/API consumer' };
+    }
+    if (lowerCons.includes('app') || lowerCons.includes('application')) {
+      return { label: consumer, icon: FactoryIcon, description: 'Application consumer' };
+    }
+    if (lowerCons.includes('analytics') || lowerCons.includes('bi') || lowerCons.includes('reporting')) {
+      return { label: consumer, icon: GroupIcon, description: 'Analytics/BI consumer' };
+    }
+    return { label: consumer, icon: ShoppingBasketIcon, description: 'Data consumer' };
   };
 
   React.useEffect(() => {
@@ -439,13 +563,20 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
               bgcolor: alpha(currentTheme.primary, 0.05),
               borderRadius: 2,
             }}>
-              <Box sx={{ textAlign: 'center', flex: 1 }}>
+              <Box sx={{ textAlign: 'center', flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                 <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary, mb: 1 }}>
                   Producer
                 </Typography>
-                <Typography variant="h6" sx={{ color: currentTheme.text }}>
-                  {agreement.producer}
-                </Typography>
+                <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  {(() => {
+                    const producers = Array.isArray(agreement.dataProducer) ? agreement.dataProducer : [agreement.dataProducer];
+                    return producers.map((producer, index) => (
+                      <Typography key={index} variant="h6" sx={{ color: currentTheme.text, userSelect: 'text' }}>
+                        {producer}
+                      </Typography>
+                    ));
+                  })()}
+                </Box>
                 <Typography variant="body2" sx={{ color: currentTheme.textSecondary, mt: 1 }}>
                   {agreement.producerLead}
                 </Typography>
@@ -455,26 +586,75 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
                 <ArrowForwardIcon sx={{ color: currentTheme.primary }} />
               </Box>
 
-              <Box sx={{ textAlign: 'center', flex: 1 }}>
+              <Box sx={{ textAlign: 'center', flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                 <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary, mb: 1 }}>
                   Model
                 </Typography>
-                <Typography variant="h6" sx={{ color: currentTheme.text }}>
-                  {agreement.modelShortName}
-                </Typography>
+                <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <Typography variant="h6" sx={{ color: currentTheme.text, userSelect: 'text' }}>
+                    {agreement.modelShortName}
+                  </Typography>
+                </Box>
               </Box>
 
               <Box sx={{ display: 'flex', alignItems: 'center', mx: 2 }}>
                 <ArrowForwardIcon sx={{ color: currentTheme.primary }} />
               </Box>
 
-              <Box sx={{ textAlign: 'center', flex: 1 }}>
+              <Box sx={{ textAlign: 'center', flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                 <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary, mb: 1 }}>
                   Consumer
                 </Typography>
-                <Typography variant="h6" sx={{ color: currentTheme.text }}>
-                  {agreement.consumer}
-                </Typography>
+                {(() => {
+                  const consumerInfo = parseDataConsumer(agreement.dataConsumer);
+                  const consumers = Array.isArray(consumerInfo) ? consumerInfo : [consumerInfo];
+                  return (
+                    <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0, mt: 1 }}>
+                      {consumers.map((cons, index) => (
+                        <Box key={index} sx={{ width: '100%' }}>
+                          <Tooltip title="View application">
+                            <Box
+                              sx={{
+                                width: '100%',
+                                px: 2,
+                                py: 1,
+                                borderRadius: 1,
+                                bgcolor: 'transparent',
+                                transition: 'background 0.2s',
+                                userSelect: 'text',
+                                cursor: 'pointer',
+                                '&:hover': {
+                                  bgcolor: currentTheme.hoverBackground || (currentTheme.darkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'),
+                                },
+                              }}
+                              onClick={() => navigate(`/applications?search=${encodeURIComponent(cons.label)}`)}
+                            >
+                              <Typography
+                                variant="h6"
+                                sx={{
+                                  color: currentTheme.text,
+                                  fontWeight: 600,
+                                  userSelect: 'text',
+                                }}
+                              >
+                                {cons.label}
+                              </Typography>
+                            </Box>
+                          </Tooltip>
+                          {index < consumers.length - 1 && (
+                            <Box sx={{
+                              width: '90%',
+                              height: '1px',
+                              mx: 'auto',
+                              bgcolor: currentTheme.border,
+                              opacity: 0.5,
+                            }} />
+                          )}
+                        </Box>
+                      ))}
+                    </Box>
+                  );
+                })()}
                 <Typography variant="body2" sx={{ color: currentTheme.textSecondary, mt: 1 }}>
                   {agreement.consumerLead}
                 </Typography>
@@ -503,7 +683,7 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
                       Role
                     </TableCell>
                     <TableCell sx={{ color: currentTheme.textSecondary, borderBottom: `1px solid ${currentTheme.border}` }}>
-                      Person/Team
+                      Team
                     </TableCell>
                   </TableRow>
                 </TableHead>
@@ -582,7 +762,32 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
                       </Box>
                     </TableCell>
                     <TableCell sx={{ color: currentTheme.text, borderBottom: 'none' }}>
-                      {agreement.dataConsumer}
+                      {(() => {
+                        const consumerInfo = parseDataConsumer(agreement.dataConsumer);
+                        if (Array.isArray(consumerInfo)) {
+                          return (
+                            <Box>
+                              {consumerInfo.map((cons, index) => (
+                                <Box key={index} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: index < consumerInfo.length - 1 ? 1 : 0 }}>
+                                  <ShoppingBasketIcon sx={{ fontSize: 20, color: currentTheme.primary, opacity: 0.8 }} />
+                                  <Typography variant="body2" sx={{ color: currentTheme.text }}>
+                                    {cons.label}
+                                  </Typography>
+                                </Box>
+                              ))}
+                            </Box>
+                          );
+                        }
+                        // Always use ShoppingBasketIcon for single consumer too
+                        return (
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <ShoppingBasketIcon sx={{ fontSize: 20, color: currentTheme.primary, opacity: 0.8 }} />
+                            <Typography variant="body2" sx={{ color: currentTheme.text }}>
+                              {consumerInfo.label}
+                            </Typography>
+                          </Box>
+                        );
+                      })()}
                     </TableCell>
                   </TableRow>
                 </TableBody>
@@ -722,8 +927,30 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
               bgcolor: currentTheme.card,
               border: `1px solid ${currentTheme.border}`,
               borderRadius: 2,
+              position: 'relative',
             }}
           >
+            {/* Data Specification Link Icon Button */}
+            <Tooltip title="View Data Specification">
+              <IconButton
+                component={Link}
+                to={`/specifications/${agreement.modelShortName}`}
+                sx={{
+                  position: 'absolute',
+                  top: 12,
+                  right: 12,
+                  color: currentTheme.primary,
+                  bgcolor: currentTheme.card,
+                  borderRadius: '50%',
+                  boxShadow: 'none',
+                  '&:hover': {
+                    bgcolor: currentTheme.hoverBackground || (currentTheme.darkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'),
+                  },
+                }}
+              >
+                <DescriptionIcon />
+              </IconButton>
+            </Tooltip>
             <Typography variant="h6" sx={{ color: currentTheme.text, mb: 2 }}>
               Agreement Information
             </Typography>
@@ -761,27 +988,92 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
               <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
                 Delivery Frequency
               </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <ScheduleIcon sx={{ 
-                  fontSize: 20, 
-                  color: currentTheme.primary,
-                  opacity: 0.8
-                }} />
-                <Typography variant="body1" sx={{ color: currentTheme.text }}>
-                  {agreement.deliveryFrequency}
-                </Typography>
-              </Box>
+              <List dense sx={{ bgcolor: alpha(currentTheme.card, 0.7), borderRadius: 1, p: 0.5, pl: 0, ml: '-12px' }}>
+                {Array.isArray(agreement.deliveryFrequency) ? agreement.deliveryFrequency.map((freq, index) => {
+                  const { icon: IconComponent, label, description } = parseDeliveryFrequency(freq);
+                  return (
+                    <ListItem key={index} sx={{ py: 0.5, bgcolor: 'transparent' }}>
+                      <ListItemIcon sx={{ minWidth: 30 }}>
+                        <IconComponent sx={{ fontSize: 20, color: currentTheme.primary, opacity: 0.8 }} />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={<Typography sx={{ color: currentTheme.text }}>{label}</Typography>}
+                        secondary={<Typography sx={{ color: currentTheme.textSecondary }}>{description}</Typography>}
+                      />
+                    </ListItem>
+                  );
+                }) : (() => {
+                  const { icon: IconComponent, label, description } = parseDeliveryFrequency(agreement.deliveryFrequency);
+                  return (
+                    <ListItem sx={{ py: 0.5, bgcolor: 'transparent' }}>
+                      <ListItemIcon sx={{ minWidth: 30 }}>
+                        <IconComponent sx={{ fontSize: 20, color: currentTheme.primary, opacity: 0.8 }} />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={<Typography sx={{ color: currentTheme.text }}>{label}</Typography>}
+                        secondary={<Typography sx={{ color: currentTheme.textSecondary }}>{description}</Typography>}
+                      />
+                    </ListItem>
+                  );
+                })()}
+              </List>
             </Box>
 
             <Divider sx={{ my: 2 }} />
 
             <Box sx={{ mb: 2 }}>
               <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
-                File Format
+                Location
               </Typography>
-              <Typography variant="body1" sx={{ color: currentTheme.text }}>
-                {agreement.fileFormat || 'Not specified'}
-              </Typography>
+              <List dense sx={{ bgcolor: alpha(currentTheme.card, 0.7), borderRadius: 1, p: 0.5, pl: 0, ml: '-12px' }}>
+                {(() => {
+                  if (agreement.location && typeof agreement.location === 'object' && !Array.isArray(agreement.location)) {
+                    // Object: key = location, value = description
+                    return Object.entries(agreement.location).map(([loc, desc], index) => {
+                      const { icon: IconComponent, label } = parseLocation(loc);
+                      return (
+                        <ListItem key={index} sx={{ py: 0.5, bgcolor: 'transparent', alignItems: 'center' }}>
+                          <ListItemIcon sx={{ minWidth: 30, display: 'flex', alignItems: 'center' }}>
+                            <CloudIcon sx={{ fontSize: 20, color: currentTheme.primary, opacity: 0.8 }} />
+                          </ListItemIcon>
+                          <ListItemText
+                            primary={<Typography sx={{ color: currentTheme.text }}>{label}</Typography>}
+                            secondary={<Typography sx={{ color: currentTheme.textSecondary }}>{desc}</Typography>}
+                          />
+                        </ListItem>
+                      );
+                    });
+                  } else if (Array.isArray(agreement.location)) {
+                    return agreement.location.map((loc, index) => {
+                      const { icon: IconComponent, label, description } = parseLocation(loc);
+                      return (
+                        <ListItem key={index} sx={{ py: 0.5, bgcolor: 'transparent', alignItems: 'center' }}>
+                          <ListItemIcon sx={{ minWidth: 30, display: 'flex', alignItems: 'center' }}>
+                            <CloudIcon sx={{ fontSize: 20, color: currentTheme.primary, opacity: 0.8 }} />
+                          </ListItemIcon>
+                          <ListItemText
+                            primary={<Typography sx={{ color: currentTheme.text }}>{label}</Typography>}
+                            secondary={<Typography sx={{ color: currentTheme.textSecondary }}>{description}</Typography>}
+                          />
+                        </ListItem>
+                      );
+                    });
+                  } else {
+                    const { icon: IconComponent, label, description } = parseLocation(agreement.location);
+                    return (
+                      <ListItem sx={{ py: 0.5, bgcolor: 'transparent', alignItems: 'center' }}>
+                        <ListItemIcon sx={{ minWidth: 30, display: 'flex', alignItems: 'center' }}>
+                          <CloudIcon sx={{ fontSize: 20, color: currentTheme.primary, opacity: 0.8 }} />
+                        </ListItemIcon>
+                        <ListItemText
+                          primary={<Typography sx={{ color: currentTheme.text }}>{label}</Typography>}
+                          secondary={<Typography sx={{ color: currentTheme.textSecondary }}>{description}</Typography>}
+                        />
+                      </ListItem>
+                    );
+                  }
+                })()}
+              </List>
             </Box>
 
             <Divider sx={{ my: 2 }} />
@@ -803,17 +1095,6 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
                   }}
                 />
               </Box>
-            </Box>
-
-            <Divider sx={{ my: 2 }} />
-
-            <Box sx={{ mb: 2 }}>
-              <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
-                Location
-              </Typography>
-              <Typography variant="body1" sx={{ color: currentTheme.text }}>
-                {agreement.location || 'Not specified'}
-              </Typography>
             </Box>
 
             <Divider sx={{ my: 2 }} />
@@ -846,17 +1127,6 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
               </Typography>
               <Typography variant="body1" sx={{ color: currentTheme.text }}>
                 {formatDate(agreement.lastUpdated)}
-              </Typography>
-            </Box>
-
-            <Divider sx={{ my: 2 }} />
-
-            <Box sx={{ mb: 2 }}>
-              <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
-                Next Update
-              </Typography>
-              <Typography variant="body1" sx={{ color: currentTheme.text }}>
-                {formatDate(agreement.nextUpdate)}
               </Typography>
             </Box>
           </Paper>

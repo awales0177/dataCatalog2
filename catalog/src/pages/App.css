@@ -1,0 +1,16 @@
+html, body {
+  font-size: 90%;
+}
+
+/* Scale down MUI Typography and components */
+.MuiTypography-root {
+  font-size: 0.9em;
+}
+.MuiButton-root, .MuiChip-root, .MuiTableCell-root, .MuiListItem-root, .MuiInputBase-root, .MuiTab-root {
+  font-size: 0.9em;
+}
+
+/* Remove previous transform rules if present */
+#root, body {
+  transform: none !important;
+} 

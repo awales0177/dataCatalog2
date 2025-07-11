@@ -10,6 +10,7 @@ import {
   Tooltip,
 } from '@mui/material';
 import DataObjectIcon from '@mui/icons-material/DataObject';
+import { formatDate } from '../utils/dateUtils';
 
 const ReferenceDataCard = ({ item, currentTheme }) => {
   return (
@@ -75,7 +76,7 @@ const ReferenceDataCard = ({ item, currentTheme }) => {
               color: currentTheme.textSecondary,
             }}
           >
-            {new Date(item.lastUpdated).toLocaleDateString()}
+            {formatDate(item.lastUpdated)}
           </Typography>
 
           {item.swaggerPage && (

@@ -19,17 +19,31 @@ import { ThemeContext } from '../App';
 import { fetchData } from '../services/api';
 import ApplicationCard from '../components/ApplicationCard';
 import Pagination from '../components/Pagination';
+import { useLocation } from 'react-router-dom';
 
 const ITEMS_PER_PAGE = 12;
 
 const ApplicationsPage = () => {
+  const location = useLocation();
   const { currentTheme } = useContext(ThemeContext);
-  const [searchQuery, setSearchQuery] = useState('');
+  // Initialize searchQuery from URL param if present
+  const getInitialSearch = () => {
+    const params = new URLSearchParams(location.search);
+    return params.get('search') || '';
+  };
+  const [searchQuery, setSearchQuery] = useState(getInitialSearch());
   const [applications, setApplications] = useState([]);
   const [filteredApplications, setFilteredApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+
+  // Update searchQuery if URL param changes
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const urlSearch = params.get('search') || '';
+    setSearchQuery(urlSearch);
+  }, [location.search]);
 
   useEffect(() => {
     const loadData = async () => {
