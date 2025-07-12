@@ -11,8 +11,10 @@ import {
 } from '@mui/material';
 import DataObjectIcon from '@mui/icons-material/DataObject';
 import { formatDate } from '../utils/dateUtils';
+import { useNavigate } from 'react-router-dom';
 
 const ReferenceDataCard = ({ item, currentTheme }) => {
+  const navigate = useNavigate();
   return (
     <Card 
       elevation={0}
@@ -23,11 +25,13 @@ const ReferenceDataCard = ({ item, currentTheme }) => {
         bgcolor: currentTheme.card,
         border: `1px solid ${currentTheme.border}`,
         position: 'relative',
+        cursor: 'pointer',
         '&:hover': {
           transform: 'translateY(-4px)',
           boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
         },
       }}
+      onClick={() => navigate(`/reference/${item.id}`)}
     >
       <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>

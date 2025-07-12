@@ -76,6 +76,7 @@ import LexiconPage from './pages/LexiconPage';
 import ReferenceDataPage from './pages/ReferenceDataPage';
 import DataSpecificationDetailPage from './pages/DataModelDetailPage';
 import ProductAgreementDetailPage from './pages/ProductAgreementDetailPage';
+import ReferenceDataDetailPage from './pages/ReferenceDataDetailPage';
 import InfoSidebar from './components/InfoSidebar';
 
 // Import data and utilities
@@ -776,6 +777,8 @@ function AppContent() {
       title = shortName;
     } else if (path.startsWith('/agreements/')) {
       title = 'Product Agreement Details';
+    } else if (path.startsWith('/reference/')) {
+      title = 'Reference Data Details';
     }
 
     document.title = title;
@@ -1341,6 +1344,7 @@ function AppContent() {
             <Route path="/applications" element={<ApplicationsPage />} />
             <Route path="/lexicon" element={<LexiconPage />} />
             <Route path="/reference" element={<ReferenceDataPage />} />
+            <Route path="/reference/:id" element={<ReferenceDataDetailPage currentTheme={currentTheme} />} />
             <Route 
               path="/specifications/:shortName" 
               element={
