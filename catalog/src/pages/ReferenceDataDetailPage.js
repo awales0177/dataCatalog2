@@ -32,6 +32,7 @@ import HistoryIcon from '@mui/icons-material/History';
 import SecurityIcon from '@mui/icons-material/Security';
 import SourceIcon from '@mui/icons-material/Source';
 import ApiIcon from '@mui/icons-material/Api';
+import StorageIcon from '@mui/icons-material/Storage';
 import { fetchData } from '../services/api';
 import { formatDate } from '../utils/dateUtils';
 
@@ -179,6 +180,39 @@ const ReferenceDataDetailPage = ({ currentTheme }) => {
               {item.description}
             </Typography>
             
+            {/* Source Datasets */}
+            {item.sourceDatasets && item.sourceDatasets.length > 0 && (
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="subtitle2" sx={{ color: currentTheme?.text, mb: 1 }}>
+                  Source Datasets:
+                </Typography>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                  {item.sourceDatasets.map((dataset, index) => (
+                    <Box
+                      key={index}
+                      sx={{
+                        p: 1,
+                        border: `1px solid ${alpha(currentTheme?.primary, 0.2)}`,
+                        borderRadius: 1,
+                        bgcolor: alpha(currentTheme?.primary, 0.05),
+                        minWidth: '200px',
+                      }}
+                    >
+                      <Typography variant="body2" sx={{ color: currentTheme?.primary, fontWeight: 600, fontSize: '0.8rem', mb: 0.25 }}>
+                        {dataset.source_system}
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: currentTheme?.text, fontSize: '0.75rem', mb: 0.25 }}>
+                        {dataset.datasetName}
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: currentTheme?.textSecondary, fontSize: '0.7rem' }}>
+                        ID: {dataset.datasetId}
+                      </Typography>
+                    </Box>
+                  ))}
+                </Box>
+              </Box>
+            )}
+            
             <Grid container spacing={2}>
               <Grid item xs={6} sm={3}>
                 <Typography variant="body2" sx={{ color: currentTheme?.textSecondary }}>
@@ -236,6 +270,13 @@ const ReferenceDataDetailPage = ({ currentTheme }) => {
                 <Box>
                   <Typography variant="body2" sx={{ color: currentTheme?.textSecondary }}>
                     Downstream Models: <strong>{item.lineage.downstream.length}</strong>
+                  </Typography>
+                </Box>
+              )}
+              {item.sourceDatasets && (
+                <Box>
+                  <Typography variant="body2" sx={{ color: currentTheme?.textSecondary }}>
+                    Source Datasets: <strong>{item.sourceDatasets.length}</strong>
                   </Typography>
                 </Box>
               )}

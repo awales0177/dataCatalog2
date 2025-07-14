@@ -19,7 +19,6 @@ import { ThemeContext } from '../App';
 import { fetchData } from '../services/api';
 import ReferenceDataCard from '../components/ReferenceDataCard';
 import Pagination from '../components/Pagination';
-import { useThemeContext } from '../contexts/ThemeContext';
 
 const ITEMS_PER_PAGE = 12;
 

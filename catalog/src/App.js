@@ -44,6 +44,7 @@ import {
   GitHub as GitHubIcon,
   Info as InfoIcon,
   AutoMode as AutoModeIcon,
+  Gavel as GavelIcon,
 } from '@mui/icons-material';
 import {
   FiHome,
@@ -77,6 +78,7 @@ import ReferenceDataPage from './pages/ReferenceDataPage';
 import DataSpecificationDetailPage from './pages/DataModelDetailPage';
 import ProductAgreementDetailPage from './pages/ProductAgreementDetailPage';
 import ReferenceDataDetailPage from './pages/ReferenceDataDetailPage';
+import StandardsPolicyPage from './pages/StandardsPolicyPage';
 import InfoSidebar from './components/InfoSidebar';
 
 // Import data and utilities
@@ -732,6 +734,12 @@ const menuItems = [
     icon: <IoIosApps />,
     id: 'reference'
   },
+  {
+    name: 'Standards & Policy',
+    path: '/standards-policy',
+    icon: <GavelIcon />,
+    id: 'standards-policy'
+  },
 ];
 
 function AppContent() {
@@ -772,6 +780,8 @@ function AppContent() {
       title = 'Lexicon';
     } else if (path === '/reference') {
       title = 'Reference Data';
+    } else if (path === '/standards-policy') {
+      title = 'Standards & Policy';
     } else if (path.startsWith('/specifications/')) {
       const shortName = path.split('/').pop().toUpperCase();
       title = shortName;
@@ -924,7 +934,7 @@ function AppContent() {
   const drawer = (
     <>
       <List>
-        {(menuData?.items || menuItems).map((item) => (
+        {(menuData?.items || []).map((item) => (
           <Tooltip
             key={item.path}
             title={item.name}
@@ -1121,39 +1131,6 @@ function AppContent() {
             <Logo currentTheme={currentTheme} />
             <Box sx={{ flexGrow: 1 }} />
             
-            {/* UNP Box */}
-            <Box
-              sx={{
-                bgcolor: '#A52A2A',
-                color: '#FFFFFF',
-                px: 2,
-                py: 0.75,
-                borderRadius: '6px',
-                fontWeight: 600,
-                fontSize: '0.875rem',
-                letterSpacing: '0.5px',
-                boxShadow: '0 2px 4px rgba(165, 42, 42, 0.2)',
-                transition: 'all 0.2s ease-in-out',
-                '&:hover': {
-                  transform: 'translateY(-1px)',
-                  boxShadow: '0 4px 8px rgba(165, 42, 42, 0.3)',
-                },
-                mr: 2,
-              }}
-            >
-              UNP
-            </Box>
-
-            {/* Separator */}
-            <Box
-              sx={{
-                width: '1px',
-                height: '24px',
-                bgcolor: currentTheme.border,
-                mx: 1,
-              }}
-            />
-
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Tooltip title={isSplashPage ? "Explore" : "Home"}>
                 <IconButton
@@ -1344,6 +1321,7 @@ function AppContent() {
             <Route path="/applications" element={<ApplicationsPage />} />
             <Route path="/lexicon" element={<LexiconPage />} />
             <Route path="/reference" element={<ReferenceDataPage />} />
+            <Route path="/standards-policy" element={<StandardsPolicyPage currentTheme={currentTheme} />} />
             <Route path="/reference/:id" element={<ReferenceDataDetailPage currentTheme={currentTheme} />} />
             <Route 
               path="/specifications/:shortName" 
