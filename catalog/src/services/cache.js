@@ -127,6 +127,16 @@ class CacheService {
       maxSize: this.maxSize
     };
   }
+
+  // Debug method to show all cache keys
+  getAllKeys() {
+    return Array.from(this.cache.keys());
+  }
+
+  // Debug method to check if a key exists
+  hasKey(key) {
+    return this.cache.has(key);
+  }
 }
 
 // Create a singleton instance

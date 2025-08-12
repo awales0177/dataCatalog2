@@ -22,6 +22,11 @@ import { GoVerified } from "react-icons/go";
 const DataModelCard = ({ model, currentTheme }) => {
   const navigate = useNavigate();
 
+  // Safety check - if no model, don't render
+  if (!model) {
+    return null;
+  }
+
   // Calculate score based on how many fields have values
   const calculateScore = (model) => {
     const countFilledFields = (obj) => {
@@ -70,7 +75,7 @@ const DataModelCard = ({ model, currentTheme }) => {
   return (
     <Card 
       elevation={0}
-      onClick={() => navigate(`/specifications/${model.shortName.toLowerCase()}`)}
+      onClick={() => model.shortName ? navigate(`/specifications/${model.shortName.toLowerCase()}`) : null}
       sx={{ 
         height: '100%',
         borderRadius: 2,
@@ -88,7 +93,7 @@ const DataModelCard = ({ model, currentTheme }) => {
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
           <Box>
             <Typography variant="h6" sx={{ fontWeight: 600, color: currentTheme.text }}>
-              {model.name}
+              {model.name || 'Unnamed Model'}
             </Typography>
             <Typography 
               variant="caption" 
@@ -98,7 +103,7 @@ const DataModelCard = ({ model, currentTheme }) => {
                 letterSpacing: '0.5px',
               }}
             >
-              {model.shortName}
+              {model.shortName || 'N/A'}
             </Typography>
           </Box>
           {model.meta?.verified && (
@@ -117,11 +122,11 @@ const DataModelCard = ({ model, currentTheme }) => {
         </Box>
 
         <Typography variant="body2" sx={{ color: currentTheme.textSecondary, mb: 2 }}>
-          {model.description}
+          {model.description || 'No description available'}
         </Typography>
 
         <Box sx={{ mb: 2, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-          {model.domain.map((domain, index) => (
+          {model.domain && Array.isArray(model.domain) && model.domain.map((domain, index) => (
             <Chip
               key={index}
               label={domain}

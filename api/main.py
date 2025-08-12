@@ -24,10 +24,6 @@ performance_metrics = {
         "by_endpoint": {},
         "response_times": []
     },
-    "cache": {
-        "hits": 0,
-        "misses": 0
-    },
     "github": {
         "requests": 0,
         "errors": 0,
@@ -35,18 +31,12 @@ performance_metrics = {
     }
 }
 
-def log_performance(endpoint: str, start_time: float, cache_hit: bool = None, github_request: bool = False):
+def log_performance(endpoint: str, start_time: float, github_request: bool = False):
     """Log performance metrics for an API request."""
     duration = perf_counter() - start_time
     performance_metrics["requests"]["total"] += 1
     performance_metrics["requests"]["by_endpoint"][endpoint] = performance_metrics["requests"]["by_endpoint"].get(endpoint, 0) + 1
     performance_metrics["requests"]["response_times"].append(duration)
-    
-    if cache_hit is not None:
-        if cache_hit:
-            performance_metrics["cache"]["hits"] += 1
-        else:
-            performance_metrics["cache"]["misses"] += 1
     
     if github_request:
         performance_metrics["github"]["requests"] += 1
@@ -61,9 +51,8 @@ def get_performance_stats():
         "total_requests": performance_metrics["requests"]["total"],
         "requests_by_endpoint": performance_metrics["requests"]["by_endpoint"],
         "cache": {
-            "hits": performance_metrics["cache"]["hits"],
-            "misses": performance_metrics["cache"]["misses"],
-            "hit_rate": performance_metrics["cache"]["hits"] / (performance_metrics["cache"]["hits"] + performance_metrics["cache"]["misses"]) if (performance_metrics["cache"]["hits"] + performance_metrics["cache"]["misses"]) > 0 else 0
+            "status": "disabled",
+            "message": "All data is read fresh from files"
         },
         "github": {
             "total_requests": performance_metrics["github"]["requests"],
@@ -131,20 +120,22 @@ app.add_middleware(
 GITHUB_RAW_BASE_URL = "https://raw.githubusercontent.com/awales0177/test_data/main"
 CACHE_DURATION = timedelta(minutes=15)
 PASSTHROUGH_MODE = False  # Can be toggled via environment variable
+TEST_MODE = True  # Set to True to use local _data files instead of GitHub
 
 # Log server configuration
 logger.info("=" * 50)
 logger.info("Server Configuration:")
-logger.info(f"Mode: {'PASSTHROUGH' if PASSTHROUGH_MODE else 'CACHED'}")
-logger.info(f"Cache Duration: {CACHE_DURATION}")
+logger.info(f"Mode: {'PASSTHROUGH' if PASSTHROUGH_MODE else 'DIRECT'}")
+logger.info(f"Test Mode: {'ENABLED' if TEST_MODE else 'DISABLED'}")
+logger.info(f"Caching: DISABLED - Always fresh data")
 logger.info(f"GitHub Base URL: {GITHUB_RAW_BASE_URL}")
 logger.info("=" * 50)
 
-# Cache storage
-cache = {
-    "data": {},
-    "last_updated": {}
-}
+# Cache storage - Disabled
+# cache = {
+#     "data": {},
+#     "last_updated": {}
+# }
 
 # Basic authentication
 security = HTTPBasic()
@@ -165,6 +156,27 @@ def verify_credentials(credentials: HTTPBasicCredentials = Depends(security)):
 # Data models
 class JSONData(BaseModel):
     data: Dict[str, Any] = Field(..., description="The JSON data to be stored")
+
+class CreateModelRequest(BaseModel):
+    shortName: str = Field(..., description="Short name of the new model")
+    name: str = Field(..., description="Name of the new model")
+    description: str = Field(..., description="Description of the new model")
+    version: str = Field(default="1.0.0", description="Version of the new model")
+    extendedDescription: str = Field(default="", description="Extended description of the new model")
+    owner: str = Field(default="", description="Owner of the new model")
+    specMaintainer: str = Field(default="", description="Spec maintainer of the new model")
+    maintainerEmail: str = Field(default="", description="Maintainer email of the new model")
+    domain: List[str] = Field(default=[], description="Domains of the new model")
+    referenceData: List[str] = Field(default=[], description="Reference data of the new model")
+    meta: Dict[str, Any] = Field(default={"tier": "bronze", "verified": False}, description="Metadata of the new model")
+    changelog: List[Dict[str, Any]] = Field(default=[], description="Changelog of the new model")
+    resources: Dict[str, Any] = Field(default={}, description="Resources of the new model")
+    users: List[str] = Field(default=[], description="Users of the new model")
+
+class UpdateModelRequest(BaseModel):
+    shortName: str = Field(..., description="Short name of the model to update")
+    modelData: Dict[str, Any] = Field(..., description="Updated model data")
+    updateAssociatedLinks: bool = Field(True, description="Whether to update agreements that reference this model")
 
 class FileList(BaseModel):
     files: List[str] = Field(..., description="List of available file names")
@@ -236,51 +248,52 @@ def fetch_from_github(file_name: str) -> Dict:
         logger.error(f"Unexpected error fetching from GitHub: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-def cleanup_stale_cache():
-    """Remove cache entries that are older than CACHE_DURATION."""
-    current_time = datetime.now()
-    stale_files = [
-        file_name for file_name, last_updated in cache["last_updated"].items()
-        if current_time - last_updated > CACHE_DURATION
-    ]
-    
-    for file_name in stale_files:
-        logger.info(f"Removing stale cache for {file_name}")
-        del cache["data"][file_name]
-        del cache["last_updated"][file_name]
+# Cache cleanup disabled
+# def cleanup_stale_cache():
+#     """Remove cache entries that are older than CACHE_DURATION."""
+#     current_time = datetime.now()
+#     stale_files = [
+#         file_name for file_name, last_updated in cache["last_updated"].items()
+#         if current_time - last_updated > CACHE_DURATION
+#     ]
+#     
+#     for file_name in stale_files:
+#         logger.info(f"Removing stale cache for {file_name}")
+#         del cache["data"][file_name]
+#         del cache["last_updated"][file_name]
 
 def get_cached_data(file_name: str) -> Dict:
-    """Get data from cache or fetch from GitHub if cache is expired."""
+    """Get data directly from local files (no caching)."""
     start_time = perf_counter()
-    current_time = datetime.now()
-    logger.info(f"Getting cached data for {file_name}")
+    logger.info(f"Reading data directly from local files for {file_name}")
     
-    # Clean up any stale cache entries
-    cleanup_stale_cache()
-    
-    # Check if cache is expired or doesn't exist
-    if (file_name not in cache["last_updated"] or 
-        current_time - cache["last_updated"][file_name] > CACHE_DURATION or 
-        file_name not in cache["data"]):
-        
-        logger.info(f"Cache miss or expired for {file_name}, fetching from GitHub")
-        # Fetch fresh data from GitHub
-        data = fetch_from_github(file_name)
-        cache["data"][file_name] = data
-        cache["last_updated"][file_name] = current_time
-        logger.info(f"Cache updated for {file_name}")
-        log_performance("cache_miss", start_time, cache_hit=False)
+    if TEST_MODE:
+        logger.info(f"Reading from local _data files for {file_name}")
+        try:
+            data = read_json_file(JSON_FILES[file_name])
+            logger.info(f"Local file loaded successfully for {file_name}")
+            log_performance("local_file_read", start_time)
+            return data
+        except Exception as e:
+            logger.error(f"Error reading local file {file_name}: {str(e)}")
+            # Fallback to GitHub if local file fails
+            logger.info(f"Falling back to GitHub for {file_name}")
+            data = fetch_from_github(file_name)
+            logger.info(f"GitHub fallback loaded for {file_name}")
+            log_performance("github_fallback", start_time)
+            return data
     else:
-        logger.info(f"Cache hit for {file_name} (age: {current_time - cache['last_updated'][file_name]})")
-        log_performance("cache_hit", start_time, cache_hit=True)
-    
-    return cache["data"][file_name]
+        logger.info(f"Fetching from GitHub for {file_name}")
+        data = fetch_from_github(file_name)
+        logger.info(f"GitHub data loaded for {file_name}")
+        log_performance("github_fetch", start_time)
+        return data
 
 @app.get("/api/{file_name}")
 def get_json_file(file_name: str):
-    """Get JSON file content with caching or passthrough mode."""
+    """Get JSON file content with direct file reading or passthrough mode."""
     start_time = perf_counter()
-    logger.info(f"Request for {file_name} - Using {'passthrough' if PASSTHROUGH_MODE else 'cached'} mode")
+    logger.info(f"Request for {file_name} - Using {'passthrough' if PASSTHROUGH_MODE else 'direct'} mode")
     result = fetch_from_github(file_name) if PASSTHROUGH_MODE else get_cached_data(file_name)
     log_performance("get_json_file", start_time)
     return result
@@ -292,7 +305,7 @@ def get_paginated_json_file(
     page_size: int = Query(10, ge=1, le=100)
 ):
     """Get paginated JSON file content."""
-    logger.info(f"Paginated request for {file_name} - Using {'passthrough' if PASSTHROUGH_MODE else 'cached'} mode")
+    logger.info(f"Paginated request for {file_name} - Using {'passthrough' if PASSTHROUGH_MODE else 'direct'} mode")
     data = get_cached_data(file_name) if not PASSTHROUGH_MODE else fetch_from_github(file_name)
     key = DATA_TYPE_KEYS.get(file_name)
     
@@ -314,7 +327,7 @@ def get_paginated_json_file(
 @app.get("/api/count/{file_name}")
 def get_count(file_name: str):
     """Get the count of items in a specific data file."""
-    logger.info(f"Count request for {file_name} - Using {'passthrough' if PASSTHROUGH_MODE else 'cached'} mode")
+    logger.info(f"Count request for {file_name} - Using {'passthrough' if PASSTHROUGH_MODE else 'direct'} mode")
     data = get_cached_data(file_name) if not PASSTHROUGH_MODE else fetch_from_github(file_name)
     key = DATA_TYPE_KEYS.get(file_name)
     
@@ -355,6 +368,13 @@ async def get_agreements_by_model(model_short_name: str):
             if agreement.get('modelShortName', '').lower() == model_short_name.lower()
         ]
         
+        # Add debugging information
+        logger.info(f"Agreements lookup for model '{model_short_name}':")
+        logger.info(f"  Total agreements in file: {len(agreements_data['agreements'])}")
+        logger.info(f"  Found agreements: {len(filtered_agreements)}")
+        logger.info(f"  Agreement modelShortNames: {[a.get('modelShortName') for a in agreements_data['agreements']]}")
+        logger.info(f"  Model shortName: {model['shortName']}")
+        
         return {
             "model": {
                 "id": model['id'],
@@ -368,6 +388,258 @@ async def get_agreements_by_model(model_short_name: str):
         raise HTTPException(
             status_code=500,
             detail=f"Error processing request: {str(e)}"
+        )
+
+@app.post("/api/models")
+async def create_model(request: CreateModelRequest):
+    """
+    Create a new data model.
+    
+    Args:
+        request (CreateModelRequest): The new model data
+        
+    Returns:
+        dict: Success message and created model info
+        
+    Raises:
+        HTTPException: If creation fails
+    """
+    try:
+        logger.info(f"Create request for new model")
+        
+        # Read current models data
+        models_data = read_json_file(JSON_FILES['models'])
+        
+        # Check if the shortName already exists
+        for existing_model in models_data['models']:
+            if existing_model['shortName'] == request.shortName:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Model with shortName '{request.shortName}' already exists"
+                )
+        
+        # Generate a new ID (max existing ID + 1)
+        new_id = max([m['id'] for m in models_data['models']], default=0) + 1
+        
+        # Create the new model from the request
+        new_model = {
+            'id': new_id,
+            'shortName': request.shortName,
+            'name': request.name,
+            'description': request.description,
+            'version': request.version,
+            'extendedDescription': request.extendedDescription,
+            'owner': request.owner,
+            'specMaintainer': request.specMaintainer,
+            'maintainerEmail': request.maintainerEmail,
+            'domain': request.domain,
+            'referenceData': request.referenceData,
+            'meta': request.meta,
+            'changelog': request.changelog,
+            'resources': request.resources,
+            'users': request.users,
+            'lastUpdated': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        }
+        
+        # Add the new model to the array
+        models_data['models'].append(new_model)
+        
+        # Save the updated data to local file
+        local_file_path = JSON_FILES['models']
+        write_json_file(local_file_path, models_data)
+        logger.info(f"Created new model in local file {local_file_path}")
+        
+        logger.info(f"Model {request.shortName} created successfully with ID {new_id}")
+        
+        return {
+            "message": "Model created successfully",
+            "shortName": request.shortName,
+            "id": new_id,
+            "created": True
+        }
+        
+    except Exception as e:
+        logger.error(f"Error creating model: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error creating model: {str(e)}"
+        )
+
+@app.delete("/api/models/{short_name}")
+async def delete_model(short_name: str):
+    """
+    Delete a data model by its short name.
+    
+    Args:
+        short_name (str): The short name of the model to delete
+        
+    Returns:
+        dict: Success message and deleted model info
+        
+    Raises:
+        HTTPException: If the model is not found or deletion fails
+    """
+    try:
+        logger.info(f"Delete request for model: {short_name}")
+        
+        # Read current models data
+        models_data = read_json_file(JSON_FILES['models'])
+        
+        # Find the model to delete
+        model_to_delete = None
+        for model in models_data['models']:
+            if model['shortName'].lower() == short_name.lower():
+                model_to_delete = model
+                break
+        
+        if not model_to_delete:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Model with shortName '{short_name}' not found"
+            )
+        
+        # Remove the model from the array
+        models_data['models'] = [m for m in models_data['models'] if m['shortName'].lower() != short_name.lower()]
+        
+        # Save the updated data to local file
+        local_file_path = JSON_FILES['models']
+        write_json_file(local_file_path, models_data)
+        logger.info(f"Model deleted from local file {local_file_path}")
+        
+        logger.info(f"Model {short_name} deleted successfully")
+        
+        return {
+            "message": "Model deleted successfully",
+            "shortName": short_name,
+            "deleted": True
+        }
+        
+    except Exception as e:
+        logger.error(f"Error deleting model: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error deleting model: {str(e)}"
+        )
+
+@app.put("/api/models/{short_name}")
+async def update_model(short_name: str, request: UpdateModelRequest):
+    """
+    Update a data model by its short name.
+    
+    Args:
+        short_name (str): The short name of the model to update
+        request (UpdateModelRequest): The updated model data
+        
+    Returns:
+        dict: Success message and updated model info
+        
+    Raises:
+        HTTPException: If the model is not found or update fails
+    """
+    try:
+        logger.info(f"Update request for model: {short_name}")
+        
+        # Read current models data
+        models_data = read_json_file(JSON_FILES['models'])
+        
+        # Find the model to update
+        model_index = None
+        for i, model in enumerate(models_data['models']):
+            if model['shortName'].lower() == short_name.lower():
+                model_index = i
+                break
+        
+        if model_index is None:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Model with short name '{short_name}' not found"
+            )
+        
+        # Update the model
+        old_model = models_data['models'][model_index]
+        updated_model = {**old_model, **request.modelData}
+        
+        # Check if shortName is being changed
+        old_short_name = old_model.get('shortName')
+        new_short_name = updated_model.get('shortName')
+        is_short_name_changing = old_short_name != new_short_name
+        
+        if is_short_name_changing:
+            logger.info(f"ShortName is being changed from '{old_short_name}' to '{new_short_name}'")
+            
+            # Check if the new shortName conflicts with existing models
+            for existing_model in models_data['models']:
+                if existing_model['id'] != old_model['id'] and existing_model['shortName'] == new_short_name:
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Model with shortName '{new_short_name}' already exists"
+                    )
+            
+            # Update agreements that reference the old shortName (only if requested)
+            if request.updateAssociatedLinks:
+                try:
+                    agreements_data = read_json_file(JSON_FILES['dataAgreements'])
+                    agreements_updated = False
+                    
+                    for agreement in agreements_data['agreements']:
+                        if agreement.get('modelShortName') == old_short_name:
+                            agreement['modelShortName'] = new_short_name
+                            agreements_updated = True
+                            logger.info(f"Updated agreement {agreement['id']} modelShortName from '{old_short_name}' to '{new_short_name}'")
+                    
+                    if agreements_updated:
+                        write_json_file(JSON_FILES['dataAgreements'], agreements_data)
+                        logger.info(f"Updated agreements file with new modelShortName references")
+                    
+                except Exception as e:
+                    logger.error(f"Error updating agreements: {str(e)}")
+                    raise HTTPException(
+                        status_code=500,
+                        detail=f"Failed to update agreements: {str(e)}"
+                    )
+            else:
+                logger.info(f"Not updating agreements - keeping old references to '{old_short_name}'")
+        else:
+            logger.info(f"ShortName unchanged: '{old_short_name}'")
+        
+        # Log the update details for debugging
+        logger.info(f"Model update details:")
+        logger.info(f"  Old shortName: {old_short_name}")
+        logger.info(f"  New shortName: {new_short_name}")
+        logger.info(f"  Request shortName: {short_name}")
+        logger.info(f"  Model data keys: {list(request.modelData.keys())}")
+        logger.info(f"  shortName in modelData: {request.modelData.get('shortName', 'NOT_PRESENT')}")
+        logger.info(f"  shortName will be: {new_short_name}")
+        logger.info(f"  updateAssociatedLinks: {request.updateAssociatedLinks}")
+        
+        # Update the lastUpdated field with full timestamp
+        updated_model['lastUpdated'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        
+        # Replace the model in the array
+        models_data['models'][model_index] = updated_model
+        
+        # Save the updated data to local file
+        local_file_path = JSON_FILES['models']
+        write_json_file(local_file_path, models_data)
+        logger.info(f"Updated local file {local_file_path}")
+        
+        # No cache to clear - always fresh data
+        logger.info("No caching - data will be fresh on next request")
+        
+        logger.info(f"Model {short_name} updated successfully")
+        
+        return {
+            "message": "Model updated successfully",
+            "shortName": short_name,
+            "updated": True,
+            "lastUpdated": updated_model['lastUpdated']
+        }
+        
+    except Exception as e:
+        logger.error(f"Error updating model {short_name}: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error updating model: {str(e)}"
         )
 
 def get_paginated_data(data: Dict, key: str, page: int, page_size: int) -> Dict:
@@ -408,7 +680,12 @@ def update_json_path(data: Dict, path: str, value: Any) -> Dict:
 
 def read_json_file(file_path: str) -> Dict:
     try:
-        data_path = os.path.join('_data', file_path)
+        # Handle both relative and absolute paths
+        if file_path.startswith('_data/'):
+            data_path = file_path
+        else:
+            data_path = os.path.join('_data', file_path)
+        
         logger.info(f"Reading JSON file from: {data_path}")
         with open(data_path, 'r') as f:
             return json.load(f)
@@ -417,45 +694,225 @@ def read_json_file(file_path: str) -> Dict:
         raise HTTPException(status_code=404, detail=f"File not found: {file_path}")
     except json.JSONDecodeError:
         logger.error(f"Invalid JSON file: {data_path}")
-        raise HTTPException(status_code=500, detail=f"Invalid JSON file: {file_path}")
+        raise HTTPException(status_code=500, detail=str(e))
     except Exception as e:
         logger.error(f"Error reading file {data_path}: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 def write_json_file(file_path: str, data: Dict):
     try:
-        data_path = os.path.join('_data', file_path)
+        # Handle both relative and absolute paths
+        if file_path.startswith('_data/'):
+            data_path = file_path
+        else:
+            data_path = os.path.join('_data', file_path)
+        
         logger.info(f"Writing JSON file to: {data_path}")
         with open(data_path, 'w') as f:
             json.dump(data, f, indent=2)
+        logger.info(f"Successfully wrote to: {data_path}")
     except Exception as e:
         logger.error(f"Error writing file {data_path}: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+# Agreement Management Endpoints
+@app.post("/api/agreements")
+async def create_agreement(request: Dict[str, Any]):
+    """
+    Create a new agreement.
+    
+    Args:
+        request (dict): The new agreement data
+        
+    Returns:
+        dict: Success message and created agreement info
+        
+    Raises:
+        HTTPException: If creation fails
+    """
+    try:
+        logger.info(f"Create request for new agreement")
+        agreements_data = read_json_file(JSON_FILES['dataAgreements'])
+        
+        # Check for duplicate ID
+        for existing_agreement in agreements_data['agreements']:
+            if existing_agreement['id'] == request['id']:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Agreement with ID '{request['id']}' already exists"
+                )
+        
+        # Add lastUpdated timestamp
+        new_agreement = request.copy()
+        new_agreement['lastUpdated'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        
+        agreements_data['agreements'].append(new_agreement)
+        local_file_path = JSON_FILES['dataAgreements']
+        write_json_file(local_file_path, agreements_data)
+        
+        logger.info(f"Created new agreement in local file {local_file_path}")
+        logger.info(f"Agreement {request['id']} created successfully")
+        
+        return {
+            "message": "Agreement created successfully",
+            "id": request['id'],
+            "created": True
+        }
+    except Exception as e:
+        logger.error(f"Error creating agreement: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error creating agreement: {str(e)}")
+
+@app.put("/api/agreements/{agreement_id}")
+async def update_agreement(agreement_id: str, request: Dict[str, Any]):
+    """
+    Update an existing agreement.
+    
+    Args:
+        agreement_id (str): The ID of the agreement to update
+        request (dict): The updated agreement data
+        
+    Returns:
+        dict: Success message and updated agreement info
+        
+    Raises:
+        HTTPException: If the agreement is not found or update fails
+    """
+    try:
+        logger.info(f"Update request for agreement: {agreement_id}")
+        agreements_data = read_json_file(JSON_FILES['dataAgreements'])
+        
+        # Find the agreement to update
+        agreement_to_update = None
+        for agreement in agreements_data['agreements']:
+            if agreement['id'].lower() == agreement_id.lower():
+                agreement_to_update = agreement
+                break
+        
+        if not agreement_to_update:
+            raise HTTPException(status_code=404, detail=f"Agreement with ID '{agreement_id}' not found")
+        
+        # Update the agreement
+        updated_agreement = agreement_to_update.copy()
+        updated_agreement.update(request)
+        updated_agreement['lastUpdated'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        
+        # Replace the old agreement with the updated one
+        agreements_data['agreements'] = [
+            a for a in agreements_data['agreements'] 
+            if a['id'].lower() != agreement_id.lower()
+        ]
+        agreements_data['agreements'].append(updated_agreement)
+        
+        local_file_path = JSON_FILES['dataAgreements']
+        write_json_file(local_file_path, agreements_data)
+        
+        logger.info(f"Agreement updated in local file {local_file_path}")
+        logger.info(f"Agreement {agreement_id} updated successfully")
+        
+        return {
+            "message": "Agreement updated successfully",
+            "id": agreement_id,
+            "updated": True
+        }
+    except Exception as e:
+        logger.error(f"Error updating agreement: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error updating agreement: {str(e)}")
+
+@app.delete("/api/agreements/{agreement_id}")
+async def delete_agreement(agreement_id: str):
+    """
+    Delete an agreement by its ID.
+    
+    Args:
+        agreement_id (str): The ID of the agreement to delete
+        
+    Returns:
+        dict: Success message and deleted agreement info
+        
+    Raises:
+        HTTPException: If the agreement is not found or deletion fails
+    """
+    try:
+        logger.info(f"Delete request for agreement: {agreement_id}")
+        agreements_data = read_json_file(JSON_FILES['dataAgreements'])
+        
+        agreement_to_delete = None
+        for agreement in agreements_data['agreements']:
+            if agreement['id'].lower() == agreement_id.lower():
+                agreement_to_delete = agreement
+                break
+        
+        if not agreement_to_delete:
+            raise HTTPException(status_code=404, detail=f"Agreement with ID '{agreement_id}' not found")
+        
+        agreements_data['agreements'] = [
+            a for a in agreements_data['agreements'] 
+            if a['id'].lower() != agreement_id.lower()
+        ]
+        
+        local_file_path = JSON_FILES['dataAgreements']
+        write_json_file(local_file_path, agreements_data)
+        
+        logger.info(f"Agreement deleted from local file {local_file_path}")
+        logger.info(f"Agreement {agreement_id} deleted successfully")
+        
+        return {
+            "message": "Agreement deleted successfully",
+            "id": agreement_id,
+            "deleted": True
+        }
+    except Exception as e:
+        logger.error(f"Error deleting agreement: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error deleting agreement: {str(e)}")
+
 # Debug endpoints
 @app.get("/api/debug/cache")
 def get_cache_status():
-    """Get the current status of the cache."""
-    current_time = datetime.now()
-    cache_status = {
-        "total_files": len(cache["data"]),
-        "files": {}
+    """Get the current status of the cache (disabled)."""
+    return {
+        "status": "Caching disabled",
+        "message": "All data is read fresh from files on each request",
+        "test_mode": TEST_MODE
     }
-    
-    for file_name, last_updated in cache["last_updated"].items():
-        age = current_time - last_updated
-        cache_status["files"][file_name] = {
-            "last_updated": last_updated.isoformat(),
-            "age_seconds": age.total_seconds(),
-            "is_stale": age > CACHE_DURATION
-        }
-    
-    return cache_status
 
 @app.get("/api/debug/performance")
 def get_performance_metrics():
     """Get current performance metrics."""
     return get_performance_stats()
+
+@app.get("/api/debug/model-relationships")
+def get_model_relationships():
+    """Debug endpoint to check model and agreement relationships."""
+    try:
+        models_data = read_json_file(JSON_FILES['models'])
+        agreements_data = read_json_file(JSON_FILES['dataAgreements'])
+        
+        relationships = {}
+        for model in models_data['models']:
+            short_name = model['shortName']
+            model_agreements = [
+                agreement for agreement in agreements_data['agreements']
+                if agreement.get('modelShortName', '').lower() == short_name.lower()
+            ]
+            
+            relationships[short_name] = {
+                "model": {
+                    "id": model['id'],
+                    "shortName": model['shortName'],
+                    "name": model['name']
+                },
+                "agreements_count": len(model_agreements),
+                "agreements": [a['id'] for a in model_agreements]
+            }
+        
+        return {
+            "total_models": len(models_data['models']),
+            "total_agreements": len(agreements_data['agreements']),
+            "relationships": relationships
+        }
+    except Exception as e:
+        logger.error(f"Error in model relationships debug: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == "__main__":
     import uvicorn

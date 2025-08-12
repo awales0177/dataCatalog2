@@ -358,8 +358,15 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
         }
 
         const modelData = await fetchModels();
-        const model = modelData.models.find(m => m.shortName === agreement.modelShortName);
+        const model = modelData.models.find(m => 
+          m.shortName.toLowerCase() === agreement.modelShortName.toLowerCase()
+        );
         if (!model) {
+          console.error('Model lookup failed:', {
+            agreementModelShortName: agreement.modelShortName,
+            availableModelShortNames: modelData.models.map(m => m.shortName),
+            agreement: agreement
+          });
           setError('Associated model not found');
           return;
         }
@@ -450,6 +457,18 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
                 word.charAt(0).toUpperCase() + word.slice(1)
               ).join(' ')}
             </Box>
+            <IconButton
+              onClick={() => navigate(`/agreements/${agreement.id}/edit`)}
+              sx={{
+                color: currentTheme.primary,
+                '&:hover': {
+                  bgcolor: currentTheme.primary + '20'
+                }
+              }}
+              title="Edit Agreement"
+            >
+              <UpdateIcon />
+            </IconButton>
           </Box>
           <Typography variant="body1" sx={{ color: currentTheme.textSecondary }}>
             {agreement.description}
@@ -934,7 +953,7 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
             <Tooltip title="View Data Specification">
               <IconButton
                 component={Link}
-                to={`/specifications/${agreement.modelShortName}`}
+                to={`/specifications/${agreement.modelShortName.toLowerCase()}`}
                 sx={{
                   position: 'absolute',
                   top: 12,

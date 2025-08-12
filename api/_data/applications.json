@@ -2,14 +2,14 @@
   "applications": [
     {
       "id": 1,
-      "name": "Customer Portal",
+      "name": "Customer Porta",
       "description": "Self-service portal for customers to manage their accounts and services",
       "domains": ["customer", "technology"],
       "link": "https://customer-portal.example.com"
     },
     {
       "id": 2,
-      "name": "Order Management System",
+      "name": "Catalog",
       "description": "Enterprise system for managing orders and inventory",
       "domains": ["business", "technology"],
       "link": "https://oms.example.com"

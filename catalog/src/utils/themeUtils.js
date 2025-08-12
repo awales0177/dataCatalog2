@@ -29,6 +29,11 @@ export const formatDate = (dateString) => {
     return trimmedString;
   }
   
+  // Check if it's already a formatted timestamp (YYYY-MM-DD HH:MM:SS)
+  if (trimmedString.match(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/)) {
+    return trimmedString; // Return the full timestamp as-is
+  }
+  
   // Try to parse as a date
   const date = new Date(dateString);
   

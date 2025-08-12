@@ -9,11 +9,15 @@ import {
   CircularProgress,
   Alert,
   Chip,
-  useTheme
+  useTheme,
+  Button,
+  Fab
 } from '@mui/material';
 import {
   Search as SearchIcon,
+  Add as AddIcon,
 } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
 import DataModelCard from '../components/DataModelCard';
 import { ThemeContext } from '../App';
 import { fetchData } from '../services/api';
@@ -23,6 +27,7 @@ const ITEMS_PER_PAGE = 12;
 
 const DataSpecificationsPage = () => {
   const { currentTheme } = useContext(ThemeContext);
+  const navigate = useNavigate();
   const [allModels, setAllModels] = useState([]);
   const [filteredModels, setFilteredModels] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -97,6 +102,53 @@ const DataSpecificationsPage = () => {
 
   const handlePageChange = (event, value) => {
     setPage(value);
+  };
+
+  const handleCreateNewModel = () => {
+    // Generate a unique temporary ID for the new model
+    const tempId = `temp_${Date.now()}`;
+    
+    // Create an empty model template
+    const newModel = {
+      id: tempId,
+      shortName: '',
+      name: '',
+      version: '1.0.0',
+      description: '',
+      extendedDescription: '',
+      lastUpdated: new Date().toISOString().slice(0, 19).replace('T', ' '),
+      owner: '',
+      specMaintainer: '',
+      maintainerEmail: '',
+      domain: [],
+      referenceData: [],
+      meta: {
+        tier: 'bronze',
+        verified: false
+      },
+      changelog: [
+        {
+          version: '1.0.0',
+          date: new Date().toISOString().slice(0, 10),
+          changes: ['Initial model creation']
+        }
+      ],
+      resources: {
+        code: '',
+        documentation: '',
+        rules: '',
+        tools: {},
+        git: '',
+        validation: ''
+      },
+      users: []
+    };
+
+    // Store the new model in localStorage temporarily
+    localStorage.setItem('newModelTemplate', JSON.stringify(newModel));
+    
+    // Navigate to the edit page with a special "new" parameter
+    navigate('/specifications/new/edit');
   };
 
   const totalPages = Math.ceil(filteredModels.length / ITEMS_PER_PAGE);
@@ -193,12 +245,14 @@ const DataSpecificationsPage = () => {
       <Grid container spacing={3}>
         {paginatedModels.map((model) => (
           <Grid item xs={12} sm={6} md={4} lg={3} key={model.id}>
-            <DataModelCard
-              model={model}
-              isFavorite={favorites.includes(model.id)}
-              onFavoriteToggle={handleFavoriteToggle}
-              currentTheme={currentTheme}
-            />
+            {model && model.shortName && (
+              <DataModelCard
+                model={model}
+                isFavorite={favorites.includes(model.id)}
+                onFavoriteToggle={handleFavoriteToggle}
+                currentTheme={currentTheme}
+              />
+            )}
           </Grid>
         ))}
       </Grid>
@@ -211,6 +265,26 @@ const DataSpecificationsPage = () => {
           currentTheme={currentTheme}
         />
       </Box>
+
+      {/* Floating Action Button for creating new model */}
+      <Fab
+        color="primary"
+        aria-label="add new model"
+        onClick={handleCreateNewModel}
+        sx={{
+          position: 'fixed',
+          bottom: 24,
+          right: 24,
+          bgcolor: currentTheme.primary,
+          color: currentTheme.background,
+          '&:hover': {
+            bgcolor: currentTheme.primaryDark || currentTheme.primary,
+          },
+          zIndex: 1000,
+        }}
+      >
+        <AddIcon />
+      </Fab>
     </Container>
   );
 };

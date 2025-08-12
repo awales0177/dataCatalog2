@@ -33,6 +33,7 @@ import {
   Email as EmailIcon,
   HelpOutline as HelpOutlineIcon,
   Gavel as GavelIcon,
+  LockOpen as LockOpenIcon,
 } from '@mui/icons-material';
 import { ImMakeGroup } from "react-icons/im";
 import { MdHandshake, MdDomain } from "react-icons/md";
@@ -57,11 +58,11 @@ const DataModelDetailPage = ({ currentTheme }) => {
       try {
         console.log('Loading model and agreements for:', shortName);
         console.log('Fetching model data...');
-        const modelData = await fetchData('models');
+        const modelData = await fetchData('models', { forceRefresh: true });
         console.log('Model data received:', modelData);
         
         console.log('Fetching agreements data...');
-        const agreementsData = await fetchAgreementsByModel(shortName);
+        const agreementsData = await fetchAgreementsByModel(shortName, { forceRefresh: true });
         console.log('Agreements data received:', agreementsData);
         
         const foundModel = modelData.models.find(m => m.shortName.toLowerCase() === shortName.toLowerCase());
@@ -180,6 +181,23 @@ const DataModelDetailPage = ({ currentTheme }) => {
             </Typography>
           </Box>
         </Box>
+        
+        {/* Edit Mode Toggle */}
+        <Tooltip title="Edit Model">
+          <IconButton
+            onClick={() => navigate(`/specifications/${model.shortName}/edit`)}
+            sx={{
+              color: currentTheme.primary,
+              bgcolor: alpha(currentTheme.primary, 0.1),
+              '&:hover': {
+                bgcolor: alpha(currentTheme.primary, 0.2),
+              },
+              border: `1px solid ${alpha(currentTheme.primary, 0.3)}`,
+            }}
+          >
+            <LockOpenIcon />
+          </IconButton>
+        </Tooltip>
       </Box>
 
       <Grid container spacing={3}>
@@ -564,7 +582,7 @@ const DataModelDetailPage = ({ currentTheme }) => {
                   }}
                 >
                   <CodeIcon sx={{ fontSize: 20 }} />
-                  <Typography variant="body2">Code Repository</Typography>
+                  <Typography variant="body2">Conditioning Code</Typography>
                 </Link>
               )}
               {model.resources?.documentation && (

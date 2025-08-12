@@ -158,24 +158,9 @@ const ReferenceDataDetailPage = ({ currentTheme }) => {
         {/* Main Details */}
         <Grid item xs={12} md={8}>
           <Paper elevation={0} sx={{ p: 3, bgcolor: currentTheme?.card, border: `1px solid ${currentTheme?.border}`, borderRadius: 2, mb: 3 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-              <Typography variant="h6" sx={{ color: currentTheme?.text }}>
-                Description
-              </Typography>
-              <IconButton
-                size="small"
-                onClick={() => window.open(`/api/docs#/reference/get_reference_${item.id}`, '_blank')}
-                sx={{
-                  color: currentTheme?.textSecondary,
-                  '&:hover': {
-                    color: currentTheme?.primary,
-                    bgcolor: alpha(currentTheme?.primary, 0.1),
-                  }
-                }}
-              >
-                <ApiIcon fontSize="small" />
-              </IconButton>
-            </Box>
+            <Typography variant="h6" sx={{ color: currentTheme?.text, mb: 2 }}>
+              Description
+            </Typography>
             <Typography variant="body1" sx={{ color: currentTheme?.textSecondary, mb: 3 }}>
               {item.description}
             </Typography>
@@ -196,8 +181,25 @@ const ReferenceDataDetailPage = ({ currentTheme }) => {
                         borderRadius: 1,
                         bgcolor: alpha(currentTheme?.primary, 0.05),
                         minWidth: '200px',
+                        position: 'relative',
                       }}
                     >
+                      <IconButton
+                        size="small"
+                        onClick={() => window.open(`/api/docs#/reference/get_reference_${item.id}`, '_blank')}
+                        sx={{
+                          position: 'absolute',
+                          top: 4,
+                          right: 4,
+                          color: currentTheme?.textSecondary,
+                          '&:hover': {
+                            color: currentTheme?.primary,
+                            bgcolor: alpha(currentTheme?.primary, 0.1),
+                          }
+                        }}
+                      >
+                        <ApiIcon fontSize="small" />
+                      </IconButton>
                       <Typography variant="body2" sx={{ color: currentTheme?.primary, fontWeight: 600, fontSize: '0.8rem', mb: 0.25 }}>
                         {dataset.source_system}
                       </Typography>

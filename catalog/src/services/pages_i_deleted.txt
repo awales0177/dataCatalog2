@@ -5,6 +5,4 @@ modified:   catalog/src/App.js
 	deleted:    catalog/src/contexts/ThemeContext.js
 	deleted:    catalog/src/data/menuItems.js
 	deleted:    catalog/src/hooks/useTheme.js
-	modified:   catalog/src/pages/ReferenceDataDetailPage.js
-	modified:   catalog/src/pages/ReferenceDataPage.js
 	deleted:    catalog/src/setupTests.js

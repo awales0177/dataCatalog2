@@ -40,7 +40,6 @@ import {
   DarkMode as DarkModeIcon,
   LightMode as LightModeIcon,
   Home as HomeIcon,
-  Add as AddIcon,
   GitHub as GitHubIcon,
   Info as InfoIcon,
   AutoMode as AutoModeIcon,
@@ -76,7 +75,9 @@ import ApplicationsPage from './pages/ApplicationsPage';
 import LexiconPage from './pages/LexiconPage';
 import ReferenceDataPage from './pages/ReferenceDataPage';
 import DataSpecificationDetailPage from './pages/DataModelDetailPage';
+import EditDataModelDetailPage from './pages/EditDataModelDetailPage';
 import ProductAgreementDetailPage from './pages/ProductAgreementDetailPage';
+import EditAgreementPage from './pages/EditAgreementPage';
 import ReferenceDataDetailPage from './pages/ReferenceDataDetailPage';
 import StandardsPolicyPage from './pages/StandardsPolicyPage';
 import InfoSidebar from './components/InfoSidebar';
@@ -190,19 +191,33 @@ const ModelFilters = ({ filters, setFilters, currentTheme }) => {
   const [allTags, setAllTags] = useState([]);
   const [allOwners, setAllOwners] = useState([]);
 
+  const loadFilterData = async () => {
+    try {
+      const data = await fetchModels({ forceRefresh: true });
+      const tags = [...new Set(data.models.flatMap(model => model.tags))];
+      const owners = [...new Set(data.models.map(model => model.owner))];
+      setAllTags(tags);
+      setAllOwners(owners);
+    } catch (error) {
+      console.error('Error loading filter data:', error);
+    }
+  };
+
   useEffect(() => {
-    const loadFilterData = async () => {
-      try {
-        const data = await fetchModels();
-        const tags = [...new Set(data.models.flatMap(model => model.tags))];
-        const owners = [...new Set(data.models.map(model => model.owner))];
-        setAllTags(tags);
-        setAllOwners(owners);
-      } catch (error) {
-        console.error('Error loading filter data:', error);
+    loadFilterData();
+  }, []);
+
+  // Refresh filter data when models are updated
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === 'models-updated') {
+        // Models were updated, refresh filter data
+        loadFilterData();
       }
     };
-    loadFilterData();
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   return (
@@ -862,14 +877,16 @@ function AppContent() {
     }
   };
 
-  // Add effect to handle sidebar collapse on 2-level navigation
+  // Add effect to handle sidebar collapse on 2-level navigation and edit mode
   useEffect(() => {
     const pathSegments = location.pathname.split('/').filter(segment => segment !== '');
     console.log('Current path segments:', pathSegments);
     
-    // Collapse if we're exactly 2 levels deep (e.g., /models/PROD)
-    if (pathSegments.length === 2) {
-      console.log('Collapsing sidebar - 2-level navigation detected');
+    // Collapse if we're exactly 2 levels deep (e.g., /specifications/CUST)
+    // OR if we're in edit mode (e.g., /specifications/CUST/edit)
+    if (pathSegments.length === 2 || 
+        (pathSegments.length === 3 && pathSegments[2] === 'edit')) {
+      console.log('Collapsing sidebar - 2-level navigation or edit mode detected');
       setIsDrawerCollapsed(true);
     } else {
       console.log('Expanding sidebar - top level navigation');
@@ -1188,22 +1205,7 @@ function AppContent() {
                   <GitHubIcon />
                 </IconButton>
               </Tooltip>
-              <Tooltip title="Add New">
-                <IconButton
-                  component="a"
-                  href="https://www.google.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  sx={{
-                    color: currentTheme.text,
-                    '&:hover': {
-                      bgcolor: darkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)',
-                    },
-                  }}
-                >
-                  <AddIcon />
-                </IconButton>
-              </Tooltip>
+
             </Box>
           </Toolbar>
         </AppBar>
@@ -1332,9 +1334,33 @@ function AppContent() {
               } 
             />
             <Route 
+              path="/specifications/:shortName/edit" 
+              element={
+                <EditDataModelDetailPage 
+                  currentTheme={currentTheme}
+                />
+              } 
+            />
+            <Route 
+              path="/agreements/create" 
+              element={
+                <EditAgreementPage 
+                  currentTheme={currentTheme}
+                />
+              } 
+            />
+            <Route 
               path="/agreements/:id" 
               element={
                 <ProductAgreementDetailPage 
+                  currentTheme={currentTheme}
+                />
+              } 
+            />
+            <Route 
+              path="/agreements/:id/edit" 
+              element={
+                <EditAgreementPage 
                   currentTheme={currentTheme}
                 />
               } 

@@ -37,6 +37,14 @@ const fetchWithCache = async (endpoint, params = {}, options = {}) => {
   const { forceRefresh = false, ttl } = options;
   const cacheKey = cacheService.generateKey(endpoint, params);
 
+  // Debug cache status
+  console.log(`Cache check for ${endpoint}:`, {
+    cacheKey,
+    forceRefresh,
+    hasCachedData: !!cacheService.get(cacheKey),
+    allCacheKeys: cacheService.getAllKeys()
+  });
+
   // Return cached data if available and not forcing refresh
   if (!forceRefresh) {
     const cachedData = cacheService.get(cacheKey);
@@ -184,6 +192,183 @@ export const fetchTheme = (options = {}) =>
 
 export const fetchModels = (options = {}) => 
   fetchData('models', options);
+
+export const createModel = async (modelData) => {
+  try {
+    const response = await fetch(`${API_URL}/models`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(modelData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    
+    // Debug cache invalidation
+    console.log('Cache invalidation for model creation:');
+    console.log('  New model shortName:', modelData.shortName);
+    console.log('  Cache keys before invalidation:', cacheService.getAllKeys());
+    
+    // Invalidate cache for models and related data
+    cacheService.invalidateByPrefix('models');
+    cacheService.invalidateByPrefix('dataAgreements');
+    cacheService.invalidateByPrefix('agreements');
+    
+    console.log('  Cache keys after invalidation:', cacheService.getAllKeys());
+    
+    return result;
+  } catch (error) {
+    console.error('Error creating model:', error);
+    throw error;
+  }
+};
+
+export const deleteModel = async (shortName) => {
+  try {
+    const response = await fetch(`${API_URL}/models/${shortName}`, {
+      method: 'DELETE',
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    
+    // Debug cache invalidation
+    console.log('Cache invalidation for model deletion:');
+    console.log('  Deleted model shortName:', shortName);
+    console.log('  Cache keys before invalidation:', cacheService.getAllKeys());
+    
+    // Invalidate cache for models and related data
+    cacheService.invalidateByPrefix('models');
+    cacheService.invalidateByPrefix('dataAgreements');
+    cacheService.invalidateByPrefix('agreements');
+    
+    console.log('  Cache keys after invalidation:', cacheService.getAllKeys());
+    
+    return result;
+  } catch (error) {
+    console.error('Error deleting model:', error);
+    throw error;
+  }
+};
+
+export const updateModel = async (shortName, modelData, options = {}) => {
+  try {
+    const response = await fetch(`${API_URL}/models/${shortName}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        shortName: shortName,
+        modelData: modelData,
+        updateAssociatedLinks: options.updateAssociatedLinks !== undefined ? options.updateAssociatedLinks : true
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    
+    // Debug cache invalidation
+    console.log('Cache invalidation for model update:');
+    console.log('  Model shortName:', shortName);
+    console.log('  Cache keys before invalidation:', cacheService.getAllKeys());
+    
+    // Invalidate cache for models and related data
+    cacheService.invalidateByPrefix('models');
+    cacheService.invalidateByPrefix('dataAgreements');
+    cacheService.invalidateByPrefix('agreements');
+    
+    // Specifically invalidate the agreements for this model
+    const modelAgreementsKey = cacheService.generateKey(`agreements/by-model/${shortName}`);
+    cacheService.invalidate(modelAgreementsKey);
+    
+    // Nuclear option: clear all cache if invalidation didn't work
+    if (cacheService.getAllKeys().some(key => key.includes('models') || key.includes('agreements'))) {
+      console.log('Cache invalidation incomplete, clearing all cache');
+      cacheService.clear();
+    }
+    
+    console.log('  Cache keys after invalidation:', cacheService.getAllKeys());
+    
+    return result;
+  } catch (error) {
+    console.error('Error updating model:', error);
+    throw error;
+  }
+};
+
+// Agreement Management Functions
+export const createAgreement = async (agreementData) => {
+  try {
+    const response = await fetch(`${API_URL}/agreements`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(agreementData),
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+    }
+    const result = await response.json();
+    cacheService.invalidateByPrefix('agreements');
+    return result;
+  } catch (error) {
+    console.error('Error creating agreement:', error);
+    throw error;
+  }
+};
+
+export const updateAgreement = async (agreementId, agreementData) => {
+  try {
+    const response = await fetch(`${API_URL}/agreements/${agreementId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(agreementData),
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+    }
+    const result = await response.json();
+    cacheService.invalidateByPrefix('agreements');
+    return result;
+  } catch (error) {
+    console.error('Error updating agreement:', error);
+    throw error;
+  }
+};
+
+export const deleteAgreement = async (agreementId) => {
+  try {
+    const response = await fetch(`${API_URL}/agreements/${agreementId}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+    }
+    const result = await response.json();
+    cacheService.invalidateByPrefix('agreements');
+    return result;
+  } catch (error) {
+    console.error('Error deleting agreement:', error);
+    throw error;
+  }
+};
 
 // Export cache service for direct access when needed
 export { default as cacheService } from './cache';

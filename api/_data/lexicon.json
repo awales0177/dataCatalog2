@@ -2,135 +2,284 @@
   "terms": [
     {
       "id": 1,
-      "term": "API",
-      "definition": "Application Programming Interface - A set of rules and protocols for building and interacting with software applications",
-      "domains": ["Technology", "Communications"]
+      "term": "StudentID",
+      "definition": "A unique identifier for each student",
+      "domains": [
+        "Education",
+        "Identity"
+      ],
+      "regex": "^[A-Z]{2}\\d{6}$",
+      "regexSource": "Two uppercase letters followed by six digits (e.g., ST123456)",
+      "validationRules": [
+        "Must be unique",
+        "Not null",
+        "Fixed length: 8"
+      ],
+      "code": "df.filter(df.StudentID.rlike('^[A-Z]{2}\\\\d{6}$'))",
+      "function": {
+        "validation": {
+          "name": "validate_StudentID",
+          "example": "validate_StudentID(df)",
+          "definition": "def validate_StudentID(df):\n    return df.filter(df.StudentID.rlike(r'^[A-Z]{2}\\\\d{6}$'))"
+        },
+        "transformation": {
+          "name": "transform_StudentID",
+          "example": "transform_StudentID(df)",
+          "definition": "def transform_StudentID(df):\n    return df.withColumn('StudentID', df.StudentID)"
+        }
+      }
     },
     {
       "id": 2,
-      "term": "Microservices",
-      "definition": "An architectural style that structures an application as a collection of small, independent services",
-      "domains": ["Technology", "Infrastructure"]
+      "term": "FirstName",
+      "definition": "The student's given name",
+      "domains": [
+        "Education",
+        "Personal Information"
+      ],
+      "regex": "^[A-Za-z'-]{1,50}$",
+      "regexSource": "Allows alphabetic characters, hyphens, and apostrophes (max 50 chars)",
+      "validationRules": [
+        "Not null",
+        "Max length: 50"
+      ],
+      "code": "df.filter(df.FirstName.rlike(\"^[A-Za-z'-]{1,50}$\"))",
+      "function": {
+        "validation": {
+          "name": "validate_FirstName",
+          "example": "validate_FirstName(df)",
+          "definition": "def validate_FirstName(df):\n    return df.filter(df.FirstName.rlike(r'^[A-Za-z'-]{1,50}$'))"
+        },
+        "transformation": {
+          "name": "transform_FirstName",
+          "example": "transform_FirstName(df)",
+          "definition": "def transform_FirstName(df):\n    return df.withColumn('FirstName', df.FirstName)"
+        }
+      }
     },
     {
       "id": 3,
-      "term": "DevOps",
-      "definition": "A set of practices that combines software development and IT operations to shorten the development lifecycle",
-      "domains": ["Technology", "Process"]
+      "term": "LastName",
+      "definition": "The student's family name or surname",
+      "domains": [
+        "Education",
+        "Personal Information"
+      ],
+      "regex": "^[A-Za-z'-]{1,50}$",
+      "regexSource": "Same as FirstName",
+      "validationRules": [
+        "Not null",
+        "Max length: 50"
+      ],
+      "code": "df.filter(df.LastName.rlike(\"^[A-Za-z'-]{1,50}$\"))",
+      "function": {
+        "validation": {
+          "name": "validate_LastName",
+          "example": "validate_LastName(df)",
+          "definition": "def validate_LastName(df):\n    return df.filter(df.LastName.rlike(r'^[A-Za-z'-]{1,50}$'))"
+        },
+        "transformation": {
+          "name": "transform_LastName",
+          "example": "transform_LastName(df)",
+          "definition": "def transform_LastName(df):\n    return df.withColumn('LastName', df.LastName)"
+        }
+      }
     },
     {
       "id": 4,
-      "term": "CI/CD",
-      "definition": "Continuous Integration/Continuous Deployment - A method to frequently deliver apps to customers by introducing automation",
-      "domains": ["Technology", "Process"]
+      "term": "DateOfBirth",
+      "definition": "The student's birth date",
+      "domains": [
+        "Education",
+        "Personal Information"
+      ],
+      "regex": "^\\d{4}-\\d{2}-\\d{2}$",
+      "regexSource": "ISO 8601 format (YYYY-MM-DD)",
+      "validationRules": [
+        "Must be in the past",
+        "Minimum age: 5"
+      ],
+      "code": "df.filter(df.DateOfBirth.rlike('^\\\\d{4}-\\\\d{2}-\\\\d{2}$'))",
+      "function": {
+        "validation": {
+          "name": "validate_DateOfBirth",
+          "example": "validate_DateOfBirth(df)",
+          "definition": "def validate_DateOfBirth(df):\n    return df.filter(df.DateOfBirth.rlike(r'^\\\\d{4}-\\\\d{2}-\\\\d{2}$'))"
+        },
+        "transformation": {
+          "name": "transform_DateOfBirth",
+          "example": "transform_DateOfBirth(df)",
+          "definition": "def transform_DateOfBirth(df):\n    return df.withColumn('DateOfBirth', df.DateOfBirth)"
+        }
+      }
     },
     {
       "id": 5,
-      "term": "Containerization",
-      "definition": "A lightweight alternative to full machine virtualization that involves encapsulating an application in a container with its own operating environment",
-      "domains": ["Technology", "Infrastructure"]
+      "term": "Email",
+      "definition": "The student's primary email address",
+      "domains": [
+        "Education",
+        "Communications"
+      ],
+      "regex": "^[\\w\\.-]+@[\\w\\.-]+\\.[A-Za-z]{2,}$",
+      "regexSource": "Standard email format",
+      "validationRules": [
+        "Must be unique",
+        "Must be valid format"
+      ],
+      "code": "df.filter(df.Email.rlike('^[\\\\w\\\\.-]+@[\\\\w\\\\.-]+\\\\.[A-Za-z]{2,}$'))",
+      "function": {
+        "validation": {
+          "name": "validate_Email",
+          "example": "validate_Email(df)",
+          "definition": "def validate_Email(df):\n    return df.filter(df.Email.rlike(r'^[\\\\w\\\\.-]+@[\\\\w\\\\.-]+\\\\.[A-Za-z]{2,}$'))"
+        },
+        "transformation": {
+          "name": "transform_Email",
+          "example": "transform_Email(df)",
+          "definition": "def transform_Email(df):\n    return df.withColumn('Email', df.Email)"
+        }
+      }
     },
     {
       "id": 6,
-      "term": "REST",
-      "definition": "Representational State Transfer - An architectural style for designing networked applications",
-      "domains": ["Technology", "Communications"]
+      "term": "PhoneNumber",
+      "definition": "The student's contact number",
+      "domains": [
+        "Education",
+        "Communications"
+      ],
+      "regex": "^\\+?\\d{10,15}$",
+      "regexSource": "Optional '+' followed by 10\u201315 digits",
+      "validationRules": [
+        "Optional",
+        "Must be digits only if present"
+      ],
+      "code": "df.filter(df.PhoneNumber.rlike('^\\\\+?\\\\d{10,15}$'))",
+      "function": {
+        "validation": {
+          "name": "validate_PhoneNumber",
+          "example": "validate_PhoneNumber(df)",
+          "definition": "def validate_PhoneNumber(df):\n    return df.filter(df.PhoneNumber.rlike(r'^\\\\+?\\\\d{10,15}$'))"
+        },
+        "transformation": {
+          "name": "transform_PhoneNumber",
+          "example": "transform_PhoneNumber(df)",
+          "definition": "def transform_PhoneNumber(df):\n    return df.withColumn('PhoneNumber', df.PhoneNumber)"
+        }
+      }
     },
     {
       "id": 7,
-      "term": "GraphQL",
-      "definition": "A query language for APIs and a runtime for executing those queries with existing data",
-      "domains": ["Technology", "Communications"]
+      "term": "EnrollmentYear",
+      "definition": "The year the student enrolled",
+      "domains": [
+        "Education",
+        "Academic"
+      ],
+      "regex": "^\\d{4}$",
+      "regexSource": "Four-digit year",
+      "validationRules": [
+        "Must be current year or earlier",
+        "Not null"
+      ],
+      "code": "df.filter(df.EnrollmentYear.rlike('^\\\\d{4}$'))",
+      "function": {
+        "validation": {
+          "name": "validate_EnrollmentYear",
+          "example": "validate_EnrollmentYear(df)",
+          "definition": "def validate_EnrollmentYear(df):\n    return df.filter(df.EnrollmentYear.rlike(r'^\\\\d{4}$'))"
+        },
+        "transformation": {
+          "name": "transform_EnrollmentYear",
+          "example": "transform_EnrollmentYear(df)",
+          "definition": "def transform_EnrollmentYear(df):\n    return df.withColumn('EnrollmentYear', df.EnrollmentYear)"
+        }
+      }
     },
     {
       "id": 8,
-      "term": "OAuth",
-      "definition": "An open standard for access delegation, commonly used for token-based authentication and authorization",
-      "domains": ["Safety", "Technology"]
+      "term": "GPA",
+      "definition": "Grade Point Average of the student",
+      "domains": [
+        "Education",
+        "Performance"
+      ],
+      "regex": "^([0-3]\\.[0-9]{1,2}|4\\.0{1,2})$",
+      "regexSource": "Decimal between 0.00 and 4.00 (inclusive)",
+      "validationRules": [
+        "Range: 0.00 - 4.00",
+        "Optional"
+      ],
+      "code": "df.filter(df.GPA.rlike('^([0-3]\\\\.[0-9]{1,2}|4\\\\.0{1,2})$'))",
+      "function": {
+        "validation": {
+          "name": "validate_GPA",
+          "example": "validate_GPA(df)",
+          "definition": "def validate_GPA(df):\n    return df.filter(df.GPA.rlike(r'^([0-3]\\\\.[0-9]{1,2}|4\\\\.0{1,2})$'))"
+        },
+        "transformation": {
+          "name": "transform_GPA",
+          "example": "transform_GPA(df)",
+          "definition": "def transform_GPA(df):\n    return df.withColumn('GPA', df.GPA)"
+        }
+      }
     },
     {
       "id": 9,
-      "term": "JWT",
-      "definition": "JSON Web Token - A compact, URL-safe means of representing claims between two parties",
-      "domains": ["Safety", "Technology"]
+      "term": "Major",
+      "definition": "The student's primary field of study",
+      "domains": [
+        "Education",
+        "Academic"
+      ],
+      "regex": "^[A-Za-z&\\s]{2,100}$",
+      "regexSource": "Letters, spaces, and ampersands allowed (2\u2013100 characters)",
+      "validationRules": [
+        "Not null",
+        "Must match allowed academic programs"
+      ],
+      "code": "df.filter(df.Major.rlike('^[A-Za-z&\\\\s]{2,100}$'))",
+      "function": {
+        "validation": {
+          "name": "validate_Major",
+          "example": "validate_Major(df)",
+          "definition": "def validate_Major(df):\n    return df.filter(df.Major.rlike(r'^[A-Za-z&\\\\s]{2,100}$'))"
+        },
+        "transformation": {
+          "name": "transform_Major",
+          "example": "transform_Major(df)",
+          "definition": "def transform_Major(df):\n    return df.withColumn('Major', df.Major)"
+        }
+      }
     },
     {
       "id": 10,
-      "term": "WebSocket",
-      "definition": "A computer communications protocol providing full-duplex communication channels over a single TCP connection",
-      "domains": ["Technology", "Communications"]
-    }
-  ],
-  "suffixes": [
-    {
-      "id": "suf-001",
-      "name": "API",
-      "description": "Application Programming Interface",
-      "count": 15,
-      "examples": ["REST API", "GraphQL API", "Web API"]
-    },
-    {
-      "id": "suf-002",
-      "name": "DB",
-      "description": "Database",
-      "count": 12,
-      "examples": ["SQL DB", "NoSQL DB", "Graph DB"]
-    },
-    {
-      "id": "suf-003",
-      "name": "Service",
-      "description": "Service-oriented component",
-      "count": 20,
-      "examples": ["Auth Service", "Payment Service", "Notification Service"]
-    },
-    {
-      "id": "suf-004",
-      "name": "System",
-      "description": "Complete system or platform",
-      "count": 8,
-      "examples": ["Payment System", "Billing System", "Reporting System"]
-    },
-    {
-      "id": "suf-005",
-      "name": "Manager",
-      "description": "Management component",
-      "count": 10,
-      "examples": ["User Manager", "Resource Manager", "Task Manager"]
-    },
-    {
-      "id": "suf-006",
-      "name": "Engine",
-      "description": "Core processing component",
-      "count": 6,
-      "examples": ["Search Engine", "Rule Engine", "Recommendation Engine"]
-    },
-    {
-      "id": "suf-007",
-      "name": "Client",
-      "description": "Client-side component",
-      "count": 9,
-      "examples": ["Web Client", "Mobile Client", "Desktop Client"]
-    },
-    {
-      "id": "suf-008",
-      "name": "Server",
-      "description": "Server-side component",
-      "count": 11,
-      "examples": ["Web Server", "Application Server", "File Server"]
-    },
-    {
-      "id": "suf-009",
-      "name": "Gateway",
-      "description": "Entry point or routing component",
-      "count": 7,
-      "examples": ["API Gateway", "Payment Gateway", "Service Gateway"]
-    },
-    {
-      "id": "suf-010",
-      "name": "Repository",
-      "description": "Data storage component",
-      "count": 14,
-      "examples": ["User Repository", "Product Repository", "Order Repository"]
+      "term": "GraduationStatus",
+      "definition": "The current graduation status of the student",
+      "domains": [
+        "Education",
+        "Academic"
+      ],
+      "regex": "^(Enrolled|Graduated|Withdrawn|Deferred)$",
+      "regexSource": "One of four allowed fixed statuses",
+      "validationRules": [
+        "Enum value",
+        "Not null"
+      ],
+      "code": "df.filter(df.GraduationStatus.rlike('^(Enrolled|Graduated|Withdrawn|Deferred)$'))",
+      "function": {
+        "validation": {
+          "name": "validate_GraduationStatus",
+          "example": "validate_GraduationStatus(df)",
+          "definition": "def validate_GraduationStatus(df):\n    return df.filter(df.GraduationStatus.rlike(r'^(Enrolled|Graduated|Withdrawn|Deferred)$'))"
+        },
+        "transformation": {
+          "name": "transform_GraduationStatus",
+          "example": "transform_GraduationStatus(df)",
+          "definition": "def transform_GraduationStatus(df):\n    return df.withColumn('GraduationStatus', df.GraduationStatus)"
+        }
+      }
     }
   ]
-} 
+}

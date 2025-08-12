@@ -10,20 +10,24 @@ import {
   CircularProgress,
   Alert,
   Chip,
+  Fab,
   useTheme,
 } from '@mui/material';
 import {
   Search as SearchIcon,
+  Add as AddIcon,
 } from '@mui/icons-material';
 import { ThemeContext } from '../App';
 import { fetchAgreements } from '../services/api';
 import ProductAgreementCard from '../components/ProductAgreementCard';
 import Pagination from '../components/Pagination';
+import { useNavigate } from 'react-router-dom';
 
 const ITEMS_PER_PAGE = 12;
 
 const ProductAgreementsPage = () => {
   const { currentTheme } = useContext(ThemeContext);
+  const navigate = useNavigate();
   const [allAgreements, setAllAgreements] = useState([]);
   const [filteredAgreements, setFilteredAgreements] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -99,6 +103,45 @@ const ProductAgreementsPage = () => {
 
   const handlePageChange = (event, value) => {
     setPage(value);
+  };
+
+  const handleCreateNewAgreement = () => {
+    const tempId = `temp_${Date.now()}`;
+    const newAgreement = {
+      id: tempId,
+      name: '',
+      description: '',
+      status: 'draft',
+      specificationMaintainer: '',
+      parentSystem: '',
+      dataProducer: '',
+      dataValidator: '',
+      dataConsumer: [],
+      modelShortName: '',
+      contractVersion: '1.0.0',
+      deliveredVersion: ['1.0.0'],
+      deliveryFrequency: ['One-Time'],
+      startDate: new Date().toISOString().slice(0, 10),
+      endDate: '',
+      fileFormat: 'JSON',
+      restricted: false,
+      location: {},
+      todo: {
+        date: new Date().toISOString(),
+        items: ['Initial setup tasks']
+      },
+      changelog: [
+        {
+          version: '1.0.0',
+          date: new Date().toISOString().slice(0, 10),
+          changes: ['Initial agreement creation']
+        }
+      ],
+      nextUpdate: '',
+      lastUpdated: new Date().toISOString().slice(0, 19).replace('T', ' ')
+    };
+    localStorage.setItem('newAgreementTemplate', JSON.stringify(newAgreement));
+    navigate('/agreements/create');
   };
 
   const getStatusColor = (status) => {
@@ -233,6 +276,26 @@ const ProductAgreementsPage = () => {
           currentTheme={currentTheme}
         />
       </Box>
+
+      {/* Floating Action Button for creating new agreements */}
+      <Fab
+        color="primary"
+        aria-label="add new agreement"
+        onClick={handleCreateNewAgreement}
+        sx={{
+          position: 'fixed',
+          bottom: 24,
+          right: 24,
+          bgcolor: currentTheme.primary,
+          color: currentTheme.background,
+          '&:hover': {
+            bgcolor: currentTheme.primaryDark || currentTheme.primary
+          },
+          zIndex: 1000,
+        }}
+      >
+        <AddIcon />
+      </Fab>
     </Container>
   );
 };
