@@ -68,6 +68,11 @@ const EditAgreementPage = () => {
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
   const [showDeleteArrayDialog, setShowDeleteArrayDialog] = useState(false);
   const [deleteArrayItem, setDeleteArrayItem] = useState({ path: '', index: -1, label: '' });
+  const [newLocationKey, setNewLocationKey] = useState('');
+  const [newLocationValue, setNewLocationValue] = useState('');
+  const [newChangelogVersion, setNewChangelogVersion] = useState('');
+  const [newChangelogDate, setNewChangelogDate] = useState('');
+  const [newChangelogChanges, setNewChangelogChanges] = useState('');
 
   // Load agreement data
   useEffect(() => {
@@ -403,10 +408,706 @@ const EditAgreementPage = () => {
     }
   };
 
+  const renderLocationField = (path, value, label) => {
+    const handleAddLocationItem = () => {
+      if (newLocationKey.trim() && newLocationValue.trim()) {
+        setEditedAgreement(prev => {
+          const newAgreement = { ...prev };
+          const pathArray = path.split('.');
+          let current = newAgreement;
+          
+          for (let i = 0; i < pathArray.length; i++) {
+            current = current[pathArray[i]];
+          }
+          
+          if (typeof current === 'object' && current !== null) {
+            current[newLocationKey.trim()] = newLocationValue.trim();
+          }
+          
+          return newAgreement;
+        });
+        
+        setNewLocationKey('');
+        setNewLocationValue('');
+      }
+    };
+
+    const handleKeyChange = (oldKey, newKey) => {
+      if (oldKey === newKey || !newKey.trim()) return;
+      
+      setEditedAgreement(prev => {
+        const newAgreement = { ...prev };
+        const pathArray = path.split('.');
+        let current = newAgreement;
+        
+        for (let i = 0; i < pathArray.length; i++) {
+          current = current[pathArray[i]];
+        }
+        
+        if (typeof current === 'object' && current !== null) {
+          const value = current[oldKey];
+          delete current[oldKey];
+          current[newKey.trim()] = value;
+        }
+        
+        return newAgreement;
+      });
+    };
+
+    const handleValueChange = (key, newValue) => {
+      setEditedAgreement(prev => {
+        const newAgreement = { ...prev };
+        const pathArray = path.split('.');
+        let current = newAgreement;
+        
+        for (let i = 0; i < pathArray.length; i++) {
+          current = current[pathArray[i]];
+        }
+        
+        if (typeof current === 'object' && current !== null) {
+          current[key] = newValue;
+        }
+        
+        return newAgreement;
+      });
+    };
+
+    const handleDeleteLocationItem = (keyToDelete) => {
+      setEditedAgreement(prev => {
+        const newAgreement = { ...prev };
+        const pathArray = path.split('.');
+        let current = newAgreement;
+        
+        for (let i = 0; i < pathArray.length; i++) {
+          current = current[pathArray[i]];
+        }
+        
+        if (typeof current === 'object' && current !== null) {
+          delete current[keyToDelete];
+        }
+        
+        return newAgreement;
+      });
+    };
+
+    return (
+      <Box key={path} sx={{ 
+        mb: 2,
+        p: 2,
+        bgcolor: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.02)' : 'rgba(33, 150, 243, 0.01)',
+        borderRadius: 1,
+        border: `1px solid ${currentTheme.darkMode ? 'rgba(33, 150, 243, 0.1)' : 'rgba(33, 150, 243, 0.08)'}`,
+        borderLeft: `4px solid ${currentTheme.darkMode ? 'rgba(33, 150, 243, 0.4)' : 'rgba(33, 150, 243, 0.3)'}`
+      }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+          <Typography variant="subtitle2" sx={{ 
+            color: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.9)' : 'rgba(33, 150, 243, 0.8)', 
+            fontWeight: 700,
+            fontSize: '1rem'
+          }}>
+            {label}
+          </Typography>
+          <Typography variant="caption" sx={{ 
+            color: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.7)' : 'rgba(33, 150, 243, 0.6)',
+            fontStyle: 'italic',
+            ml: 'auto'
+          }}>
+            Key-Value Pairs
+          </Typography>
+        </Box>
+
+        {/* Existing location items */}
+        {Object.entries(value || {}).map(([key, val]) => (
+          <Box key={key} sx={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: 1, 
+            mb: 1.5,
+            p: 1.5,
+            bgcolor: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.04)' : 'rgba(33, 150, 243, 0.03)',
+            borderRadius: 1,
+            border: `1px solid ${currentTheme.darkMode ? 'rgba(33, 150, 243, 0.15)' : 'rgba(33, 150, 243, 0.12)'}`,
+            transition: 'all 0.2s ease-in-out',
+            '&:hover': {
+              bgcolor: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.06)' : 'rgba(33, 150, 243, 0.05)',
+              borderColor: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.25)' : 'rgba(33, 150, 243, 0.2)'
+            }
+          }}>
+            <TextField
+              size="small"
+              label="Bucket"
+              value={key}
+              onChange={(e) => handleKeyChange(key, e.target.value)}
+              sx={{ 
+                flex: 1,
+                '& .MuiInputLabel-root': { 
+                  color: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.8)' : 'rgba(33, 150, 243, 0.7)',
+                  fontWeight: 600
+                },
+                '& .MuiOutlinedInput-root': { 
+                  color: currentTheme.text,
+                  bgcolor: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.02)' : 'rgba(33, 150, 243, 0.01)',
+                  '& fieldset': { 
+                    borderColor: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.2)' : 'rgba(33, 150, 243, 0.15)',
+                    borderWidth: '1.5px'
+                  },
+                  '&:hover fieldset': { 
+                    borderColor: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.3)' : 'rgba(33, 150, 243, 0.25)'
+                  },
+                  '&.Mui-focused fieldset': { 
+                    borderColor: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.5)' : 'rgba(33, 150, 243, 0.4)'
+                  }
+                },
+                '& .MuiInputBase-input': { color: currentTheme.text },
+                '& .MuiInputBase-input::placeholder': { color: currentTheme.textSecondary, opacity: 0.7 }
+              }}
+              placeholder="Location bucket"
+            />
+            <Typography variant="body2" sx={{ color: currentTheme.textSecondary, mx: 1 }}>
+              :
+            </Typography>
+            <TextField
+              size="small"
+              label="Description"
+              value={val}
+              onChange={(e) => handleValueChange(key, e.target.value)}
+              sx={{ 
+                flex: 1,
+                '& .MuiInputLabel-root': { 
+                  color: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.8)' : 'rgba(33, 150, 243, 0.7)',
+                  fontWeight: 600
+                },
+                '& .MuiOutlinedInput-root': { 
+                  color: currentTheme.text,
+                  bgcolor: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.02)' : 'rgba(33, 150, 243, 0.01)',
+                  '& fieldset': { 
+                    borderColor: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.2)' : 'rgba(33, 150, 243, 0.15)',
+                    borderWidth: '1.5px'
+                  },
+                  '&:hover fieldset': { 
+                    borderColor: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.3)' : 'rgba(33, 150, 243, 0.25)'
+                  },
+                  '&.Mui-focused fieldset': { 
+                    borderColor: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.5)' : 'rgba(33, 150, 243, 0.4)'
+                  }
+                },
+                '& .MuiInputBase-input': { color: currentTheme.text },
+                '& .MuiInputBase-input::placeholder': { color: currentTheme.textSecondary, opacity: 0.7 }
+              }}
+              placeholder="Location description"
+            />
+            <IconButton
+              size="small"
+              onClick={() => handleDeleteLocationItem(key)}
+              sx={{ 
+                color: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.7)' : 'rgba(33, 150, 243, 0.6)',
+                '&:hover': {
+                  bgcolor: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.1)' : 'rgba(33, 150, 243, 0.08)'
+                }
+              }}
+              title="Delete location item"
+            >
+              <DeleteIcon />
+            </IconButton>
+          </Box>
+        ))}
+
+        {/* Add new location item */}
+        <Box sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: 1, 
+          mt: 2,
+          p: 2,
+          bgcolor: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.06)' : 'rgba(33, 150, 243, 0.04)',
+          borderRadius: 1,
+          border: `2px dashed ${currentTheme.darkMode ? 'rgba(33, 150, 243, 0.3)' : 'rgba(33, 150, 243, 0.2)'}`,
+          borderStyle: 'dashed'
+        }}>
+                                <TextField
+             size="small"
+             label="New Bucket"
+             value={newLocationKey}
+             onChange={(e) => setNewLocationKey(e.target.value)}
+             sx={{ 
+               flex: 1,
+               '& .MuiInputLabel-root': { 
+                 color: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.8)' : 'rgba(33, 150, 243, 0.7)',
+                 fontWeight: 600
+               },
+               '& .MuiOutlinedInput-root': { 
+                 color: currentTheme.text,
+                 bgcolor: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.02)' : 'rgba(33, 150, 243, 0.01)',
+                 '& fieldset': { 
+                   borderColor: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.2)' : 'rgba(33, 150, 243, 0.15)',
+                   borderWidth: '1.5px'
+                 },
+                 '&:hover fieldset': { 
+                   borderColor: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.3)' : 'rgba(33, 150, 243, 0.25)'
+                 },
+                 '&.Mui-focused fieldset': { 
+                   borderColor: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.5)' : 'rgba(33, 150, 243, 0.4)'
+                 }
+               },
+               '& .MuiInputBase-input': { color: currentTheme.text },
+               '& .MuiInputBase-input::placeholder': { color: currentTheme.textSecondary, opacity: 0.7 }
+             }}
+             placeholder="Enter bucket"
+           />
+          <Typography variant="body2" sx={{ color: currentTheme.textSecondary, mx: 1 }}>
+            :
+          </Typography>
+                                <TextField
+             size="small"
+             label="New Description"
+             value={newLocationValue}
+             onChange={(e) => setNewLocationValue(e.target.value)}
+             sx={{ 
+               flex: 1,
+               '& .MuiInputLabel-root': { 
+                 color: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.8)' : 'rgba(33, 150, 243, 0.7)',
+                 fontWeight: 600
+               },
+               '& .MuiOutlinedInput-root': { 
+                 color: currentTheme.text,
+                 bgcolor: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.02)' : 'rgba(33, 150, 243, 0.01)',
+                 '& fieldset': { 
+                   borderColor: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.2)' : 'rgba(33, 150, 243, 0.15)',
+                   borderWidth: '1.5px'
+                 },
+                 '&:hover fieldset': { 
+                   borderColor: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.3)' : 'rgba(33, 150, 243, 0.25)'
+                 },
+                 '&.Mui-focused fieldset': { 
+                   borderColor: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.5)' : 'rgba(33, 150, 243, 0.4)'
+                 }
+               },
+               '& .MuiInputBase-input': { color: currentTheme.text },
+               '& .MuiInputBase-input::placeholder': { color: currentTheme.textSecondary, opacity: 0.7 }
+             }}
+             placeholder="Enter description"
+           />
+          <IconButton
+            size="small"
+            onClick={handleAddLocationItem}
+            disabled={!newLocationKey.trim() || !newLocationValue.trim()}
+            sx={{ 
+              color: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.8)' : 'rgba(33, 150, 243, 0.7)',
+              '&:hover': {
+                bgcolor: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.1)' : 'rgba(33, 150, 243, 0.08)'
+              },
+              '&:disabled': {
+                color: currentTheme.textSecondary,
+                opacity: 0.5
+              }
+            }}
+            title="Add new location item"
+          >
+            <AddIcon />
+          </IconButton>
+        </Box>
+      </Box>
+    );
+  };
+
+  const renderChangelogField = (path, value, label) => {
+    console.log('renderChangelogField called with:', { path, value, label });
+    
+    const handleAddChangelogItem = () => {
+      if (newChangelogVersion.trim() && newChangelogDate.trim() && newChangelogChanges.trim()) {
+        setEditedAgreement(prev => {
+          const newAgreement = { ...prev };
+          const pathArray = path.split('.');
+          let current = newAgreement;
+          
+          for (let i = 0; i < pathArray.length; i++) {
+            if (!current[pathArray[i]]) {
+              current[pathArray[i]] = [];
+            }
+            current = current[pathArray[i]];
+          }
+          
+          if (Array.isArray(current)) {
+            current.push({
+              version: newChangelogVersion.trim(),
+              date: newChangelogDate.trim(),
+              changes: [newChangelogChanges.trim()]
+            });
+          }
+          
+          return newAgreement;
+        });
+        
+        setNewChangelogVersion('');
+        setNewChangelogDate('');
+        setNewChangelogChanges('');
+      }
+    };
+
+    const handleVersionChange = (index, newVersion) => {
+      setEditedAgreement(prev => {
+        const newAgreement = { ...prev };
+        const pathArray = path.split('.');
+        let current = newAgreement;
+        
+        for (let i = 0; i < pathArray.length; i++) {
+          current = current[pathArray[i]];
+        }
+        
+        if (Array.isArray(current) && current[index]) {
+          current[index].version = newVersion;
+        }
+        
+        return newAgreement;
+      });
+    };
+
+    const handleDateChange = (index, newDate) => {
+      setEditedAgreement(prev => {
+        const newAgreement = { ...prev };
+        const pathArray = path.split('.');
+        let current = newAgreement;
+        
+        for (let i = 0; i < pathArray.length; i++) {
+          current = current[pathArray[i]];
+        }
+        
+        if (Array.isArray(current) && current[index]) {
+          current[index].date = newDate;
+        }
+        
+        return newAgreement;
+      });
+    };
+
+    const handleChangesChange = (index, newChanges) => {
+      setEditedAgreement(prev => {
+        const newAgreement = { ...prev };
+        const pathArray = path.split('.');
+        let current = newAgreement;
+        
+        for (let i = 0; i < pathArray.length; i++) {
+          current = current[pathArray[i]];
+        }
+        
+        if (Array.isArray(current) && current[index]) {
+          current[index].changes = [newChanges];
+        }
+        
+        return newAgreement;
+      });
+    };
+
+    const handleDeleteChangelogItem = (indexToDelete) => {
+      setEditedAgreement(prev => {
+        const newAgreement = { ...prev };
+        const pathArray = path.split('.');
+        let current = newAgreement;
+        
+        for (let i = 0; i < pathArray.length; i++) {
+          current = current[pathArray[i]];
+        }
+        
+        if (Array.isArray(current)) {
+          current.splice(indexToDelete, 1);
+        }
+        
+        return newAgreement;
+      });
+    };
+
+    return (
+      <Box key={path} sx={{ 
+        mb: 2,
+        p: 2,
+        bgcolor: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.02)' : 'rgba(76, 175, 80, 0.01)',
+        borderRadius: 1,
+        border: `1px solid ${currentTheme.darkMode ? 'rgba(76, 175, 80, 0.1)' : 'rgba(76, 175, 80, 0.08)'}`,
+        borderLeft: `4px solid ${currentTheme.darkMode ? 'rgba(76, 175, 80, 0.4)' : 'rgba(76, 175, 80, 0.3)'}`
+      }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+          <Typography variant="subtitle2" sx={{ 
+            color: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.9)' : 'rgba(76, 175, 80, 0.8)', 
+            fontWeight: 700,
+            fontSize: '1rem'
+          }}>
+            {label}
+          </Typography>
+          <Typography variant="caption" sx={{ 
+            color: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.7)' : 'rgba(76, 175, 80, 0.6)',
+            fontStyle: 'italic',
+            ml: 'auto'
+          }}>
+            Version History
+          </Typography>
+        </Box>
+
+        {/* Existing changelog items */}
+        {(value || []).map((item, index) => (
+          <Box key={index} sx={{ 
+            display: 'flex', 
+            flexDirection: 'column',
+            gap: 1, 
+            mb: 2,
+            p: 2,
+            bgcolor: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.04)' : 'rgba(76, 175, 80, 0.03)',
+            borderRadius: 1,
+            border: `1px solid ${currentTheme.darkMode ? 'rgba(76, 175, 80, 0.15)' : 'rgba(76, 175, 80, 0.12)'}`,
+            transition: 'all 0.2s ease-in-out',
+            '&:hover': {
+              bgcolor: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.06)' : 'rgba(76, 175, 80, 0.05)',
+              borderColor: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.25)' : 'rgba(76, 175, 80, 0.2)'
+            }
+          }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+              <TextField
+                size="small"
+                label="Version"
+                value={item.version || ''}
+                onChange={(e) => handleVersionChange(index, e.target.value)}
+                sx={{ 
+                  flex: 1,
+                  '& .MuiInputLabel-root': { 
+                    color: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.8)' : 'rgba(76, 175, 80, 0.7)',
+                    fontWeight: 600
+                  },
+                  '& .MuiOutlinedInput-root': { 
+                    color: currentTheme.text,
+                    bgcolor: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.02)' : 'rgba(76, 175, 80, 0.01)',
+                    '& fieldset': { 
+                      borderColor: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.2)' : 'rgba(76, 175, 80, 0.15)',
+                      borderWidth: '1.5px'
+                    },
+                    '&:hover fieldset': { 
+                      borderColor: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.3)' : 'rgba(76, 175, 80, 0.25)'
+                    },
+                    '&.Mui-focused fieldset': { 
+                      borderColor: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.5)' : 'rgba(76, 175, 80, 0.4)'
+                    }
+                  },
+                  '& .MuiInputBase-input': { color: currentTheme.text },
+                  '& .MuiInputBase-input::placeholder': { color: currentTheme.textSecondary, opacity: 0.7 }
+                }}
+                placeholder="Version number"
+              />
+              <TextField
+                size="small"
+                label="Date"
+                value={item.date || ''}
+                onChange={(e) => handleDateChange(index, e.target.value)}
+                sx={{ 
+                  flex: 1,
+                  '& .MuiInputLabel-root': { 
+                    color: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.8)' : 'rgba(76, 175, 80, 0.7)',
+                    fontWeight: 600
+                  },
+                  '& .MuiOutlinedInput-root': { 
+                    color: currentTheme.text,
+                    bgcolor: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.02)' : 'rgba(76, 175, 80, 0.01)',
+                    '& fieldset': { 
+                      borderColor: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.2)' : 'rgba(76, 175, 80, 0.15)',
+                      borderWidth: '1.5px'
+                    },
+                    '&:hover fieldset': { 
+                      borderColor: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.3)' : 'rgba(76, 175, 80, 0.25)'
+                    },
+                    '&.Mui-focused fieldset': { 
+                      borderColor: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.5)' : 'rgba(76, 175, 80, 0.4)'
+                    }
+                  },
+                  '& .MuiInputBase-input': { color: currentTheme.text },
+                  '& .MuiInputBase-input::placeholder': { color: currentTheme.textSecondary, opacity: 0.7 }
+                }}
+                placeholder="YYYY-MM-DD or ISO date"
+              />
+              <IconButton
+                size="small"
+                onClick={() => handleDeleteChangelogItem(index)}
+                sx={{ 
+                  color: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.7)' : 'rgba(76, 175, 80, 0.6)',
+                  '&:hover': {
+                    bgcolor: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.1)' : 'rgba(76, 175, 80, 0.08)'
+                  }
+                }}
+                title="Delete changelog item"
+              >
+                <DeleteIcon />
+              </IconButton>
+            </Box>
+            <TextField
+              size="small"
+              label="Changes"
+              value={Array.isArray(item.changes) ? item.changes.join(', ') : item.changes || ''}
+              onChange={(e) => handleChangesChange(index, e.target.value)}
+              multiline
+              rows={2}
+              sx={{ 
+                '& .MuiInputLabel-root': { 
+                  color: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.8)' : 'rgba(76, 175, 80, 0.7)',
+                  fontWeight: 600
+                },
+                '& .MuiOutlinedInput-root': { 
+                  color: currentTheme.text,
+                  bgcolor: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.02)' : 'rgba(76, 175, 80, 0.01)',
+                  '& fieldset': { 
+                    borderColor: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.2)' : 'rgba(76, 175, 80, 0.15)',
+                    borderWidth: '1.5px'
+                  },
+                  '&:hover fieldset': { 
+                    borderColor: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.3)' : 'rgba(76, 175, 80, 0.25)'
+                  },
+                  '&.Mui-focused fieldset': { 
+                    borderColor: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.5)' : 'rgba(76, 175, 80, 0.4)'
+                  }
+                },
+                '& .MuiInputBase-input': { color: currentTheme.text },
+                '& .MuiInputBase-input::placeholder': { color: currentTheme.textSecondary, opacity: 0.7 }
+              }}
+              placeholder="Describe the changes made in this version"
+            />
+          </Box>
+        ))}
+
+        {/* Add new changelog item */}
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: 'column',
+          gap: 1, 
+          mt: 2,
+          p: 2,
+          bgcolor: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.06)' : 'rgba(76, 175, 80, 0.04)',
+          borderRadius: 1,
+          border: `2px dashed ${currentTheme.darkMode ? 'rgba(76, 175, 80, 0.3)' : 'rgba(76, 175, 80, 0.2)'}`,
+          borderStyle: 'dashed'
+        }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <TextField
+              size="small"
+              label="New Version"
+              value={newChangelogVersion}
+              onChange={(e) => setNewChangelogVersion(e.target.value)}
+              sx={{ 
+                flex: 1,
+                '& .MuiInputLabel-root': { 
+                  color: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.8)' : 'rgba(76, 175, 80, 0.7)',
+                  fontWeight: 600
+                },
+                '& .MuiOutlinedInput-root': { 
+                  color: currentTheme.text,
+                  bgcolor: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.02)' : 'rgba(76, 175, 80, 0.01)',
+                  '& fieldset': { 
+                    borderColor: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.2)' : 'rgba(76, 175, 80, 0.15)',
+                    borderWidth: '1.5px'
+                  },
+                  '&:hover fieldset': { 
+                    borderColor: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.3)' : 'rgba(76, 175, 80, 0.25)'
+                  },
+                  '&.Mui-focused fieldset': { 
+                    borderColor: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.5)' : 'rgba(76, 175, 80, 0.4)'
+                  }
+                },
+                '& .MuiInputBase-input': { color: currentTheme.text },
+                '& .MuiInputBase-input::placeholder': { color: currentTheme.textSecondary, opacity: 0.7 }
+              }}
+              placeholder="Enter version number"
+            />
+            <TextField
+              size="small"
+              label="New Date"
+              value={newChangelogDate}
+              onChange={(e) => setNewChangelogDate(e.target.value)}
+              sx={{ 
+                flex: 1,
+                '& .MuiInputLabel-root': { 
+                  color: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.8)' : 'rgba(76, 175, 80, 0.7)',
+                  fontWeight: 600
+                },
+                '& .MuiOutlinedInput-root': { 
+                  color: currentTheme.text,
+                  bgcolor: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.02)' : 'rgba(76, 175, 80, 0.01)',
+                  '& fieldset': { 
+                    borderColor: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.2)' : 'rgba(76, 175, 80, 0.15)',
+                    borderWidth: '1.5px'
+                  },
+                  '&:hover fieldset': { 
+                    borderColor: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.3)' : 'rgba(76, 175, 80, 0.25)'
+                  },
+                  '&.Mui-focused fieldset': { 
+                    borderColor: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.5)' : 'rgba(76, 175, 80, 0.4)'
+                  }
+                },
+                '& .MuiInputBase-input': { color: currentTheme.text },
+                '& .MuiInputBase-input::placeholder': { color: currentTheme.textSecondary, opacity: 0.7 }
+              }}
+              placeholder="YYYY-MM-DD or ISO date"
+            />
+            <IconButton
+              size="small"
+              onClick={handleAddChangelogItem}
+              disabled={!newChangelogVersion.trim() || !newChangelogDate.trim() || !newChangelogChanges.trim()}
+              sx={{ 
+                color: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.8)' : 'rgba(76, 175, 80, 0.7)',
+                '&:hover': {
+                  bgcolor: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.1)' : 'rgba(76, 175, 80, 0.08)'
+                },
+                '&:disabled': {
+                  color: currentTheme.textSecondary,
+                  opacity: 0.5
+                }
+              }}
+              title="Add new changelog item"
+            >
+              <AddIcon />
+            </IconButton>
+          </Box>
+          <TextField
+            size="small"
+            label="New Changes"
+            value={newChangelogChanges}
+            onChange={(e) => setNewChangelogChanges(e.target.value)}
+            multiline
+            rows={2}
+            sx={{ 
+              '& .MuiInputLabel-root': { 
+                color: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.8)' : 'rgba(76, 175, 80, 0.7)',
+                fontWeight: 600
+              },
+              '& .MuiOutlinedInput-root': { 
+                color: currentTheme.text,
+                bgcolor: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.02)' : 'rgba(76, 175, 80, 0.01)',
+                '& fieldset': { 
+                  borderColor: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.2)' : 'rgba(76, 175, 80, 0.15)',
+                  borderWidth: '1.5px'
+                },
+                '&:hover fieldset': { 
+                  borderColor: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.3)' : 'rgba(76, 175, 80, 0.25)'
+                },
+                '&.Mui-focused fieldset': { 
+                  borderColor: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.5)' : 'rgba(76, 175, 80, 0.4)'
+                }
+              },
+              '& .MuiInputBase-input': { color: currentTheme.text },
+              '& .MuiInputBase-input::placeholder': { color: currentTheme.textSecondary, opacity: 0.7 }
+            }}
+            placeholder="Describe the changes made in this version"
+          />
+        </Box>
+      </Box>
+    );
+  };
+
   const renderField = (path, value, label, type = 'text', options = null, isRequired = false) => {
+    console.log('renderField called with:', { path, value, label, type, isRequired });
+    
     if (Array.isArray(value)) {
-      // Special styling for arrays within todo and location
-      const isSpecialArray = path.includes('todo.') || path.includes('location.');
+      // Special handling for changelog arrays
+      if (path === 'changelog') {
+        console.log('Changelog array detected, calling renderChangelogField');
+        return renderChangelogField(path, value, label);
+      }
+      
+      // Special styling for arrays within todo
+      const isSpecialArray = path.includes('todo.');
       
       return (
         <Box key={path} sx={{ 
@@ -519,8 +1220,13 @@ const EditAgreementPage = () => {
     }
 
     if (typeof value === 'object' && value !== null) {
-      // Special styling for todo and location fields
-      const isSpecialField = path === 'todo' || path === 'location';
+      // Special handling for location field
+      if (path === 'location') {
+        return renderLocationField(path, value, label);
+      }
+      
+      // Special styling for todo field
+      const isSpecialField = path === 'todo';
       
       return (
         <Accordion key={path} sx={{ 
@@ -703,8 +1409,8 @@ const EditAgreementPage = () => {
         }}
         sx={{
           mb: 2,
-          // Special styling for fields within todo and location
-          ...(path.includes('todo.') || path.includes('location.') ? {
+          // Special styling for fields within todo
+          ...(path.includes('todo.') ? {
             '& .MuiInputLabel-root': { 
               color: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.8)' : 'rgba(33, 150, 243, 0.7)',
               fontWeight: 600
