@@ -33,7 +33,7 @@ import {
   Email as EmailIcon,
   HelpOutline as HelpOutlineIcon,
   Gavel as GavelIcon,
-  LockOpen as LockOpenIcon,
+  Edit as EditIcon,
 } from '@mui/icons-material';
 import { ImMakeGroup } from "react-icons/im";
 import { MdHandshake, MdDomain } from "react-icons/md";
@@ -140,7 +140,7 @@ const DataModelDetailPage = ({ currentTheme }) => {
     <Box sx={{ p: 3, maxWidth: 1200, margin: '0 auto' }}>
       <Box sx={{ mb: 3, display: 'flex', alignItems: 'flex-start', gap: 2 }}>
         <ArrowBackIcon 
-          onClick={() => navigate(-1)} 
+          onClick={() => navigate('/specifications')} 
           sx={{ 
             cursor: 'pointer',
             color: currentTheme.text,
@@ -195,7 +195,7 @@ const DataModelDetailPage = ({ currentTheme }) => {
               border: `1px solid ${alpha(currentTheme.primary, 0.3)}`,
             }}
           >
-            <LockOpenIcon />
+            <EditIcon />
           </IconButton>
         </Tooltip>
       </Box>

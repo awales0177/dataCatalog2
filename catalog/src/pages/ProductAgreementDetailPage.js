@@ -43,7 +43,7 @@ import {
   Roofing as RoofingIcon,
   Factory as FactoryIcon,
   Add as AddIcon,
-  Edit as UpdateIcon,
+  Edit as EditIcon,
   Delete as DeleteIcon,
   CheckCircle as FinalizeIcon,
   Create as CreateIcon,
@@ -167,7 +167,7 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
              lowerText.includes('upgrade') || 
              lowerText.includes('refactor') || 
              lowerText.includes('optimize')) {
-      return { icon: UpdateIcon, color: '#2196f3' }; // Blue
+      return { icon: RefreshIcon, color: '#2196f3' }; // Blue
     } 
     // Delete/Remove related keywords
     else if (lowerText.includes('delete') || 
@@ -264,7 +264,7 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
       return { type: 'one-time', label: 'One-Time', icon: UploadIcon, description: 'Single delivery, no recurring updates' };
     }
     if (lowerFreq === 'aperiodic') {
-      return { type: 'aperiodic', label: 'Aperiodic', icon: UpdateIcon, description: 'Irregular updates based on events or triggers' };
+      return { type: 'aperiodic', label: 'Aperiodic', icon: RefreshIcon, description: 'Irregular updates based on events or triggers' };
     }
     if (lowerFreq.includes('min') || lowerFreq.includes('minute')) {
       const minutes = lowerFreq.match(/(\d+)/)?.[1] || '1';
@@ -429,7 +429,7 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
     <Box sx={{ p: 3, maxWidth: 1200, margin: '0 auto' }}>
       <Box sx={{ mb: 3, display: 'flex', alignItems: 'flex-start', gap: 2 }}>
         <ArrowBackIcon 
-          onClick={() => navigate(-1)} 
+          onClick={() => navigate('/agreements')} 
           sx={{ 
             cursor: 'pointer',
             color: currentTheme.text,
@@ -437,43 +437,50 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
             mt: 0.5
           }} 
         />
-        <Box sx={{ flex: 1 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-            <Typography variant="h4" sx={{ color: currentTheme.text }}>
-              {agreement.name}
-            </Typography>
-            <Box
-              sx={{
-                px: 1.5,
-                py: 0.5,
-                borderRadius: 1,
-                bgcolor: `${statusColor}20`,
-                color: statusColor,
-                fontSize: '0.875rem',
-                fontWeight: 500,
-              }}
-            >
-              {agreement.status.split('_').map(word => 
-                word.charAt(0).toUpperCase() + word.slice(1)
-              ).join(' ')}
+        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, flex: 1 }}>
+          <Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+              <Typography variant="h4" sx={{ color: currentTheme.text }}>
+                {agreement.name}
+              </Typography>
+              <Box
+                sx={{
+                  px: 1.5,
+                  py: 0.5,
+                  borderRadius: 1,
+                  bgcolor: `${statusColor}20`,
+                  color: statusColor,
+                  fontSize: '0.875rem',
+                  fontWeight: 500,
+                }}
+              >
+                {agreement.status.split('_').map(word => 
+                  word.charAt(0).toUpperCase() + word.slice(1)
+                ).join(' ')}
+              </Box>
             </Box>
-            <IconButton
-              onClick={() => navigate(`/agreements/${agreement.id}/edit`)}
-              sx={{
-                color: currentTheme.primary,
-                '&:hover': {
-                  bgcolor: currentTheme.primary + '20'
-                }
-              }}
-              title="Edit Agreement"
-            >
-              <UpdateIcon />
-            </IconButton>
+            <Typography variant="body1" sx={{ color: currentTheme.textSecondary }}>
+              {agreement.description}
+            </Typography>
           </Box>
-          <Typography variant="body1" sx={{ color: currentTheme.textSecondary }}>
-            {agreement.description}
-          </Typography>
         </Box>
+        
+        {/* Edit Mode Toggle */}
+        <Tooltip title="Edit Agreement">
+          <IconButton
+            onClick={() => navigate(`/agreements/${agreement.id}/edit`)}
+            sx={{
+              color: currentTheme.primary,
+              bgcolor: alpha(currentTheme.primary, 0.1),
+              '&:hover': {
+                bgcolor: alpha(currentTheme.primary, 0.2),
+              },
+              border: `1px solid ${alpha(currentTheme.primary, 0.3)}`,
+            }}
+          >
+            <EditIcon />
+          </IconButton>
+        </Tooltip>
       </Box>
 
       {versionDiff && (

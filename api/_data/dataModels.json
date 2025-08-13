@@ -7,14 +7,15 @@
       "version": "2.1.0",
       "description": "Comprehensive model for managing customer information including personal details, contact information, purchase history, preferences, and interaction records. Supports customer segmentation, relationship management, and personalized service delivery across multiple channels.",
       "extendedDescription": "The Customer Data Model serves as the foundation for all customer-related operations. It includes detailed schemas for personal information, contact details, purchase history, preferences, and interaction records. The model supports advanced features like customer segmentation, relationship management, and personalized service delivery. It integrates with multiple channels including web, mobile, and in-store systems. The model also includes data quality checks, validation rules, and compliance measures for handling sensitive customer information.",
-      "lastUpdated": "2025-08-12 01:05:59",
+      "lastUpdated": "2025-08-12 22:21:21",
       "owner": "Data Team",
       "specMaintainer": "Jane Smith",
       "maintainerEmail": "abc@yahoo.com",
       "domain": [
         "Customer",
         "Data",
-        "Analytics"
+        "Analytics",
+        "Tax"
       ],
       "referenceData": [
         "iso",

@@ -42,17 +42,17 @@ import { fetchData, createAgreement, updateAgreement, deleteAgreement } from '..
 const EditAgreementPage = () => {
   const { currentTheme } = useContext(ThemeContext);
   const navigate = useNavigate();
-  const { agreementId } = useParams();
+  const { id } = useParams();
   
   // Extract ID from URL as fallback
   const urlPath = window.location.pathname;
   const urlId = urlPath.includes('/edit') ? urlPath.split('/')[2] : null;
-  const finalAgreementId = agreementId || urlId;
+  const finalAgreementId = id || urlId;
   
   const isNewAgreement = !finalAgreementId || finalAgreementId === 'new';
   
   console.log('EditAgreementPage rendered with:');
-  console.log('  agreementId from useParams:', agreementId);
+  console.log('  id from useParams:', id);
   console.log('  urlPath:', urlPath);
   console.log('  urlId from URL:', urlId);
   console.log('  finalAgreementId:', finalAgreementId);
@@ -72,7 +72,7 @@ const EditAgreementPage = () => {
   // Load agreement data
   useEffect(() => {
     const loadAgreement = async () => {
-      console.log('Loading agreement with ID:', agreementId, 'isNewAgreement:', isNewAgreement);
+      console.log('Loading agreement with ID:', finalAgreementId, 'isNewAgreement:', isNewAgreement);
       
       // Wait for route parameters to be loaded
       if (finalAgreementId === undefined) {
@@ -155,13 +155,13 @@ const EditAgreementPage = () => {
       if (isNewAgreement) {
         navigate('/agreements', { replace: true });
       } else {
-        navigate(-1);
+        navigate(`/agreements/${finalAgreementId}`, { replace: true });
       }
     };
 
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, [isNewAgreement, navigate]);
+  }, [isNewAgreement, navigate, finalAgreementId]);
 
   // Warn about unsaved changes
   useEffect(() => {
@@ -315,7 +315,7 @@ const EditAgreementPage = () => {
         }, 1500);
       } else {
         // Update existing agreement
-        const result = await updateAgreement(agreementId, updatedAgreement);
+        const result = await updateAgreement(finalAgreementId, updatedAgreement);
         
         // Update local agreement
         setAgreement(updatedAgreement);
@@ -328,7 +328,7 @@ const EditAgreementPage = () => {
         
         // Navigate back to view mode
         setTimeout(() => {
-          navigate(`/agreements/${agreementId}`);
+          navigate(`/agreements/${finalAgreementId}`);
         }, 1500);
       }
     } catch (error) {
@@ -347,7 +347,25 @@ const EditAgreementPage = () => {
     if (isNewAgreement) {
       navigate('/agreements', { replace: true });
     } else {
-      navigate(`/agreements/${agreementId}`);
+      navigate(`/agreements/${finalAgreementId}`);
+    }
+  };
+
+  const handleBackArrow = () => {
+    console.log('Back arrow clicked');
+    console.log('  isNewAgreement:', isNewAgreement);
+    console.log('  finalAgreementId:', finalAgreementId);
+    console.log('  agreement:', agreement);
+    
+    if (isNewAgreement) {
+      console.log('Navigating to agreements list');
+      navigate('/agreements', { replace: true });
+    } else if (finalAgreementId && finalAgreementId !== 'undefined' && finalAgreementId !== 'null') {
+      console.log('Navigating to view page:', `/agreements/${finalAgreementId}`);
+      navigate(`/agreements/${finalAgreementId}`, { replace: true });
+    } else {
+      console.log('No valid ID, navigating to agreements list');
+      navigate('/agreements', { replace: true });
     }
   };
 
@@ -366,7 +384,7 @@ const EditAgreementPage = () => {
     }
 
     try {
-      await deleteAgreement(agreementId);
+      await deleteAgreement(finalAgreementId);
       setSnackbar({
         open: true,
         message: 'Agreement deleted successfully',
@@ -748,7 +766,7 @@ const EditAgreementPage = () => {
       <Paper sx={{ p: 3, mb: 3, bgcolor: currentTheme.card }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <IconButton onClick={handleCancel} sx={{ color: currentTheme.text }}>
+            <IconButton onClick={handleBackArrow} sx={{ color: currentTheme.text }}>
               <ArrowBackIcon />
             </IconButton>
             <Typography variant="h4" sx={{ color: currentTheme.text }}>
