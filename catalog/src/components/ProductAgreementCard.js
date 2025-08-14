@@ -36,7 +36,7 @@ const ProductAgreementCard = ({ agreement, currentTheme }) => {
       onClick={handleClick}
       sx={{
         p: 2,
-        height: '150px',
+        height: '180px',
         width: '100%',
         display: 'flex',
         flexDirection: 'column',
@@ -80,8 +80,8 @@ const ProductAgreementCard = ({ agreement, currentTheme }) => {
         <Box sx={{
           display: 'flex',
           flexWrap: 'wrap',
-          gap: 1,
-          mb: 2,
+          gap: 0.5,
+          mb: 1,
         }}>
           {(() => {
             const consumers = Array.isArray(agreement.dataConsumer)
@@ -89,8 +89,34 @@ const ProductAgreementCard = ({ agreement, currentTheme }) => {
               : agreement.dataConsumer
                 ? [agreement.dataConsumer]
                 : [];
-            return consumers.length > 0
-              ? consumers.map((consumer, idx) => (
+            
+            if (consumers.length === 0) {
+              return (
+                <Chip
+                  icon={<ShoppingBasketIcon sx={{ color: currentTheme.primary, opacity: 0.8 }} />}
+                  label="No Consumer"
+                  size="small"
+                  sx={{
+                    bgcolor: currentTheme.card,
+                    color: currentTheme.textSecondary,
+                    border: `1px solid ${currentTheme.border}`,
+                    fontWeight: 500,
+                    fontSize: '0.7rem',
+                    opacity: 0.7,
+                    height: '24px',
+                  }}
+                />
+              );
+            }
+            
+            // Show only first 2 consumers to prevent title from being hidden
+            const maxVisible = 2;
+            const visibleConsumers = consumers.slice(0, maxVisible);
+            const hiddenCount = consumers.length - maxVisible;
+            
+            return (
+              <>
+                {visibleConsumers.map((consumer, idx) => (
                   <Chip
                     key={idx}
                     icon={<ShoppingBasketIcon sx={{ color: currentTheme.primary, opacity: 0.8 }} />}
@@ -101,24 +127,28 @@ const ProductAgreementCard = ({ agreement, currentTheme }) => {
                       color: currentTheme.text,
                       border: `1px solid ${currentTheme.border}`,
                       fontWeight: 500,
-                      fontSize: '0.8rem',
+                      fontSize: '0.7rem',
                       opacity: 0.95,
+                      height: '24px',
                     }}
                   />
-                ))
-              : <Chip
-                  icon={<ShoppingBasketIcon sx={{ color: currentTheme.primary, opacity: 0.8 }} />}
-                  label="No Consumer"
-                  size="small"
-                  sx={{
-                    bgcolor: currentTheme.card,
-                    color: currentTheme.textSecondary,
-                    border: `1px solid ${currentTheme.border}`,
-                    fontWeight: 500,
-                    fontSize: '0.8rem',
-                    opacity: 0.7,
-                  }}
-                />;
+                ))}
+                {hiddenCount > 0 && (
+                  <Chip
+                    label={`+${hiddenCount} more`}
+                    size="small"
+                    sx={{
+                      bgcolor: currentTheme.textSecondary,
+                      color: currentTheme.card,
+                      fontWeight: 500,
+                      fontSize: '0.7rem',
+                      opacity: 0.8,
+                      height: '24px',
+                    }}
+                  />
+                )}
+              </>
+            );
           })()}
         </Box>
 

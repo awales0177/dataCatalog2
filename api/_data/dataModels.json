@@ -725,7 +725,7 @@
     },
     {
       "id": 20,
-      "shortName": "CUS",
+      "shortName": "ASY",
       "name": "Product Team Model",
       "description": "hi",
       "version": "1.0.0",
@@ -757,7 +757,7 @@
         "validation": ""
       },
       "users": [],
-      "lastUpdated": "2025-08-12 01:22:08"
+      "lastUpdated": "2025-08-13 20:19:51"
     }
   ]
 }

@@ -72,12 +72,16 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState(null);
 
-  // Set document title to "{modelShortName} Agreement"
+  // Set document title to "{modelShortName} Agreement" or just "Agreement" if no model
   React.useEffect(() => {
-    if (agreement && agreement.modelShortName) {
-      document.title = `${agreement.modelShortName} Agreement`;
+    if (agreement) {
+      if (agreement.modelShortName) {
+        document.title = `${agreement.modelShortName} Agreement`;
+      } else {
+        document.title = `${agreement.name} Agreement`;
+      }
     }
-  }, [agreement && agreement.modelShortName]);
+  }, [agreement]);
 
   const calculateVersionDifference = (agreementVersions, modelVersion) => {
     if (!agreementVersions || !modelVersion) return null;
@@ -358,17 +362,44 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
         }
 
         const modelData = await fetchModels();
-        const model = modelData.models.find(m => 
-          m.shortName.toLowerCase() === agreement.modelShortName.toLowerCase()
-        );
-        if (!model) {
-          console.error('Model lookup failed:', {
-            agreementModelShortName: agreement.modelShortName,
-            availableModelShortNames: modelData.models.map(m => m.shortName),
-            agreement: agreement
-          });
-          setError('Associated model not found');
-          return;
+        let model = null;
+        
+        console.log('Loading agreement and model:', {
+          agreementModelShortName: agreement.modelShortName,
+          hasModelShortName: !!agreement.modelShortName,
+          modelShortNameType: typeof agreement.modelShortName,
+          modelShortNameLength: agreement.modelShortName ? agreement.modelShortName.length : 'N/A',
+          agreement: agreement
+        });
+        
+        // Only try to find model if modelShortName exists and is not empty/whitespace
+        if (agreement.modelShortName && agreement.modelShortName.trim()) {
+          console.log('Looking for model with shortName:', agreement.modelShortName);
+          console.log('Available models:', modelData.models.map(m => ({ shortName: m.shortName, id: m.id })));
+          
+          model = modelData.models.find(m => 
+            m.shortName.toLowerCase() === agreement.modelShortName.toLowerCase()
+          );
+          
+          if (!model) {
+            console.error('Model lookup failed:', {
+              agreementModelShortName: agreement.modelShortName,
+              availableModelShortNames: modelData.models.map(m => m.shortName),
+              agreement: agreement
+            });
+            console.error('Comparison details:', {
+              searchedFor: agreement.modelShortName.toLowerCase(),
+              availableLowercase: modelData.models.map(m => m.shortName.toLowerCase()),
+              exactMatches: modelData.models.filter(m => m.shortName === agreement.modelShortName),
+              caseInsensitiveMatches: modelData.models.filter(m => m.shortName.toLowerCase() === agreement.modelShortName.toLowerCase())
+            });
+            setError('Associated model not found');
+            return;
+          }
+          console.log('Model found:', model);
+        } else {
+          console.log('No model associated with this agreement - proceeding without model validation');
+          console.log('modelShortName value:', JSON.stringify(agreement.modelShortName));
         }
 
         setAgreement(agreement);
@@ -423,7 +454,7 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
 
   const statusColor = getStatusColor(agreement.status);
 
-  const versionDiff = model ? calculateVersionDifference(agreement.deliveredVersion, model.version) : null;
+  const versionDiff = model && agreement.deliveredVersion ? calculateVersionDifference(agreement.deliveredVersion, model.version) : null;
 
   return (
     <Box sx={{ p: 3, maxWidth: 1200, margin: '0 auto' }}>
@@ -618,7 +649,7 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
                 </Typography>
                 <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                   <Typography variant="h6" sx={{ color: currentTheme.text, userSelect: 'text' }}>
-                    {agreement.modelShortName}
+                    {agreement.modelShortName || 'No Model Associated'}
                   </Typography>
                 </Box>
               </Box>
@@ -956,27 +987,29 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
               position: 'relative',
             }}
           >
-            {/* Data Specification Link Icon Button */}
-            <Tooltip title="View Data Specification">
-              <IconButton
-                component={Link}
-                to={`/specifications/${agreement.modelShortName.toLowerCase()}`}
-                sx={{
-                  position: 'absolute',
-                  top: 12,
-                  right: 12,
-                  color: currentTheme.primary,
-                  bgcolor: currentTheme.card,
-                  borderRadius: '50%',
-                  boxShadow: 'none',
-                  '&:hover': {
-                    bgcolor: currentTheme.hoverBackground || (currentTheme.darkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'),
-                  },
-                }}
-              >
-                <DescriptionIcon />
-              </IconButton>
-            </Tooltip>
+            {/* Data Specification Link Icon Button - Only show if model exists */}
+            {agreement.modelShortName && (
+              <Tooltip title="View Data Specification">
+                <IconButton
+                  component={Link}
+                  to={`/specifications/${agreement.modelShortName.toLowerCase()}`}
+                  sx={{
+                    position: 'absolute',
+                    top: 12,
+                    right: 12,
+                    color: currentTheme.primary,
+                    bgcolor: currentTheme.card,
+                    borderRadius: '50%',
+                    boxShadow: 'none',
+                    '&:hover': {
+                      bgcolor: currentTheme.hoverBackground || (currentTheme.darkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'),
+                    },
+                  }}
+                >
+                  <DescriptionIcon />
+                </IconButton>
+              </Tooltip>
+            )}
             <Typography variant="h6" sx={{ color: currentTheme.text, mb: 2 }}>
               Agreement Information
             </Typography>
@@ -995,7 +1028,7 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
                 Model Name
               </Typography>
               <Typography variant="body1" sx={{ color: currentTheme.text }}>
-                {agreement.modelShortName}
+                {agreement.modelShortName || 'No Model Associated'}
               </Typography>
             </Box>
 

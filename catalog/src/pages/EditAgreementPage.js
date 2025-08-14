@@ -25,7 +25,10 @@ import {
   Grid,
   Paper,
   Divider,
+  Tooltip,
+  CircularProgress,
 } from '@mui/material';
+
 import {
   ArrowBack as ArrowBackIcon,
   Save as SaveIcon,
@@ -71,8 +74,63 @@ const EditAgreementPage = () => {
   const [newLocationKey, setNewLocationKey] = useState('');
   const [newLocationValue, setNewLocationValue] = useState('');
   const [newChangelogVersion, setNewChangelogVersion] = useState('');
-  const [newChangelogDate, setNewChangelogDate] = useState('');
   const [newChangelogChanges, setNewChangelogChanges] = useState('');
+
+  const handleAddChangelogItem = (path) => {
+    console.log('handleAddChangelogItem called with path:', path);
+    console.log('newChangelogVersion:', newChangelogVersion);
+    console.log('newChangelogChanges:', newChangelogChanges);
+    
+    if (newChangelogVersion.trim() && newChangelogChanges.trim()) {
+      // Generate current timestamp in ISO format
+      const currentDate = new Date().toISOString();
+      
+      console.log('Adding changelog item:');
+      console.log('  Version:', newChangelogVersion.trim());
+      console.log('  Date:', currentDate);
+      console.log('  Changes:', newChangelogChanges.trim());
+      console.log('  Path:', path);
+      
+      setEditedAgreement(prev => {
+        console.log('Previous editedAgreement:', prev);
+        const newAgreement = { ...prev };
+        const pathArray = path.split('.');
+        let current = newAgreement;
+        
+        console.log('Path array:', pathArray);
+        console.log('Initial current:', current);
+        
+        for (let i = 0; i < pathArray.length; i++) {
+          if (!current[pathArray[i]]) {
+            current[pathArray[i]] = [];
+          }
+          current = current[pathArray[i]];
+          console.log(`After step ${i}, current:`, current);
+        }
+        
+        if (Array.isArray(current)) {
+          current.push({
+            version: newChangelogVersion.trim(),
+            date: currentDate,
+            changes: [newChangelogChanges.trim()]
+          });
+          console.log('Added item to array, current now:', current);
+        } else {
+          console.error('Current is not an array:', current);
+        }
+        
+        console.log('Final newAgreement:', newAgreement);
+        return newAgreement;
+      });
+      
+      setNewChangelogVersion('');
+      setNewChangelogChanges('');
+    } else {
+      console.log('Validation failed:');
+      console.log('  Version trimmed:', newChangelogVersion.trim());
+      console.log('  Changes trimmed:', newChangelogChanges.trim());
+    }
+  };
 
   // Load agreement data
   useEffect(() => {
@@ -93,8 +151,17 @@ const EditAgreementPage = () => {
         if (template) {
           const newAgreement = JSON.parse(template);
           console.log('Parsed new agreement:', newAgreement);
-          setAgreement(newAgreement);
-          setEditedAgreement(newAgreement);
+          
+          // Ensure dataConsumer is always an array
+          const migratedNewAgreement = {
+            ...newAgreement,
+            dataConsumer: Array.isArray(newAgreement.dataConsumer) 
+              ? newAgreement.dataConsumer 
+              : []
+          };
+          
+          setAgreement(migratedNewAgreement);
+          setEditedAgreement(migratedNewAgreement);
         } else {
           // Redirect if no template found
           console.log('No template found, redirecting to /agreements');
@@ -127,8 +194,18 @@ const EditAgreementPage = () => {
             });
             
             if (foundAgreement) {
-              setAgreement(foundAgreement);
-              setEditedAgreement(foundAgreement);
+              // Ensure dataConsumer is always an array for backward compatibility
+              const migratedAgreement = {
+                ...foundAgreement,
+                dataConsumer: Array.isArray(foundAgreement.dataConsumer) 
+                  ? foundAgreement.dataConsumer 
+                  : foundAgreement.dataConsumer 
+                    ? [foundAgreement.dataConsumer] 
+                    : []
+              };
+              
+              setAgreement(migratedAgreement);
+              setEditedAgreement(migratedAgreement);
             } else {
               console.log('Agreement not found, showing error');
               setSnackbar({
@@ -186,7 +263,23 @@ const EditAgreementPage = () => {
     if (isNewAgreement) {
       return editedAgreement.name && editedAgreement.description && editedAgreement.id;
     }
-    return JSON.stringify(agreement) !== JSON.stringify(editedAgreement);
+    
+    console.log('Checking for changes:');
+    console.log('Original agreement dataConsumer:', agreement.dataConsumer);
+    console.log('Edited agreement dataConsumer:', editedAgreement.dataConsumer);
+    
+    // Simple but effective comparison
+    const originalStr = JSON.stringify(agreement);
+    const editedStr = JSON.stringify(editedAgreement);
+    const hasChanged = originalStr !== editedStr;
+    
+    console.log('Change detected:', hasChanged);
+    if (hasChanged) {
+      console.log('Original length:', originalStr.length);
+      console.log('Edited length:', editedStr.length);
+    }
+    
+    return hasChanged;
   };
 
   const handleFieldChange = (path, value) => {
@@ -710,39 +803,174 @@ const EditAgreementPage = () => {
     );
   };
 
+  const renderDataConsumerField = (path, value, label) => {
+    console.log('renderDataConsumerField called with:', { path, value, label });
+
+    const handleConsumerChange = (index, newValue) => {
+      setEditedAgreement(prev => {
+        const newAgreement = { ...prev };
+        const pathArray = path.split('.');
+        let current = newAgreement;
+        
+        for (let i = 0; i < pathArray.length - 1; i++) {
+          if (!current[pathArray[i]]) {
+            current[pathArray[i]] = {};
+          }
+          current = current[pathArray[i]];
+        }
+        
+        const lastKey = pathArray[pathArray.length - 1];
+        if (!Array.isArray(current[lastKey])) {
+          current[lastKey] = [];
+        }
+        
+        // Create a new array with the updated item
+        const newArray = [...current[lastKey]];
+        newArray[index] = newValue;
+        current[lastKey] = newArray;
+        
+        return newAgreement;
+      });
+    };
+
+    const handleDeleteConsumer = (indexToDelete) => {
+      setEditedAgreement(prev => {
+        const newAgreement = { ...prev };
+        const pathArray = path.split('.');
+        let current = newAgreement;
+        
+        for (let i = 0; i < pathArray.length - 1; i++) {
+          if (!current[pathArray[i]]) {
+            current[pathArray[i]] = {};
+          }
+          current = current[pathArray[i]];
+        }
+        
+        const lastKey = pathArray[pathArray.length - 1];
+        if (!Array.isArray(current[lastKey])) {
+          current[lastKey] = [];
+        }
+        
+        // Create a new array without the deleted item
+        const newArray = current[lastKey].filter((_, index) => index !== indexToDelete);
+        current[lastKey] = newArray;
+        
+        return newAgreement;
+      });
+    };
+
+    const addConsumer = () => {
+      console.log('Adding consumer, current editedAgreement:', editedAgreement);
+      setEditedAgreement(prev => {
+        const newAgreement = { ...prev };
+        const pathArray = path.split('.');
+        let current = newAgreement;
+        
+        for (let i = 0; i < pathArray.length - 1; i++) {
+          if (!current[pathArray[i]]) {
+            current[pathArray[i]] = {};
+          }
+          current = current[pathArray[i]];
+        }
+        
+        const lastKey = pathArray[pathArray.length - 1];
+        if (!Array.isArray(current[lastKey])) {
+          current[lastKey] = [];
+        }
+        
+        // Create a new array with the additional item
+        current[lastKey] = [...current[lastKey], ''];
+        console.log('Added empty consumer, new array:', current[lastKey]);
+        
+        console.log('New agreement after adding consumer:', newAgreement);
+        return newAgreement;
+      });
+    };
+
+    return (
+      <Box key={path} sx={{ mb: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+          <Typography variant="subtitle2" sx={{ 
+            color: currentTheme.text, 
+            fontWeight: 600
+          }}>
+            {label}
+          </Typography>
+        </Box>
+
+        {/* Existing consumers */}
+        {(value || []).map((consumer, index) => (
+          <Box key={index} sx={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: 1, 
+            mb: 1.5
+          }}>
+            <TextField
+              size="small"
+              label={`Consumer ${index + 1}`}
+              value={consumer}
+              onChange={(e) => handleConsumerChange(index, e.target.value)}
+              sx={{ 
+                flex: 1,
+                '& .MuiInputLabel-root': { color: currentTheme.textSecondary },
+                '& .MuiInputLabel-root.Mui-focused': { color: currentTheme.primary },
+                '& .MuiOutlinedInput-root': { 
+                  color: currentTheme.text,
+                  '& fieldset': { borderColor: currentTheme.border },
+                  '&:hover fieldset': { borderColor: currentTheme.primary },
+                  '&.Mui-focused fieldset': { borderColor: currentTheme.primary }
+                },
+                '& .MuiInputBase-input': { color: currentTheme.text },
+                '& .MuiInputBase-input::placeholder': { color: currentTheme.textSecondary, opacity: 0.7 }
+              }}
+              placeholder="Enter consumer service name"
+            />
+            <IconButton
+              size="small"
+              onClick={() => handleDeleteConsumer(index)}
+              sx={{ 
+                color: 'error.main',
+                '&:hover': {
+                  bgcolor: 'error.main',
+                  color: 'white'
+                }
+              }}
+              title="Delete consumer"
+            >
+              <DeleteIcon />
+            </IconButton>
+          </Box>
+        ))}
+
+        {/* Add new consumer button */}
+        <Box sx={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          mt: 2
+        }}>
+          <Button
+            variant="outlined"
+            startIcon={<AddIcon />}
+            onClick={addConsumer}
+            sx={{
+              color: currentTheme.primary,
+              borderColor: currentTheme.border,
+              '&:hover': {
+                bgcolor: currentTheme.primary,
+                color: 'white'
+              }
+            }}
+          >
+            Add Consumer Service
+          </Button>
+        </Box>
+      </Box>
+    );
+  };
+
   const renderChangelogField = (path, value, label) => {
     console.log('renderChangelogField called with:', { path, value, label });
-    
-    const handleAddChangelogItem = () => {
-      if (newChangelogVersion.trim() && newChangelogDate.trim() && newChangelogChanges.trim()) {
-        setEditedAgreement(prev => {
-          const newAgreement = { ...prev };
-          const pathArray = path.split('.');
-          let current = newAgreement;
-          
-          for (let i = 0; i < pathArray.length; i++) {
-            if (!current[pathArray[i]]) {
-              current[pathArray[i]] = [];
-            }
-            current = current[pathArray[i]];
-          }
-          
-          if (Array.isArray(current)) {
-            current.push({
-              version: newChangelogVersion.trim(),
-              date: newChangelogDate.trim(),
-              changes: [newChangelogChanges.trim()]
-            });
-          }
-          
-          return newAgreement;
-        });
-        
-        setNewChangelogVersion('');
-        setNewChangelogDate('');
-        setNewChangelogChanges('');
-      }
-    };
 
     const handleVersionChange = (index, newVersion) => {
       setEditedAgreement(prev => {
@@ -762,23 +990,7 @@ const EditAgreementPage = () => {
       });
     };
 
-    const handleDateChange = (index, newDate) => {
-      setEditedAgreement(prev => {
-        const newAgreement = { ...prev };
-        const pathArray = path.split('.');
-        let current = newAgreement;
-        
-        for (let i = 0; i < pathArray.length; i++) {
-          current = current[pathArray[i]];
-        }
-        
-        if (Array.isArray(current) && current[index]) {
-          current[index].date = newDate;
-        }
-        
-        return newAgreement;
-      });
-    };
+
 
     const handleChangesChange = (index, newChanges) => {
       setEditedAgreement(prev => {
@@ -817,28 +1029,13 @@ const EditAgreementPage = () => {
     };
 
     return (
-      <Box key={path} sx={{ 
-        mb: 2,
-        p: 2,
-        bgcolor: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.02)' : 'rgba(76, 175, 80, 0.01)',
-        borderRadius: 1,
-        border: `1px solid ${currentTheme.darkMode ? 'rgba(76, 175, 80, 0.1)' : 'rgba(76, 175, 80, 0.08)'}`,
-        borderLeft: `4px solid ${currentTheme.darkMode ? 'rgba(76, 175, 80, 0.4)' : 'rgba(76, 175, 80, 0.3)'}`
-      }}>
+      <Box key={path} sx={{ mb: 2 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
           <Typography variant="subtitle2" sx={{ 
-            color: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.9)' : 'rgba(76, 175, 80, 0.8)', 
-            fontWeight: 700,
-            fontSize: '1rem'
+            color: currentTheme.text, 
+            fontWeight: 600
           }}>
             {label}
-          </Typography>
-          <Typography variant="caption" sx={{ 
-            color: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.7)' : 'rgba(76, 175, 80, 0.6)',
-            fontStyle: 'italic',
-            ml: 'auto'
-          }}>
-            Version History
           </Typography>
         </Box>
 
@@ -848,16 +1045,7 @@ const EditAgreementPage = () => {
             display: 'flex', 
             flexDirection: 'column',
             gap: 1, 
-            mb: 2,
-            p: 2,
-            bgcolor: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.04)' : 'rgba(76, 175, 80, 0.03)',
-            borderRadius: 1,
-            border: `1px solid ${currentTheme.darkMode ? 'rgba(76, 175, 80, 0.15)' : 'rgba(76, 175, 80, 0.12)'}`,
-            transition: 'all 0.2s ease-in-out',
-            '&:hover': {
-              bgcolor: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.06)' : 'rgba(76, 175, 80, 0.05)',
-              borderColor: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.25)' : 'rgba(76, 175, 80, 0.2)'
-            }
+            mb: 2
           }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
               <TextField
@@ -867,66 +1055,51 @@ const EditAgreementPage = () => {
                 onChange={(e) => handleVersionChange(index, e.target.value)}
                 sx={{ 
                   flex: 1,
-                  '& .MuiInputLabel-root': { 
-                    color: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.8)' : 'rgba(76, 175, 80, 0.7)',
-                    fontWeight: 600
-                  },
+                  '& .MuiInputLabel-root': { color: currentTheme.textSecondary },
+                  '& .MuiInputLabel-root.Mui-focused': { color: currentTheme.primary },
                   '& .MuiOutlinedInput-root': { 
                     color: currentTheme.text,
-                    bgcolor: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.02)' : 'rgba(76, 175, 80, 0.01)',
-                    '& fieldset': { 
-                      borderColor: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.2)' : 'rgba(76, 175, 80, 0.15)',
-                      borderWidth: '1.5px'
-                    },
-                    '&:hover fieldset': { 
-                      borderColor: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.3)' : 'rgba(76, 175, 80, 0.25)'
-                    },
-                    '&.Mui-focused fieldset': { 
-                      borderColor: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.5)' : 'rgba(76, 175, 80, 0.4)'
-                    }
+                    '& fieldset': { borderColor: currentTheme.border },
+                    '&:hover fieldset': { borderColor: currentTheme.primary },
+                    '&.Mui-focused fieldset': { borderColor: currentTheme.primary }
                   },
                   '& .MuiInputBase-input': { color: currentTheme.text },
                   '& .MuiInputBase-input::placeholder': { color: currentTheme.textSecondary, opacity: 0.7 }
                 }}
                 placeholder="Version number"
               />
-              <TextField
-                size="small"
-                label="Date"
-                value={item.date || ''}
-                onChange={(e) => handleDateChange(index, e.target.value)}
-                sx={{ 
-                  flex: 1,
-                  '& .MuiInputLabel-root': { 
-                    color: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.8)' : 'rgba(76, 175, 80, 0.7)',
-                    fontWeight: 600
-                  },
-                  '& .MuiOutlinedInput-root': { 
-                    color: currentTheme.text,
-                    bgcolor: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.02)' : 'rgba(76, 175, 80, 0.01)',
-                    '& fieldset': { 
-                      borderColor: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.2)' : 'rgba(76, 175, 80, 0.15)',
-                      borderWidth: '1.5px'
+              <Tooltip title="Date when this changelog entry was created (cannot be edited)" arrow>
+                <TextField
+                  size="small"
+                  label="Date"
+                  value={item.date || ''}
+                  InputProps={{
+                    readOnly: true
+                  }}
+                  sx={{ 
+                    flex: 1,
+                    '& .MuiInputLabel-root': { color: currentTheme.textSecondary },
+                    '& .MuiOutlinedInput-root': { 
+                      color: currentTheme.textSecondary,
+                      '& fieldset': { borderColor: currentTheme.border }
                     },
-                    '&:hover fieldset': { 
-                      borderColor: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.3)' : 'rgba(76, 175, 80, 0.25)'
+                    '& .MuiInputBase-input': { 
+                      color: currentTheme.textSecondary,
+                      WebkitTextFillColor: currentTheme.textSecondary
                     },
-                    '&.Mui-focused fieldset': { 
-                      borderColor: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.5)' : 'rgba(76, 175, 80, 0.4)'
-                    }
-                  },
-                  '& .MuiInputBase-input': { color: currentTheme.text },
-                  '& .MuiInputBase-input::placeholder': { color: currentTheme.textSecondary, opacity: 0.7 }
-                }}
+                    '& .MuiInputBase-input::placeholder': { color: currentTheme.textSecondary, opacity: 0.7 }
+                  }}
                 placeholder="YYYY-MM-DD or ISO date"
               />
+              </Tooltip>
               <IconButton
                 size="small"
                 onClick={() => handleDeleteChangelogItem(index)}
                 sx={{ 
-                  color: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.7)' : 'rgba(76, 175, 80, 0.6)',
+                  color: 'error.main',
                   '&:hover': {
-                    bgcolor: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.1)' : 'rgba(76, 175, 80, 0.08)'
+                    bgcolor: 'error.main',
+                    color: 'white'
                   }
                 }}
                 title="Delete changelog item"
@@ -942,23 +1115,13 @@ const EditAgreementPage = () => {
               multiline
               rows={2}
               sx={{ 
-                '& .MuiInputLabel-root': { 
-                  color: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.8)' : 'rgba(76, 175, 80, 0.7)',
-                  fontWeight: 600
-                },
+                '& .MuiInputLabel-root': { color: currentTheme.textSecondary },
+                '& .MuiInputLabel-root.Mui-focused': { color: currentTheme.primary },
                 '& .MuiOutlinedInput-root': { 
                   color: currentTheme.text,
-                  bgcolor: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.02)' : 'rgba(76, 175, 80, 0.01)',
-                  '& fieldset': { 
-                    borderColor: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.2)' : 'rgba(76, 175, 80, 0.15)',
-                    borderWidth: '1.5px'
-                  },
-                  '&:hover fieldset': { 
-                    borderColor: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.3)' : 'rgba(76, 175, 80, 0.25)'
-                  },
-                  '&.Mui-focused fieldset': { 
-                    borderColor: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.5)' : 'rgba(76, 175, 80, 0.4)'
-                  }
+                  '& fieldset': { borderColor: currentTheme.border },
+                  '&:hover fieldset': { borderColor: currentTheme.primary },
+                  '&.Mui-focused fieldset': { borderColor: currentTheme.primary }
                 },
                 '& .MuiInputBase-input': { color: currentTheme.text },
                 '& .MuiInputBase-input::placeholder': { color: currentTheme.textSecondary, opacity: 0.7 }
@@ -973,12 +1136,7 @@ const EditAgreementPage = () => {
           display: 'flex', 
           flexDirection: 'column',
           gap: 1, 
-          mt: 2,
-          p: 2,
-          bgcolor: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.06)' : 'rgba(76, 175, 80, 0.04)',
-          borderRadius: 1,
-          border: `2px dashed ${currentTheme.darkMode ? 'rgba(76, 175, 80, 0.3)' : 'rgba(76, 175, 80, 0.2)'}`,
-          borderStyle: 'dashed'
+          mt: 2
         }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <TextField
@@ -988,67 +1146,46 @@ const EditAgreementPage = () => {
               onChange={(e) => setNewChangelogVersion(e.target.value)}
               sx={{ 
                 flex: 1,
-                '& .MuiInputLabel-root': { 
-                  color: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.8)' : 'rgba(76, 175, 80, 0.7)',
-                  fontWeight: 600
-                },
+                '& .MuiInputLabel-root': { color: currentTheme.textSecondary },
+                '& .MuiInputLabel-root.Mui-focused': { color: currentTheme.primary },
                 '& .MuiOutlinedInput-root': { 
                   color: currentTheme.text,
-                  bgcolor: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.02)' : 'rgba(76, 175, 80, 0.01)',
-                  '& fieldset': { 
-                    borderColor: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.2)' : 'rgba(76, 175, 80, 0.15)',
-                    borderWidth: '1.5px'
-                  },
-                  '&:hover fieldset': { 
-                    borderColor: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.3)' : 'rgba(76, 175, 80, 0.25)'
-                  },
-                  '&.Mui-focused fieldset': { 
-                    borderColor: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.5)' : 'rgba(76, 175, 80, 0.4)'
-                  }
+                  '& fieldset': { borderColor: currentTheme.border },
+                  '&:hover fieldset': { borderColor: currentTheme.primary },
+                  '&.Mui-focused fieldset': { borderColor: currentTheme.primary }
                 },
                 '& .MuiInputBase-input': { color: currentTheme.text },
                 '& .MuiInputBase-input::placeholder': { color: currentTheme.textSecondary, opacity: 0.7 }
               }}
               placeholder="Enter version number"
             />
-            <TextField
-              size="small"
-              label="New Date"
-              value={newChangelogDate}
-              onChange={(e) => setNewChangelogDate(e.target.value)}
-              sx={{ 
-                flex: 1,
-                '& .MuiInputLabel-root': { 
-                  color: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.8)' : 'rgba(76, 175, 80, 0.7)',
-                  fontWeight: 600
-                },
-                '& .MuiOutlinedInput-root': { 
-                  color: currentTheme.text,
-                  bgcolor: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.02)' : 'rgba(76, 175, 80, 0.01)',
-                  '& fieldset': { 
-                    borderColor: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.2)' : 'rgba(76, 175, 80, 0.15)',
-                    borderWidth: '1.5px'
-                  },
-                  '&:hover fieldset': { 
-                    borderColor: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.3)' : 'rgba(76, 175, 80, 0.25)'
-                  },
-                  '&.Mui-focused fieldset': { 
-                    borderColor: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.5)' : 'rgba(76, 175, 80, 0.4)'
-                  }
-                },
-                '& .MuiInputBase-input': { color: currentTheme.text },
-                '& .MuiInputBase-input::placeholder': { color: currentTheme.textSecondary, opacity: 0.7 }
-              }}
-              placeholder="YYYY-MM-DD or ISO date"
-            />
+            <Box sx={{ 
+              flex: 1, 
+              p: 1.5, 
+              bgcolor: currentTheme.card,
+              borderRadius: 1,
+              border: `1px solid ${currentTheme.border}`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <Typography variant="body2" sx={{ 
+                color: currentTheme.textSecondary,
+                fontWeight: 600,
+                textAlign: 'center'
+              }}>
+                Date will be set automatically
+              </Typography>
+            </Box>
             <IconButton
               size="small"
-              onClick={handleAddChangelogItem}
-              disabled={!newChangelogVersion.trim() || !newChangelogDate.trim() || !newChangelogChanges.trim()}
+              onClick={() => handleAddChangelogItem(path)}
+              disabled={!newChangelogVersion.trim() || !newChangelogChanges.trim()}
               sx={{ 
-                color: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.8)' : 'rgba(76, 175, 80, 0.7)',
+                color: currentTheme.primary,
                 '&:hover': {
-                  bgcolor: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.1)' : 'rgba(76, 175, 80, 0.08)'
+                  bgcolor: currentTheme.primary,
+                  color: 'white'
                 },
                 '&:disabled': {
                   color: currentTheme.textSecondary,
@@ -1068,23 +1205,13 @@ const EditAgreementPage = () => {
             multiline
             rows={2}
             sx={{ 
-              '& .MuiInputLabel-root': { 
-                color: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.8)' : 'rgba(76, 175, 80, 0.7)',
-                fontWeight: 600
-              },
+              '& .MuiInputLabel-root': { color: currentTheme.textSecondary },
+              '& .MuiInputLabel-root.Mui-focused': { color: currentTheme.primary },
               '& .MuiOutlinedInput-root': { 
                 color: currentTheme.text,
-                bgcolor: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.02)' : 'rgba(76, 175, 80, 0.01)',
-                '& fieldset': { 
-                  borderColor: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.2)' : 'rgba(76, 175, 80, 0.15)',
-                  borderWidth: '1.5px'
-                },
-                '&:hover fieldset': { 
-                  borderColor: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.3)' : 'rgba(76, 175, 80, 0.25)'
-                },
-                '&.Mui-focused fieldset': { 
-                  borderColor: currentTheme.darkMode ? 'rgba(76, 175, 80, 0.5)' : 'rgba(76, 175, 80, 0.4)'
-                }
+                '& fieldset': { borderColor: currentTheme.border },
+                '&:hover fieldset': { borderColor: currentTheme.primary },
+                '&.Mui-focused fieldset': { borderColor: currentTheme.primary }
               },
               '& .MuiInputBase-input': { color: currentTheme.text },
               '& .MuiInputBase-input::placeholder': { color: currentTheme.textSecondary, opacity: 0.7 }
@@ -1096,7 +1223,7 @@ const EditAgreementPage = () => {
     );
   };
 
-  const renderField = (path, value, label, type = 'text', options = null, isRequired = false) => {
+  const renderField = (path, value, label, type = 'text', options = null, isRequired = false, fieldType = null) => {
     console.log('renderField called with:', { path, value, label, type, isRequired });
     
     if (Array.isArray(value)) {
@@ -1106,25 +1233,17 @@ const EditAgreementPage = () => {
         return renderChangelogField(path, value, label);
       }
       
-      // Special styling for arrays within todo
-      const isSpecialArray = path.includes('todo.');
+      // Special handling for dataConsumer arrays
+      if (path === 'dataConsumer') {
+        return renderDataConsumerField(path, value, label);
+      }
       
       return (
-        <Box key={path} sx={{ 
-          mb: 2,
-          ...(isSpecialArray && {
-            p: 2,
-            bgcolor: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.02)' : 'rgba(33, 150, 243, 0.01)',
-            borderRadius: 1,
-            border: `1px solid ${currentTheme.darkMode ? 'rgba(33, 150, 243, 0.1)' : 'rgba(33, 150, 243, 0.08)'}`,
-            borderLeft: `4px solid ${currentTheme.darkMode ? 'rgba(33, 150, 243, 0.4)' : 'rgba(33, 150, 243, 0.3)'}`
-          })
-        }}>
+        <Box key={path} sx={{ mb: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
             <Typography variant="subtitle2" sx={{ 
-              color: isSpecialArray ? (currentTheme.darkMode ? 'rgba(33, 150, 243, 0.9)' : 'rgba(33, 150, 243, 0.8)') : currentTheme.text, 
-              fontWeight: isSpecialArray ? 700 : 600,
-              fontSize: isSpecialArray ? '1rem' : '0.875rem'
+              color: currentTheme.text, 
+              fontWeight: 600
             }}>
               {label}
               {isRequired && (
@@ -1136,12 +1255,7 @@ const EditAgreementPage = () => {
             <IconButton
               size="small"
               onClick={() => addArrayItem(path)}
-              sx={{ 
-                color: isSpecialArray ? (currentTheme.darkMode ? 'rgba(33, 150, 243, 0.8)' : 'rgba(33, 150, 243, 0.7)') : currentTheme.primary,
-                '&:hover': {
-                  bgcolor: isSpecialArray ? (currentTheme.darkMode ? 'rgba(33, 150, 243, 0.1)' : 'rgba(33, 150, 243, 0.08)') : undefined
-                }
-              }}
+              sx={{ color: currentTheme.primary }}
               title="Add new item"
             >
               <AddIcon />
@@ -1152,18 +1266,7 @@ const EditAgreementPage = () => {
               display: 'flex', 
               alignItems: 'center', 
               gap: 1, 
-              mb: 1,
-              ...(isSpecialArray && {
-                p: 1.5,
-                bgcolor: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.04)' : 'rgba(33, 150, 243, 0.03)',
-                borderRadius: 1,
-                border: `1px solid ${currentTheme.darkMode ? 'rgba(33, 150, 243, 0.15)' : 'rgba(33, 150, 243, 0.12)'}`,
-                transition: 'all 0.2s ease-in-out',
-                '&:hover': {
-                  bgcolor: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.06)' : 'rgba(33, 150, 243, 0.05)',
-                  borderColor: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.25)' : 'rgba(33, 150, 243, 0.2)'
-                }
-              })
+              mb: 1
             }}>
               <TextField
                 size="small"
@@ -1171,31 +1274,14 @@ const EditAgreementPage = () => {
                 onChange={(e) => handleArrayFieldChange(path, index, e.target.value)}
                 sx={{ 
                   flex: 1,
-                  ...(isSpecialArray ? {
-                    '& .MuiOutlinedInput-root': { 
-                      color: currentTheme.text,
-                      bgcolor: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.02)' : 'rgba(33, 150, 243, 0.01)',
-                      '& fieldset': { 
-                        borderColor: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.2)' : 'rgba(33, 150, 243, 0.15)',
-                        borderWidth: '1.5px'
-                      },
-                      '&:hover fieldset': { 
-                        borderColor: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.3)' : 'rgba(33, 150, 243, 0.25)'
-                      },
-                      '&.Mui-focused fieldset': { 
-                        borderColor: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.5)' : 'rgba(33, 150, 243, 0.4)'
-                      }
-                    }
-                  } : {
-                    '& .MuiInputLabel-root': { color: currentTheme.textSecondary },
-                    '& .MuiInputLabel-root.Mui-focused': { color: currentTheme.primary },
-                    '& .MuiOutlinedInput-root': { 
-                      color: currentTheme.text,
-                      '& fieldset': { borderColor: currentTheme.border },
-                      '&:hover fieldset': { borderColor: currentTheme.primary },
-                      '&.Mui-focused fieldset': { borderColor: currentTheme.primary }
-                    }
-                  }),
+                  '& .MuiInputLabel-root': { color: currentTheme.textSecondary },
+                  '& .MuiInputLabel-root.Mui-focused': { color: currentTheme.primary },
+                  '& .MuiOutlinedInput-root': { 
+                    color: currentTheme.text,
+                    '& fieldset': { borderColor: currentTheme.border },
+                    '&:hover fieldset': { borderColor: currentTheme.primary },
+                    '&.Mui-focused fieldset': { borderColor: currentTheme.primary }
+                  },
                   '& .MuiInputBase-input': { color: currentTheme.text },
                   '& .MuiInputBase-input::placeholder': { color: currentTheme.textSecondary, opacity: 0.7 }
                 }}
@@ -1204,12 +1290,7 @@ const EditAgreementPage = () => {
               <IconButton
                 size="small"
                 onClick={() => confirmDeleteArrayItem(path, index, label)}
-                sx={{ 
-                  color: isSpecialArray ? (currentTheme.darkMode ? 'rgba(33, 150, 243, 0.7)' : 'rgba(33, 150, 243, 0.6)') : 'error.main',
-                  '&:hover': {
-                    bgcolor: isSpecialArray ? (currentTheme.darkMode ? 'rgba(33, 150, 243, 0.1)' : 'rgba(33, 150, 243, 0.08)') : undefined
-                  }
-                }}
+                sx={{ color: 'error.main' }}
               >
                 <DeleteIcon />
               </IconButton>
@@ -1231,102 +1312,25 @@ const EditAgreementPage = () => {
       return (
         <Accordion key={path} sx={{ 
           mb: 2, 
-          background: isSpecialField ? (currentTheme.darkMode 
-            ? 'linear-gradient(135deg, rgba(33, 150, 243, 0.05) 0%, rgba(33, 150, 243, 0.02) 100%)' 
-            : 'linear-gradient(135deg, rgba(33, 150, 243, 0.03) 0%, rgba(33, 150, 243, 0.01) 100%)'
-          ) : 'transparent', 
-          boxShadow: isSpecialField ? '0 2px 8px rgba(0,0,0,0.1)' : 'none',
-          borderRadius: isSpecialField ? 2 : 0,
-          border: isSpecialField ? `1px solid ${currentTheme.darkMode ? 'rgba(33, 150, 243, 0.25)' : 'rgba(33, 150, 243, 0.2)'}` : 'none',
-          transition: 'all 0.3s ease-in-out',
-          '&:hover': isSpecialField ? {
-            boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
-            transform: 'translateY(-1px)'
-          } : {},
+          bgcolor: 'transparent', 
+          boxShadow: 'none',
           '& .MuiAccordionSummary-root': {
-            background: isSpecialField ? (currentTheme.darkMode 
-              ? 'linear-gradient(135deg, rgba(33, 150, 243, 0.1) 0%, rgba(33, 150, 243, 0.06) 100%)' 
-              : 'linear-gradient(135deg, rgba(33, 150, 243, 0.08) 0%, rgba(33, 150, 243, 0.04) 100%)'
-            ) : 'transparent',
-            borderRadius: isSpecialField ? '8px 8px 0 0' : 0,
-            border: 'none',
-            '&:hover': { 
-              background: isSpecialField ? (currentTheme.darkMode 
-                ? 'linear-gradient(135deg, rgba(33, 150, 243, 0.15) 0%, rgba(33, 150, 243, 0.09) 100%)' 
-                : 'linear-gradient(135deg, rgba(33, 150, 243, 0.12) 0%, rgba(33, 150, 243, 0.06) 100%)'
-              ) : currentTheme.border + '20'
-            },
-            transition: 'all 0.2s ease-in-out'
+            '&:hover': { bgcolor: currentTheme.border + '20' }
           },
           '& .MuiAccordionDetails-root': {
-            bgcolor: 'transparent',
-            pt: isSpecialField ? 2 : 1
-          },
-          '& .MuiAccordionSummary-content': {
-            alignItems: 'center',
-            gap: 1
+            bgcolor: 'transparent'
           }
         }}>
           <AccordionSummary 
-            expandIcon={
-              <ExpandMoreIcon sx={{ 
-                color: isSpecialField ? (currentTheme.darkMode ? 'rgba(33, 150, 243, 0.8)' : 'rgba(33, 150, 243, 0.7)') : currentTheme.textSecondary,
-                transition: 'transform 0.2s ease-in-out',
-                ...(isSpecialField && {
-                  '&.Mui-expanded': {
-                    transform: 'rotate(180deg)',
-                    color: currentTheme.darkMode ? 'rgba(33, 150, 243, 1)' : 'rgba(33, 150, 243, 0.9)'
-                  }
-                })
-              }} />
-            }
-            sx={{ 
-              color: currentTheme.text,
-              minHeight: isSpecialField ? '56px' : '48px'
-            }}
+            expandIcon={<ExpandMoreIcon sx={{ color: currentTheme.textSecondary }} />}
+            sx={{ color: currentTheme.text }}
           >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              {isSpecialField && (
-                <Box sx={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: '50%',
-                  bgcolor: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.6)' : 'rgba(33, 150, 243, 0.5)',
-                  flexShrink: 0,
-                  animation: 'pulse 2s infinite',
-                  '@keyframes pulse': {
-                    '0%': {
-                      boxShadow: `0 0 0 0 ${currentTheme.darkMode ? 'rgba(33, 150, 243, 0.4)' : 'rgba(33, 150, 243, 0.3)'}`
-                    },
-                    '70%': {
-                      boxShadow: `0 0 0 6px ${currentTheme.darkMode ? 'rgba(33, 150, 243, 0)' : 'rgba(33, 150, 243, 0)'}`
-                    },
-                    '100%': {
-                      boxShadow: `0 0 0 0 ${currentTheme.darkMode ? 'rgba(33, 150, 243, 0)' : 'rgba(33, 150, 243, 0)'}`
-                    }
-                  }
-                }} />
-              )}
-              <Typography variant="subtitle1" sx={{ 
-                color: currentTheme.text, 
-                fontWeight: isSpecialField ? 700 : 600,
-                fontSize: isSpecialField ? '1.1rem' : '0.875rem'
-              }}>
-                {label}
-              </Typography>
-              {isSpecialField && (
-                <Typography variant="caption" sx={{ 
-                  color: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.7)' : 'rgba(33, 150, 243, 0.6)',
-                  fontStyle: 'italic',
-                  ml: 'auto'
-                }}>
-                  Click to expand
-                </Typography>
-              )}
-            </Box>
+            <Typography variant="subtitle2" sx={{ color: currentTheme.text, fontWeight: 600 }}>
+              {label}
+            </Typography>
           </AccordionSummary>
           <AccordionDetails>
-            <Box sx={{ pl: isSpecialField ? 3 : 2 }}>
+            <Box sx={{ pl: 2 }}>
               {Object.entries(value).map(([key, val]) => (
                 <Box key={`${path}.${key}`}>
                   {renderField(`${path}.${key}`, val, key.charAt(0).toUpperCase() + key.slice(1))}
@@ -1360,6 +1364,19 @@ const EditAgreementPage = () => {
               '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: currentTheme.primary },
               '& .MuiSelect-icon': { color: currentTheme.textSecondary }
             }}
+            MenuProps={{
+              PaperProps: {
+                sx: {
+                  bgcolor: currentTheme.card,
+                  border: `1px solid ${currentTheme.border}`,
+                  '& .MuiMenuItem-root': {
+                    color: currentTheme.text,
+                    '&:hover': { bgcolor: currentTheme.primary + '20' },
+                    '&.Mui-selected': { bgcolor: currentTheme.primary + '40' }
+                  }
+                }
+              }
+            }}
           >
             {options.map((option) => (
               <MenuItem key={option.value} value={option.value}>
@@ -1368,6 +1385,36 @@ const EditAgreementPage = () => {
             ))}
           </Select>
         </FormControl>
+      );
+    }
+
+    if (type === 'date') {
+      return (
+        <TextField
+          key={path}
+          fullWidth
+          label={label}
+          type="date"
+          value={value || ''}
+          onChange={(e) => handleFieldChange(path, e.target.value)}
+          variant="outlined"
+          InputLabelProps={{
+            shrink: true,
+          }}
+          sx={{
+            mb: 2,
+            '& .MuiInputLabel-root': { color: currentTheme.textSecondary },
+            '& .MuiInputLabel-root.Mui-focused': { color: currentTheme.primary },
+            '& .MuiOutlinedInput-root': { 
+              color: currentTheme.text,
+              '& fieldset': { borderColor: currentTheme.border },
+              '&:hover fieldset': { borderColor: currentTheme.primary },
+              '&.Mui-focused fieldset': { borderColor: currentTheme.primary }
+            },
+            '& .MuiInputBase-input': { color: currentTheme.text },
+            '& .MuiInputBase-input::placeholder': { color: currentTheme.textSecondary, opacity: 0.7 }
+          }}
+        />
       );
     }
 
@@ -1382,11 +1429,10 @@ const EditAgreementPage = () => {
               sx={{
                 '& .MuiSwitch-switchBase.Mui-checked': {
                   color: currentTheme.primary,
-                  '&:hover': { bgcolor: currentTheme.primary + '20' }
                 },
                 '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                  bgcolor: currentTheme.primary
-                }
+                  backgroundColor: currentTheme.primary + '80',
+                },
               }}
             />
           }
@@ -1409,35 +1455,14 @@ const EditAgreementPage = () => {
         }}
         sx={{
           mb: 2,
-          // Special styling for fields within todo
-          ...(path.includes('todo.') ? {
-            '& .MuiInputLabel-root': { 
-              color: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.8)' : 'rgba(33, 150, 243, 0.7)',
-              fontWeight: 600
-            },
-            '& .MuiOutlinedInput-root': { 
-              color: currentTheme.text,
-              bgcolor: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.03)' : 'rgba(33, 150, 243, 0.02)',
-              '& fieldset': { 
-                borderColor: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.3)' : 'rgba(33, 150, 243, 0.2)',
-                borderWidth: '2px'
-              },
-              '&:hover fieldset': { 
-                borderColor: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.5)' : 'rgba(33, 150, 243, 0.4)'
-              },
-              '&.Mui-focused fieldset': { 
-                borderColor: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.7)' : 'rgba(33, 150, 243, 0.6)'
-              }
-            }
-          } : {
-            '& .MuiInputLabel-root': { color: currentTheme.textSecondary },
-            '& .MuiOutlinedInput-root': { 
-              color: currentTheme.text,
-              '& fieldset': { borderColor: currentTheme.border },
-              '&:hover fieldset': { borderColor: currentTheme.primary },
-              '&.Mui-focused fieldset': { borderColor: currentTheme.primary }
-            }
-          }),
+          '& .MuiInputLabel-root': { color: currentTheme.textSecondary },
+          '& .MuiInputLabel-root.Mui-focused': { color: currentTheme.primary },
+          '& .MuiOutlinedInput-root': { 
+            color: currentTheme.text,
+            '& fieldset': { borderColor: currentTheme.border },
+            '&:hover fieldset': { borderColor: currentTheme.primary },
+            '&.Mui-focused fieldset': { borderColor: currentTheme.primary }
+          },
           '& .MuiInputBase-input': { color: currentTheme.text },
           '& .MuiInputBase-input::placeholder': { color: currentTheme.textSecondary, opacity: 0.7 }
         }}
@@ -1469,15 +1494,20 @@ const EditAgreementPage = () => {
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
       {/* Header */}
-      <Paper sx={{ p: 3, mb: 3, bgcolor: currentTheme.card }}>
+      <Paper elevation={0} sx={{ p: 3, mb: 3, bgcolor: currentTheme.card, border: `1px solid ${currentTheme.border}`, borderRadius: 2 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <IconButton onClick={handleBackArrow} sx={{ color: currentTheme.text }}>
               <ArrowBackIcon />
             </IconButton>
-            <Typography variant="h4" sx={{ color: currentTheme.text }}>
-              {isNewAgreement ? 'Create New Agreement' : 'Edit Agreement'}
-            </Typography>
+            <Box sx={{ flex: 1 }}>
+              <Typography variant="h4" sx={{ color: currentTheme.text }}>
+                {isNewAgreement ? 'Create New Agreement' : 'Edit Agreement'}
+              </Typography>
+              <Typography variant="subtitle1" sx={{ color: currentTheme.textSecondary }}>
+                {isNewAgreement ? 'Fill in the details below' : agreement?.name || 'Agreement Details'}
+              </Typography>
+            </Box>
           </Box>
           
           <Box sx={{ display: 'flex', gap: 1 }}>
@@ -1503,13 +1533,7 @@ const EditAgreementPage = () => {
               variant="outlined"
               onClick={handleCancel}
               startIcon={<CancelIcon />}
-              sx={{
-                borderColor: currentTheme.border,
-                color: currentTheme.text,
-                '&:hover': {
-                  bgcolor: currentTheme.border + '20'
-                }
-              }}
+              sx={{ color: currentTheme.text, borderColor: currentTheme.border }}
             >
               Cancel
             </Button>
@@ -1517,18 +1541,8 @@ const EditAgreementPage = () => {
               variant="contained"
               onClick={handleSave}
               disabled={!hasChanges() || saving}
-              startIcon={<SaveIcon />}
-              sx={{
-                bgcolor: currentTheme.primary,
-                color: currentTheme.background,
-                '&:hover': {
-                  bgcolor: currentTheme.primaryDark || currentTheme.primary
-                },
-                '&:disabled': {
-                  bgcolor: currentTheme.border,
-                  color: currentTheme.textSecondary
-                }
-              }}
+              startIcon={saving ? <CircularProgress size={20} /> : <SaveIcon />}
+              sx={{ bgcolor: currentTheme.primary }}
             >
               {saving ? 'Saving...' : (isNewAgreement ? 'Create Agreement' : 'Save Changes')}
             </Button>
@@ -1560,7 +1574,7 @@ const EditAgreementPage = () => {
       </Paper>
 
       {/* Form */}
-      <Paper sx={{ p: 3, bgcolor: currentTheme.card }}>
+      <Paper elevation={0} sx={{ p: 3, bgcolor: currentTheme.card, border: `1px solid ${currentTheme.border}`, borderRadius: 2 }}>
         {/* Last Updated Display */}
         {!isNewAgreement && editedAgreement.lastUpdated ? (
           <Box sx={{ 
@@ -1599,6 +1613,10 @@ const EditAgreementPage = () => {
             </Typography>
           </Box>
         )}
+        
+        <Typography variant="h6" sx={{ color: currentTheme.text, mb: 3 }}>
+          Agreement Details
+        </Typography>
         
         <Grid container spacing={3}>
           <Grid item xs={12} md={6}>
@@ -1653,7 +1671,7 @@ const EditAgreementPage = () => {
             {renderField('restricted', editedAgreement.restricted, 'Restricted', 'switch')}
           </Grid>
           <Grid item xs={12}>
-            {renderField('dataConsumer', editedAgreement.dataConsumer, 'Data Consumer')}
+            {renderField('dataConsumer', editedAgreement.dataConsumer, 'Data Consumer', 'text', null, false, 'array')}
           </Grid>
           <Grid item xs={12}>
             {renderField('deliveredVersion', editedAgreement.deliveredVersion, 'Delivered Version')}

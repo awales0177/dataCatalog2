@@ -75,7 +75,15 @@ const ProductAgreementsPage = () => {
         if (agreement.name) searchStr += agreement.name + ' ';
         if (agreement.description) searchStr += agreement.description + ' ';
         if (agreement.dataProducer) searchStr += agreement.dataProducer + ' ';
-        if (agreement.dataConsumer) searchStr += agreement.dataConsumer + ' ';
+        if (agreement.dataConsumer) {
+          if (Array.isArray(agreement.dataConsumer)) {
+            agreement.dataConsumer.forEach(consumer => {
+              if (consumer) searchStr += consumer + ' ';
+            });
+          } else {
+            searchStr += agreement.dataConsumer + ' ';
+          }
+        }
         if (agreement.modelShortName) searchStr += agreement.modelShortName + ' ';
         if (agreement.status) searchStr += agreement.status + ' ';
         
