@@ -41,7 +41,7 @@ const DataSpecificationsPage = () => {
   useEffect(() => {
     const loadSpecifications = async () => {
       try {
-        const data = await fetchData('specifications');
+        const data = await fetchData('models');
         setAllModels(data.models || []);
         setFilteredModels(data.models || []);
         setError(null);

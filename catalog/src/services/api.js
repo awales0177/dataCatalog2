@@ -132,13 +132,17 @@ export const fetchAgreements = async (options = {}) => {
 };
 
 export const fetchAgreementsByModel = async (modelShortName, options = {}) => {
-  const cacheKey = cacheService.generateKey(`agreements/by-model/${modelShortName}`);
-  
+  // Use the same cache as the main agreements data for consistency
   if (!options.forceRefresh) {
-    const cachedData = cacheService.get(cacheKey);
-    if (cachedData) {
+    const cachedData = cacheService.get('dataAgreements');
+    if (cachedData && cachedData.agreements) {
       console.log('Returning cached agreements for model:', modelShortName);
-      return cachedData;
+      // Filter the cached data by model
+      const filteredAgreements = cachedData.agreements.filter(
+        agreement => agreement.modelShortName && 
+        agreement.modelShortName.toLowerCase() === modelShortName.toLowerCase()
+      );
+      return { agreements: filteredAgreements };
     }
   }
 
@@ -167,7 +171,7 @@ export const fetchAgreementsByModel = async (modelShortName, options = {}) => {
     const data = await response.json();
     console.log('Agreements data received:', data);
     
-    cacheService.set(cacheKey, data, options.ttl);
+    // Note: We don't cache this separately since it's filtered from the main dataAgreements cache
     return data;
   } catch (error) {
     console.error('Error fetching agreements by model:', error);
@@ -218,7 +222,6 @@ export const createModel = async (modelData) => {
     // Invalidate cache for models and related data
     cacheService.invalidateByPrefix('models');
     cacheService.invalidateByPrefix('dataAgreements');
-    cacheService.invalidateByPrefix('agreements');
     
     console.log('  Cache keys after invalidation:', cacheService.getAllKeys());
     
@@ -250,7 +253,6 @@ export const deleteModel = async (shortName) => {
     // Invalidate cache for models and related data
     cacheService.invalidateByPrefix('models');
     cacheService.invalidateByPrefix('dataAgreements');
-    cacheService.invalidateByPrefix('agreements');
     
     console.log('  Cache keys after invalidation:', cacheService.getAllKeys());
     
@@ -290,14 +292,9 @@ export const updateModel = async (shortName, modelData, options = {}) => {
     // Invalidate cache for models and related data
     cacheService.invalidateByPrefix('models');
     cacheService.invalidateByPrefix('dataAgreements');
-    cacheService.invalidateByPrefix('agreements');
-    
-    // Specifically invalidate the agreements for this model
-    const modelAgreementsKey = cacheService.generateKey(`agreements/by-model/${shortName}`);
-    cacheService.invalidate(modelAgreementsKey);
     
     // Nuclear option: clear all cache if invalidation didn't work
-    if (cacheService.getAllKeys().some(key => key.includes('models') || key.includes('agreements'))) {
+    if (cacheService.getAllKeys().some(key => key.includes('models') || key.includes('dataAgreements'))) {
       console.log('Cache invalidation incomplete, clearing all cache');
       cacheService.clear();
     }
@@ -324,7 +321,7 @@ export const createAgreement = async (agreementData) => {
       throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
     }
     const result = await response.json();
-    cacheService.invalidateByPrefix('agreements');
+    cacheService.invalidateByPrefix('dataAgreements');
     return result;
   } catch (error) {
     console.error('Error creating agreement:', error);
@@ -344,7 +341,7 @@ export const updateAgreement = async (agreementId, agreementData) => {
       throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
     }
     const result = await response.json();
-    cacheService.invalidateByPrefix('agreements');
+    cacheService.invalidateByPrefix('dataAgreements');
     return result;
   } catch (error) {
     console.error('Error updating agreement:', error);
@@ -362,7 +359,7 @@ export const deleteAgreement = async (agreementId) => {
       throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
     }
     const result = await response.json();
-    cacheService.invalidateByPrefix('agreements');
+    cacheService.invalidateByPrefix('dataAgreements');
     return result;
   } catch (error) {
     console.error('Error deleting agreement:', error);

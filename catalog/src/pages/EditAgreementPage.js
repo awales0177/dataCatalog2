@@ -37,6 +37,8 @@ import {
 import { useNavigate, useParams } from 'react-router-dom';
 import { ThemeContext } from '../App';
 import { fetchData, createAgreement, updateAgreement, deleteAgreement } from '../services/api';
+import cacheService from '../services/cache';
+import ChangelogEditor from '../components/ChangelogEditor';
 
 const EditAgreementPage = () => {
   const { currentTheme } = useContext(ThemeContext);
@@ -704,242 +706,7 @@ const EditAgreementPage = () => {
     );
   };
 
-  const renderChangelogField = (path, value, label) => {
-    const handleAddChangelogItem = () => {
-      setEditedAgreement(prev => {
-        const newAgreement = { ...prev };
-        if (!newAgreement.changelog) {
-          newAgreement.changelog = [];
-        }
-        if (!Array.isArray(newAgreement.changelog)) {
-          newAgreement.changelog = [];
-        }
-        
-        // Add new changelog item with current timestamp
-        const newItem = {
-          version: '',
-          date: new Date().toISOString(),
-          changes: ['']
-        };
-        
-        newAgreement.changelog.push(newItem);
-        return newAgreement;
-      });
-    };
-
-    const handleChangelogVersionChange = (index, newVersion) => {
-      setEditedAgreement(prev => {
-        const newAgreement = { ...prev };
-        if (newAgreement.changelog && Array.isArray(newAgreement.changelog[index])) {
-          newAgreement.changelog[index].version = newVersion;
-        }
-        return newAgreement;
-      });
-    };
-
-    const handleChangelogDateChange = (index, newDate) => {
-      setEditedAgreement(prev => {
-        const newAgreement = { ...prev };
-        if (newAgreement.changelog && Array.isArray(newAgreement.changelog[index])) {
-          newAgreement.changelog[index].date = newDate;
-        }
-        return newAgreement;
-      });
-    };
-
-    const handleChangelogChangeChange = (changelogIndex, changeIndex, newChange) => {
-      setEditedAgreement(prev => {
-        const newAgreement = { ...prev };
-        if (newAgreement.changelog && 
-            Array.isArray(newAgreement.changelog[changelogIndex]) && 
-            Array.isArray(newAgreement.changelog[changelogIndex].changes)) {
-          newAgreement.changelog[changelogIndex].changes[changeIndex] = newChange;
-        }
-        return newAgreement;
-      });
-    };
-
-    const addChangelogChange = (changelogIndex) => {
-      setEditedAgreement(prev => {
-        const newAgreement = { ...prev };
-        if (newAgreement.changelog && Array.isArray(newAgreement.changelog[changelogIndex])) {
-          if (!newAgreement.changelog[changelogIndex].changes) {
-            newAgreement.changelog[changelogIndex].changes = [];
-          }
-          newAgreement.changelog[changelogIndex].changes.push('');
-        }
-        return newAgreement;
-      });
-    };
-
-    const handleDeleteChangelogItem = (indexToDelete) => {
-      setEditedAgreement(prev => {
-        const newAgreement = { ...prev };
-        if (newAgreement.changelog && Array.isArray(newAgreement.changelog)) {
-          newAgreement.changelog = newAgreement.changelog.filter((_, index) => index !== indexToDelete);
-        }
-        return newAgreement;
-      });
-    };
-
-    const handleDeleteChangelogChange = (changelogIndex, changeIndexToDelete) => {
-      setEditedAgreement(prev => {
-        const newAgreement = { ...prev };
-        if (newAgreement.changelog && 
-            Array.isArray(newAgreement.changelog[changelogIndex]) && 
-            Array.isArray(newAgreement.changelog[changelogIndex].changes)) {
-          newAgreement.changelog[changelogIndex].changes = newAgreement.changelog[changelogIndex].changes.filter((_, index) => index !== changeIndexToDelete);
-        }
-        return newAgreement;
-      });
-    };
-
-    return (
-      <Box key={path} sx={{ mb: 2 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-          <Typography variant="subtitle2" sx={{ 
-            color: currentTheme.text, 
-            fontWeight: 600
-          }}>
-            {label}
-          </Typography>
-          <IconButton
-            size="small"
-            onClick={handleAddChangelogItem}
-            sx={{ 
-              color: currentTheme.primary,
-              '&:hover': {
-                bgcolor: currentTheme.darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)'
-              }
-            }}
-            title="Add changelog item"
-          >
-            <AddIcon />
-          </IconButton>
-        </Box>
-
-        {/* Existing changelog items */}
-        {(value || []).map((changelogItem, changelogIndex) => (
-          <Box key={changelogIndex} sx={{ 
-            mb: 2,
-            p: 2,
-            bgcolor: currentTheme.card,
-            borderRadius: 1,
-            border: `1px solid ${currentTheme.border}`,
-          }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-              <Typography variant="subtitle2" sx={{ color: currentTheme.text, fontWeight: 600 }}>
-                Version {changelogIndex + 1}
-              </Typography>
-              <IconButton
-                size="small"
-                onClick={() => handleDeleteChangelogItem(changelogIndex)}
-                sx={{ color: 'error.main', ml: 'auto' }}
-                title="Delete changelog item"
-              >
-                <DeleteIcon />
-              </IconButton>
-            </Box>
-            
-            <Grid container spacing={2} sx={{ mb: 2 }}>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  size="small"
-                  label="Version"
-                  value={changelogItem.version || ''}
-                  onChange={(e) => handleChangelogVersionChange(changelogIndex, e.target.value)}
-                  sx={{ 
-                    '& .MuiInputLabel-root': { color: currentTheme.textSecondary },
-                    '& .MuiOutlinedInput-root': { 
-                      color: currentTheme.text,
-                      '& fieldset': { borderColor: currentTheme.border },
-                      '&:hover fieldset': { borderColor: currentTheme.primary },
-                      '&.Mui-focused fieldset': { borderColor: currentTheme.primary }
-                    }
-                  }}
-                  placeholder="e.g., 1.0.0"
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  size="small"
-                  label="Date"
-                  type="date"
-                  value={changelogItem.date ? changelogItem.date.split('T')[0] : ''}
-                  onChange={(e) => handleChangelogDateChange(changelogIndex, e.target.value + 'T00:00:00Z')}
-                  InputLabelProps={{ shrink: true }}
-                  sx={{ 
-                    '& .MuiInputLabel-root': { color: currentTheme.textSecondary },
-                    '& .MuiOutlinedInput-root': { 
-                      color: currentTheme.text,
-                      '& fieldset': { borderColor: currentTheme.border },
-                      '&:hover fieldset': { borderColor: currentTheme.primary },
-                      '&.Mui-focused fieldset': { borderColor: currentTheme.primary }
-                    }
-                  }}
-                />
-              </Grid>
-            </Grid>
-
-            <Box sx={{ mb: 2 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                <Typography variant="subtitle2" sx={{ color: currentTheme.text, fontWeight: 600 }}>
-                  Changes
-                </Typography>
-                <IconButton
-                  size="small"
-                  onClick={() => addChangelogChange(changelogIndex)}
-                  sx={{ 
-                    color: currentTheme.primary,
-                    '&:hover': {
-                      bgcolor: currentTheme.darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)'
-                    }
-                  }}
-                  title="Add change item"
-                >
-                  <AddIcon />
-                </IconButton>
-              </Box>
-              
-              {(changelogItem.changes || []).map((change, changeIndex) => (
-                <Box key={changeIndex} sx={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: 1, 
-                  mb: 1
-                }}>
-                  <TextField
-                    size="small"
-                    value={change}
-                    onChange={(e) => handleChangelogChangeChange(changelogIndex, changeIndex, e.target.value)}
-                    sx={{ 
-                      flex: 1,
-                      '& .MuiInputLabel-root': { color: currentTheme.textSecondary },
-                      '& .MuiOutlinedInput-root': { 
-                        color: currentTheme.text,
-                        '& fieldset': { borderColor: currentTheme.border },
-                        '&:hover fieldset': { borderColor: currentTheme.primary },
-                        '&.Mui-focused fieldset': { borderColor: currentTheme.primary }
-                      }
-                    }}
-                    placeholder="Enter change description"
-                  />
-                  <IconButton
-                    size="small"
-                    onClick={() => handleDeleteChangelogChange(changelogIndex, changeIndex)}
-                    sx={{ color: 'error.main' }}
-                    title="Delete change item"
-                  >
-                    <DeleteIcon />
-                  </IconButton>
-                </Box>
-              ))}
-            </Box>
-          </Box>
-        ))}
-      </Box>
-    );
-  };
+  
 
   const renderDataConsumerField = (path, value, label) => {
     console.log('renderDataConsumerField called with:', { path, value, label });
@@ -1115,8 +882,19 @@ const EditAgreementPage = () => {
     if (Array.isArray(value)) {
       // Special handling for changelog arrays
       if (path === 'changelog') {
-        console.log('Changelog array detected, calling renderChangelogField');
-        return renderChangelogField(path, value, label);
+        console.log('Changelog array detected, using ChangelogEditor component');
+        return (
+          <ChangelogEditor
+            value={value}
+            onChange={(newChangelog) => {
+              setEditedAgreement(prev => ({
+                ...prev,
+                changelog: newChangelog
+              }));
+            }}
+            currentTheme={currentTheme}
+          />
+        );
       }
       
       // Special handling for dataConsumer arrays
@@ -1194,7 +972,18 @@ const EditAgreementPage = () => {
       
       // Special handling for changelog field
       if (path === 'changelog') {
-        return renderChangelogField(path, value, label);
+        return (
+          <ChangelogEditor
+            value={value}
+            onChange={(newChangelog) => {
+              setEditedAgreement(prev => ({
+                ...prev,
+                changelog: newChangelog
+              }));
+            }}
+            currentTheme={currentTheme}
+          />
+        );
       }
       
       // Special styling for todo field

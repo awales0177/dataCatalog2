@@ -734,16 +734,12 @@ async def create_agreement(request: Dict[str, Any]):
         logger.info(f"Create request for new agreement")
         agreements_data = read_json_file(JSON_FILES['dataAgreements'])
         
-        # Check for duplicate ID
-        for existing_agreement in agreements_data['agreements']:
-            if existing_agreement['id'] == request['id']:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Agreement with ID '{request['id']}' already exists"
-                )
+        # Generate automatic ID
+        new_id = generate_next_agreement_id(agreements_data)
         
-        # Add lastUpdated timestamp
+        # Add lastUpdated timestamp and assign the generated ID
         new_agreement = request.copy()
+        new_agreement['id'] = new_id
         new_agreement['lastUpdated'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         
         agreements_data['agreements'].append(new_agreement)
@@ -751,11 +747,11 @@ async def create_agreement(request: Dict[str, Any]):
         write_json_file(local_file_path, agreements_data)
         
         logger.info(f"Created new agreement in local file {local_file_path}")
-        logger.info(f"Agreement {request['id']} created successfully")
+        logger.info(f"Agreement {new_id} created successfully")
         
         return {
             "message": "Agreement created successfully",
-            "id": request['id'],
+            "id": new_id,
             "created": True
         }
     except Exception as e:
@@ -864,6 +860,200 @@ async def delete_agreement(agreement_id: str):
     except Exception as e:
         logger.error(f"Error deleting agreement: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error deleting agreement: {str(e)}")
+
+def generate_next_reference_id(reference_data: Dict) -> str:
+    """
+    Generate the next available reference ID with format 'ref-XXX'.
+    
+    Args:
+        reference_data (dict): The current reference data
+        
+    Returns:
+        str: The next available ID
+    """
+    existing_ids = [item['id'] for item in reference_data['items']]
+    max_number = 0
+    
+    for item_id in existing_ids:
+        if item_id.startswith('ref-'):
+            try:
+                number = int(item_id[4:])  # Extract number after 'ref-'
+                max_number = max(max_number, number)
+            except ValueError:
+                continue  # Skip if not a valid number
+    
+    next_number = max_number + 1
+    return f"ref-{next_number:03d}"  # Format as ref-001, ref-002, etc.
+
+def generate_next_agreement_id(agreements_data: Dict) -> str:
+    """
+    Generate the next available agreement ID with format 'agreement-XXX'.
+    
+    Args:
+        agreements_data (dict): The current agreements data
+        
+    Returns:
+        str: The next available ID
+    """
+    existing_ids = [agreement['id'] for agreement in agreements_data['agreements']]
+    max_number = 0
+    
+    for item_id in existing_ids:
+        if item_id.startswith('agreement-'):
+            try:
+                number = int(item_id[10:])  # Extract number after 'agreement-'
+                max_number = max(max_number, number)
+            except ValueError:
+                continue  # Skip if not a valid number
+    
+    next_number = max_number + 1
+    return f"agreement-{next_number:03d}"  # Format as agreement-001, agreement-002, etc.
+
+# Reference Data Management Endpoints
+@app.post("/api/reference")
+async def create_reference_item(request: Dict[str, Any]):
+    """
+    Create a new reference data item.
+    
+    Args:
+        request (dict): The new reference data
+        
+    Returns:
+        dict: Success message and created reference item info
+        
+    Raises:
+        HTTPException: If creation fails
+    """
+    try:
+        logger.info(f"Create request for new reference item")
+        reference_data = read_json_file(JSON_FILES['reference'])
+        
+        # Generate automatic ID
+        new_id = generate_next_reference_id(reference_data)
+        
+        # Add lastUpdated timestamp and assign the generated ID
+        new_item = request.copy()
+        new_item['id'] = new_id
+        new_item['lastUpdated'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        
+        reference_data['items'].append(new_item)
+        local_file_path = JSON_FILES['reference']
+        write_json_file(local_file_path, reference_data)
+        
+        logger.info(f"Created new reference item in local file {local_file_path}")
+        logger.info(f"Reference item {new_id} created successfully")
+        
+        return {
+            "message": "Reference item created successfully",
+            "id": new_id,
+            "created": True
+        }
+    except Exception as e:
+        logger.error(f"Error creating reference item: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error creating reference item: {str(e)}")
+
+@app.put("/api/reference/{item_id}")
+async def update_reference_item(item_id: str, request: Dict[str, Any]):
+    """
+    Update an existing reference data item.
+    
+    Args:
+        item_id (str): The ID of the reference item to update
+        request (dict): The updated reference data
+        
+    Returns:
+        dict: Success message and updated reference item info
+        
+    Raises:
+        HTTPException: If the reference item is not found or update fails
+    """
+    try:
+        logger.info(f"Update request for reference item: {item_id}")
+        reference_data = read_json_file(JSON_FILES['reference'])
+        
+        # Find the reference item to update
+        item_to_update = None
+        for item in reference_data['items']:
+            if item['id'].lower() == item_id.lower():
+                item_to_update = item
+                break
+        
+        if not item_to_update:
+            raise HTTPException(status_code=404, detail=f"Reference item with ID '{item_id}' not found")
+        
+        # Update the reference item
+        updated_item = item_to_update.copy()
+        updated_item.update(request)
+        updated_item['lastUpdated'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        
+        # Replace the old item with the updated one
+        reference_data['items'] = [
+            i for i in reference_data['items'] 
+            if i['id'].lower() != item_id.lower()
+        ]
+        reference_data['items'].append(updated_item)
+        
+        local_file_path = JSON_FILES['reference']
+        write_json_file(local_file_path, reference_data)
+        
+        logger.info(f"Reference item updated in local file {local_file_path}")
+        logger.info(f"Reference item {item_id} updated successfully")
+        
+        return {
+            "message": "Reference item updated successfully",
+            "id": item_id,
+            "updated": True
+        }
+    except Exception as e:
+        logger.error(f"Error updating reference item: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error updating reference item: {str(e)}")
+
+@app.delete("/api/reference/{item_id}")
+async def delete_reference_item(item_id: str):
+    """
+    Delete a reference data item by its ID.
+    
+    Args:
+        item_id (str): The ID of the reference item to delete
+        
+    Returns:
+        dict: Success message and deleted reference item info
+        
+    Raises:
+        HTTPException: If the reference item is not found or deletion fails
+    """
+    try:
+        logger.info(f"Delete request for reference item: {item_id}")
+        reference_data = read_json_file(JSON_FILES['reference'])
+        
+        item_to_delete = None
+        for item in reference_data['items']:
+            if item['id'].lower() == item_id.lower():
+                item_to_delete = item
+                break
+        
+        if not item_to_delete:
+            raise HTTPException(status_code=404, detail=f"Reference item with ID '{item_id}' not found")
+        
+        reference_data['items'] = [
+            i for i in reference_data['items'] 
+            if i['id'].lower() != item_id.lower()
+        ]
+        
+        local_file_path = JSON_FILES['reference']
+        write_json_file(local_file_path, reference_data)
+        
+        logger.info(f"Reference item deleted from local file {local_file_path}")
+        logger.info(f"Reference item {item_id} deleted successfully")
+        
+        return {
+            "message": "Reference item deleted successfully",
+            "id": item_id,
+            "deleted": True
+        }
+    except Exception as e:
+        logger.error(f"Error deleting reference item: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error deleting reference item: {str(e)}")
 
 # Debug endpoints
 @app.get("/api/debug/cache")

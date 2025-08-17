@@ -7,7 +7,7 @@
       "version": "2.1.0",
       "description": "Comprehensive model for managing customer information including personal details, contact information, purchase history, preferences, and interaction records. Supports customer segmentation, relationship management, and personalized service delivery across multiple channels.",
       "extendedDescription": "The Customer Data Model serves as the foundation for all customer-related operations. It includes detailed schemas for personal information, contact details, purchase history, preferences, and interaction records. The model supports advanced features like customer segmentation, relationship management, and personalized service delivery. It integrates with multiple channels including web, mobile, and in-store systems. The model also includes data quality checks, validation rules, and compliance measures for handling sensitive customer information.",
-      "lastUpdated": "2025-08-12 22:21:21",
+      "lastUpdated": "2025-08-17 01:28:14",
       "owner": "Data Team",
       "specMaintainer": "Jane Smith",
       "maintainerEmail": "abc@yahoo.com",
@@ -24,7 +24,7 @@
       ],
       "meta": {
         "tier": "gold",
-        "verified": true
+        "verified": false
       },
       "changelog": [
         {
@@ -33,7 +33,8 @@
           "changes": [
             "Added new customer segmentation fields",
             "Enhanced privacy compliance features",
-            "Updated validation rules for contact information"
+            "Updated validation rules for contact information",
+            "same change"
           ]
         },
         {
@@ -79,7 +80,7 @@
       "version": "1.3.0",
       "description": "Product information and inventory management",
       "extendedDescription": "The Product Catalog model manages comprehensive product information including SKUs, descriptions, pricing, categories, and inventory levels. It supports multiple product types, variants, and relationships between products. The model includes features for product categorization, attribute management, and inventory tracking. It also handles product lifecycle management, from creation to retirement, and supports bulk operations for product updates and maintenance.",
-      "lastUpdated": "2025-08-12 02:06:57",
+      "lastUpdated": "2025-08-16 22:13:37",
       "owner": "Product Team",
       "specMaintainer": "Michael Chen",
       "maintainerEmail": "michael.chen@example.com",
@@ -98,7 +99,7 @@
       ],
       "meta": {
         "tier": "silver",
-        "verified": true
+        "verified": false
       },
       "changelog": [
         {
@@ -153,7 +154,7 @@
       "version": "3.0.0",
       "description": "End-to-end order processing and fulfillment data model covering order creation, payment processing, inventory allocation, shipping logistics, delivery tracking, and post-delivery support. Includes integration points with payment gateways, shipping carriers, and customer service systems.",
       "extendedDescription": "The Order Management model provides a comprehensive framework for handling the entire order lifecycle. It includes detailed schemas for order creation, payment processing, inventory allocation, shipping logistics, and delivery tracking. The model supports multiple payment methods, shipping carriers, and fulfillment options. It includes features for order status tracking, exception handling, and post-delivery support. The model also integrates with customer service systems for handling inquiries and issues.",
-      "lastUpdated": "2025-08-12 01:57:10",
+      "lastUpdated": "2025-08-16 22:12:56",
       "owner": "Operations Team",
       "specMaintainer": "Sarah Johnson",
       "maintainerEmail": "sarah.johnson@example.com",
@@ -171,7 +172,7 @@
       ],
       "meta": {
         "tier": "bronze",
-        "verified": false
+        "verified": true
       },
       "changelog": [
         {
@@ -530,7 +531,7 @@
       "version": "1.3.0",
       "description": "Recreational facility management and scheduling",
       "extendedDescription": "The Recreation Facilities model manages comprehensive recreational facility data. It includes schemas for facility information, scheduling, and maintenance. The model supports program management, resource allocation, and capacity planning. It includes features for online booking, membership management, and activity tracking. The model also handles integration with payment systems, communication platforms, and reporting tools.",
-      "lastUpdated": "2024-03-08",
+      "lastUpdated": "2025-08-17 01:04:57",
       "owner": "Recreation Team",
       "specMaintainer": "Kevin Park",
       "maintainerEmail": "kevin.park@example.com",
@@ -541,7 +542,7 @@
       ],
       "meta": {
         "tier": "bronze",
-        "verified": false
+        "verified": true
       },
       "resources": {
         "code": "https://github.com/org/recreation-facilities",

@@ -48,6 +48,7 @@ import {
 import { useNavigate, useParams } from 'react-router-dom';
 import { ThemeContext } from '../App';
 import { fetchData, createReferenceItem, updateReferenceItem, deleteReferenceItem } from '../services/api';
+import cacheService from '../services/cache';
 
 const EditReferenceDataPage = () => {
   const { currentTheme } = useContext(ThemeContext);
@@ -64,6 +65,7 @@ const EditReferenceDataPage = () => {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
 
   // Form fields
   const [newSourceSystem, setNewSourceSystem] = useState('');
@@ -155,6 +157,24 @@ const EditReferenceDataPage = () => {
     loadReferenceItem();
   }, [id, isNewItem, navigate]);
 
+  const refreshReferenceData = async () => {
+    try {
+      if (!isNewItem) {
+        // Invalidate the reference data cache to ensure fresh data
+        cacheService.invalidateByPrefix('reference');
+        
+        const referenceData = await fetchData('reference', {}, { forceRefresh: true });
+        const foundItem = referenceData.items.find(item => item.id === id);
+        if (foundItem) {
+          setReferenceItem(foundItem);
+          setEditedItem(foundItem);
+        }
+      }
+    } catch (error) {
+      console.error('Error refreshing reference data:', error);
+    }
+  };
+
   const handleSave = async () => {
     if (!editedItem.name) {
       setSnackbar({
@@ -176,6 +196,10 @@ const EditReferenceDataPage = () => {
         });
       } else {
         await updateReferenceItem(id, editedItem);
+        
+        // Refresh the UI with updated data
+        await refreshReferenceData();
+        
         setSnackbar({
           open: true,
           message: 'Reference item updated successfully',
@@ -195,6 +219,20 @@ const EditReferenceDataPage = () => {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleCancel = () => {
+    // Check if there are unsaved changes
+    if (referenceItem && editedItem && JSON.stringify(referenceItem) !== JSON.stringify(editedItem)) {
+      setShowSaveDialog(true);
+    } else {
+      // No changes, proceed with navigation
+      navigate('/reference');
+    }
+  };
+
+  const goToViewMode = () => {
+    navigate('/reference');
   };
 
   const handleDelete = async () => {
@@ -614,7 +652,7 @@ const EditReferenceDataPage = () => {
             )}
             <Button
               variant="outlined"
-              onClick={() => navigate('/reference')}
+              onClick={handleCancel}
               startIcon={<CancelIcon />}
               sx={{ color: currentTheme.text, borderColor: currentTheme.border }}
             >
@@ -1274,6 +1312,36 @@ const EditReferenceDataPage = () => {
             disabled={deleteConfirmation !== editedItem?.name}
           >
             Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Save Confirmation Dialog */}
+      <Dialog 
+        open={showSaveDialog} 
+        onClose={() => setShowSaveDialog(false)}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            bgcolor: currentTheme.card,
+            color: currentTheme.text,
+            border: `1px solid ${currentTheme.border}`
+          }
+        }}
+      >
+        <DialogTitle sx={{ color: currentTheme.text }}>Unsaved Changes</DialogTitle>
+        <DialogContent sx={{ color: currentTheme.text }}>
+          <Typography sx={{ color: currentTheme.text }}>
+            You have unsaved changes. Are you sure you want to discard them?
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowSaveDialog(false)} sx={{ color: currentTheme.text }}>
+            Continue Editing
+          </Button>
+          <Button onClick={goToViewMode} color="error">
+            Discard Changes
           </Button>
         </DialogActions>
       </Dialog>

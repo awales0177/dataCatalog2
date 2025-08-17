@@ -48,6 +48,8 @@ import {
 import { GoVerified } from "react-icons/go";
 import { fetchData, updateModel, createModel, deleteModel } from '../services/api';
 import { formatDate, getQualityColor } from '../utils/themeUtils';
+import cacheService from '../services/cache';
+import ChangelogEditor from '../components/ChangelogEditor';
 
 const EditDataModelDetailPage = ({ currentTheme }) => {
   const { shortName } = useParams();
@@ -519,6 +521,24 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
     await performSave();
   };
 
+  const refreshModelData = async () => {
+    try {
+      if (shortName !== 'new') {
+        // Invalidate models cache (specifications is an alias for the same data)
+        cacheService.invalidateByPrefix('models');
+        
+        const modelData = await fetchData('models', {}, { forceRefresh: true });
+        const foundModel = modelData.models.find(m => m.shortName.toLowerCase() === shortName.toLowerCase());
+        if (foundModel) {
+          setModel(foundModel);
+          setEditedModel(JSON.parse(JSON.stringify(foundModel)));
+        }
+      }
+    } catch (error) {
+      console.error('Error refreshing model data:', error);
+    }
+  };
+
   const performSave = async () => {
     setSaving(true);
     try {
@@ -570,8 +590,8 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
         // Update existing model
         const result = await updateModel(shortName, updatedModel, { updateAssociatedLinks });
         
-        // Update the local model
-        setModel(updatedModel);
+        // Refresh the UI with updated data
+        await refreshModelData();
         
         setSnackbar({
           open: true,
@@ -779,10 +799,42 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
                   '& .MuiInputBase-input': { color: currentTheme.text },
                   '& .MuiInputBase-input::placeholder': { color: currentTheme.textSecondary, opacity: 0.7 },
                   '&.Mui-disabled': {
-                    bgcolor: currentTheme.darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
+                    bgcolor: currentTheme.darkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)',
                     '& .MuiInputBase-input': { 
-                      color: currentTheme.textSecondary,
-                      WebkitTextFillColor: currentTheme.textSecondary
+                      color: currentTheme.text,
+                      WebkitTextFillColor: currentTheme.text
+                    },
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: currentTheme.border
+                    }
+                  },
+                  '&.Mui-disabled .MuiInputBase-input': {
+                    color: currentTheme.text,
+                    WebkitTextFillColor: currentTheme.text
+                  },
+                  '&.Mui-disabled .MuiOutlinedInput-root': {
+                    '& .MuiInputBase-input': {
+                      color: currentTheme.text,
+                      WebkitTextFillColor: currentTheme.text
+                    },
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: currentTheme.border
+                    }
+                  },
+                  // Target the disabled state at multiple levels
+                  '& .MuiOutlinedInput-root.Mui-disabled': {
+                    '& .MuiInputBase-input': {
+                      color: currentTheme.text,
+                      WebkitTextFillColor: currentTheme.text
+                    },
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: currentTheme.border
+                    }
+                  },
+                  '& .MuiInputBase-root.Mui-disabled': {
+                    '& .MuiInputBase-input': {
+                      color: currentTheme.text,
+                      WebkitTextFillColor: currentTheme.text
                     }
                   }
                 }}
@@ -1147,61 +1199,16 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
         </Grid>
 
         {/* Changelog */}
-        <Box sx={{ mt: 4 }}>
-          <Typography variant="h6" sx={{ color: currentTheme.text, mb: 2 }}>
-            Changelog
-          </Typography>
-          {editedModel.changelog?.map((change, index) => (
-            <Accordion key={index} sx={{ mb: 2, bgcolor: 'transparent', boxShadow: 'none' }}>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
-                  <Typography variant="subtitle2" sx={{ color: currentTheme.primary, fontWeight: 600 }}>
-                    v{change.version}
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: currentTheme.textSecondary }}>
-                    {change.date}
-                  </Typography>
-                </Box>
-              </AccordionSummary>
-              <AccordionDetails>
-                <Box sx={{ pl: 2 }}>
-                  {renderField(`changelog.${index}.version`, change.version, 'Version')}
-                  {renderField(`changelog.${index}.date`, change.date, 'Date')}
-                  {renderField(`changelog.${index}.changes`, change.changes, 'Changes')}
-                  
-                  {/* Delete Changelog Entry Button */}
-                  <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
-                    <Button
-                      variant="outlined"
-                      color="error"
-                      size="small"
-                      onClick={() => confirmDeleteArrayItem('changelog', index, `Changelog entry v${change.version}`)}
-                      startIcon={<DeleteIcon />}
-                      sx={{ 
-                        borderColor: 'error.main',
-                        color: 'error.main',
-                        '&:hover': {
-                          bgcolor: 'error.main',
-                          color: 'white',
-                        }
-                      }}
-                    >
-                      Delete Entry
-                    </Button>
-                  </Box>
-                </Box>
-              </AccordionDetails>
-            </Accordion>
-          ))}
-          <Button
-            variant="outlined"
-            onClick={() => addArrayItem('changelog')}
-            startIcon={<AddIcon />}
-            sx={{ mt: 1, color: currentTheme.primary, borderColor: currentTheme.primary }}
-          >
-            Add Changelog Entry
-          </Button>
-        </Box>
+        <ChangelogEditor
+          value={editedModel.changelog}
+          onChange={(newChangelog) => {
+            setEditedModel(prev => ({
+              ...prev,
+              changelog: newChangelog
+            }));
+          }}
+          currentTheme={currentTheme}
+        />
 
         {/* Resources */}
         <Box sx={{ mt: 4 }}>
