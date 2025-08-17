@@ -11,19 +11,25 @@ import {
   Alert,
   useTheme,
   alpha,
+  Button,
+  IconButton,
+  Fab,
 } from '@mui/material';
 import {
   Search as SearchIcon,
+  Add as AddIcon,
 } from '@mui/icons-material';
 import { ThemeContext } from '../App';
 import { fetchData } from '../services/api';
 import ReferenceDataCard from '../components/ReferenceDataCard';
 import Pagination from '../components/Pagination';
+import { useNavigate } from 'react-router-dom';
 
 const ITEMS_PER_PAGE = 12;
 
 const ReferenceDataPage = () => {
   const { currentTheme } = useContext(ThemeContext);
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [originalData, setOriginalData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
@@ -102,6 +108,8 @@ const ReferenceDataPage = () => {
         Manage and maintain reference data sets. Ensure consistency and standardization of key business values across your data ecosystem.
       </Typography>
 
+
+
       <Box sx={{ mb: 4 }}>
         <TextField
           fullWidth
@@ -152,6 +160,26 @@ const ReferenceDataPage = () => {
           currentTheme={currentTheme}
         />
       </Box>
+
+      {/* Floating Action Button for creating new reference data */}
+      <Fab
+        color="primary"
+        aria-label="add new reference data"
+        onClick={() => navigate('/reference/create')}
+        sx={{
+          position: 'fixed',
+          bottom: 24,
+          right: 24,
+          bgcolor: currentTheme.primary,
+          color: currentTheme.background,
+          '&:hover': {
+            bgcolor: currentTheme.primaryDark || currentTheme.primary
+          },
+          zIndex: 1000,
+        }}
+      >
+        <AddIcon />
+      </Fab>
     </Container>
   );
 };

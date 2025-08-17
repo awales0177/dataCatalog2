@@ -26,6 +26,7 @@ import {
   Button
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import EditIcon from '@mui/icons-material/Edit';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import TimelineIcon from '@mui/icons-material/Timeline';
 import HistoryIcon from '@mui/icons-material/History';
@@ -125,6 +126,20 @@ const ReferenceDataDetailPage = ({ currentTheme }) => {
             {item.id}
           </Typography>
         </Box>
+        <Button
+          variant="contained"
+          startIcon={<EditIcon />}
+          onClick={() => navigate(`/reference/${item.id}/edit`)}
+          sx={{
+            bgcolor: currentTheme?.primary,
+            color: 'white',
+            '&:hover': {
+              bgcolor: currentTheme?.darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+            },
+          }}
+        >
+          Edit
+        </Button>
         <Box sx={{ display: 'flex', gap: 1 }}>
           <Chip 
             label={item.category} 

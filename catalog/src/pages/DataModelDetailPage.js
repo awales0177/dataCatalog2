@@ -38,7 +38,8 @@ import {
 import { ImMakeGroup } from "react-icons/im";
 import { MdHandshake, MdDomain } from "react-icons/md";
 import { IoIosApps } from "react-icons/io";
-import { formatDate, getQualityColor } from '../utils/themeUtils';
+import { formatDate } from '../utils/themeUtils';
+import { calculateModelScore, getModelQualityColor } from '../utils/modelScoreUtils';
 import verifiedLogo from '../imgs/verified.svg';
 import { fetchData, fetchAgreementsByModel } from '../services/api';
 import ProductAgreementCard from '../components/ProductAgreementCard';
@@ -119,7 +120,7 @@ const DataModelDetailPage = ({ currentTheme }) => {
   }
 
   const score = calculateScore(model);
-  const qualityColor = getQualityColor(score.score, currentTheme.darkMode);
+  const qualityColor = getModelQualityColor(score.score, currentTheme.darkMode);
   const tierColor = getTierColor(model.meta?.tier);
 
   const handleNextAgreement = () => {
@@ -863,36 +864,9 @@ const DataModelDetailPage = ({ currentTheme }) => {
   );
 };
 
-// Helper function to calculate score (reused from DataModelCard)
+// Use the new scoring system from modelScoreUtils
 const calculateScore = (model) => {
-  const countFilledFields = (obj) => {
-    let filledCount = 0;
-    let totalCount = 0;
-    let missingFields = [];
-
-    for (const [key, value] of Object.entries(obj)) {
-      totalCount++;
-      if (value === null || value === undefined || value === "") {
-        missingFields.push(key);
-        continue;
-      }
-      if (typeof value === 'object' && !Array.isArray(value)) {
-        const nestedResult = countFilledFields(value);
-        filledCount += nestedResult.filled;
-        totalCount += nestedResult.total - 1; // Subtract 1 to avoid double counting the parent object
-        missingFields = missingFields.concat(nestedResult.missing.map(field => `${key}.${field}`));
-      } else {
-        filledCount++;
-      }
-    }
-    return { filled: filledCount, total: totalCount, missing: missingFields };
-  };
-
-  const result = countFilledFields(model);
-  return {
-    score: Math.round((result.filled / result.total) * 100),
-    missingFields: result.missing
-  };
+  return calculateModelScore(model);
 };
 
 // Helper function to get tier color

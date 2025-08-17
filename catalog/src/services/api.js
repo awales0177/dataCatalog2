@@ -370,5 +370,64 @@ export const deleteAgreement = async (agreementId) => {
   }
 };
 
+// Reference Data Management Functions
+export const createReferenceItem = async (referenceData) => {
+  try {
+    const response = await fetch(`${API_URL}/reference`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(referenceData),
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+    }
+    const result = await response.json();
+    cacheService.invalidateByPrefix('reference');
+    return result;
+  } catch (error) {
+    console.error('Error creating reference item:', error);
+    throw error;
+  }
+};
+
+export const updateReferenceItem = async (itemId, referenceData) => {
+  try {
+    const response = await fetch(`${API_URL}/reference/${itemId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(referenceData),
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+    }
+    const result = await response.json();
+    cacheService.invalidateByPrefix('reference');
+    return result;
+  } catch (error) {
+    console.error('Error updating reference item:', error);
+    throw error;
+  }
+};
+
+export const deleteReferenceItem = async (itemId) => {
+  try {
+    const response = await fetch(`${API_URL}/reference/${itemId}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+    }
+    const result = await response.json();
+    cacheService.invalidateByPrefix('reference');
+    return result;
+  } catch (error) {
+    console.error('Error deleting reference item:', error);
+    throw error;
+  }
+};
+
 // Export cache service for direct access when needed
 export { default as cacheService } from './cache';

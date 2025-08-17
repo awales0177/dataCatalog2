@@ -14,7 +14,8 @@ import {
   EmojiEvents as EmojiEventsIcon,
   Whatshot as WhatshotIcon,
 } from '@mui/icons-material';
-import { formatDate, getQualityColor } from '../utils/themeUtils';
+import { formatDate } from '../utils/themeUtils';
+import { calculateModelScore, getModelQualityColor } from '../utils/modelScoreUtils';
 import verifiedLogo from '../imgs/verified.svg';
 import { GoVerified } from "react-icons/go";
 
@@ -28,33 +29,9 @@ const DataModelCard = ({ model, currentTheme }) => {
   }
 
   // Calculate score based on how many fields have values
-  const calculateScore = (model) => {
-    const countFilledFields = (obj) => {
-      let filledCount = 0;
-      let totalCount = 0;
-
-      for (const [key, value] of Object.entries(obj)) {
-        totalCount++;
-        if (value === null || value === undefined || value === "") {
-          continue;
-        }
-        if (typeof value === 'object' && !Array.isArray(value)) {
-          const nestedResult = countFilledFields(value);
-          filledCount += nestedResult.filled;
-          totalCount += nestedResult.total - 1; // Subtract 1 to avoid double counting the parent object
-        } else {
-          filledCount++;
-        }
-      }
-      return { filled: filledCount, total: totalCount };
-    };
-
-    const result = countFilledFields(model);
-    return Math.round((result.filled / result.total) * 100);
-  };
-
-  const score = calculateScore(model);
-  const qualityColor = getQualityColor(score, currentTheme.darkMode);
+  const scoreResult = calculateModelScore(model);
+  const score = scoreResult.score;
+  const qualityColor = getModelQualityColor(score, currentTheme.darkMode);
 
   // Get tier color based on meta.tier
   const getTierColor = (tier) => {

@@ -152,6 +152,19 @@ const ProductAgreementCard = ({ agreement, currentTheme }) => {
           })()}
         </Box>
 
+        {/* Contract Version */}
+        {agreement.contractVersion && (
+          <Box sx={{ mb: 1 }}>
+            <Typography variant="caption" sx={{ 
+              color: currentTheme.textSecondary,
+              fontSize: '0.7rem',
+              fontWeight: 500,
+            }}>
+              v{agreement.contractVersion}
+            </Typography>
+          </Box>
+        )}
+
         <Box sx={{ 
           display: 'flex', 
           justifyContent: 'space-between', 

@@ -1019,7 +1019,7 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
                 Agreement Version
               </Typography>
               <Typography variant="body1" sx={{ color: currentTheme.text }}>
-                v{agreement.agreementVersion}
+                v{agreement.contractVersion}
               </Typography>
             </Box>
 
@@ -1047,7 +1047,7 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
               <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
                 Delivery Frequency
               </Typography>
-              <List dense sx={{ bgcolor: alpha(currentTheme.card, 0.7), borderRadius: 1, p: 0.5, pl: 0, ml: '-12px' }}>
+              <List dense sx={{ bgcolor: 'transparent', borderRadius: 1, p: 0.5, pl: 0, ml: '-12px' }}>
                 {Array.isArray(agreement.deliveryFrequency) ? agreement.deliveryFrequency.map((freq, index) => {
                   const { icon: IconComponent, label, description } = parseDeliveryFrequency(freq);
                   return (
@@ -1084,7 +1084,7 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
               <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
                 Location
               </Typography>
-              <List dense sx={{ bgcolor: alpha(currentTheme.card, 0.7), borderRadius: 1, p: 0.5, pl: 0, ml: '-12px' }}>
+              <List dense sx={{ bgcolor: 'transparent', borderRadius: 1, p: 0.5, pl: 0, ml: '-12px' }}>
                 {(() => {
                   if (agreement.location && typeof agreement.location === 'object' && !Array.isArray(agreement.location)) {
                     // Object: key = location, value = description

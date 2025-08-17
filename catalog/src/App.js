@@ -43,7 +43,6 @@ import {
   GitHub as GitHubIcon,
   Info as InfoIcon,
   AutoMode as AutoModeIcon,
-  Gavel as GavelIcon,
 } from '@mui/icons-material';
 import {
   FiHome,
@@ -59,7 +58,7 @@ import {
 import { MdHandshake, MdDomain } from "react-icons/md";
 import { ImMakeGroup } from "react-icons/im";
 import { AiOutlineAppstore } from "react-icons/ai";
-import { IoBookOutline } from "react-icons/io5";
+
 import { IoIosApps } from "react-icons/io";
 import { PiGraph } from "react-icons/pi";
 import lotusRed from './imgs/lotus-red.svg';
@@ -72,14 +71,15 @@ import ProductAgreementsPage from './pages/ProductAgreementsPage';
 import DataDomainsPage from './pages/DataDomainsPage';
 import SplashPage from './pages/SplashPage';
 import ApplicationsPage from './pages/ApplicationsPage';
-import LexiconPage from './pages/LexiconPage';
+
 import ReferenceDataPage from './pages/ReferenceDataPage';
+import EditReferenceDataPage from './pages/EditReferenceDataPage';
 import DataSpecificationDetailPage from './pages/DataModelDetailPage';
 import EditDataModelDetailPage from './pages/EditDataModelDetailPage';
 import ProductAgreementDetailPage from './pages/ProductAgreementDetailPage';
 import EditAgreementPage from './pages/EditAgreementPage';
 import ReferenceDataDetailPage from './pages/ReferenceDataDetailPage';
-import StandardsPolicyPage from './pages/StandardsPolicyPage';
+
 import InfoSidebar from './components/InfoSidebar';
 
 // Import data and utilities
@@ -737,24 +737,14 @@ const menuItems = [
     icon: <AiOutlineAppstore />,
     id: 'applications'
   },
-  {
-    name: 'Lexicon',
-    path: '/lexicon',
-    icon: <IoBookOutline />,
-    id: 'lexicon'
-  },
+
   {
     name: 'Reference Data',
     path: '/reference',
     icon: <IoIosApps />,
     id: 'reference'
   },
-  {
-    name: 'Standards & Policy',
-    path: '/standards-policy',
-    icon: <GavelIcon />,
-    id: 'standards-policy'
-  },
+
 ];
 
 function AppContent() {
@@ -791,12 +781,8 @@ function AppContent() {
       title = 'Data Domains';
     } else if (path === '/applications') {
       title = 'Applications';
-    } else if (path === '/lexicon') {
-      title = 'Lexicon';
     } else if (path === '/reference') {
       title = 'Reference Data';
-    } else if (path === '/standards-policy') {
-      title = 'Standards & Policy';
     } else if (path.startsWith('/specifications/')) {
       const shortName = path.split('/').pop().toUpperCase();
       title = shortName;
@@ -1321,9 +1307,9 @@ function AppContent() {
             <Route path="/agreements" element={<ProductAgreementsPage />} />
             <Route path="/domains" element={<DataDomainsPage />} />
             <Route path="/applications" element={<ApplicationsPage />} />
-            <Route path="/lexicon" element={<LexiconPage />} />
             <Route path="/reference" element={<ReferenceDataPage />} />
-            <Route path="/standards-policy" element={<StandardsPolicyPage currentTheme={currentTheme} />} />
+            <Route path="/reference/create" element={<EditReferenceDataPage currentTheme={currentTheme} />} />
+            <Route path="/reference/:id/edit" element={<EditReferenceDataPage currentTheme={currentTheme} />} />
             <Route path="/reference/:id" element={<ReferenceDataDetailPage currentTheme={currentTheme} />} />
             <Route 
               path="/specifications/:shortName" 

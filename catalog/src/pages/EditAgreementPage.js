@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useContext, useEffect, useRef } from 'react';
 import {
   Box,
   Container,
@@ -6,9 +6,6 @@ import {
   TextField,
   Button,
   IconButton,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
   Chip,
   Switch,
   FormControlLabel,
@@ -35,7 +32,6 @@ import {
   Cancel as CancelIcon,
   Add as AddIcon,
   Delete as DeleteIcon,
-  ExpandMore as ExpandMoreIcon,
   DeleteForever as DeleteForeverIcon,
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -75,6 +71,7 @@ const EditAgreementPage = () => {
   const [newLocationValue, setNewLocationValue] = useState('');
   const [newChangelogVersion, setNewChangelogVersion] = useState('');
   const [newChangelogChanges, setNewChangelogChanges] = useState('');
+
 
   const handleAddChangelogItem = (path) => {
     console.log('handleAddChangelogItem called with path:', path);
@@ -261,10 +258,12 @@ const EditAgreementPage = () => {
   const hasChanges = () => {
     if (!agreement || !editedAgreement) return false;
     if (isNewAgreement) {
-      return editedAgreement.name && editedAgreement.description && editedAgreement.id;
+      return editedAgreement.name && editedAgreement.description;
     }
     
     console.log('Checking for changes:');
+    console.log('Original agreement location:', agreement.location);
+    console.log('Edited agreement location:', editedAgreement.location);
     console.log('Original agreement dataConsumer:', agreement.dataConsumer);
     console.log('Edited agreement dataConsumer:', editedAgreement.dataConsumer);
     
@@ -307,6 +306,13 @@ const EditAgreementPage = () => {
         current[lastPart] = value;
       }
       
+      // Auto-update todo date when todo items are modified
+      if (path.startsWith('todo.items')) {
+        if (newAgreement.todo && typeof newAgreement.todo === 'object') {
+          newAgreement.todo.date = new Date().toISOString();
+        }
+      }
+      
       return newAgreement;
     });
   };
@@ -343,6 +349,13 @@ const EditAgreementPage = () => {
         current.push('');
       }
       
+      // Auto-update todo date when todo items are added
+      if (path === 'todo.items') {
+        if (newAgreement.todo && typeof newAgreement.todo === 'object') {
+          newAgreement.todo.date = new Date().toISOString();
+        }
+      }
+      
       return newAgreement;
     });
   };
@@ -364,6 +377,13 @@ const EditAgreementPage = () => {
       
       if (Array.isArray(current)) {
         current.splice(deleteArrayItem.index, 1);
+      }
+      
+      // Auto-update todo date when todo items are deleted
+      if (deleteArrayItem.path === 'todo.items') {
+        if (newAgreement.todo && typeof newAgreement.todo === 'object') {
+          newAgreement.todo.date = new Date().toISOString();
+        }
       }
       
       return newAgreement;
@@ -504,198 +524,94 @@ const EditAgreementPage = () => {
   const renderLocationField = (path, value, label) => {
     const handleAddLocationItem = () => {
       if (newLocationKey.trim() && newLocationValue.trim()) {
-        setEditedAgreement(prev => {
-          const newAgreement = { ...prev };
-          const pathArray = path.split('.');
-          let current = newAgreement;
-          
-          for (let i = 0; i < pathArray.length; i++) {
-            current = current[pathArray[i]];
-          }
-          
-          if (typeof current === 'object' && current !== null) {
-            current[newLocationKey.trim()] = newLocationValue.trim();
-          }
-          
-          return newAgreement;
-        });
+        // Use the proper change tracking system
+        const currentLocation = editedAgreement.location || {};
+        const updatedLocation = {
+          ...currentLocation,
+          [newLocationKey.trim()]: newLocationValue.trim()
+        };
+        
+        handleFieldChange('location', updatedLocation);
         
         setNewLocationKey('');
         setNewLocationValue('');
       }
     };
 
-    const handleKeyChange = (oldKey, newKey) => {
-      if (oldKey === newKey || !newKey.trim()) return;
-      
-      setEditedAgreement(prev => {
-        const newAgreement = { ...prev };
-        const pathArray = path.split('.');
-        let current = newAgreement;
-        
-        for (let i = 0; i < pathArray.length; i++) {
-          current = current[pathArray[i]];
-        }
-        
-        if (typeof current === 'object' && current !== null) {
-          const value = current[oldKey];
-          delete current[oldKey];
-          current[newKey.trim()] = value;
-        }
-        
-        return newAgreement;
-      });
-    };
 
-    const handleValueChange = (key, newValue) => {
-      setEditedAgreement(prev => {
-        const newAgreement = { ...prev };
-        const pathArray = path.split('.');
-        let current = newAgreement;
-        
-        for (let i = 0; i < pathArray.length; i++) {
-          current = current[pathArray[i]];
-        }
-        
-        if (typeof current === 'object' && current !== null) {
-          current[key] = newValue;
-        }
-        
-        return newAgreement;
-      });
-    };
 
     const handleDeleteLocationItem = (keyToDelete) => {
-      setEditedAgreement(prev => {
-        const newAgreement = { ...prev };
-        const pathArray = path.split('.');
-        let current = newAgreement;
-        
-        for (let i = 0; i < pathArray.length; i++) {
-          current = current[pathArray[i]];
-        }
-        
-        if (typeof current === 'object' && current !== null) {
-          delete current[keyToDelete];
-        }
-        
-        return newAgreement;
-      });
+      // Use the proper change tracking system
+      const currentLocation = { ...editedAgreement.location } || {};
+      delete currentLocation[keyToDelete];
+      
+      handleFieldChange('location', currentLocation);
     };
 
+
+
     return (
-      <Box key={path} sx={{ 
-        mb: 2,
-        p: 2,
-        bgcolor: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.02)' : 'rgba(33, 150, 243, 0.01)',
-        borderRadius: 1,
-        border: `1px solid ${currentTheme.darkMode ? 'rgba(33, 150, 243, 0.1)' : 'rgba(33, 150, 243, 0.08)'}`,
-        borderLeft: `4px solid ${currentTheme.darkMode ? 'rgba(33, 150, 243, 0.4)' : 'rgba(33, 150, 243, 0.3)'}`
-      }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-          <Typography variant="subtitle2" sx={{ 
-            color: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.9)' : 'rgba(33, 150, 243, 0.8)', 
-            fontWeight: 700,
-            fontSize: '1rem'
-          }}>
-            {label}
-          </Typography>
-          <Typography variant="caption" sx={{ 
-            color: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.7)' : 'rgba(33, 150, 243, 0.6)',
-            fontStyle: 'italic',
-            ml: 'auto'
-          }}>
-            Key-Value Pairs
-          </Typography>
-        </Box>
+      <Box key={path} sx={{ mb: 3 }}>
+        <Typography variant="subtitle1" sx={{ 
+          color: currentTheme.text, 
+          fontWeight: 600,
+          mb: 2
+        }}>
+          {label}
+        </Typography>
 
         {/* Existing location items */}
         {Object.entries(value || {}).map(([key, val]) => (
           <Box key={key} sx={{ 
             display: 'flex', 
             alignItems: 'center', 
-            gap: 1, 
-            mb: 1.5,
-            p: 1.5,
-            bgcolor: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.04)' : 'rgba(33, 150, 243, 0.03)',
-            borderRadius: 1,
-            border: `1px solid ${currentTheme.darkMode ? 'rgba(33, 150, 243, 0.15)' : 'rgba(33, 150, 243, 0.12)'}`,
-            transition: 'all 0.2s ease-in-out',
-            '&:hover': {
-              bgcolor: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.06)' : 'rgba(33, 150, 243, 0.05)',
-              borderColor: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.25)' : 'rgba(33, 150, 243, 0.2)'
-            }
+            gap: 2, 
+            mb: 2
           }}>
             <TextField
-              size="small"
+              fullWidth
               label="Bucket"
               value={key}
-              onChange={(e) => handleKeyChange(key, e.target.value)}
+              disabled
               sx={{ 
-                flex: 1,
                 '& .MuiInputLabel-root': { 
-                  color: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.8)' : 'rgba(33, 150, 243, 0.7)',
+                  color: currentTheme.textSecondary,
                   fontWeight: 600
                 },
                 '& .MuiOutlinedInput-root': { 
                   color: currentTheme.text,
-                  bgcolor: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.02)' : 'rgba(33, 150, 243, 0.01)',
                   '& fieldset': { 
-                    borderColor: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.2)' : 'rgba(33, 150, 243, 0.15)',
-                    borderWidth: '1.5px'
-                  },
-                  '&:hover fieldset': { 
-                    borderColor: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.3)' : 'rgba(33, 150, 243, 0.25)'
-                  },
-                  '&.Mui-focused fieldset': { 
-                    borderColor: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.5)' : 'rgba(33, 150, 243, 0.4)'
+                    borderColor: currentTheme.border
                   }
-                },
-                '& .MuiInputBase-input': { color: currentTheme.text },
-                '& .MuiInputBase-input::placeholder': { color: currentTheme.textSecondary, opacity: 0.7 }
+                }
               }}
-              placeholder="Location bucket"
             />
-            <Typography variant="body2" sx={{ color: currentTheme.textSecondary, mx: 1 }}>
-              :
-            </Typography>
             <TextField
-              size="small"
+              fullWidth
               label="Description"
               value={val}
-              onChange={(e) => handleValueChange(key, e.target.value)}
+              disabled
               sx={{ 
-                flex: 1,
                 '& .MuiInputLabel-root': { 
-                  color: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.8)' : 'rgba(33, 150, 243, 0.7)',
+                  color: currentTheme.textSecondary,
                   fontWeight: 600
                 },
                 '& .MuiOutlinedInput-root': { 
                   color: currentTheme.text,
-                  bgcolor: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.02)' : 'rgba(33, 150, 243, 0.01)',
                   '& fieldset': { 
-                    borderColor: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.2)' : 'rgba(33, 150, 243, 0.15)',
-                    borderWidth: '1.5px'
-                  },
-                  '&:hover fieldset': { 
-                    borderColor: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.3)' : 'rgba(33, 150, 243, 0.25)'
-                  },
-                  '&.Mui-focused fieldset': { 
-                    borderColor: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.5)' : 'rgba(33, 150, 243, 0.4)'
+                    borderColor: currentTheme.border
                   }
-                },
-                '& .MuiInputBase-input': { color: currentTheme.text },
-                '& .MuiInputBase-input::placeholder': { color: currentTheme.textSecondary, opacity: 0.7 }
+                }
               }}
-              placeholder="Location description"
             />
             <IconButton
               size="small"
               onClick={() => handleDeleteLocationItem(key)}
               sx={{ 
-                color: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.7)' : 'rgba(33, 150, 243, 0.6)',
+                color: 'error.main',
                 '&:hover': {
-                  bgcolor: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.1)' : 'rgba(33, 150, 243, 0.08)'
+                  bgcolor: 'error.main',
+                  color: 'white'
                 }
               }}
               title="Delete location item"
@@ -705,100 +621,322 @@ const EditAgreementPage = () => {
           </Box>
         ))}
 
-        {/* Add new location item */}
+
+
+                {/* Add new location item */}
         <Box sx={{ 
           display: 'flex', 
           alignItems: 'center', 
-          gap: 1, 
-          mt: 2,
-          p: 2,
-          bgcolor: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.06)' : 'rgba(33, 150, 243, 0.04)',
-          borderRadius: 1,
-          border: `2px dashed ${currentTheme.darkMode ? 'rgba(33, 150, 243, 0.3)' : 'rgba(33, 150, 243, 0.2)'}`,
-          borderStyle: 'dashed'
+          gap: 2
         }}>
-                                <TextField
-             size="small"
-             label="New Bucket"
-             value={newLocationKey}
-             onChange={(e) => setNewLocationKey(e.target.value)}
-             sx={{ 
-               flex: 1,
-               '& .MuiInputLabel-root': { 
-                 color: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.8)' : 'rgba(33, 150, 243, 0.7)',
-                 fontWeight: 600
-               },
-               '& .MuiOutlinedInput-root': { 
-                 color: currentTheme.text,
-                 bgcolor: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.02)' : 'rgba(33, 150, 243, 0.01)',
-                 '& fieldset': { 
-                   borderColor: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.2)' : 'rgba(33, 150, 243, 0.15)',
-                   borderWidth: '1.5px'
-                 },
-                 '&:hover fieldset': { 
-                   borderColor: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.3)' : 'rgba(33, 150, 243, 0.25)'
-                 },
-                 '&.Mui-focused fieldset': { 
-                   borderColor: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.5)' : 'rgba(33, 150, 243, 0.4)'
-                 }
-               },
-               '& .MuiInputBase-input': { color: currentTheme.text },
-               '& .MuiInputBase-input::placeholder': { color: currentTheme.textSecondary, opacity: 0.7 }
-             }}
-             placeholder="Enter bucket"
-           />
-          <Typography variant="body2" sx={{ color: currentTheme.textSecondary, mx: 1 }}>
-            :
-          </Typography>
-                                <TextField
-             size="small"
-             label="New Description"
-             value={newLocationValue}
-             onChange={(e) => setNewLocationValue(e.target.value)}
-             sx={{ 
-               flex: 1,
-               '& .MuiInputLabel-root': { 
-                 color: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.8)' : 'rgba(33, 150, 243, 0.7)',
-                 fontWeight: 600
-               },
-               '& .MuiOutlinedInput-root': { 
-                 color: currentTheme.text,
-                 bgcolor: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.02)' : 'rgba(33, 150, 243, 0.01)',
-                 '& fieldset': { 
-                   borderColor: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.2)' : 'rgba(33, 150, 243, 0.15)',
-                   borderWidth: '1.5px'
-                 },
-                 '&:hover fieldset': { 
-                   borderColor: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.3)' : 'rgba(33, 150, 243, 0.25)'
-                 },
-                 '&.Mui-focused fieldset': { 
-                   borderColor: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.5)' : 'rgba(33, 150, 243, 0.4)'
-                 }
-               },
-               '& .MuiInputBase-input': { color: currentTheme.text },
-               '& .MuiInputBase-input::placeholder': { color: currentTheme.textSecondary, opacity: 0.7 }
-             }}
-             placeholder="Enter description"
-           />
-          <IconButton
-            size="small"
-            onClick={handleAddLocationItem}
-            disabled={!newLocationKey.trim() || !newLocationValue.trim()}
+          <TextField
+            fullWidth
+            label="New Bucket"
+            value={newLocationKey}
+            onChange={(e) => setNewLocationKey(e.target.value)}
+            placeholder="Enter bucket name"
             sx={{ 
-              color: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.8)' : 'rgba(33, 150, 243, 0.7)',
-              '&:hover': {
-                bgcolor: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.1)' : 'rgba(33, 150, 243, 0.08)'
-              },
-              '&:disabled': {
+              '& .MuiInputLabel-root': { 
                 color: currentTheme.textSecondary,
-                opacity: 0.5
+                fontWeight: 600
+              },
+              '& .MuiOutlinedInput-root': { 
+                color: currentTheme.text,
+                '& fieldset': { 
+                  borderColor: currentTheme.border
+                },
+                '&:hover fieldset': { 
+                  borderColor: currentTheme.primary
+                },
+                '&:focus fieldset': { 
+                  borderColor: currentTheme.primary
+                }
               }
             }}
-            title="Add new location item"
+          />
+          <TextField
+            fullWidth
+            label="New Description"
+            value={newLocationValue}
+            onChange={(e) => setNewLocationValue(e.target.value)}
+            placeholder="Enter description"
+            sx={{ 
+              '& .MuiInputLabel-root': { 
+                color: currentTheme.textSecondary,
+                fontWeight: 600
+              },
+              '& .MuiOutlinedInput-root': { 
+                color: currentTheme.text,
+                '& fieldset': { 
+                  borderColor: currentTheme.border
+                },
+                '&:hover fieldset': { 
+                  borderColor: currentTheme.primary
+                },
+                '&:focus fieldset': { 
+                  borderColor: currentTheme.primary
+                }
+              }
+            }}
+          />
+          <Button
+            variant="outlined"
+            onClick={handleAddLocationItem}
+            disabled={!newLocationKey.trim() || !newLocationValue.trim()}
+            startIcon={<AddIcon />}
+            sx={{ 
+              borderColor: currentTheme.primary,
+              color: currentTheme.primary,
+              '&:hover': {
+                bgcolor: currentTheme.primary,
+                color: 'white'
+              },
+              '&:disabled': {
+                borderColor: currentTheme.border,
+                color: currentTheme.textSecondary
+              }
+            }}
+          >
+            Add
+          </Button>
+        </Box>
+      </Box>
+    );
+  };
+
+  const renderChangelogField = (path, value, label) => {
+    const handleAddChangelogItem = () => {
+      setEditedAgreement(prev => {
+        const newAgreement = { ...prev };
+        if (!newAgreement.changelog) {
+          newAgreement.changelog = [];
+        }
+        if (!Array.isArray(newAgreement.changelog)) {
+          newAgreement.changelog = [];
+        }
+        
+        // Add new changelog item with current timestamp
+        const newItem = {
+          version: '',
+          date: new Date().toISOString(),
+          changes: ['']
+        };
+        
+        newAgreement.changelog.push(newItem);
+        return newAgreement;
+      });
+    };
+
+    const handleChangelogVersionChange = (index, newVersion) => {
+      setEditedAgreement(prev => {
+        const newAgreement = { ...prev };
+        if (newAgreement.changelog && Array.isArray(newAgreement.changelog[index])) {
+          newAgreement.changelog[index].version = newVersion;
+        }
+        return newAgreement;
+      });
+    };
+
+    const handleChangelogDateChange = (index, newDate) => {
+      setEditedAgreement(prev => {
+        const newAgreement = { ...prev };
+        if (newAgreement.changelog && Array.isArray(newAgreement.changelog[index])) {
+          newAgreement.changelog[index].date = newDate;
+        }
+        return newAgreement;
+      });
+    };
+
+    const handleChangelogChangeChange = (changelogIndex, changeIndex, newChange) => {
+      setEditedAgreement(prev => {
+        const newAgreement = { ...prev };
+        if (newAgreement.changelog && 
+            Array.isArray(newAgreement.changelog[changelogIndex]) && 
+            Array.isArray(newAgreement.changelog[changelogIndex].changes)) {
+          newAgreement.changelog[changelogIndex].changes[changeIndex] = newChange;
+        }
+        return newAgreement;
+      });
+    };
+
+    const addChangelogChange = (changelogIndex) => {
+      setEditedAgreement(prev => {
+        const newAgreement = { ...prev };
+        if (newAgreement.changelog && Array.isArray(newAgreement.changelog[changelogIndex])) {
+          if (!newAgreement.changelog[changelogIndex].changes) {
+            newAgreement.changelog[changelogIndex].changes = [];
+          }
+          newAgreement.changelog[changelogIndex].changes.push('');
+        }
+        return newAgreement;
+      });
+    };
+
+    const handleDeleteChangelogItem = (indexToDelete) => {
+      setEditedAgreement(prev => {
+        const newAgreement = { ...prev };
+        if (newAgreement.changelog && Array.isArray(newAgreement.changelog)) {
+          newAgreement.changelog = newAgreement.changelog.filter((_, index) => index !== indexToDelete);
+        }
+        return newAgreement;
+      });
+    };
+
+    const handleDeleteChangelogChange = (changelogIndex, changeIndexToDelete) => {
+      setEditedAgreement(prev => {
+        const newAgreement = { ...prev };
+        if (newAgreement.changelog && 
+            Array.isArray(newAgreement.changelog[changelogIndex]) && 
+            Array.isArray(newAgreement.changelog[changelogIndex].changes)) {
+          newAgreement.changelog[changelogIndex].changes = newAgreement.changelog[changelogIndex].changes.filter((_, index) => index !== changeIndexToDelete);
+        }
+        return newAgreement;
+      });
+    };
+
+    return (
+      <Box key={path} sx={{ mb: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+          <Typography variant="subtitle2" sx={{ 
+            color: currentTheme.text, 
+            fontWeight: 600
+          }}>
+            {label}
+          </Typography>
+          <IconButton
+            size="small"
+            onClick={handleAddChangelogItem}
+            sx={{ 
+              color: currentTheme.primary,
+              '&:hover': {
+                bgcolor: currentTheme.darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)'
+              }
+            }}
+            title="Add changelog item"
           >
             <AddIcon />
           </IconButton>
         </Box>
+
+        {/* Existing changelog items */}
+        {(value || []).map((changelogItem, changelogIndex) => (
+          <Box key={changelogIndex} sx={{ 
+            mb: 2,
+            p: 2,
+            bgcolor: currentTheme.card,
+            borderRadius: 1,
+            border: `1px solid ${currentTheme.border}`,
+          }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+              <Typography variant="subtitle2" sx={{ color: currentTheme.text, fontWeight: 600 }}>
+                Version {changelogIndex + 1}
+              </Typography>
+              <IconButton
+                size="small"
+                onClick={() => handleDeleteChangelogItem(changelogIndex)}
+                sx={{ color: 'error.main', ml: 'auto' }}
+                title="Delete changelog item"
+              >
+                <DeleteIcon />
+              </IconButton>
+            </Box>
+            
+            <Grid container spacing={2} sx={{ mb: 2 }}>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  size="small"
+                  label="Version"
+                  value={changelogItem.version || ''}
+                  onChange={(e) => handleChangelogVersionChange(changelogIndex, e.target.value)}
+                  sx={{ 
+                    '& .MuiInputLabel-root': { color: currentTheme.textSecondary },
+                    '& .MuiOutlinedInput-root': { 
+                      color: currentTheme.text,
+                      '& fieldset': { borderColor: currentTheme.border },
+                      '&:hover fieldset': { borderColor: currentTheme.primary },
+                      '&.Mui-focused fieldset': { borderColor: currentTheme.primary }
+                    }
+                  }}
+                  placeholder="e.g., 1.0.0"
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  size="small"
+                  label="Date"
+                  type="date"
+                  value={changelogItem.date ? changelogItem.date.split('T')[0] : ''}
+                  onChange={(e) => handleChangelogDateChange(changelogIndex, e.target.value + 'T00:00:00Z')}
+                  InputLabelProps={{ shrink: true }}
+                  sx={{ 
+                    '& .MuiInputLabel-root': { color: currentTheme.textSecondary },
+                    '& .MuiOutlinedInput-root': { 
+                      color: currentTheme.text,
+                      '& fieldset': { borderColor: currentTheme.border },
+                      '&:hover fieldset': { borderColor: currentTheme.primary },
+                      '&.Mui-focused fieldset': { borderColor: currentTheme.primary }
+                    }
+                  }}
+                />
+              </Grid>
+            </Grid>
+
+            <Box sx={{ mb: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                <Typography variant="subtitle2" sx={{ color: currentTheme.text, fontWeight: 600 }}>
+                  Changes
+                </Typography>
+                <IconButton
+                  size="small"
+                  onClick={() => addChangelogChange(changelogIndex)}
+                  sx={{ 
+                    color: currentTheme.primary,
+                    '&:hover': {
+                      bgcolor: currentTheme.darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)'
+                    }
+                  }}
+                  title="Add change item"
+                >
+                  <AddIcon />
+                </IconButton>
+              </Box>
+              
+              {(changelogItem.changes || []).map((change, changeIndex) => (
+                <Box key={changeIndex} sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: 1, 
+                  mb: 1
+                }}>
+                  <TextField
+                    size="small"
+                    value={change}
+                    onChange={(e) => handleChangelogChangeChange(changelogIndex, changeIndex, e.target.value)}
+                    sx={{ 
+                      flex: 1,
+                      '& .MuiInputLabel-root': { color: currentTheme.textSecondary },
+                      '& .MuiOutlinedInput-root': { 
+                        color: currentTheme.text,
+                        '& fieldset': { borderColor: currentTheme.border },
+                        '&:hover fieldset': { borderColor: currentTheme.primary },
+                        '&.Mui-focused fieldset': { borderColor: currentTheme.primary }
+                      }
+                    }}
+                    placeholder="Enter change description"
+                  />
+                  <IconButton
+                    size="small"
+                    onClick={() => handleDeleteChangelogChange(changelogIndex, changeIndex)}
+                    sx={{ color: 'error.main' }}
+                    title="Delete change item"
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                </Box>
+              ))}
+            </Box>
+          </Box>
+        ))}
       </Box>
     );
   };
@@ -969,259 +1107,7 @@ const EditAgreementPage = () => {
     );
   };
 
-  const renderChangelogField = (path, value, label) => {
-    console.log('renderChangelogField called with:', { path, value, label });
-
-    const handleVersionChange = (index, newVersion) => {
-      setEditedAgreement(prev => {
-        const newAgreement = { ...prev };
-        const pathArray = path.split('.');
-        let current = newAgreement;
-        
-        for (let i = 0; i < pathArray.length; i++) {
-          current = current[pathArray[i]];
-        }
-        
-        if (Array.isArray(current) && current[index]) {
-          current[index].version = newVersion;
-        }
-        
-        return newAgreement;
-      });
-    };
-
-
-
-    const handleChangesChange = (index, newChanges) => {
-      setEditedAgreement(prev => {
-        const newAgreement = { ...prev };
-        const pathArray = path.split('.');
-        let current = newAgreement;
-        
-        for (let i = 0; i < pathArray.length; i++) {
-          current = current[pathArray[i]];
-        }
-        
-        if (Array.isArray(current) && current[index]) {
-          current[index].changes = [newChanges];
-        }
-        
-        return newAgreement;
-      });
-    };
-
-    const handleDeleteChangelogItem = (indexToDelete) => {
-      setEditedAgreement(prev => {
-        const newAgreement = { ...prev };
-        const pathArray = path.split('.');
-        let current = newAgreement;
-        
-        for (let i = 0; i < pathArray.length; i++) {
-          current = current[pathArray[i]];
-        }
-        
-        if (Array.isArray(current)) {
-          current.splice(indexToDelete, 1);
-        }
-        
-        return newAgreement;
-      });
-    };
-
-    return (
-      <Box key={path} sx={{ mb: 2 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-          <Typography variant="subtitle2" sx={{ 
-            color: currentTheme.text, 
-            fontWeight: 600
-          }}>
-            {label}
-          </Typography>
-        </Box>
-
-        {/* Existing changelog items */}
-        {(value || []).map((item, index) => (
-          <Box key={index} sx={{ 
-            display: 'flex', 
-            flexDirection: 'column',
-            gap: 1, 
-            mb: 2
-          }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-              <TextField
-                size="small"
-                label="Version"
-                value={item.version || ''}
-                onChange={(e) => handleVersionChange(index, e.target.value)}
-                sx={{ 
-                  flex: 1,
-                  '& .MuiInputLabel-root': { color: currentTheme.textSecondary },
-                  '& .MuiInputLabel-root.Mui-focused': { color: currentTheme.primary },
-                  '& .MuiOutlinedInput-root': { 
-                    color: currentTheme.text,
-                    '& fieldset': { borderColor: currentTheme.border },
-                    '&:hover fieldset': { borderColor: currentTheme.primary },
-                    '&.Mui-focused fieldset': { borderColor: currentTheme.primary }
-                  },
-                  '& .MuiInputBase-input': { color: currentTheme.text },
-                  '& .MuiInputBase-input::placeholder': { color: currentTheme.textSecondary, opacity: 0.7 }
-                }}
-                placeholder="Version number"
-              />
-              <Tooltip title="Date when this changelog entry was created (cannot be edited)" arrow>
-                <TextField
-                  size="small"
-                  label="Date"
-                  value={item.date || ''}
-                  InputProps={{
-                    readOnly: true
-                  }}
-                  sx={{ 
-                    flex: 1,
-                    '& .MuiInputLabel-root': { color: currentTheme.textSecondary },
-                    '& .MuiOutlinedInput-root': { 
-                      color: currentTheme.textSecondary,
-                      '& fieldset': { borderColor: currentTheme.border }
-                    },
-                    '& .MuiInputBase-input': { 
-                      color: currentTheme.textSecondary,
-                      WebkitTextFillColor: currentTheme.textSecondary
-                    },
-                    '& .MuiInputBase-input::placeholder': { color: currentTheme.textSecondary, opacity: 0.7 }
-                  }}
-                placeholder="YYYY-MM-DD or ISO date"
-              />
-              </Tooltip>
-              <IconButton
-                size="small"
-                onClick={() => handleDeleteChangelogItem(index)}
-                sx={{ 
-                  color: 'error.main',
-                  '&:hover': {
-                    bgcolor: 'error.main',
-                    color: 'white'
-                  }
-                }}
-                title="Delete changelog item"
-              >
-                <DeleteIcon />
-              </IconButton>
-            </Box>
-            <TextField
-              size="small"
-              label="Changes"
-              value={Array.isArray(item.changes) ? item.changes.join(', ') : item.changes || ''}
-              onChange={(e) => handleChangesChange(index, e.target.value)}
-              multiline
-              rows={2}
-              sx={{ 
-                '& .MuiInputLabel-root': { color: currentTheme.textSecondary },
-                '& .MuiInputLabel-root.Mui-focused': { color: currentTheme.primary },
-                '& .MuiOutlinedInput-root': { 
-                  color: currentTheme.text,
-                  '& fieldset': { borderColor: currentTheme.border },
-                  '&:hover fieldset': { borderColor: currentTheme.primary },
-                  '&.Mui-focused fieldset': { borderColor: currentTheme.primary }
-                },
-                '& .MuiInputBase-input': { color: currentTheme.text },
-                '& .MuiInputBase-input::placeholder': { color: currentTheme.textSecondary, opacity: 0.7 }
-              }}
-              placeholder="Describe the changes made in this version"
-            />
-          </Box>
-        ))}
-
-        {/* Add new changelog item */}
-        <Box sx={{ 
-          display: 'flex', 
-          flexDirection: 'column',
-          gap: 1, 
-          mt: 2
-        }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <TextField
-              size="small"
-              label="New Version"
-              value={newChangelogVersion}
-              onChange={(e) => setNewChangelogVersion(e.target.value)}
-              sx={{ 
-                flex: 1,
-                '& .MuiInputLabel-root': { color: currentTheme.textSecondary },
-                '& .MuiInputLabel-root.Mui-focused': { color: currentTheme.primary },
-                '& .MuiOutlinedInput-root': { 
-                  color: currentTheme.text,
-                  '& fieldset': { borderColor: currentTheme.border },
-                  '&:hover fieldset': { borderColor: currentTheme.primary },
-                  '&.Mui-focused fieldset': { borderColor: currentTheme.primary }
-                },
-                '& .MuiInputBase-input': { color: currentTheme.text },
-                '& .MuiInputBase-input::placeholder': { color: currentTheme.textSecondary, opacity: 0.7 }
-              }}
-              placeholder="Enter version number"
-            />
-            <Box sx={{ 
-              flex: 1, 
-              p: 1.5, 
-              bgcolor: currentTheme.card,
-              borderRadius: 1,
-              border: `1px solid ${currentTheme.border}`,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
-              <Typography variant="body2" sx={{ 
-                color: currentTheme.textSecondary,
-                fontWeight: 600,
-                textAlign: 'center'
-              }}>
-                Date will be set automatically
-              </Typography>
-            </Box>
-            <IconButton
-              size="small"
-              onClick={() => handleAddChangelogItem(path)}
-              disabled={!newChangelogVersion.trim() || !newChangelogChanges.trim()}
-              sx={{ 
-                color: currentTheme.primary,
-                '&:hover': {
-                  bgcolor: currentTheme.primary,
-                  color: 'white'
-                },
-                '&:disabled': {
-                  color: currentTheme.textSecondary,
-                  opacity: 0.5
-                }
-              }}
-              title="Add new changelog item"
-            >
-              <AddIcon />
-            </IconButton>
-          </Box>
-          <TextField
-            size="small"
-            label="New Changes"
-            value={newChangelogChanges}
-            onChange={(e) => setNewChangelogChanges(e.target.value)}
-            multiline
-            rows={2}
-            sx={{ 
-              '& .MuiInputLabel-root': { color: currentTheme.textSecondary },
-              '& .MuiInputLabel-root.Mui-focused': { color: currentTheme.primary },
-              '& .MuiOutlinedInput-root': { 
-                color: currentTheme.text,
-                '& fieldset': { borderColor: currentTheme.border },
-                '&:hover fieldset': { borderColor: currentTheme.primary },
-                '&.Mui-focused fieldset': { borderColor: currentTheme.primary }
-              },
-              '& .MuiInputBase-input': { color: currentTheme.text },
-              '& .MuiInputBase-input::placeholder': { color: currentTheme.textSecondary, opacity: 0.7 }
-            }}
-            placeholder="Describe the changes made in this version"
-          />
-        </Box>
-      </Box>
-    );
-  };
+  
 
   const renderField = (path, value, label, type = 'text', options = null, isRequired = false, fieldType = null) => {
     console.log('renderField called with:', { path, value, label, type, isRequired });
@@ -1306,39 +1192,33 @@ const EditAgreementPage = () => {
         return renderLocationField(path, value, label);
       }
       
+      // Special handling for changelog field
+      if (path === 'changelog') {
+        return renderChangelogField(path, value, label);
+      }
+      
       // Special styling for todo field
       const isSpecialField = path === 'todo';
       
       return (
-        <Accordion key={path} sx={{ 
-          mb: 2, 
-          bgcolor: 'transparent', 
-          boxShadow: 'none',
-          '& .MuiAccordionSummary-root': {
-            '&:hover': { bgcolor: currentTheme.border + '20' }
-          },
-          '& .MuiAccordionDetails-root': {
-            bgcolor: 'transparent'
-          }
-        }}>
-          <AccordionSummary 
-            expandIcon={<ExpandMoreIcon sx={{ color: currentTheme.textSecondary }} />}
-            sx={{ color: currentTheme.text }}
-          >
-            <Typography variant="subtitle2" sx={{ color: currentTheme.text, fontWeight: 600 }}>
-              {label}
-            </Typography>
-          </AccordionSummary>
-          <AccordionDetails>
-            <Box sx={{ pl: 2 }}>
-              {Object.entries(value).map(([key, val]) => (
+        <Box key={path} sx={{ mb: 2 }}>
+          <Typography variant="subtitle2" sx={{ color: currentTheme.text, fontWeight: 600, mb: 1 }}>
+            {label}
+          </Typography>
+          <Box sx={{ pl: 2 }}>
+            {Object.entries(value).map(([key, val]) => {
+              // Skip the date field for todo - it will be auto-updated
+              if (path === 'todo' && key === 'date') {
+                return null;
+              }
+              return (
                 <Box key={`${path}.${key}`}>
                   {renderField(`${path}.${key}`, val, key.charAt(0).toUpperCase() + key.slice(1))}
                 </Box>
-              ))}
-            </Box>
-          </AccordionDetails>
-        </Accordion>
+              );
+            })}
+          </Box>
+        </Box>
       );
     }
 
@@ -1622,9 +1502,6 @@ const EditAgreementPage = () => {
           <Grid item xs={12} md={6}>
             {renderField('name', editedAgreement.name, 'Name', 'text', null, true)}
           </Grid>
-          <Grid item xs={12} md={6}>
-            {renderField('id', editedAgreement.id, 'ID', 'text', null, true)}
-          </Grid>
           <Grid item xs={12}>
             {renderField('description', editedAgreement.description, 'Description', 'text', null, true)}
           </Grid>
@@ -1664,9 +1541,7 @@ const EditAgreementPage = () => {
           <Grid item xs={12} md={6}>
             {renderField('endDate', editedAgreement.endDate, 'End Date', 'date')}
           </Grid>
-          <Grid item xs={12} md={6}>
-            {renderField('nextUpdate', editedAgreement.nextUpdate, 'Next Update', 'date')}
-          </Grid>
+
           <Grid item xs={12} md={6}>
             {renderField('restricted', editedAgreement.restricted, 'Restricted', 'switch')}
           </Grid>

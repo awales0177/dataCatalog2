@@ -145,7 +145,7 @@ const ProductAgreementsPage = () => {
           changes: ['Initial agreement creation']
         }
       ],
-      nextUpdate: '',
+      
       lastUpdated: new Date().toISOString().slice(0, 19).replace('T', ' ')
     };
     localStorage.setItem('newAgreementTemplate', JSON.stringify(newAgreement));
