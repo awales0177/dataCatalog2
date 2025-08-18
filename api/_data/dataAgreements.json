@@ -1,337 +1,6 @@
 {
   "agreements": [
     {
-      "id": "contract-006",
-      "name": "Shipping Integration",
-      "description": "Product agreement for shipping carrier integration",
-      "status": "in_progress",
-      "specificationMaintainer": "Shipping Operations Team",
-      "parentSystem": "Shipping Management System",
-      "dataProducer": "Shipping Service",
-      "dataValidator": "Shipping Operations Team",
-      "dataConsumer": [
-        "Fulfillment Service"
-      ],
-      "modelShortName": "ORD",
-      "contractVersion": "1.5.0",
-      "deliveredVersion": "1.5.2",
-      "deliveryFrequency": "15min",
-      "startDate": "2024-02-15T10:15:00Z",
-      "endDate": "2024-09-30T23:59:59Z",
-      "fileFormat": "Avro",
-      "restricted": false,
-      "location": {
-        "eu-central-1": "Primary AWS region for shipping operations in Europe"
-      },
-      "todo": {
-        "date": "2024-03-30T15:30:00Z",
-        "items": [
-          "Add new carrier API integration",
-          "Update rate calculation logic",
-          "Implement tracking webhook"
-        ]
-      },
-      "changelog": [
-        {
-          "version": "1.5.2",
-          "date": "2024-03-10T16:45:00Z",
-          "changes": [
-            "Fixed rate calculation bug",
-            "Added new carrier integration"
-          ]
-        },
-        {
-          "version": "1.5.0",
-          "date": "2024-02-28T14:30:00Z",
-          "changes": [
-            "Added support for international shipping",
-            "Enhanced tracking updates"
-          ]
-        },
-        {
-          "version": "1.0.0",
-          "date": "2024-02-15T10:15:00Z",
-          "changes": [
-            "Initial contract release"
-          ]
-        }
-      ],
-      "lastUpdated": "2025-08-16 15:01:24"
-    },
-    {
-      "id": "temp_1755130484850",
-      "name": "Aaron Test",
-      "description": "Data Team agreement",
-      "status": "active",
-      "specificationMaintainer": "Customers",
-      "parentSystem": "Analytics",
-      "dataProducer": "Auth Service",
-      "dataValidator": "Product Service",
-      "dataConsumer": [
-        "Store",
-        "Jane Smith"
-      ],
-      "modelShortName": "ASY",
-      "contractVersion": "1.0.2",
-      "deliveredVersion": [
-        "1.0.0"
-      ],
-      "deliveryFrequency": [
-        "One-Time",
-        "Feed"
-      ],
-      "startDate": "2025-08-14",
-      "endDate": "2025-08-15",
-      "fileFormat": "JSON",
-      "restricted": true,
-      "location": {
-        "a": "a",
-        "s": "ss"
-      },
-      "todo": {
-        "date": "2025-08-14T00:14:44.850Z",
-        "items": [
-          "Initial setup tasks"
-        ]
-      },
-      "changelog": [
-        {
-          "version": "1.0.0",
-          "date": "2025-08-14",
-          "changes": [
-            "Initial agreement creation"
-          ]
-        },
-        {
-          "version": "2.0.0",
-          "date": "2025-08-14T01:40:19.347Z",
-          "changes": [
-            "new version"
-          ]
-        }
-      ],
-      "lastUpdated": "2025-08-17 00:49:25",
-      "nextUpdate": ""
-    },
-    {
-      "id": "contract-004",
-      "name": "Inventory Sync",
-      "description": "Product agreement for real-time inventory synchronization",
-      "status": "in_review",
-      "specificationMaintainer": "Inventory Management Team",
-      "parentSystem": "Inventory Management System",
-      "dataProducer": "Inventory Service",
-      "dataValidator": "Inventory Management Team",
-      "dataConsumer": [
-        "Catalog Service"
-      ],
-      "modelShortName": "PROD",
-      "contractVersion": "1.0.1",
-      "deliveredVersion": "1.0.0",
-      "deliveryFrequency": "5min",
-      "startDate": "2024-03-12T14:20:00Z",
-      "endDate": "2024-06-30T23:59:59Z",
-      "fileFormat": "JSON",
-      "restricted": false,
-      "location": {
-        "us-east-1": "Primary AWS region for inventory data"
-      },
-      "todo": {
-        "date": "2024-03-28T11:15:00Z",
-        "items": [
-          "Implement real-time sync monitoring",
-          "Add error handling for network issues",
-          "Create backup sync mechanism"
-        ]
-      },
-      "changelog": [
-        {
-          "version": "1.0.0",
-          "date": "2024-03-12T14:20:00Z",
-          "changes": [
-            "Initial contract release",
-            "Basic inventory sync implementation"
-          ]
-        }
-      ],
-      "lastUpdated": "2025-08-17 00:53:07"
-    },
-    {
-      "id": "contract-005",
-      "name": "User Authentication",
-      "description": "Product agreement for user authentication and authorization",
-      "status": "in_progress",
-      "specificationMaintainer": "Security Team",
-      "parentSystem": "Identity Management System",
-      "dataProducer": "Auth Service",
-      "dataValidator": "Security Team",
-      "dataConsumer": [
-        "User Service"
-      ],
-      "modelShortName": "CUST",
-      "contractVersion": "2.0.0",
-      "deliveredVersion": "2.3.0",
-      "deliveryFrequency": "real-time",
-      "startDate": "2024-02-10T09:30:00Z",
-      "endDate": null,
-      "fileFormat": "Protobuf",
-      "restricted": true,
-      "location": {
-        "us-west-2": "Primary AWS region for user authentication data"
-      },
-      "todo": {
-        "date": "2024-03-29T13:45:00Z",
-        "items": [
-          "Implement biometric authentication",
-          "Update session timeout policies",
-          "Add support for hardware security keys"
-        ]
-      },
-      "changelog": [
-        {
-          "version": "2.3.0",
-          "date": "2024-03-11T11:30:00Z",
-          "changes": [
-            "Added MFA support",
-            "Enhanced session management"
-          ]
-        },
-        {
-          "version": "2.2.0",
-          "date": "2024-02-25T13:45:00Z",
-          "changes": [
-            "Added OAuth2 support",
-            "Updated password policies"
-          ]
-        },
-        {
-          "version": "2.1.0",
-          "date": "2024-02-10T09:30:00Z",
-          "changes": [
-            "Added social login support",
-            "Enhanced security logging"
-          ]
-        }
-      ],
-      "lastUpdated": "2025-08-17 00:57:29"
-    },
-    {
-      "id": "contract-002",
-      "name": "Order Processing",
-      "description": "Product agreement for order processing",
-      "status": "active",
-      "specificationMaintainer": "Order Management Team",
-      "parentSystem": "Order Management System",
-      "dataProducer": "Order Service",
-      "dataValidator": "Order Processing Team",
-      "dataConsumer": [
-        "Fulfillment Service",
-        "Other Service",
-        "Other Service 3"
-      ],
-      "modelShortName": "ORD",
-      "contractVersion": "2.0.0",
-      "deliveredVersion": "2.0.1",
-      "deliveryFrequency": "real-time",
-      "startDate": "2024-02-15T08:45:00Z",
-      "endDate": "2024-12-31T23:59:59Z",
-      "fileFormat": "Avro",
-      "restricted": true,
-      "location": {
-        "eu-west-1": "Primary AWS region for order processing in Europe"
-      },
-      "todo": {
-        "date": "2024-03-26T14:30:00Z",
-        "items": [
-          "Fix remaining order status transition issues",
-          "Add validation for international shipping addresses",
-          "Update test cases for new payment methods"
-        ]
-      },
-      "changelog": [
-        {
-          "version": "2.0.1",
-          "date": "2024-03-14T15:45:00Z",
-          "changes": [
-            "Fixed order status transition bug",
-            "Added validation for shipping address"
-          ]
-        },
-        {
-          "version": "2.0.0",
-          "date": "2024-03-01T11:30:00Z",
-          "changes": [
-            "Major overhaul of order processing flow",
-            "Added support for multiple payment methods"
-          ]
-        },
-        {
-          "version": "1.0.0",
-          "date": "2024-02-15T08:45:00Z",
-          "changes": [
-            "Initial contract release"
-          ]
-        }
-      ],
-      "lastUpdated": "2025-08-17 00:57:51"
-    },
-    {
-      "id": "contract-009",
-      "name": "Order Analytics",
-      "description": "Product agreement for order data analytics and reporting",
-      "status": "in_progress",
-      "producer": "Analytics Service",
-      "consumer": "Business Intelligence",
-      "modelShortName": "ORD",
-      "contractVersion": "1.0.0",
-      "deliveredVersion": "1.0.3",
-      "deliveryFrequency": "1hour",
-      "validator": "Data Analytics Team",
-      "startDate": "2024-03-01T09:00:00Z",
-      "endDate": null,
-      "fileFormat": "Parquet",
-      "restricted": true,
-      "location": {
-        "us-east-1": "Primary AWS region for order analytics data"
-      },
-      "todo": {
-        "date": "2024-04-02T14:00:00Z",
-        "items": [
-          "Implement revenue analytics dashboard",
-          "Add customer segmentation features",
-          "Update reporting templates"
-        ]
-      },
-      "changelog": [
-        {
-          "version": "1.0.3",
-          "date": "2024-03-20T11:30:00Z",
-          "changes": [
-            "Added revenue analytics",
-            "Enhanced reporting capabilities"
-          ]
-        },
-        {
-          "version": "1.0.2",
-          "date": "2024-03-15T14:20:00Z",
-          "changes": [
-            "Added customer segmentation",
-            "Improved data aggregation"
-          ]
-        },
-        {
-          "version": "1.0.0",
-          "date": "2024-03-01T09:00:00Z",
-          "changes": [
-            "Initial contract release",
-            "Basic order analytics implementation"
-          ]
-        }
-      ],
-      "lastUpdated": "2025-08-17 01:00:32",
-      "dataConsumer": []
-    },
-    {
       "id": "contract-007",
       "name": "Content Management",
       "description": "Product agreement for content validation and publishing",
@@ -351,9 +20,12 @@
       "endDate": null,
       "fileFormat": "JSON",
       "restricted": false,
-      "location": {
-        "us-east-1": "Primary AWS region for content management data"
-      },
+      "location": [
+        {
+          "bucket": "us-east-1",
+          "description": "Primary AWS region for content management data"
+        }
+      ],
       "todo": {
         "date": "2024-03-31T10:00:00Z",
         "items": [
@@ -409,9 +81,12 @@
       "endDate": "2024-08-31T23:59:59Z",
       "fileFormat": "Protobuf",
       "restricted": true,
-      "location": {
-        "us-west-2": "Primary AWS region for API management and gateway services"
-      },
+      "location": [
+        {
+          "bucket": "us-west-2",
+          "description": "Primary AWS region for API management and gateway services"
+        }
+      ],
       "todo": {
         "date": "2024-04-01T09:15:00Z",
         "items": [
@@ -468,9 +143,12 @@
       "endDate": null,
       "fileFormat": "Protobuf",
       "restricted": true,
-      "location": {
-        "us-west-2": "Primary AWS region for payment processing and security"
-      },
+      "location": [
+        {
+          "bucket": "us-west-2",
+          "description": "Primary AWS region for payment processing and security"
+        }
+      ],
       "todo": {
         "date": "2024-03-27T09:00:00Z",
         "items": [
@@ -537,10 +215,16 @@
       "endDate": "unk",
       "fileFormat": "JSON",
       "restricted": true,
-      "location": {
-        "s3://bucket/folder/file.json": "Primary configuration file",
-        "s3://bucket/folder/file2.json": "Backup or override configuration file"
-      },
+      "location": [
+        {
+          "bucket": "s3://bucket/folder/file.json",
+          "description": "Primary configuration file"
+        },
+        {
+          "bucket": "s3://bucket/folder/file2.json",
+          "description": "Backup or override configuration file"
+        }
+      ],
       "todo": {
         "date": "2024-03-25T10:00:00Z",
         "items": [
@@ -576,6 +260,388 @@
         }
       ],
       "lastUpdated": "2025-08-17 01:33:26"
+    },
+    {
+      "id": "temp_1755130484850",
+      "name": "Aaron Test",
+      "description": "Data Team agreement",
+      "status": "active",
+      "specificationMaintainer": "Customers",
+      "parentSystem": "Analytics",
+      "dataProducer": "Auth Service",
+      "dataValidator": "Product Service",
+      "dataConsumer": [
+        "Store",
+        "Jane Smith"
+      ],
+      "modelShortName": "ASY",
+      "contractVersion": "1.0.2",
+      "deliveredVersion": [
+        "1.0.0"
+      ],
+      "deliveryFrequency": [
+        "One-Time",
+        "Feed"
+      ],
+      "startDate": "2025-08-14",
+      "endDate": "2025-08-15",
+      "fileFormat": "JSON",
+      "restricted": true,
+      "location": [
+        {
+          "bucket": "a",
+          "description": "a"
+        },
+        {
+          "bucket": "s",
+          "description": "ss"
+        },
+        {
+          "bucket": "aaa",
+          "description": "aaaa"
+        }
+      ],
+      "todo": {
+        "date": "2025-08-14T00:14:44.850Z",
+        "items": [
+          "Initial setup tasks"
+        ]
+      },
+      "changelog": [
+        {
+          "version": "1.0.0",
+          "date": "2025-08-14",
+          "changes": [
+            "Initial agreement creation"
+          ]
+        },
+        {
+          "version": "2.0.0",
+          "date": "2025-08-14T01:40:19.347Z",
+          "changes": [
+            "new version"
+          ]
+        }
+      ],
+      "lastUpdated": "2025-08-17 01:43:16",
+      "nextUpdate": ""
+    },
+    {
+      "id": "contract-004",
+      "name": "Inventory Sync",
+      "description": "Product agreement for real-time inventory synchronization",
+      "status": "in_review",
+      "specificationMaintainer": "Inventory Management Team",
+      "parentSystem": "Inventory Management System",
+      "dataProducer": "Inventory Service",
+      "dataValidator": "Inventory Management Team",
+      "dataConsumer": [
+        "Catalog Service"
+      ],
+      "modelShortName": "PROD",
+      "contractVersion": "1.0.1",
+      "deliveredVersion": "1.0.0",
+      "deliveryFrequency": "5min",
+      "startDate": "2024-03-12T14:20:00Z",
+      "endDate": "2024-06-30T23:59:59Z",
+      "fileFormat": "JSON",
+      "restricted": false,
+      "location": [
+        {
+          "bucket": "s3://bucket/folder/file.json",
+          "description": "Primary configuration file"
+        },
+        {
+          "bucket": "s3://bucket/folder/file2.json",
+          "description": "Backup or override configuration file"
+        }
+      ],
+      "todo": {
+        "date": "2024-03-28T11:15:00Z",
+        "items": [
+          "Implement real-time sync monitoring",
+          "Add error handling for network issues",
+          "Create backup sync mechanism"
+        ]
+      },
+      "changelog": [
+        {
+          "version": "1.0.0",
+          "date": "2024-03-12T14:20:00Z",
+          "changes": [
+            "Initial contract release",
+            "Basic inventory sync implementation"
+          ]
+        }
+      ],
+      "lastUpdated": "2025-08-17 22:14:42"
+    },
+    {
+      "id": "contract-005",
+      "name": "User Authentication",
+      "description": "Product agreement for user authentication and authorization",
+      "status": "in_progress",
+      "specificationMaintainer": "Security Team",
+      "parentSystem": "Identity Management System",
+      "dataProducer": "Auth Service",
+      "dataValidator": "Security Team",
+      "dataConsumer": [
+        "User Service"
+      ],
+      "modelShortName": "CUST",
+      "contractVersion": "2.0.0",
+      "deliveredVersion": "2.3.0",
+      "deliveryFrequency": "real-time",
+      "startDate": "2024-02-10T09:30:00Z",
+      "endDate": null,
+      "fileFormat": "Protobuf",
+      "restricted": true,
+      "location": [
+        {
+          "bucket": "s3://bucket/folder/file.json",
+          "description": "Primary configuration file"
+        },
+        {
+          "bucket": "s3://bucket/folder/file2.json",
+          "description": "Backup or override configuration file"
+        }
+      ],
+      "todo": {
+        "date": "2024-03-29T13:45:00Z",
+        "items": [
+          "Implement biometric authentication",
+          "Update session timeout policies",
+          "Add support for hardware security keys"
+        ]
+      },
+      "changelog": [
+        {
+          "version": "2.3.0",
+          "date": "2024-03-11T11:30:00Z",
+          "changes": [
+            "Added MFA support",
+            "Enhanced session management"
+          ]
+        },
+        {
+          "version": "2.2.0",
+          "date": "2024-02-25T13:45:00Z",
+          "changes": [
+            "Added OAuth2 support",
+            "Updated password policies"
+          ]
+        },
+        {
+          "version": "2.1.0",
+          "date": "2024-02-10T09:30:00Z",
+          "changes": [
+            "Added social login support",
+            "Enhanced security logging"
+          ]
+        }
+      ],
+      "lastUpdated": "2025-08-17 22:17:47"
+    },
+    {
+      "id": "contract-006",
+      "name": "Shipping Integration",
+      "description": "Product agreement for shipping carrier integration",
+      "status": "in_progress",
+      "specificationMaintainer": "Shipping Operations Team",
+      "parentSystem": "Shipping Management System",
+      "dataProducer": "Shipping Service",
+      "dataValidator": "Shipping Operations Team",
+      "dataConsumer": [
+        "Fulfillment Service"
+      ],
+      "modelShortName": "ORD",
+      "contractVersion": "1.5.0",
+      "deliveredVersion": "1.5.2",
+      "deliveryFrequency": "15min",
+      "startDate": "2024-02-15T10:15:00Z",
+      "endDate": "2024-09-30T23:59:59Z",
+      "fileFormat": "Avro",
+      "restricted": false,
+      "location": [
+        {
+          "bucket": "s3://bucket/folder/file.json",
+          "description": "Primary configuration file"
+        },
+        {
+          "bucket": "s3://bucket/folder/file2.json",
+          "description": "Backup or override configuration file"
+        }
+      ],
+      "todo": {
+        "date": "2024-03-30T15:30:00Z",
+        "items": [
+          "Add new carrier API integration",
+          "Update rate calculation logic",
+          "Implement tracking webhook"
+        ]
+      },
+      "changelog": [
+        {
+          "version": "1.5.2",
+          "date": "2024-03-10T16:45:00Z",
+          "changes": [
+            "Fixed rate calculation bug",
+            "Added new carrier integration"
+          ]
+        },
+        {
+          "version": "1.5.0",
+          "date": "2024-02-28T14:30:00Z",
+          "changes": [
+            "Added support for international shipping",
+            "Enhanced tracking updates"
+          ]
+        },
+        {
+          "version": "1.0.0",
+          "date": "2024-02-15T10:15:00Z",
+          "changes": [
+            "Initial contract release"
+          ]
+        }
+      ],
+      "lastUpdated": "2025-08-17 22:19:11"
+    },
+    {
+      "id": "contract-002",
+      "name": "Order Processing",
+      "description": "Product agreement for order processing",
+      "status": "active",
+      "specificationMaintainer": "Order Management Team",
+      "parentSystem": "Order Management System",
+      "dataProducer": "Order Service",
+      "dataValidator": "Order Processing Team",
+      "dataConsumer": [
+        "Fulfillment Service",
+        "Other Service",
+        "Other Service 3"
+      ],
+      "modelShortName": "ORD",
+      "contractVersion": "2.0.0",
+      "deliveredVersion": "2.0.1",
+      "deliveryFrequency": "real-time",
+      "startDate": "2024-02-15T08:45:00Z",
+      "endDate": "2024-12-31T23:59:59Z",
+      "fileFormat": "Avro",
+      "restricted": true,
+      "location": [
+        {
+          "bucket": "s3://bucket/folder/file.json",
+          "description": "Primary configuration file"
+        },
+        {
+          "bucket": "s3://bucket/folder/file2.json",
+          "description": "Backup or override configuration file"
+        }
+      ],
+      "todo": {
+        "date": "2024-03-26T14:30:00Z",
+        "items": [
+          "Fix remaining order status transition issues",
+          "Add validation for international shipping addresses",
+          "Update test cases for new payment methods"
+        ]
+      },
+      "changelog": [
+        {
+          "version": "2.0.1",
+          "date": "2024-03-14T15:45:00Z",
+          "changes": [
+            "Fixed order status transition bug",
+            "Added validation for shipping address"
+          ]
+        },
+        {
+          "version": "2.0.0",
+          "date": "2024-03-01T11:30:00Z",
+          "changes": [
+            "Major overhaul of order processing flow",
+            "Added support for multiple payment methods"
+          ]
+        },
+        {
+          "version": "1.0.0",
+          "date": "2024-02-15T08:45:00Z",
+          "changes": [
+            "Initial contract release"
+          ]
+        }
+      ],
+      "lastUpdated": "2025-08-17 22:22:18"
+    },
+    {
+      "id": "contract-009",
+      "name": "Order Analytics",
+      "description": "Product agreement for order data analytics and reporting",
+      "status": "in_progress",
+      "producer": "Analytics Service",
+      "consumer": "Business Intelligence",
+      "modelShortName": "ORD",
+      "contractVersion": "1.0.0",
+      "deliveredVersion": "1.0.3",
+      "deliveryFrequency": "1hour",
+      "validator": "Data Analytics Team",
+      "startDate": "2024-03-01T09:00:00Z",
+      "endDate": null,
+      "fileFormat": "Parquet",
+      "restricted": true,
+      "location": [
+        {
+          "bucket": "s3://bucket/folder/file.json",
+          "description": "Primary configuration file"
+        },
+        {
+          "bucket": "s3://bucket/folder/file2.json",
+          "description": "backup"
+        },
+        {
+          "bucket": "s3://bucket/folder/file3.json",
+          "description": "backup 2"
+        }
+      ],
+      "todo": {
+        "date": "2024-04-02T14:00:00Z",
+        "items": [
+          "Implement revenue analytics dashboard",
+          "Add customer segmentation features",
+          "Update reporting templates"
+        ]
+      },
+      "changelog": [
+        {
+          "version": "1.0.3",
+          "date": "2024-03-20T11:30:00Z",
+          "changes": [
+            "Added revenue analytics",
+            "Enhanced reporting capabilities"
+          ]
+        },
+        {
+          "version": "1.0.2",
+          "date": "2024-03-15T14:20:00Z",
+          "changes": [
+            "Added customer segmentation",
+            "Improved data aggregation"
+          ]
+        },
+        {
+          "version": "1.0.0",
+          "date": "2024-03-01T09:00:00Z",
+          "changes": [
+            "Initial contract release",
+            "Basic order analytics implementation"
+          ]
+        }
+      ],
+      "lastUpdated": "2025-08-17 23:12:43",
+      "dataConsumer": [
+        "goog"
+      ]
     }
   ]
 }

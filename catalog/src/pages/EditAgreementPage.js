@@ -59,6 +59,14 @@ const EditAgreementPage = () => {
   console.log('  finalAgreementId:', finalAgreementId);
   console.log('  isNewAgreement:', isNewAgreement);
 
+  // Helper function for deep cloning
+  const deepClone = (obj) => {
+    if (window.structuredClone) {
+      return structuredClone(obj);
+    }
+    return JSON.parse(JSON.stringify(obj));
+  };
+
   // State management
   const [agreement, setAgreement] = useState(null);
   const [editedAgreement, setEditedAgreement] = useState(null);
@@ -69,10 +77,11 @@ const EditAgreementPage = () => {
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
   const [showDeleteArrayDialog, setShowDeleteArrayDialog] = useState(false);
   const [deleteArrayItem, setDeleteArrayItem] = useState({ path: '', index: -1, label: '' });
-  const [newLocationKey, setNewLocationKey] = useState('');
-  const [newLocationValue, setNewLocationValue] = useState('');
+
   const [newChangelogVersion, setNewChangelogVersion] = useState('');
   const [newChangelogChanges, setNewChangelogChanges] = useState('');
+  
+
 
 
   const handleAddChangelogItem = (path) => {
@@ -160,7 +169,7 @@ const EditAgreementPage = () => {
           };
           
           setAgreement(migratedNewAgreement);
-          setEditedAgreement(migratedNewAgreement);
+          setEditedAgreement(deepClone(migratedNewAgreement));
         } else {
           // Redirect if no template found
           console.log('No template found, redirecting to /agreements');
@@ -204,7 +213,7 @@ const EditAgreementPage = () => {
               };
               
               setAgreement(migratedAgreement);
-              setEditedAgreement(migratedAgreement);
+              setEditedAgreement(deepClone(migratedAgreement));
             } else {
               console.log('Agreement not found, showing error');
               setSnackbar({
@@ -229,6 +238,58 @@ const EditAgreementPage = () => {
 
     loadAgreement();
   }, [finalAgreementId, isNewAgreement, navigate]);
+
+  // Normalize location to array format [{ bucket, description }, ...] - only run once on initial load
+  useEffect(() => {
+    if (!editedAgreement || !editedAgreement.location) return;
+    
+    // Only normalize if the location is not already in the correct array format
+    const loc = editedAgreement.location;
+    const needsUpdate = 
+      !Array.isArray(loc) || 
+      !loc.every(item => typeof item === 'object' && item.bucket !== undefined && item.description !== undefined);
+
+    if (needsUpdate) {
+      console.log('Normalizing location to array format');
+      
+      let normalized = [];
+      
+      // Convert from old object format { bucket: description }
+      if (typeof loc === 'object' && !Array.isArray(loc)) {
+        if (loc.items && Array.isArray(loc.items)) {
+          // Already has items array, convert to new format
+          normalized = loc.items.map(item => ({
+            bucket: item.bucket || '',
+            description: item.description || ''
+          }));
+        } else {
+          // Convert { bucket: description } to array format
+          normalized = Object.entries(loc).map(([bucket, description]) => ({
+            bucket: bucket || '',
+            description: String(description || '')
+          }));
+        }
+      }
+      
+      // Convert from plain array of strings
+      if (Array.isArray(loc) && loc.some(item => typeof item === 'string')) {
+        normalized = loc.map(item => ({
+          bucket: '',
+          description: typeof item === 'string' ? item : String(item || '')
+        }));
+      }
+      
+      // Ensure we have at least one empty item if location is empty
+      if (normalized.length === 0) {
+        normalized = [{ bucket: '', description: '' }];
+      }
+      
+      setEditedAgreement((prev) => ({
+        ...prev,
+        location: normalized,
+      }));
+    }
+  }, [editedAgreement?.id]); // Only run when agreement ID changes, not on every location change
 
   // Handle browser back button
   useEffect(() => {
@@ -285,13 +346,18 @@ const EditAgreementPage = () => {
 
   const handleFieldChange = (path, value) => {
     setEditedAgreement(prev => {
-      const newAgreement = { ...prev };
       const pathArray = path.split('.');
+      
+      // Clone the path we're about to modify
+      const newAgreement = { ...prev };
       let current = newAgreement;
       
+      // Clone each level of the path
       for (let i = 0; i < pathArray.length - 1; i++) {
         if (!(pathArray[i] in current)) {
           current[pathArray[i]] = {};
+        } else {
+          current[pathArray[i]] = { ...current[pathArray[i]] };
         }
         current = current[pathArray[i]];
       }
@@ -302,6 +368,9 @@ const EditAgreementPage = () => {
         const index = parseInt(lastPart.split('[')[1].split(']')[0]);
         if (!Array.isArray(current[key])) {
           current[key] = [];
+        } else {
+          // Clone the array before modifying
+          current[key] = [...current[key]];
         }
         current[key][index] = value;
       } else {
@@ -311,6 +380,8 @@ const EditAgreementPage = () => {
       // Auto-update todo date when todo items are modified
       if (path.startsWith('todo.items')) {
         if (newAgreement.todo && typeof newAgreement.todo === 'object') {
+          // Clone todo object before modifying
+          newAgreement.todo = { ...newAgreement.todo };
           newAgreement.todo.date = new Date().toISOString();
         }
       }
@@ -319,45 +390,151 @@ const EditAgreementPage = () => {
     });
   };
 
-  const handleArrayFieldChange = (path, index, value) => {
+  const handleArrayFieldChange = (path, index, field, value) => {
+    console.log('handleArrayFieldChange called with:', { path, index, field, value });
     setEditedAgreement(prev => {
-      const newAgreement = { ...prev };
       const pathArray = path.split('.');
+      
+      // Clone the path we're about to modify
+      const newAgreement = { ...prev };
       let current = newAgreement;
       
-      for (let i = 0; i < pathArray.length; i++) {
+      // Clone each level of the path
+      for (let i = 0; i < pathArray.length - 1; i++) {
+        if (!current[pathArray[i]]) {
+          current[pathArray[i]] = {};
+        } else {
+          current[pathArray[i]] = { ...current[pathArray[i]] };
+        }
         current = current[pathArray[i]];
       }
       
-      if (Array.isArray(current)) {
-        current[index] = value;
+      const lastKey = pathArray[pathArray.length - 1];
+      if (!Array.isArray(current[lastKey])) {
+        current[lastKey] = [];
+      } else {
+        // Clone the array before modifying
+        current[lastKey] = [...current[lastKey]];
+      }
+      
+      // Handle both simple values and object fields
+      if (typeof field === 'string') {
+        // Object field update (e.g., todo.items[index].date)
+        if (!current[lastKey][index]) {
+          current[lastKey][index] = {};
+        } else {
+          // Clone the object at this index
+          current[lastKey][index] = { ...current[lastKey][index] };
+        }
+        current[lastKey][index][field] = value;
+        console.log('Updated object field:', { path, index, field, value, result: current[lastKey][index] });
+      } else {
+        // Simple value update (e.g., dataConsumer[index])
+        current[lastKey][index] = value;
+        console.log('Updated simple value:', { path, index, value, result: current[lastKey][index] });
       }
       
       return newAgreement;
+    });
+  };
+
+  const handleLocationFieldChange = (index, field, value) => {
+    console.log('handleLocationFieldChange called with:', { index, field, value });
+    setEditedAgreement(prev => {
+      if (!prev.location || !Array.isArray(prev.location)) return prev;
+      if (index < 0 || index >= prev.location.length) return prev;
+
+      // Clone the location array
+      const location = [...prev.location];
+      
+      // Update the specific field at the index
+      location[index] = {
+        ...location[index],
+        [field]: value
+      };
+
+      return { ...prev, location };
+    });
+  };
+
+  const handleAddLocationItem = () => {
+    console.log('handleAddLocationItem called');
+    setEditedAgreement(prev => {
+      // Clone the location array
+      const location = [...(prev.location || [])];
+      
+      // Add new empty item
+      location.push({ bucket: '', description: '' });
+      
+      return { ...prev, location };
+    });
+  };
+
+  const handleDeleteLocationItem = (index) => {
+    console.log('handleDeleteLocationItem called with index:', index);
+    setEditedAgreement(prev => {
+      if (!prev.location || !Array.isArray(prev.location)) return prev;
+      if (index < 0 || index >= prev.location.length) return prev;
+      
+      // Clone the location array
+      const location = [...prev.location];
+      
+      // Remove the item at the specified index
+      location.splice(index, 1);
+      
+      // Ensure we always have at least one item
+      if (location.length === 0) {
+        location.push({ bucket: '', description: '' });
+      }
+      
+      return { ...prev, location };
     });
   };
 
   const addArrayItem = (path) => {
+    console.log('addArrayItem called with path:', path);
     setEditedAgreement(prev => {
-      const newAgreement = { ...prev };
+      console.log('Previous editedAgreement:', prev);
       const pathArray = path.split('.');
+      
+      // Clone the path we're about to modify
+      const newAgreement = { ...prev };
       let current = newAgreement;
       
-      for (let i = 0; i < pathArray.length; i++) {
+      // Clone each level of the path
+      for (let i = 0; i < pathArray.length - 1; i++) {
+        if (!current[pathArray[i]]) {
+          current[pathArray[i]] = {};
+        } else {
+          current[pathArray[i]] = { ...current[pathArray[i]] };
+        }
         current = current[pathArray[i]];
       }
       
-      if (Array.isArray(current)) {
-        current.push('');
+      const lastKey = pathArray[pathArray.length - 1];
+      if (!Array.isArray(current[lastKey])) {
+        current[lastKey] = [];
+      } else {
+        // Clone the array before modifying
+        current[lastKey] = [...current[lastKey]];
       }
       
-      // Auto-update todo date when todo items are added
+      // Handle different types of array items
       if (path === 'todo.items') {
+        // Todo items are simple strings
+        current[lastKey].push('');
+        // Auto-update todo date when todo items are added
         if (newAgreement.todo && typeof newAgreement.todo === 'object') {
+          // Clone todo object before modifying
+          newAgreement.todo = { ...newAgreement.todo };
           newAgreement.todo.date = new Date().toISOString();
         }
+      } else {
+        // Default: simple string items
+        current[lastKey].push('');
       }
       
+      console.log('New agreement after adding item:', newAgreement);
       return newAgreement;
     });
   };
@@ -369,21 +546,34 @@ const EditAgreementPage = () => {
 
   const handleDeleteArrayItemConfirmed = () => {
     setEditedAgreement(prev => {
-      const newAgreement = { ...prev };
       const pathArray = deleteArrayItem.path.split('.');
+      
+      // Clone the path we're about to modify
+      const newAgreement = { ...prev };
       let current = newAgreement;
       
-      for (let i = 0; i < pathArray.length; i++) {
+      // Clone each level of the path
+      for (let i = 0; i < pathArray.length - 1; i++) {
+        if (!current[pathArray[i]]) {
+          current[pathArray[i]] = {};
+        } else {
+          current[pathArray[i]] = { ...current[pathArray[i]] };
+        }
         current = current[pathArray[i]];
       }
       
-      if (Array.isArray(current)) {
-        current.splice(deleteArrayItem.index, 1);
+      const lastKey = pathArray[pathArray.length - 1];
+      if (Array.isArray(current[lastKey])) {
+        // Clone the array before modifying
+        current[lastKey] = [...current[lastKey]];
+        current[lastKey].splice(deleteArrayItem.index, 1);
       }
       
       // Auto-update todo date when todo items are deleted
       if (deleteArrayItem.path === 'todo.items') {
         if (newAgreement.todo && typeof newAgreement.todo === 'object') {
+          // Clone todo object before modifying
+          newAgreement.todo = { ...newAgreement.todo };
           newAgreement.todo.date = new Date().toISOString();
         }
       }
@@ -524,184 +714,139 @@ const EditAgreementPage = () => {
   };
 
   const renderLocationField = (path, value, label) => {
-    const handleAddLocationItem = () => {
-      if (newLocationKey.trim() && newLocationValue.trim()) {
-        // Use the proper change tracking system
-        const currentLocation = editedAgreement.location || {};
-        const updatedLocation = {
-          ...currentLocation,
-          [newLocationKey.trim()]: newLocationValue.trim()
-        };
-        
-        handleFieldChange('location', updatedLocation);
-        
-        setNewLocationKey('');
-        setNewLocationValue('');
+    console.log('renderLocationField called with:', { path, value, label, valueType: typeof value, isArray: Array.isArray(value) });
+    console.log('Raw value:', value);
+    
+    // Ensure we always have a valid location structure
+    let locationArray = value;
+    
+    // If value is null/undefined, create empty structure
+    if (!locationArray) {
+      locationArray = [{ bucket: '', description: '' }];
+    }
+    
+    // If value is not an array, convert it
+    if (!Array.isArray(locationArray)) {
+      if (typeof locationArray === 'object' && locationArray.items && Array.isArray(locationArray.items)) {
+        // Has items array, use it
+        locationArray = locationArray.items;
+      } else if (typeof locationArray === 'object') {
+        // Convert { bucket: description } to array format
+        locationArray = Object.entries(locationArray).map(([bucket, description]) => ({
+          bucket: bucket || '',
+          description: String(description || '')
+        }));
+      } else {
+        // Fallback to empty array
+        locationArray = [{ bucket: '', description: '' }];
       }
-    };
-
-
-
-    const handleDeleteLocationItem = (keyToDelete) => {
-      // Use the proper change tracking system
-      const currentLocation = { ...editedAgreement.location } || {};
-      delete currentLocation[keyToDelete];
-      
-      handleFieldChange('location', currentLocation);
-    };
-
-
+    }
+    
+    // Ensure all items have the correct structure
+    const normalizedArray = locationArray.map(item => {
+      if (typeof item === 'string') {
+        return { bucket: '', description: item };
+      }
+      if (typeof item === 'object' && item !== null) {
+        return {
+          bucket: item.bucket || '',
+          description: item.description || ''
+        };
+      }
+      return { bucket: '', description: '' };
+    });
+    
+    // Ensure we have at least one item
+    if (normalizedArray.length === 0) {
+      normalizedArray.push({ bucket: '', description: '' });
+    }
+    
+    console.log('Final normalizedArray:', normalizedArray);
+    console.log('Location array type:', typeof normalizedArray);
+    console.log('Location array isArray:', Array.isArray(normalizedArray));
 
     return (
-      <Box key={path} sx={{ mb: 3 }}>
-        <Typography variant="subtitle1" sx={{ 
-          color: currentTheme.text, 
-          fontWeight: 600,
-          mb: 2
-        }}>
-          {label}
-        </Typography>
-
-        {/* Existing location items */}
-        {Object.entries(value || {}).map(([key, val]) => (
-          <Box key={key} sx={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: 2, 
-            mb: 2
+      <Box key={path} sx={{ mb: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+          <Typography variant="subtitle2" sx={{ 
+            color: currentTheme.text, 
+            fontWeight: 600
           }}>
-            <TextField
-              fullWidth
-              label="Bucket"
-              value={key}
-              disabled
-              sx={{ 
-                '& .MuiInputLabel-root': { 
-                  color: currentTheme.textSecondary,
-                  fontWeight: 600
-                },
-                '& .MuiOutlinedInput-root': { 
-                  color: currentTheme.text,
-                  '& fieldset': { 
-                    borderColor: currentTheme.border
-                  }
-                }
-              }}
-            />
-            <TextField
-              fullWidth
-              label="Description"
-              value={val}
-              disabled
-              sx={{ 
-                '& .MuiInputLabel-root': { 
-                  color: currentTheme.textSecondary,
-                  fontWeight: 600
-                },
-                '& .MuiOutlinedInput-root': { 
-                  color: currentTheme.text,
-                  '& fieldset': { 
-                    borderColor: currentTheme.border
-                  }
-                }
-              }}
-            />
-            <IconButton
-              size="small"
-              onClick={() => handleDeleteLocationItem(key)}
-              sx={{ 
-                color: 'error.main',
-                '&:hover': {
-                  bgcolor: 'error.main',
-                  color: 'white'
-                }
-              }}
-              title="Delete location item"
-            >
-              <DeleteIcon />
-            </IconButton>
-          </Box>
-        ))}
-
-
-
-                {/* Add new location item */}
-        <Box sx={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: 2
-        }}>
-          <TextField
-            fullWidth
-            label="New Bucket"
-            value={newLocationKey}
-            onChange={(e) => setNewLocationKey(e.target.value)}
-            placeholder="Enter bucket name"
-            sx={{ 
-              '& .MuiInputLabel-root': { 
-                color: currentTheme.textSecondary,
-                fontWeight: 600
-              },
-              '& .MuiOutlinedInput-root': { 
-                color: currentTheme.text,
-                '& fieldset': { 
-                  borderColor: currentTheme.border
-                },
-                '&:hover fieldset': { 
-                  borderColor: currentTheme.primary
-                },
-                '&:focus fieldset': { 
-                  borderColor: currentTheme.primary
-                }
-              }
-            }}
-          />
-          <TextField
-            fullWidth
-            label="New Description"
-            value={newLocationValue}
-            onChange={(e) => setNewLocationValue(e.target.value)}
-            placeholder="Enter description"
-            sx={{ 
-              '& .MuiInputLabel-root': { 
-                color: currentTheme.textSecondary,
-                fontWeight: 600
-              },
-              '& .MuiOutlinedInput-root': { 
-                color: currentTheme.text,
-                '& fieldset': { 
-                  borderColor: currentTheme.border
-                },
-                '&:hover fieldset': { 
-                  borderColor: currentTheme.primary
-                },
-                '&:focus fieldset': { 
-                  borderColor: currentTheme.primary
-                }
-              }
-            }}
-          />
-          <Button
-            variant="outlined"
-            onClick={handleAddLocationItem}
-            disabled={!newLocationKey.trim() || !newLocationValue.trim()}
-            startIcon={<AddIcon />}
-            sx={{ 
-              borderColor: currentTheme.primary,
-              color: currentTheme.primary,
-              '&:hover': {
-                bgcolor: currentTheme.primary,
-                color: 'white'
-              },
-              '&:disabled': {
-                borderColor: currentTheme.border,
-                color: currentTheme.textSecondary
-              }
-            }}
+            {label}
+          </Typography>
+          <IconButton
+            size="small"
+            onClick={() => handleAddLocationItem()}
+            sx={{ color: currentTheme.primary }}
+            title="Add new location item"
           >
-            Add
-          </Button>
+            <AddIcon />
+          </IconButton>
         </Box>
+        {normalizedArray.map((item, index) => {
+          // Safety check: ensure item is a valid object
+          if (!item || typeof item !== 'object') {
+            console.error('Invalid location item:', item);
+            return null;
+          }
+          
+          return (
+            <Box key={index} sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 1, 
+              mb: 1
+            }}>
+              <TextField
+                size="small"
+                label="Bucket"
+                value={String(item.bucket || '')}
+                onChange={(e) => handleLocationFieldChange(index, 'bucket', e.target.value)}
+                sx={{ 
+                  flex: 1,
+                  '& .MuiInputLabel-root': { color: currentTheme.textSecondary },
+                  '& .MuiInputLabel-root.Mui-focused': { color: currentTheme.primary },
+                  '& .MuiOutlinedInput-root': { 
+                    color: currentTheme.text,
+                    '& fieldset': { borderColor: currentTheme.border },
+                    '&:hover fieldset': { borderColor: currentTheme.primary },
+                    '&.Mui-focused fieldset': { borderColor: currentTheme.primary }
+                  },
+                  '& .MuiInputBase-input': { color: currentTheme.text },
+                  '& .MuiInputBase-input::placeholder': { color: currentTheme.textSecondary, opacity: 0.7 }
+                }}
+                placeholder="Enter bucket name"
+              />
+              <TextField
+                size="small"
+                label="Description"
+                value={String(item.description || '')}
+                onChange={(e) => handleLocationFieldChange(index, 'description', e.target.value)}
+                sx={{ 
+                  flex: 1,
+                  '& .MuiInputLabel-root': { color: currentTheme.textSecondary },
+                  '& .MuiInputLabel-root.Mui-focused': { color: currentTheme.primary },
+                  '& .MuiOutlinedInput-root': { 
+                    color: currentTheme.text,
+                    '& fieldset': { borderColor: currentTheme.border },
+                    '&:hover fieldset': { borderColor: currentTheme.primary },
+                    '&.Mui-focused fieldset': { borderColor: currentTheme.primary }
+                  },
+                  '& .MuiInputBase-input': { color: currentTheme.text },
+                  '& .MuiInputBase-input::placeholder': { color: currentTheme.textSecondary, opacity: 0.7 }
+                }}
+                placeholder="Enter description"
+              />
+              <IconButton
+                size="small"
+                onClick={() => handleDeleteLocationItem(index)}
+                sx={{ color: 'error.main' }}
+              >
+                <DeleteIcon />
+              </IconButton>
+            </Box>
+          );
+        })}
       </Box>
     );
   };
@@ -879,7 +1024,22 @@ const EditAgreementPage = () => {
   const renderField = (path, value, label, type = 'text', options = null, isRequired = false, fieldType = null) => {
     console.log('renderField called with:', { path, value, label, type, isRequired });
     
+    // ALWAYS handle location fields with renderLocationField, regardless of data type
+    if (path === 'location' || path.startsWith('location.')) {
+      console.log('Location field detected, forcing renderLocationField usage');
+      return renderLocationField('location', editedAgreement.location, label);
+    }
+    
     if (Array.isArray(value)) {
+      // If the array contains objects, skip the generic primitive renderer
+      const containsObjects = value.some((v) => v && typeof v === 'object');
+      if (containsObjects) {
+        // Either return null or add a JSON editor if you want. For now, avoid the crash.
+        return null;
+      }
+
+      console.log('renderField handling array:', { path, value, label, valueLength: value.length });
+      
       // Special handling for changelog arrays
       if (path === 'changelog') {
         console.log('Changelog array detected, using ChangelogEditor component');
@@ -935,7 +1095,7 @@ const EditAgreementPage = () => {
               <TextField
                 size="small"
                 value={item}
-                onChange={(e) => handleArrayFieldChange(path, index, e.target.value)}
+                onChange={(e) => handleArrayFieldChange(path, index, null, e.target.value)}
                 sx={{ 
                   flex: 1,
                   '& .MuiInputLabel-root': { color: currentTheme.textSecondary },
@@ -965,10 +1125,7 @@ const EditAgreementPage = () => {
     }
 
     if (typeof value === 'object' && value !== null) {
-      // Special handling for location field
-      if (path === 'location') {
-        return renderLocationField(path, value, label);
-      }
+      console.log('renderField handling object:', { path, value, label });
       
       // Special handling for changelog field
       if (path === 'changelog') {
@@ -989,6 +1146,21 @@ const EditAgreementPage = () => {
       // Special styling for todo field
       const isSpecialField = path === 'todo';
       
+      console.log('Fallback object handling for:', path, 'with value:', value);
+      
+      // Skip location fields - they should be handled by renderLocationField
+      if (path === 'location' || path.startsWith('location.')) {
+        console.log('Skipping location field in fallback handling:', path);
+        console.log('This should not happen - location fields should be caught earlier!');
+        return null;
+      }
+      
+      // Additional safety check: if this is the location object itself, don't process it
+      if (path === 'location') {
+        console.log('Location object detected in object renderer, skipping to prevent recursion');
+        return null;
+      }
+      
       return (
         <Box key={path} sx={{ mb: 2 }}>
           <Typography variant="subtitle2" sx={{ color: currentTheme.text, fontWeight: 600, mb: 1 }}>
@@ -996,8 +1168,14 @@ const EditAgreementPage = () => {
           </Typography>
           <Box sx={{ pl: 2 }}>
             {Object.entries(value).map(([key, val]) => {
+              console.log('Processing object entry:', { key, val, path: `${path}.${key}` });
               // Skip the date field for todo - it will be auto-updated
               if (path === 'todo' && key === 'date') {
+                return null;
+              }
+              // Skip location-related fields completely
+              if (path === 'location' || path.startsWith('location.') || key === 'location') {
+                console.log('Skipping location field in object entry processing:', `${path}.${key}`);
                 return null;
               }
               return (
@@ -1344,7 +1522,15 @@ const EditAgreementPage = () => {
             {renderField('deliveryFrequency', editedAgreement.deliveryFrequency, 'Delivery Frequency')}
           </Grid>
           <Grid item xs={12}>
-            {renderField('location', editedAgreement.location, 'Location')}
+            {(() => {
+              console.log('Rendering location field in form, value:', editedAgreement.location);
+              console.log('Location value type:', typeof editedAgreement.location);
+              console.log('Location value isArray:', Array.isArray(editedAgreement.location));
+              console.log('Location value keys:', editedAgreement.location ? Object.keys(editedAgreement.location) : 'null');
+              
+              // Direct rendering of location field to avoid complex renderField logic
+              return renderLocationField('location', editedAgreement.location, 'Location');
+            })()}
           </Grid>
           <Grid item xs={12}>
             {renderField('todo', editedAgreement.todo, 'Todo')}

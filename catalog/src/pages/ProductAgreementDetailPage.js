@@ -308,29 +308,67 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
   // Utility function to parse and format S3 location
   const parseLocation = (location) => {
     if (!location) return { label: 'Not specified', icon: HelpOutlineIcon };
+    
+    // Handle array of location objects (new format)
     if (Array.isArray(location)) {
       return location.map(loc => parseLocation(loc));
     }
-    const lowerLoc = location.toLowerCase();
-    if (lowerLoc.includes('s3://') || lowerLoc.includes('s3.amazonaws.com')) {
-      return { label: location, icon: StorageIcon, description: 'S3 bucket location' };
-    }
-    if (lowerLoc.match(/^[a-z0-9][a-z0-9.-]*[a-z0-9]$/) && !lowerLoc.includes('/')) {
-      return { label: location, icon: StorageIcon, description: 'S3 bucket name' };
-    }
-    if (lowerLoc.includes('/') && !lowerLoc.includes('://')) {
-      const parts = location.split('/');
-      if (parts.length >= 2) {
-        return { label: location, icon: FolderIcon, description: `S3 object in bucket: ${parts[0]}` };
+    
+    // Handle location object with bucket and description (new format)
+    if (typeof location === 'object' && location.bucket !== undefined) {
+      const bucket = location.bucket;
+      const description = location.description || '';
+      
+      if (!bucket) return { label: 'Not specified', icon: HelpOutlineIcon };
+      
+      const lowerLoc = bucket.toLowerCase();
+      if (lowerLoc.includes('s3://') || lowerLoc.includes('s3.amazonaws.com')) {
+        return { label: bucket, icon: StorageIcon, description: description || 'S3 bucket location' };
       }
+      if (lowerLoc.match(/^[a-z0-9][a-z0-9.-]*[a-z0-9]$/) && !lowerLoc.includes('/')) {
+        return { label: bucket, icon: StorageIcon, description: description || 'S3 bucket name' };
+      }
+      if (lowerLoc.includes('/') && !lowerLoc.includes('://')) {
+        const parts = bucket.split('/');
+        if (parts.length >= 2) {
+          return { label: bucket, icon: FolderIcon, description: description || `S3 object in bucket: ${parts[0]}` };
+        }
+      }
+      if (lowerLoc.includes('us-east') || lowerLoc.includes('us-west') || lowerLoc.includes('eu-') || lowerLoc.includes('ap-')) {
+        return { label: bucket, icon: CloudIcon, description: description || 'AWS region' };
+      }
+      if (lowerLoc.includes('cloud') || lowerLoc.includes('storage')) {
+        return { label: bucket, icon: CloudIcon, description: description || 'Cloud storage location' };
+      }
+      return { label: bucket, icon: StorageIcon, description: description || 'S3 location' };
     }
-    if (lowerLoc.includes('us-east') || lowerLoc.includes('us-west') || lowerLoc.includes('eu-') || lowerLoc.includes('ap-')) {
-      return { label: location, icon: CloudIcon, description: 'AWS region' };
+    
+    // Handle string location (old format - for backward compatibility)
+    if (typeof location === 'string') {
+      const lowerLoc = location.toLowerCase();
+      if (lowerLoc.includes('s3://') || lowerLoc.includes('s3.amazonaws.com')) {
+        return { label: location, icon: StorageIcon, description: 'S3 bucket location' };
+      }
+      if (lowerLoc.match(/^[a-z0-9][a-z0-9.-]*[a-z0-9]$/) && !lowerLoc.includes('/')) {
+        return { label: location, icon: StorageIcon, description: 'S3 bucket name' };
+      }
+      if (lowerLoc.includes('/') && !lowerLoc.includes('://')) {
+        const parts = location.split('/');
+        if (parts.length >= 2) {
+          return { label: location, icon: FolderIcon, description: `S3 object in bucket: ${parts[0]}` };
+        }
+      }
+      if (lowerLoc.includes('us-east') || lowerLoc.includes('us-west') || lowerLoc.includes('eu-') || lowerLoc.includes('ap-')) {
+        return { label: location, icon: CloudIcon, description: 'AWS region' };
+      }
+      if (lowerLoc.includes('cloud') || lowerLoc.includes('storage')) {
+        return { label: location, icon: CloudIcon, description: 'Cloud storage location' };
+      }
+      return { label: location, icon: StorageIcon, description: 'S3 location' };
     }
-    if (lowerLoc.includes('cloud') || lowerLoc.includes('storage')) {
-      return { label: location, icon: CloudIcon, description: 'Cloud storage location' };
-    }
-    return { label: location, icon: StorageIcon, description: 'S3 location' };
+    
+    // Fallback for unexpected types
+    return { label: 'Invalid location format', icon: HelpOutlineIcon, description: 'Location format not recognized' };
   };
   // Utility function to parse and format data consumer
   const parseDataConsumer = (consumer) => {
@@ -1086,23 +1124,8 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
               </Typography>
               <List dense sx={{ bgcolor: 'transparent', borderRadius: 1, p: 0.5, pl: 0, ml: '-12px' }}>
                 {(() => {
-                  if (agreement.location && typeof agreement.location === 'object' && !Array.isArray(agreement.location)) {
-                    // Object: key = location, value = description
-                    return Object.entries(agreement.location).map(([loc, desc], index) => {
-                      const { icon: IconComponent, label } = parseLocation(loc);
-                      return (
-                        <ListItem key={index} sx={{ py: 0.5, bgcolor: 'transparent', alignItems: 'center' }}>
-                          <ListItemIcon sx={{ minWidth: 30, display: 'flex', alignItems: 'center' }}>
-                            <CloudIcon sx={{ fontSize: 20, color: currentTheme.primary, opacity: 0.8 }} />
-                          </ListItemIcon>
-                          <ListItemText
-                            primary={<Typography sx={{ color: currentTheme.text }}>{label}</Typography>}
-                            secondary={<Typography sx={{ color: currentTheme.textSecondary }}>{desc}</Typography>}
-                          />
-                        </ListItem>
-                      );
-                    });
-                  } else if (Array.isArray(agreement.location)) {
+                  if (Array.isArray(agreement.location)) {
+                    // New array format: [{ bucket, description }, ...]
                     return agreement.location.map((loc, index) => {
                       const { icon: IconComponent, label, description } = parseLocation(loc);
                       return (
@@ -1117,7 +1140,24 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
                         </ListItem>
                       );
                     });
+                  } else if (agreement.location && typeof agreement.location === 'object') {
+                    // Old object format: { key: description } - convert to array format for display
+                    return Object.entries(agreement.location).map(([loc, desc], index) => {
+                      const { icon: IconComponent, label } = parseLocation(loc);
+                      return (
+                        <ListItem key={index} sx={{ py: 0.5, bgcolor: 'transparent', alignItems: 'center' }}>
+                          <ListItemIcon sx={{ minWidth: 30, display: 'flex', alignItems: 'center' }}>
+                            <CloudIcon sx={{ fontSize: 20, color: currentTheme.primary, opacity: 0.8 }} />
+                          </ListItemIcon>
+                          <ListItemText
+                            primary={<Typography sx={{ color: currentTheme.text }}>{label}</Typography>}
+                            secondary={<Typography sx={{ color: currentTheme.textSecondary }}>{desc}</Typography>}
+                          />
+                        </ListItem>
+                      );
+                    });
                   } else {
+                    // Fallback for string or null/undefined
                     const { icon: IconComponent, label, description } = parseLocation(agreement.location);
                     return (
                       <ListItem sx={{ py: 0.5, bgcolor: 'transparent', alignItems: 'center' }}>
