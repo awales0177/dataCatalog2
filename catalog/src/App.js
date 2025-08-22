@@ -43,6 +43,7 @@ import {
   GitHub as GitHubIcon,
   Info as InfoIcon,
   AutoMode as AutoModeIcon,
+  Policy as PolicyIcon,
 } from '@mui/icons-material';
 import {
   FiHome,
@@ -54,6 +55,7 @@ import {
   FiLayers,
   FiGrid,
   FiBookOpen,
+  FiTool,
 } from 'react-icons/fi';
 import { MdHandshake, MdDomain } from "react-icons/md";
 import { ImMakeGroup } from "react-icons/im";
@@ -71,6 +73,7 @@ import ProductAgreementsPage from './pages/ProductAgreementsPage';
 import DataDomainsPage from './pages/DataDomainsPage';
 import SplashPage from './pages/SplashPage';
 import ApplicationsPage from './pages/ApplicationsPage';
+import EditApplicationPage from './pages/EditApplicationPage';
 
 import ReferenceDataPage from './pages/ReferenceDataPage';
 import EditReferenceDataPage from './pages/EditReferenceDataPage';
@@ -79,6 +82,8 @@ import EditDataModelDetailPage from './pages/EditDataModelDetailPage';
 import ProductAgreementDetailPage from './pages/ProductAgreementDetailPage';
 import EditAgreementPage from './pages/EditAgreementPage';
 import ReferenceDataDetailPage from './pages/ReferenceDataDetailPage';
+import ToolkitPage from './pages/ToolkitPage';
+import DataPoliciesPage from './pages/DataPoliciesPage';
 
 import InfoSidebar from './components/InfoSidebar';
 
@@ -726,25 +731,35 @@ const menuItems = [
     id: 'agreements'
   },
   {
-    name: 'Data Domains',
-    path: '/domains',
-    icon: <MdDomain />,
-    id: 'domains'
+    name: 'Toolkit',
+    path: '/toolkit',
+    icon: <FiTool />,
+    id: 'toolkit'
   },
-  {
-    name: 'Applications',
-    path: '/applications',
-    icon: <AiOutlineAppstore />,
-    id: 'applications'
-  },
-
   {
     name: 'Reference Data',
     path: '/reference',
     icon: <IoIosApps />,
     id: 'reference'
   },
-
+  {
+    name: 'Data Applications',
+    path: '/applications',
+    icon: <AiOutlineAppstore />,
+    id: 'applications'
+  },
+  {
+    name: 'Data Policies',
+    path: '/policies',
+    icon: <PolicyIcon />,
+    id: 'policies'
+  },
+  {
+    name: 'Data Domains',
+    path: '/domains',
+    icon: <MdDomain />,
+    id: 'domains'
+  },
 ];
 
 function AppContent() {
@@ -780,7 +795,11 @@ function AppContent() {
     } else if (path === '/domains') {
       title = 'Data Domains';
     } else if (path === '/applications') {
-      title = 'Applications';
+      title = 'Data Applications';
+    } else if (path === '/toolkit') {
+      title = 'Developer Toolkit';
+    } else if (path === '/policies') {
+      title = 'Data Policies';
     } else if (path === '/reference') {
       title = 'Reference Data';
     } else if (path.startsWith('/specifications/')) {
@@ -937,86 +956,102 @@ function AppContent() {
   const drawer = (
     <>
       <List>
-        {(menuData?.items || []).map((item) => (
-          <Tooltip
-            key={item.path}
-            title={item.name}
-            placement="right"
-            arrow
-            sx={{
-              display: isDrawerCollapsed ? 'block' : 'none'
-            }}
-          >
-            <ListItem
-              button
-              component={Link}
-              to={item.path}
-              selected={location.pathname === item.path}
-              sx={{
-                color: currentTheme.text,
-                py: 1.25,
-                px: isDrawerCollapsed ? 1 : 1.5,
-                justifyContent: isDrawerCollapsed ? 'center' : 'flex-start',
-                '&.Mui-selected': {
-                  bgcolor: `${currentTheme.primary}20`,
-                  '&:hover': {
-                    bgcolor: `${currentTheme.primary}30`,
-                  },
-                },
-                '&:hover': {
-                  bgcolor: `${currentTheme.primary}10`,
-                },
-              }}
-            >
-              <ListItemIcon sx={{ 
-                color: 'inherit', 
-                minWidth: isDrawerCollapsed ? 0 : 36,
-                marginRight: isDrawerCollapsed ? 0 : 1.5,
-                '& svg': {
-                  width: item.id === 'home' ? '1.2rem' : '1.35rem',
-                  height: item.id === 'home' ? '1.2rem' : '1.35rem'
-                }
-              }}>
-                {item.icon}
-              </ListItemIcon>
-              {!isDrawerCollapsed && (
-                <ListItemText 
-                  primary={
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <Typography 
-                        variant="body2" 
-                        sx={{ 
-                          fontSize: '0.875rem',
-                          fontWeight: 500,
-                        }}
-                      >
-                        {item.name}
-                      </Typography>
-                      {item.count !== undefined && (
-                        <Typography 
-                          variant="caption" 
-                          sx={{ 
-                            color: currentTheme.textSecondary,
-                            ml: 1,
-                            minWidth: '24px',
-                            textAlign: 'right',
-                            fontSize: '0.75rem',
-                            bgcolor: `${currentTheme.primary}15`,
-                            px: 1,
-                            py: 0.25,
-                            borderRadius: '12px',
-                          }}
-                        >
-                          {item.count}
-                        </Typography>
-                      )}
-                    </Box>
-                  }
+        {(menuData?.items || []).map((item, index) => {
+          // Add divider before Applications (start of second section)
+          const shouldAddDivider = item.id === 'applications' && !isDrawerCollapsed;
+          
+          return (
+            <React.Fragment key={item.path}>
+              {shouldAddDivider && (
+                <Divider 
+                  sx={{ 
+                    my: 1, 
+                    mx: 2, 
+                    borderColor: alpha(currentTheme.border, 0.5),
+                    opacity: 0.6
+                  }} 
                 />
               )}
-            </ListItem>
-          </Tooltip>
-        ))}
+              <Tooltip
+                title={item.name}
+                placement="right"
+                arrow
+                sx={{
+                  display: isDrawerCollapsed ? 'block' : 'none'
+                }}
+              >
+                <ListItem
+                  button
+                  component={Link}
+                  to={item.path}
+                  selected={location.pathname === item.path}
+                  sx={{
+                    color: currentTheme.text,
+                    py: 1.25,
+                    px: isDrawerCollapsed ? 1 : 1.5,
+                    justifyContent: isDrawerCollapsed ? 'center' : 'flex-start',
+                    '&.Mui-selected': {
+                      bgcolor: `${currentTheme.primary}20`,
+                      '&:hover': {
+                        bgcolor: `${currentTheme.primary}30`,
+                      },
+                    },
+                    '&:hover': {
+                      bgcolor: `${currentTheme.primary}10`,
+                    },
+                  }}
+                >
+                  <ListItemIcon sx={{ 
+                    color: 'inherit', 
+                    minWidth: isDrawerCollapsed ? 0 : 36,
+                    marginRight: isDrawerCollapsed ? 0 : 1.5,
+                    '& svg': {
+                      width: item.id === 'home' ? '1.2rem' : '1.35rem',
+                      height: item.id === 'home' ? '1.2rem' : '1.35rem'
+                    }
+                  }}>
+                    {item.icon}
+                  </ListItemIcon>
+                  {!isDrawerCollapsed && (
+                    <ListItemText 
+                      primary={
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <Typography 
+                            variant="body2" 
+                            sx={{ 
+                              fontSize: '0.875rem',
+                              fontWeight: 500,
+                            }}
+                          >
+                            {item.name}
+                          </Typography>
+                          {item.count !== undefined && (
+                            <Typography 
+                              variant="caption" 
+                              sx={{ 
+                                color: currentTheme.textSecondary,
+                                ml: 1,
+                                minWidth: '24px',
+                                textAlign: 'right',
+                                fontSize: '0.75rem',
+                                bgcolor: `${currentTheme.primary}15`,
+                                px: 1,
+                                py: 0.25,
+                                borderRadius: '12px',
+                              }}
+                            >
+                              {item.count}
+                            </Typography>
+                          )}
+                        </Box>
+                      }
+                    />
+                  )}
+                </ListItem>
+              </Tooltip>
+            </React.Fragment>
+          );
+        })}
       </List>
 
       {/* Avatar Section */}
@@ -1307,6 +1342,10 @@ function AppContent() {
             <Route path="/agreements" element={<ProductAgreementsPage />} />
             <Route path="/domains" element={<DataDomainsPage />} />
             <Route path="/applications" element={<ApplicationsPage />} />
+        <Route path="/applications/create" element={<EditApplicationPage />} />
+        <Route path="/applications/edit/:id" element={<EditApplicationPage />} />
+        <Route path="/toolkit" element={<ToolkitPage />} />
+        <Route path="/policies" element={<DataPoliciesPage />} />
             <Route path="/reference" element={<ReferenceDataPage />} />
             <Route path="/reference/create" element={<EditReferenceDataPage currentTheme={currentTheme} />} />
             <Route path="/reference/:id/edit" element={<EditReferenceDataPage currentTheme={currentTheme} />} />

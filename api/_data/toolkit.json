@@ -1,0 +1,131 @@
+{
+  "toolkit": {
+    "functions": [
+      {
+        "id": "func_001",
+        "name": "Data Validation Utility",
+        "description": "A comprehensive data validation function that checks data types, formats, and business rules",
+        "language": "python",
+        "category": "data-processing",
+        "tags": ["validation", "data", "python", "utility"],
+        "code": "def validate_data(data, schema):\n    # Data validation logic here\n    pass",
+        "author": "Data Team",
+        "version": "1.0.0",
+        "lastUpdated": "2024-01-15T10:00:00Z",
+        "usage": "Import and use for any data validation needs",
+        "dependencies": ["pydantic", "jsonschema"],
+        "examples": ["data_cleaning", "api_validation", "database_checks"],
+        "rating": 4.8,
+        "downloads": 156
+      },
+      {
+        "id": "func_002",
+        "name": "API Rate Limiter",
+        "description": "Efficient rate limiting implementation for API endpoints with Redis backend",
+        "language": "javascript",
+        "category": "api-management",
+        "tags": ["rate-limiting", "api", "redis", "performance"],
+        "code": "class RateLimiter {\n  constructor(options) {\n    // Rate limiting logic\n  }\n}",
+        "author": "DevOps Team",
+        "version": "2.1.0",
+        "lastUpdated": "2024-01-20T14:30:00Z",
+        "usage": "Add to Express.js middleware for API protection",
+        "dependencies": ["redis", "express"],
+        "examples": ["user_api", "public_api", "webhook_endpoints"],
+        "rating": 4.9,
+        "downloads": 89
+      }
+    ],
+    "containers": [
+      {
+        "id": "cont_001",
+        "name": "PostgreSQL Development Container",
+        "description": "Ready-to-use PostgreSQL container with common development tools and extensions",
+        "type": "docker",
+        "category": "database",
+        "tags": ["postgresql", "database", "development", "docker"],
+        "dockerfile": "FROM postgres:15\n# Development setup\nRUN apt-get update && apt-get install -y \\\n    postgresql-contrib \\\n    postgresql-15-postgis-3",
+        "dockerCompose": "version: '3.8'\nservices:\n  postgres:\n    build: .\n    environment:\n      POSTGRES_DB: devdb\n      POSTGRES_USER: devuser",
+        "author": "Infrastructure Team",
+        "version": "1.2.0",
+        "lastUpdated": "2024-01-18T09:15:00Z",
+        "usage": "Perfect for local development and testing",
+        "dependencies": ["docker", "docker-compose"],
+        "examples": ["local_dev", "testing", "ci_cd"],
+        "rating": 4.7,
+        "downloads": 203
+      },
+      {
+        "id": "cont_002",
+        "name": "Node.js Microservice Base",
+        "description": "Lightweight Node.js container optimized for microservices with health checks",
+        "type": "docker",
+        "category": "runtime",
+        "tags": ["nodejs", "microservice", "health-check", "optimized"],
+        "dockerfile": "FROM node:18-alpine\nWORKDIR /app\nCOPY package*.json ./\nRUN npm ci --only=production",
+        "dockerCompose": "version: '3.8'\nservices:\n  app:\n    build: .\n    ports:\n      - '3000:3000'\n    healthcheck:\n      test: ['CMD', 'curl', '-f', 'http://localhost:3000/health']",
+        "author": "Backend Team",
+        "version": "1.0.0",
+        "lastUpdated": "2024-01-22T16:45:00Z",
+        "usage": "Base image for Node.js microservices",
+        "dependencies": ["docker"],
+        "examples": ["api_service", "worker_service", "webhook_service"],
+        "rating": 4.6,
+        "downloads": 134
+      }
+    ],
+    "terraform": [
+      {
+        "id": "tf_001",
+        "name": "AWS VPC with Private Subnets",
+        "description": "Complete VPC setup with public/private subnets, NAT gateway, and security groups",
+        "provider": "aws",
+        "category": "networking",
+        "tags": ["aws", "vpc", "networking", "security", "terraform"],
+        "mainTf": "resource \"aws_vpc\" \"main\" {\n  cidr_block = var.vpc_cidr\n  \n  tags = {\n    Name = \"${var.environment}-vpc\"\n  }\n}",
+        "variablesTf": "variable \"vpc_cidr\" {\n  description = \"CIDR block for VPC\"\n  type        = string\n  default     = \"10.0.0.0/16\"\n}",
+        "outputsTf": "output \"vpc_id\" {\n  value = aws_vpc.main.id\n}",
+        "author": "Cloud Team",
+        "version": "2.0.0",
+        "lastUpdated": "2024-01-19T11:20:00Z",
+        "usage": "Deploy secure VPC infrastructure for production workloads",
+        "dependencies": ["terraform", "aws_provider"],
+        "examples": ["production_env", "staging_env", "multi_az_setup"],
+        "rating": 4.9,
+        "downloads": 312
+      },
+      {
+        "id": "tf_002",
+        "name": "Kubernetes Cluster on GCP",
+        "description": "Production-ready GKE cluster with node pools, monitoring, and logging",
+        "provider": "gcp",
+        "category": "kubernetes",
+        "tags": ["gcp", "kubernetes", "gke", "monitoring", "terraform"],
+        "mainTf": "resource \"google_container_cluster\" \"primary\" {\n  name     = var.cluster_name\n  location = var.region\n  \n  node_config {\n    machine_type = var.machine_type\n  }\n}",
+        "variablesTf": "variable \"cluster_name\" {\n  description = \"Name of the GKE cluster\"\n  type        = string\n}",
+        "outputsTf": "output \"cluster_endpoint\" {\n  value = google_container_cluster.primary.endpoint\n}",
+        "author": "Platform Team",
+        "version": "1.5.0",
+        "lastUpdated": "2024-01-21T13:10:00Z",
+        "usage": "Deploy managed Kubernetes clusters on Google Cloud",
+        "dependencies": ["terraform", "google_provider"],
+        "examples": ["production_cluster", "development_cluster", "multi_region"],
+        "rating": 4.8,
+        "downloads": 178
+      }
+    ]
+  },
+  "categories": {
+    "data-processing": "Data manipulation, validation, and processing utilities",
+    "api-management": "API development, testing, and management tools",
+    "database": "Database containers, scripts, and utilities",
+    "runtime": "Application runtime environments and base images",
+    "networking": "Network infrastructure and security configurations",
+    "kubernetes": "Kubernetes manifests, operators, and configurations"
+  },
+  "tags": [
+    "python", "javascript", "docker", "terraform", "aws", "gcp", "kubernetes",
+    "validation", "api", "database", "microservice", "networking", "security",
+    "monitoring", "development", "production", "testing", "ci_cd"
+  ]
+}

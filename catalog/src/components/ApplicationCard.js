@@ -6,10 +6,15 @@ import {
   Box,
   Chip,
   alpha,
+  IconButton,
+  Tooltip,
 } from '@mui/material';
+import {
+  Edit as EditIcon,
+} from '@mui/icons-material';
 import { formatDate } from '../utils/dateUtils';
 
-const ApplicationCard = ({ application, currentTheme }) => {
+const ApplicationCard = ({ application, currentTheme, onEdit }) => {
   return (
     <Card 
       elevation={0}
@@ -22,9 +27,46 @@ const ApplicationCard = ({ application, currentTheme }) => {
         '&:hover': {
           transform: 'translateY(-4px)',
           boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+          '& .action-buttons': {
+            opacity: 1,
+          },
         },
+        position: 'relative',
       }}
     >
+      {/* Action buttons */}
+      <Box 
+        className="action-buttons"
+        sx={{ 
+          position: 'absolute', 
+          top: 8, 
+          right: 8, 
+          display: 'flex', 
+          gap: 0.5,
+          opacity: 0,
+          transition: 'opacity 0.2s ease-in-out',
+        }}
+      >
+        {onEdit && (
+          <Tooltip title="Edit Application">
+            <IconButton
+              size="small"
+              onClick={() => onEdit(application.id)}
+              sx={{ 
+                bgcolor: alpha(currentTheme.primary, 0.1),
+                color: currentTheme.primary,
+                '&:hover': {
+                  bgcolor: currentTheme.primary,
+                  color: 'white',
+                },
+              }}
+            >
+              <EditIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        )}
+      </Box>
+
       <CardContent>
         <Typography variant="h6" sx={{ fontWeight: 600, color: currentTheme.text, mb: 1 }}>
           {application.name}

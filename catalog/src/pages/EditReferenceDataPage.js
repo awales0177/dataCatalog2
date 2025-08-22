@@ -101,6 +101,28 @@ const EditReferenceDataPage = () => {
   const [showAddRowDialog, setShowAddRowDialog] = useState(false);
   const [newRowData, setNewRowData] = useState({});
 
+  // Helper function for consistent theme styling
+  const getTextFieldThemeStyles = () => ({
+    '& .MuiInputLabel-root': { color: currentTheme.textSecondary },
+    '& .MuiOutlinedInput-root': {
+      color: currentTheme.text,
+      '& fieldset': { borderColor: currentTheme.border },
+      '&:hover fieldset': { borderColor: currentTheme.primary },
+      '&.Mui-focused fieldset': { borderColor: currentTheme.primary }
+    },
+    '& .MuiInputBase-input': { color: currentTheme.text },
+  });
+
+  const getSelectThemeStyles = () => ({
+    color: currentTheme.text,
+    '& .MuiOutlinedInput-root': {
+      '& fieldset': { borderColor: currentTheme.border },
+      '&:hover fieldset': { borderColor: currentTheme.primary },
+      '&.Mui-focused fieldset': { borderColor: currentTheme.primary }
+    },
+    '& .MuiSelect-icon': { color: currentTheme.textSecondary }
+  });
+
   // Load reference item data
   useEffect(() => {
     const loadReferenceItem = async () => {
@@ -643,7 +665,7 @@ const EditReferenceDataPage = () => {
                   color: 'error.main',
                   '&:hover': {
                     bgcolor: 'error.main',
-                    color: 'white',
+                    color: currentTheme.background,
                   }
                 }}
               >
@@ -681,7 +703,7 @@ const EditReferenceDataPage = () => {
               label="Name"
               value={editedItem?.name || ''}
               onChange={(e) => setEditedItem(prev => ({ ...prev, name: e.target.value }))}
-              sx={{ mb: 2 }}
+              sx={{ mb: 2, ...getTextFieldThemeStyles() }}
             />
           </Grid>
           <Grid item xs={12} md={6}>
@@ -690,7 +712,7 @@ const EditReferenceDataPage = () => {
               label="Category"
               value={editedItem?.category || ''}
               onChange={(e) => setEditedItem(prev => ({ ...prev, category: e.target.value }))}
-              sx={{ mb: 2 }}
+              sx={{ mb: 2, ...getTextFieldThemeStyles() }}
             />
           </Grid>
           <Grid item xs={12} md={6}>
@@ -699,7 +721,7 @@ const EditReferenceDataPage = () => {
               label="Version"
               value={editedItem?.version || ''}
               onChange={(e) => setEditedItem(prev => ({ ...prev, version: e.target.value }))}
-              sx={{ mb: 2 }}
+              sx={{ mb: 2, ...getTextFieldThemeStyles() }}
             />
           </Grid>
           <Grid item xs={12}>
@@ -710,16 +732,17 @@ const EditReferenceDataPage = () => {
               label="Description"
               value={editedItem?.description || ''}
               onChange={(e) => setEditedItem(prev => ({ ...prev, description: e.target.value }))}
-              sx={{ mb: 2 }}
+              sx={{ mb: 2, ...getTextFieldThemeStyles() }}
             />
           </Grid>
           <Grid item xs={12} md={6}>
             <FormControl fullWidth sx={{ mb: 2 }}>
-              <InputLabel>Status</InputLabel>
+              <InputLabel sx={{ color: currentTheme.textSecondary }}>Status</InputLabel>
               <Select
                 value={editedItem?.status || 'active'}
                 onChange={(e) => setEditedItem(prev => ({ ...prev, status: e.target.value }))}
                 label="Status"
+                sx={getSelectThemeStyles()}
               >
                 <MenuItem value="active">Active</MenuItem>
                 <MenuItem value="inactive">Inactive</MenuItem>
@@ -729,11 +752,12 @@ const EditReferenceDataPage = () => {
           </Grid>
           <Grid item xs={12} md={6}>
             <FormControl fullWidth sx={{ mb: 2 }}>
-              <InputLabel>Sensitivity Level</InputLabel>
+              <InputLabel sx={{ color: currentTheme.textSecondary }}>Sensitivity Level</InputLabel>
               <Select
                 value={editedItem?.sensitivityLevel || 'public'}
                 onChange={(e) => setEditedItem(prev => ({ ...prev, sensitivityLevel: e.target.value }))}
                 label="Sensitivity Level"
+                sx={getSelectThemeStyles()}
               >
                 <MenuItem value="public">Public</MenuItem>
                 <MenuItem value="internal">Internal</MenuItem>
@@ -748,7 +772,7 @@ const EditReferenceDataPage = () => {
               label="Owner"
               value={editedItem?.owner || ''}
               onChange={(e) => setEditedItem(prev => ({ ...prev, owner: e.target.value }))}
-              sx={{ mb: 2 }}
+              sx={{ mb: 2, ...getTextFieldThemeStyles() }}
             />
           </Grid>
         </Grid>
@@ -787,34 +811,42 @@ const EditReferenceDataPage = () => {
             label="Source System"
             value={newSourceSystem}
             onChange={(e) => setNewSourceSystem(e.target.value)}
-            sx={{ flex: 1 }}
+            sx={{ flex: 1, ...getTextFieldThemeStyles() }}
           />
           <TextField
             size="small"
             label="Dataset ID"
             value={newDatasetId}
             onChange={(e) => setNewDatasetId(e.target.value)}
-            sx={{ flex: 1 }}
+            sx={{ flex: 1, ...getTextFieldThemeStyles() }}
           />
           <TextField
             size="small"
             label="Dataset Name"
             value={newDatasetName}
             onChange={(e) => setNewDatasetName(e.target.value)}
-            sx={{ flex: 1 }}
+            sx={{ flex: 1, ...getTextFieldThemeStyles() }}
           />
           <TextField
             size="small"
             label="API Link (optional)"
             value={newApiLink}
             onChange={(e) => setNewApiLink(e.target.value)}
-            sx={{ flex: 1 }}
+            sx={{ flex: 1, ...getTextFieldThemeStyles() }}
           />
           <Button
             variant="outlined"
             startIcon={<AddIcon />}
             onClick={addSourceDataset}
             disabled={!newSourceSystem || !newDatasetId || !newDatasetName}
+            sx={{
+              color: currentTheme.primary,
+              borderColor: currentTheme.border,
+              '&:hover': {
+                borderColor: currentTheme.primary,
+                bgcolor: alpha(currentTheme.primary, 0.1),
+              },
+            }}
           >
             Add
           </Button>
@@ -855,27 +887,35 @@ const EditReferenceDataPage = () => {
               label="Model"
               value={newUpstreamModel}
               onChange={(e) => setNewUpstreamModel(e.target.value)}
-              sx={{ flex: 1 }}
+              sx={{ flex: 1, ...getTextFieldThemeStyles() }}
             />
             <TextField
               size="small"
               label="Field"
               value={newUpstreamField}
               onChange={(e) => setNewUpstreamField(e.target.value)}
-              sx={{ flex: 1 }}
+              sx={{ flex: 1, ...getTextFieldThemeStyles() }}
             />
             <TextField
               size="small"
               label="Relationship"
               value={newUpstreamRelationship}
               onChange={(e) => setNewUpstreamRelationship(e.target.value)}
-              sx={{ flex: 1 }}
+              sx={{ flex: 1, ...getTextFieldThemeStyles() }}
             />
             <Button
               variant="outlined"
               startIcon={<AddIcon />}
               onClick={addUpstreamLineage}
               disabled={!newUpstreamModel || !newUpstreamField || !newUpstreamRelationship}
+              sx={{
+                color: currentTheme.primary,
+                borderColor: currentTheme.border,
+                '&:hover': {
+                  borderColor: currentTheme.primary,
+                  bgcolor: alpha(currentTheme.primary, 0.1),
+                },
+              }}
             >
               Add
             </Button>
@@ -910,27 +950,35 @@ const EditReferenceDataPage = () => {
               label="Model"
               value={newDownstreamModel}
               onChange={(e) => setNewDownstreamModel(e.target.value)}
-              sx={{ flex: 1 }}
+              sx={{ flex: 1, ...getTextFieldThemeStyles() }}
             />
             <TextField
               size="small"
               label="Field"
               value={newDownstreamField}
               onChange={(e) => setNewDownstreamField(e.target.value)}
-              sx={{ flex: 1 }}
+              sx={{ flex: 1, ...getTextFieldThemeStyles() }}
             />
             <TextField
               size="small"
               label="Relationship"
               value={newDownstreamRelationship}
               onChange={(e) => setNewDownstreamRelationship(e.target.value)}
-              sx={{ flex: 1 }}
+              sx={{ flex: 1, ...getTextFieldThemeStyles() }}
             />
             <Button
               variant="outlined"
               startIcon={<AddIcon />}
               onClick={addDownstreamLineage}
               disabled={!newDownstreamModel || !newDownstreamField || !newDownstreamRelationship}
+              sx={{
+                color: currentTheme.primary,
+                borderColor: currentTheme.border,
+                '&:hover': {
+                  borderColor: currentTheme.primary,
+                  bgcolor: alpha(currentTheme.primary, 0.1),
+                },
+              }}
             >
               Add
             </Button>
@@ -972,27 +1020,35 @@ const EditReferenceDataPage = () => {
             label="Version"
             value={newChangeLogVersion}
             onChange={(e) => setNewChangeLogVersion(e.target.value)}
-            sx={{ flex: 1 }}
+            sx={{ flex: 1, ...getTextFieldThemeStyles() }}
           />
           <TextField
             size="small"
             label="Updated By"
             value={newChangeLogUpdatedBy}
             onChange={(e) => setNewChangeLogUpdatedBy(e.target.value)}
-            sx={{ flex: 1 }}
+            sx={{ flex: 1, ...getTextFieldThemeStyles() }}
           />
           <TextField
             size="small"
             label="Update Reason"
             value={newChangeLogUpdateReason}
             onChange={(e) => setNewChangeLogUpdateReason(e.target.value)}
-            sx={{ flex: 1 }}
+            sx={{ flex: 1, ...getTextFieldThemeStyles() }}
           />
           <Button
             variant="outlined"
             startIcon={<AddIcon />}
             onClick={addChangeLog}
             disabled={!newChangeLogVersion || !newChangeLogUpdatedBy || !newChangeLogUpdateReason}
+            sx={{
+              color: currentTheme.primary,
+              borderColor: currentTheme.border,
+              '&:hover': {
+                borderColor: currentTheme.primary,
+                bgcolor: alpha(currentTheme.primary, 0.1),
+              },
+            }}
           >
             Add
           </Button>
@@ -1006,8 +1062,24 @@ const EditReferenceDataPage = () => {
         </Typography>
         
         {editedItem?.childTables?.map((table, tableIndex) => (
-          <Accordion key={tableIndex} sx={{ mb: 2, bgcolor: currentTheme.background }}>
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+          <Accordion 
+            key={tableIndex} 
+            sx={{ 
+              mb: 2, 
+              bgcolor: currentTheme.background,
+              '& .MuiAccordionSummary-root': {
+                bgcolor: currentTheme.background,
+                color: currentTheme.text,
+              },
+              '& .MuiAccordionDetails-root': {
+                bgcolor: currentTheme.background,
+                color: currentTheme.text,
+              },
+            }}
+          >
+            <AccordionSummary 
+              expandIcon={<ExpandMoreIcon sx={{ color: currentTheme.textSecondary }} />}
+            >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
                 <Box sx={{ flex: 1 }}>
                   <Typography variant="subtitle1" sx={{ color: currentTheme.text, fontWeight: 600 }}>
@@ -1047,7 +1119,15 @@ const EditReferenceDataPage = () => {
                         setEditingTableIndex(tableIndex);
                         setShowAddColumnDialog(true);
                       }}
-                      sx={{ fontSize: '0.75rem' }}
+                      sx={{ 
+                        fontSize: '0.75rem',
+                        color: currentTheme.primary,
+                        borderColor: currentTheme.border,
+                        '&:hover': {
+                          borderColor: currentTheme.primary,
+                          bgcolor: alpha(currentTheme.primary, 0.1),
+                        },
+                      }}
                     >
                       Add Column
                     </Button>
@@ -1055,7 +1135,15 @@ const EditReferenceDataPage = () => {
                       size="small"
                       variant="outlined"
                       onClick={() => addRow(tableIndex)}
-                      sx={{ fontSize: '0.75rem' }}
+                      sx={{ 
+                        fontSize: '0.75rem',
+                        color: currentTheme.primary,
+                        borderColor: currentTheme.border,
+                        '&:hover': {
+                          borderColor: currentTheme.primary,
+                          bgcolor: alpha(currentTheme.primary, 0.1),
+                        },
+                      }}
                     >
                       Add Row
                     </Button>
@@ -1063,7 +1151,15 @@ const EditReferenceDataPage = () => {
                 </Box>
                 
                 {/* Dataframe Table */}
-                <TableContainer component={Paper} sx={{ maxHeight: 400, overflow: 'auto' }}>
+                <TableContainer 
+                  component={Paper} 
+                  sx={{ 
+                    maxHeight: 400, 
+                    overflow: 'auto',
+                    bgcolor: currentTheme.card,
+                    border: `1px solid ${currentTheme.border}`,
+                  }}
+                >
                   <Table size="small" stickyHeader>
                     <TableHead>
                       <TableRow>
@@ -1106,7 +1202,15 @@ const EditReferenceDataPage = () => {
                         const consistentRow = ensureRowStructure(row, table.columns);
                         
                         return (
-                          <TableRow key={rowIndex} hover>
+                          <TableRow 
+                            key={rowIndex} 
+                            hover
+                            sx={{
+                              '&:hover': {
+                                bgcolor: alpha(currentTheme.primary, 0.05),
+                              },
+                            }}
+                          >
                             {table.columns?.map((column, columnIndex) => (
                               <TableCell key={columnIndex} sx={{ color: currentTheme.text }}>
                                 {editingTableIndex === tableIndex && editingRowIndex === rowIndex && editingColumnIndex === columnIndex ? (
@@ -1120,6 +1224,7 @@ const EditReferenceDataPage = () => {
                                     }}
                                     autoFocus
                                     sx={{ 
+                                      ...getTextFieldThemeStyles(),
                                       '& .MuiInputBase-input': { 
                                         p: 0.5, 
                                         fontSize: '0.875rem' 
@@ -1143,7 +1248,7 @@ const EditReferenceDataPage = () => {
                                 )}
                               </TableCell>
                             ))}
-                            <TableCell>
+                            <TableCell sx={{ bgcolor: currentTheme.card }}>
                               <IconButton
                                 size="small"
                                 onClick={() => removeRow(tableIndex, rowIndex)}
@@ -1160,11 +1265,15 @@ const EditReferenceDataPage = () => {
                       })}
                       {(!table.rows || table.rows.length === 0) && (
                         <TableRow>
-                          <TableCell colSpan={(table.columns?.length || 0) + 1} sx={{ 
-                            textAlign: 'center', 
-                            color: currentTheme.textSecondary,
-                            fontStyle: 'italic'
-                          }}>
+                          <TableCell 
+                            colSpan={(table.columns?.length || 0) + 1} 
+                            sx={{ 
+                              textAlign: 'center', 
+                              color: currentTheme.textSecondary,
+                              fontStyle: 'italic',
+                              bgcolor: currentTheme.card,
+                            }}
+                          >
                             No data rows. Click "Add Row" to start adding data.
                           </TableCell>
                         </TableRow>
@@ -1179,7 +1288,14 @@ const EditReferenceDataPage = () => {
                       size="small"
                       variant="contained"
                       onClick={saveCellEdit}
-                      sx={{ fontSize: '0.75rem' }}
+                      sx={{ 
+                        fontSize: '0.75rem',
+                        bgcolor: currentTheme.primary,
+                        '&:hover': {
+                          bgcolor: currentTheme.primary,
+                          opacity: 0.9,
+                        },
+                      }}
                     >
                       Save
                     </Button>
@@ -1187,7 +1303,15 @@ const EditReferenceDataPage = () => {
                       size="small"
                       variant="outlined"
                       onClick={cancelCellEdit}
-                      sx={{ fontSize: '0.75rem' }}
+                      sx={{ 
+                        fontSize: '0.75rem',
+                        color: currentTheme.textSecondary,
+                        borderColor: currentTheme.border,
+                        '&:hover': {
+                          borderColor: currentTheme.primary,
+                          bgcolor: alpha(currentTheme.primary, 0.1),
+                        },
+                      }}
                     >
                       Cancel
                     </Button>
@@ -1204,55 +1328,63 @@ const EditReferenceDataPage = () => {
             label="Table ID"
             value={newChildTableId}
             onChange={(e) => setNewChildTableId(e.target.value)}
-            sx={{ minWidth: '150px' }}
+            sx={{ minWidth: '150px', ...getTextFieldThemeStyles() }}
           />
           <TextField
             size="small"
             label="Table Name"
             value={newChildTableName}
             onChange={(e) => setNewChildTableName(e.target.value)}
-            sx={{ minWidth: '150px' }}
+            sx={{ minWidth: '150px', ...getTextFieldThemeStyles() }}
           />
           <TextField
             size="small"
             label="Description"
             value={newChildTableDescription}
             onChange={(e) => setNewChildTableDescription(e.target.value)}
-            sx={{ minWidth: '200px' }}
+            sx={{ minWidth: '200px', ...getTextFieldThemeStyles() }}
           />
           <TextField
             size="small"
             label="Columns (comma-separated)"
             value={newChildTableColumns}
             onChange={(e) => setNewChildTableColumns(e.target.value)}
-            sx={{ minWidth: '200px' }}
+            sx={{ minWidth: '200px', ...getTextFieldThemeStyles() }}
           />
           <TextField
             size="small"
             label="Source Type"
             value={newChildTableSourceType}
             onChange={(e) => setNewChildTableSourceType(e.target.value)}
-            sx={{ minWidth: '120px' }}
+            sx={{ minWidth: '120px', ...getTextFieldThemeStyles() }}
           />
           <TextField
             size="small"
             label="Review Frequency"
             value={newChildTableReviewFrequency}
             onChange={(e) => setNewChildTableReviewFrequency(e.target.value)}
-            sx={{ minWidth: '120px' }}
+            sx={{ minWidth: '120px', ...getTextFieldThemeStyles() }}
           />
           <TextField
             size="small"
             label="Owner"
             value={newChildTableOwner}
             onChange={(e) => setNewChildTableOwner(e.target.value)}
-            sx={{ minWidth: '120px' }}
+            sx={{ minWidth: '120px', ...getTextFieldThemeStyles() }}
           />
           <Button
             variant="outlined"
             startIcon={<AddIcon />}
             onClick={addChildTable}
             disabled={!newChildTableId || !newChildTableName || !newChildTableDescription}
+            sx={{
+              color: currentTheme.primary,
+              borderColor: currentTheme.border,
+              '&:hover': {
+                borderColor: currentTheme.primary,
+                bgcolor: alpha(currentTheme.primary, 0.1),
+              },
+            }}
           >
             Add
           </Button>
@@ -1262,9 +1394,18 @@ const EditReferenceDataPage = () => {
 
 
       {/* Add Column Dialog */}
-      <Dialog open={showAddColumnDialog} onClose={() => setShowAddColumnDialog(false)}>
+      <Dialog 
+        open={showAddColumnDialog} 
+        onClose={() => setShowAddColumnDialog(false)}
+        PaperProps={{
+          sx: {
+            bgcolor: currentTheme.card,
+            border: `1px solid ${currentTheme.border}`,
+          }
+        }}
+      >
         <DialogTitle sx={{ color: currentTheme.text }}>Add New Column</DialogTitle>
-        <DialogContent>
+        <DialogContent sx={{ bgcolor: currentTheme.card }}>
           <TextField
             autoFocus
             margin="dense"
@@ -1276,14 +1417,32 @@ const EditReferenceDataPage = () => {
             onKeyPress={(e) => {
               if (e.key === 'Enter') addColumn(editingTableIndex);
             }}
+            sx={getTextFieldThemeStyles()}
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShowAddColumnDialog(false)}>Cancel</Button>
+          <Button 
+            onClick={() => setShowAddColumnDialog(false)}
+            sx={{
+              color: currentTheme.textSecondary,
+              '&:hover': {
+                bgcolor: alpha(currentTheme.textSecondary, 0.1),
+              },
+            }}
+          >
+            Cancel
+          </Button>
           <Button 
             onClick={() => addColumn(editingTableIndex)} 
             variant="contained"
             disabled={!newColumnName.trim()}
+            sx={{
+              bgcolor: currentTheme.primary,
+              '&:hover': {
+                bgcolor: currentTheme.primary,
+                opacity: 0.9,
+              },
+            }}
           >
             Add Column
           </Button>
@@ -1291,10 +1450,19 @@ const EditReferenceDataPage = () => {
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
-      <Dialog open={showDeleteDialog} onClose={() => setShowDeleteDialog(false)}>
-        <DialogTitle>Confirm Deletion</DialogTitle>
-        <DialogContent>
-          <Typography sx={{ mb: 2 }}>
+      <Dialog 
+        open={showDeleteDialog} 
+        onClose={() => setShowDeleteDialog(false)}
+        PaperProps={{
+          sx: {
+            bgcolor: currentTheme.card,
+            border: `1px solid ${currentTheme.border}`,
+          }
+        }}
+      >
+        <DialogTitle sx={{ color: currentTheme.text }}>Confirm Deletion</DialogTitle>
+        <DialogContent sx={{ bgcolor: currentTheme.card }}>
+          <Typography sx={{ mb: 2, color: currentTheme.text }}>
             Are you sure you want to delete "{editedItem?.name}"? This action cannot be undone.
           </Typography>
           <TextField
@@ -1302,14 +1470,30 @@ const EditReferenceDataPage = () => {
             label={`Type "${editedItem?.name}" to confirm`}
             value={deleteConfirmation}
             onChange={(e) => setDeleteConfirmation(e.target.value)}
+            sx={getTextFieldThemeStyles()}
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShowDeleteDialog(false)}>Cancel</Button>
+          <Button 
+            onClick={() => setShowDeleteDialog(false)}
+            sx={{
+              color: currentTheme.textSecondary,
+              '&:hover': {
+                bgcolor: alpha(currentTheme.textSecondary, 0.1),
+              },
+            }}
+          >
+            Cancel
+          </Button>
           <Button
             onClick={handleDelete}
             color="error"
             disabled={deleteConfirmation !== editedItem?.name}
+            sx={{
+              '&:hover': {
+                opacity: 0.9,
+              },
+            }}
           >
             Delete
           </Button>
@@ -1337,10 +1521,26 @@ const EditReferenceDataPage = () => {
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShowSaveDialog(false)} sx={{ color: currentTheme.text }}>
+          <Button 
+            onClick={() => setShowSaveDialog(false)} 
+            sx={{ 
+              color: currentTheme.text,
+              '&:hover': {
+                bgcolor: alpha(currentTheme.text, 0.1),
+              },
+            }}
+          >
             Continue Editing
           </Button>
-          <Button onClick={goToViewMode} color="error">
+          <Button 
+            onClick={goToViewMode} 
+            color="error"
+            sx={{
+              '&:hover': {
+                opacity: 0.9,
+              },
+            }}
+          >
             Discard Changes
           </Button>
         </DialogActions>
@@ -1355,7 +1555,12 @@ const EditReferenceDataPage = () => {
         <Alert
           onClose={() => setSnackbar({ ...snackbar, open: false })}
           severity={snackbar.severity}
-          sx={{ width: '100%' }}
+          sx={{ 
+            width: '100%',
+            bgcolor: currentTheme.card,
+            color: currentTheme.text,
+            border: `1px solid ${currentTheme.border}`,
+          }}
         >
           {snackbar.message}
         </Alert>

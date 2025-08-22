@@ -50,6 +50,7 @@ import { fetchData, updateModel, createModel, deleteModel } from '../services/ap
 import { formatDate, getQualityColor } from '../utils/themeUtils';
 import cacheService from '../services/cache';
 import ChangelogEditor from '../components/ChangelogEditor';
+import DomainSelector from '../components/DomainSelector';
 
 const EditDataModelDetailPage = ({ currentTheme }) => {
   const { shortName } = useParams();
@@ -72,7 +73,6 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
   const [showSelectionDialog, setShowSelectionDialog] = useState(false);
   const [selectionPath, setSelectionPath] = useState('');
   const [availableOptions, setAvailableOptions] = useState([]);
-  const [domainsData, setDomainsData] = useState([]);
   const [referenceData, setReferenceData] = useState([]);
 
   // Simple back function that goes back one level in the URL path
@@ -130,18 +130,13 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
 
     loadModel();
 
-    // Load domains and reference data for selection
+    // Load reference data for selection
     const loadSelectionData = async () => {
       try {
-        const [domainsResponse, referenceResponse] = await Promise.all([
-          fetchData('domains'),
-          fetchData('reference')
-        ]);
-        
-        setDomainsData(domainsResponse.domains || []);
+        const referenceResponse = await fetchData('reference');
         setReferenceData(referenceResponse.items || []);
       } catch (error) {
-        console.error('Error loading selection data:', error);
+        console.error('Error loading reference data:', error);
       }
     };
 
@@ -274,20 +269,12 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
   };
 
   const addArrayItem = (path) => {
-    // For domains and reference data, show selection dialog
-    if (path === 'domain' || path === 'referenceData') {
-      let options = [];
-      if (path === 'domain') {
-        options = domainsData.map(domain => ({
-          value: domain.name || domain.shortName || domain.id,
-          label: domain.name || domain.shortName || domain.id
-        }));
-      } else if (path === 'referenceData') {
-        options = referenceData.map(item => ({
-          value: item.name || item.shortName || item.id,
-          label: item.name || item.shortName || item.id
-        }));
-      }
+    // For reference data, show selection dialog
+    if (path === 'referenceData') {
+      let options = referenceData.map(item => ({
+        value: item.name || item.shortName || item.id,
+        label: item.name || item.shortName || item.id
+      }));
       
       // Filter out already selected items
       const currentValues = editedModel[path] || [];
@@ -296,7 +283,7 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
       if (filteredOptions.length === 0) {
         setSnackbar({
           open: true,
-          message: `All available ${path === 'domain' ? 'domains' : 'reference data items'} are already added`,
+          message: 'All available reference data items are already added',
           severity: 'info'
         });
         return;
@@ -785,7 +772,7 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
                 size="small"
                 value={item}
                 onChange={(e) => handleArrayFieldChange(path, index, e.target.value)}
-                disabled={path === 'domain' || path === 'referenceData'}
+                disabled={path === 'referenceData'}
                 sx={{ 
                   flex: 1,
                   '& .MuiInputLabel-root': { color: currentTheme.textSecondary },
@@ -838,7 +825,7 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
                     }
                   }
                 }}
-                placeholder={path === 'domain' || path === 'referenceData' ? 'Selected from dropdown' : `Enter ${label.toLowerCase()}`}
+                placeholder={path === 'referenceData' ? 'Selected from dropdown' : `Enter ${label.toLowerCase()}`}
               />
               <IconButton
                 size="small"
@@ -1181,7 +1168,19 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
               )}
             </Box>
             
-            {renderField('domain', editedModel.domain, 'Domains')}
+            <Box sx={{ mb: 2 }}>
+              <DomainSelector
+                selectedDomains={editedModel.domain || []}
+                onDomainsChange={(newDomains) => {
+                  setEditedModel(prev => ({
+                    ...prev,
+                    domain: newDomains
+                  }));
+                }}
+                currentTheme={currentTheme}
+                label="Domains"
+              />
+            </Box>
             {renderField('referenceData', editedModel.referenceData, 'Reference Data')}
             {renderField('users', editedModel.users, 'Users')}
             
@@ -1386,7 +1385,7 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
           }}
         >
           <DialogTitle id="selection-dialog-title" sx={{ color: currentTheme.text }}>
-            {selectionPath === 'domain' ? '🌐 Select Domain' : '📚 Select Reference Data'}
+            📚 Select Reference Data
           </DialogTitle>
           <DialogContent sx={{ color: currentTheme.text }}>
             <Box sx={{ mb: 2, p: 2, bgcolor: 'info.light', borderRadius: 1, border: '1px solid', borderColor: 'info.main' }}>
@@ -1396,7 +1395,7 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
               </Typography>
             </Box>
             <Typography sx={{ mb: 2 }}>
-              Choose from available {selectionPath === 'domain' ? 'domains' : 'reference data items'}:
+              Choose from available reference data items:
             </Typography>
             
             <Box sx={{ maxHeight: 300, overflow: 'auto' }}>

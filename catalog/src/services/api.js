@@ -426,5 +426,123 @@ export const deleteReferenceItem = async (itemId) => {
   }
 };
 
+// Application Management Functions
+export const createApplication = async (applicationData) => {
+  try {
+    const response = await fetch(`${API_URL}/applications`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(applicationData),
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+    }
+    const result = await response.json();
+    cacheService.invalidateByPrefix('applications');
+    return result;
+  } catch (error) {
+    console.error('Error creating application:', error);
+    throw error;
+  }
+};
+
+export const updateApplication = async (applicationId, applicationData) => {
+  try {
+    const response = await fetch(`${API_URL}/applications/${applicationId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(applicationData),
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+    }
+    const result = await response.json();
+    cacheService.invalidateByPrefix('applications');
+    return result;
+  } catch (error) {
+    console.error('Error updating application:', error);
+    throw error;
+  }
+};
+
+export const deleteApplication = async (applicationId) => {
+  try {
+    const response = await fetch(`${API_URL}/applications/${applicationId}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+    }
+    const result = await response.json();
+    cacheService.invalidateByPrefix('applications');
+    return result;
+  } catch (error) {
+    console.error('Error deleting application:', error);
+    throw error;
+  }
+};
+
+// Toolkit Management Functions
+export const createToolkitComponent = async (componentData) => {
+  try {
+    const response = await fetch(`${API_URL}/toolkit`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(componentData),
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+    }
+    const result = await response.json();
+    cacheService.invalidateByPrefix('toolkit');
+    return result;
+  } catch (error) {
+    console.error('Error creating toolkit component:', error);
+    throw error;
+  }
+};
+
+export const updateToolkitComponent = async (componentType, componentId, componentData) => {
+  try {
+    const response = await fetch(`${API_URL}/toolkit/${componentType}/${componentId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(componentData),
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+    }
+    const result = await response.json();
+    cacheService.invalidateByPrefix('toolkit');
+    return result;
+  } catch (error) {
+    console.error('Error updating toolkit component:', error);
+    throw error;
+  }
+};
+
+export const deleteToolkitComponent = async (componentType, componentId) => {
+  try {
+    const response = await fetch(`${API_URL}/toolkit/${componentType}/${componentId}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+    }
+    const result = await response.json();
+    cacheService.invalidateByPrefix('toolkit');
+    return result;
+  } catch (error) {
+    console.error('Error deleting toolkit component:', error);
+    throw error;
+  }
+};
+
 // Export cache service for direct access when needed
 export { default as cacheService } from './cache';

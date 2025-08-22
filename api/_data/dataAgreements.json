@@ -7,7 +7,9 @@
       "status": "in_progress",
       "specificationMaintainer": "Content Management Team",
       "parentSystem": "Content Management System",
-      "dataProducer": "CMS Service",
+      "dataProducer": [
+        "CMS Service"
+      ],
       "dataValidator": "Content Management Team",
       "dataConsumer": [
         "Frontend Service"
@@ -20,6 +22,12 @@
       "endDate": null,
       "fileFormat": "JSON",
       "restricted": false,
+      "network": [
+        "internet"
+      ],
+      "sensitivityLevel": [
+        "public"
+      ],
       "location": [
         {
           "bucket": "us-east-1",
@@ -68,7 +76,9 @@
       "status": "active",
       "specificationMaintainer": "API Platform Team",
       "parentSystem": "API Management System",
-      "dataProducer": "API Gateway",
+      "dataProducer": [
+        "API Gateway"
+      ],
       "dataValidator": "API Platform Team",
       "dataConsumer": [
         "Client Services"
@@ -81,6 +91,12 @@
       "endDate": "2024-08-31T23:59:59Z",
       "fileFormat": "Protobuf",
       "restricted": true,
+      "network": [
+        "intranet"
+      ],
+      "sensitivityLevel": [
+        "confidential"
+      ],
       "location": [
         {
           "bucket": "us-west-2",
@@ -123,78 +139,15 @@
       "lastUpdated": "2025-08-17 01:01:29"
     },
     {
-      "id": "contract-003",
-      "name": "Payment Processing",
-      "description": "Product agreement for payment data validation and security",
-      "status": "active",
-      "specificationMaintainer": "Payment Security Team",
-      "parentSystem": "Payment Processing System",
-      "dataProducer": "Payment Service",
-      "dataValidator": "Payment Security Team",
-      "dataConsumer": [
-        "Order Service",
-        "User Service"
-      ],
-      "modelShortName": "FIN",
-      "contractVersion": "3.0.0",
-      "deliveredVersion": "3.1.0",
-      "deliveryFrequency": "real-time",
-      "startDate": "2024-02-01T10:30:00Z",
-      "endDate": null,
-      "fileFormat": "Protobuf",
-      "restricted": true,
-      "location": [
-        {
-          "bucket": "us-west-2",
-          "description": "Primary AWS region for payment processing and security"
-        }
-      ],
-      "todo": {
-        "date": "2024-03-27T09:00:00Z",
-        "items": [
-          "Integrate new payment provider API",
-          "Update fraud detection rules",
-          "Schedule security audit review"
-        ]
-      },
-      "changelog": [
-        {
-          "version": "3.1.0",
-          "date": "2024-03-13T09:15:00Z",
-          "changes": [
-            "Added support for new payment providers",
-            "Enhanced fraud detection rules",
-            "hi",
-            "hi2"
-          ]
-        },
-        {
-          "version": "3.0.0",
-          "date": "2024-02-28T16:20:00Z",
-          "changes": [
-            "Complete security audit implementation",
-            "Updated encryption standards"
-          ]
-        },
-        {
-          "version": "2.0.0",
-          "date": "2024-02-01T10:30:00Z",
-          "changes": [
-            "Major security enhancements",
-            "Added new payment methods"
-          ]
-        }
-      ],
-      "lastUpdated": "2025-08-17 01:25:10"
-    },
-    {
       "id": "contract-001",
       "name": "Product Data Schema",
       "description": "Product agreement for product data",
       "status": "active",
       "specificationMaintainer": "Product Data Team",
       "parentSystem": "Product Management System",
-      "dataProducer": "Product",
+      "dataProducer": [
+        "Product"
+      ],
       "dataValidator": "Product Data Team",
       "dataConsumer": [
         "Catalog",
@@ -215,6 +168,9 @@
       "endDate": "unk",
       "fileFormat": "JSON",
       "restricted": true,
+      "network": [
+        "intranet"
+      ],
       "location": [
         {
           "bucket": "s3://bucket/folder/file.json",
@@ -268,7 +224,9 @@
       "status": "active",
       "specificationMaintainer": "Customers",
       "parentSystem": "Analytics",
-      "dataProducer": "Auth Service",
+      "dataProducer": [
+        "Auth Service"
+      ],
       "dataValidator": "Product Service",
       "dataConsumer": [
         "Store",
@@ -287,6 +245,12 @@
       "endDate": "2025-08-15",
       "fileFormat": "JSON",
       "restricted": true,
+      "network": [
+        "intranet"
+      ],
+      "sensitivityLevel": [
+        "confidential"
+      ],
       "location": [
         {
           "bucket": "a",
@@ -333,7 +297,9 @@
       "status": "in_review",
       "specificationMaintainer": "Inventory Management Team",
       "parentSystem": "Inventory Management System",
-      "dataProducer": "Inventory Service",
+      "dataProducer": [
+        "Inventory Service"
+      ],
       "dataValidator": "Inventory Management Team",
       "dataConsumer": [
         "Catalog Service"
@@ -346,6 +312,12 @@
       "endDate": "2024-06-30T23:59:59Z",
       "fileFormat": "JSON",
       "restricted": false,
+      "network": [
+        "internet"
+      ],
+      "sensitivityLevel": [
+        "public"
+      ],
       "location": [
         {
           "bucket": "s3://bucket/folder/file.json",
@@ -383,7 +355,9 @@
       "status": "in_progress",
       "specificationMaintainer": "Security Team",
       "parentSystem": "Identity Management System",
-      "dataProducer": "Auth Service",
+      "dataProducer": [
+        "Auth Service"
+      ],
       "dataValidator": "Security Team",
       "dataConsumer": [
         "User Service"
@@ -396,6 +370,12 @@
       "endDate": null,
       "fileFormat": "Protobuf",
       "restricted": true,
+      "network": [
+        "intranet"
+      ],
+      "sensitivityLevel": [
+        "highly_sensitive"
+      ],
       "location": [
         {
           "bucket": "s3://bucket/folder/file.json",
@@ -449,7 +429,9 @@
       "status": "in_progress",
       "specificationMaintainer": "Shipping Operations Team",
       "parentSystem": "Shipping Management System",
-      "dataProducer": "Shipping Service",
+      "dataProducer": [
+        "Shipping Service"
+      ],
       "dataValidator": "Shipping Operations Team",
       "dataConsumer": [
         "Fulfillment Service"
@@ -462,6 +444,12 @@
       "endDate": "2024-09-30T23:59:59Z",
       "fileFormat": "Avro",
       "restricted": false,
+      "network": [
+        "internet"
+      ],
+      "sensitivityLevel": [
+        "public"
+      ],
       "location": [
         {
           "bucket": "s3://bucket/folder/file.json",
@@ -514,7 +502,9 @@
       "status": "active",
       "specificationMaintainer": "Order Management Team",
       "parentSystem": "Order Management System",
-      "dataProducer": "Order Service",
+      "dataProducer": [
+        "Order Service"
+      ],
       "dataValidator": "Order Processing Team",
       "dataConsumer": [
         "Fulfillment Service",
@@ -529,6 +519,12 @@
       "endDate": "2024-12-31T23:59:59Z",
       "fileFormat": "Avro",
       "restricted": true,
+      "network": [
+        "intranet"
+      ],
+      "sensitivityLevel": [
+        "confidential"
+      ],
       "location": [
         {
           "bucket": "s3://bucket/folder/file.json",
@@ -575,11 +571,88 @@
       "lastUpdated": "2025-08-17 22:22:18"
     },
     {
+      "id": "contract-003",
+      "name": "Payment Processing",
+      "description": "Product agreement for payment data validation and security",
+      "status": "active",
+      "specificationMaintainer": "Payment Security Team",
+      "parentSystem": "Payment Processing System",
+      "dataProducer": [
+        "Payment Service"
+      ],
+      "dataValidator": "Payment Security Team",
+      "dataConsumer": [
+        "Order Service",
+        "User Service"
+      ],
+      "modelShortName": "FIN",
+      "contractVersion": "3.0.0",
+      "deliveredVersion": "3.1.0",
+      "deliveryFrequency": "real-time",
+      "startDate": "2024-02-01T10:30:00Z",
+      "endDate": null,
+      "fileFormat": "Protobuf",
+      "restricted": true,
+      "network": [
+        "internet",
+        "intranet"
+      ],
+      "sensitivityLevel": [
+        "highly_sensitive"
+      ],
+      "location": [
+        {
+          "bucket": "us-west-2",
+          "description": "Primary AWS region for payment processing and security"
+        }
+      ],
+      "todo": {
+        "date": "2024-03-27T09:00:00Z",
+        "items": [
+          "Integrate new payment provider API",
+          "Update fraud detection rules",
+          "Schedule security audit review"
+        ]
+      },
+      "changelog": [
+        {
+          "version": "3.1.0",
+          "date": "2024-03-13T09:15:00Z",
+          "changes": [
+            "Added support for new payment providers",
+            "Enhanced fraud detection rules",
+            "hi",
+            "hi2"
+          ]
+        },
+        {
+          "version": "3.0.0",
+          "date": "2024-02-28T16:20:00Z",
+          "changes": [
+            "Complete security audit implementation",
+            "Updated encryption standards"
+          ]
+        },
+        {
+          "version": "2.0.0",
+          "date": "2024-02-01T10:30:00Z",
+          "changes": [
+            "Major security enhancements",
+            "Added new payment methods"
+          ]
+        }
+      ],
+      "lastUpdated": "2025-08-20 22:24:38"
+    },
+    {
       "id": "contract-009",
       "name": "Order Analytics",
       "description": "Product agreement for order data analytics and reporting",
       "status": "in_progress",
-      "producer": "Analytics Service",
+      "dataProducer": [
+        "Customers",
+        "cust2"
+      ],
       "consumer": "Business Intelligence",
       "modelShortName": "ORD",
       "contractVersion": "1.0.0",
@@ -590,6 +663,15 @@
       "endDate": null,
       "fileFormat": "Parquet",
       "restricted": true,
+      "network": [
+        "intranet",
+        "internet",
+        "internet"
+      ],
+      "sensitivityLevel": [
+        "confidential",
+        "public"
+      ],
       "location": [
         {
           "bucket": "s3://bucket/folder/file.json",
@@ -638,9 +720,13 @@
           ]
         }
       ],
-      "lastUpdated": "2025-08-17 23:12:43",
+      "lastUpdated": "2025-08-20 22:45:51",
       "dataConsumer": [
-        "goog"
+        "goog",
+        "goog2",
+        "goog3",
+        "goog4",
+        "goog5"
       ]
     }
   ]

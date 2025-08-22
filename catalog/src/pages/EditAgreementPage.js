@@ -1019,7 +1019,535 @@ const EditAgreementPage = () => {
     );
   };
 
-  
+  const renderDataProducerField = (path, value, label) => {
+    console.log('renderDataProducerField called with:', { path, value, label });
+
+    const handleProducerChange = (index, newValue) => {
+      setEditedAgreement(prev => {
+        const newAgreement = { ...prev };
+        const pathArray = path.split('.');
+        let current = newAgreement;
+        
+        for (let i = 0; i < pathArray.length - 1; i++) {
+          if (!current[pathArray[i]]) {
+            current[pathArray[i]] = {};
+          }
+          current = current[pathArray[i]];
+        }
+        
+        const lastKey = pathArray[pathArray.length - 1];
+        if (!Array.isArray(current[lastKey])) {
+          current[lastKey] = [];
+        }
+        
+        // Create a new array with the updated item
+        const newArray = [...current[lastKey]];
+        newArray[index] = newValue;
+        current[lastKey] = newArray;
+        
+        return newAgreement;
+      });
+    };
+
+    const handleDeleteProducer = (indexToDelete) => {
+      setEditedAgreement(prev => {
+        const newAgreement = { ...prev };
+        const pathArray = path.split('.');
+        let current = newAgreement;
+        
+        for (let i = 0; i < pathArray.length - 1; i++) {
+          if (!current[pathArray[i]]) {
+            current[pathArray[i]] = {};
+          }
+          current = current[pathArray[i]];
+        }
+        
+        const lastKey = pathArray[pathArray.length - 1];
+        if (!Array.isArray(current[lastKey])) {
+          current[lastKey] = [];
+        }
+        
+        // Create a new array without the deleted item
+        const newArray = current[lastKey].filter((_, index) => index !== indexToDelete);
+        current[lastKey] = newArray;
+        
+        return newAgreement;
+      });
+    };
+
+    const addProducer = () => {
+      console.log('Adding producer, current editedAgreement:', editedAgreement);
+      setEditedAgreement(prev => {
+        const newAgreement = { ...prev };
+        const pathArray = path.split('.');
+        let current = newAgreement;
+        
+        for (let i = 0; i < pathArray.length - 1; i++) {
+          if (!current[pathArray[i]]) {
+            current[pathArray[i]] = {};
+          }
+          current = current[pathArray[i]];
+        }
+        
+        const lastKey = pathArray[pathArray.length - 1];
+        if (!Array.isArray(current[lastKey])) {
+          current[lastKey] = [];
+        }
+        
+        // Create a new array with the additional item
+        current[lastKey] = [...current[lastKey], ''];
+        console.log('Added empty producer, new array:', current[lastKey]);
+        
+        console.log('New agreement after adding producer:', newAgreement);
+        return newAgreement;
+      });
+    };
+
+    return (
+      <Box key={path} sx={{ mb: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+          <Typography variant="subtitle2" sx={{ 
+            color: currentTheme.text, 
+            fontWeight: 600
+          }}>
+            {label}
+          </Typography>
+        </Box>
+
+        {/* Existing producers */}
+        {(value || []).map((producer, index) => (
+          <Box key={index} sx={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: 1, 
+            mb: 1.5
+          }}>
+            <TextField
+              size="small"
+              label={`Producer ${index + 1}`}
+              value={producer}
+              onChange={(e) => handleProducerChange(index, e.target.value)}
+              sx={{ 
+                flex: 1,
+                '& .MuiInputLabel-root': { color: currentTheme.textSecondary },
+                '& .MuiInputLabel-root.Mui-focused': { color: currentTheme.primary },
+                '& .MuiOutlinedInput-root': { 
+                  color: currentTheme.text,
+                  '& fieldset': { borderColor: currentTheme.border },
+                  '&:hover fieldset': { borderColor: currentTheme.primary },
+                  '&.Mui-focused fieldset': { borderColor: currentTheme.primary }
+                },
+                '& .MuiInputBase-input': { color: currentTheme.text },
+                '& .MuiInputBase-input::placeholder': { color: currentTheme.textSecondary, opacity: 0.7 }
+              }}
+              placeholder="Enter producer service name"
+            />
+            <IconButton
+              size="small"
+              onClick={() => handleDeleteProducer(index)}
+              sx={{ 
+                color: 'error.main',
+                '&:hover': {
+                  bgcolor: 'error.main',
+                  color: 'white'
+                }
+              }}
+              title="Delete producer"
+            >
+              <DeleteIcon />
+            </IconButton>
+          </Box>
+        ))}
+
+        {/* Add new producer button */}
+        <Box sx={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          mt: 2
+        }}>
+          <Button
+            variant="outlined"
+            startIcon={<AddIcon />}
+            onClick={addProducer}
+            sx={{
+              color: currentTheme.primary,
+              borderColor: currentTheme.border,
+              '&:hover': {
+                bgcolor: currentTheme.primary,
+                color: 'white'
+              }
+            }}
+          >
+            Add Producer Service
+          </Button>
+        </Box>
+      </Box>
+    );
+  };
+
+  const renderNetworkField = (path, value, label) => {
+    console.log('renderNetworkField called with:', { path, value, label });
+
+    const networkOptions = [
+      { value: 'internet', label: 'Internet', color: '#4caf50' },
+      { value: 'intranet', label: 'Intranet', color: '#2196f3' }
+    ];
+
+    const handleNetworkChange = (index, newValue) => {
+      setEditedAgreement(prev => {
+        const newAgreement = { ...prev };
+        const pathArray = path.split('.');
+        let current = newAgreement;
+        
+        for (let i = 0; i < pathArray.length - 1; i++) {
+          if (!current[pathArray[i]]) {
+            current[pathArray[i]] = {};
+          }
+          current = current[pathArray[i]];
+        }
+        
+        const lastKey = pathArray[pathArray.length - 1];
+        if (!Array.isArray(current[lastKey])) {
+          current[lastKey] = [];
+        }
+        
+        // Create a new array with the updated item
+        const newArray = [...current[lastKey]];
+        newArray[index] = newValue;
+        current[lastKey] = newArray;
+        
+        return newAgreement;
+      });
+    };
+
+    const handleDeleteNetwork = (indexToDelete) => {
+      setEditedAgreement(prev => {
+        const newAgreement = { ...prev };
+        const pathArray = path.split('.');
+        let current = newAgreement;
+        
+        for (let i = 0; i < pathArray.length - 1; i++) {
+          if (!current[pathArray[i]]) {
+            current[pathArray[i]] = {};
+          }
+          current = current[pathArray[i]];
+        }
+        
+        const lastKey = pathArray[pathArray.length - 1];
+        if (!Array.isArray(current[lastKey])) {
+          current[lastKey] = [];
+        }
+        
+        // Create a new array without the deleted item
+        const newArray = current[lastKey].filter((_, index) => index !== indexToDelete);
+        current[lastKey] = newArray;
+        
+        return newAgreement;
+      });
+    };
+
+    const addNetwork = () => {
+      console.log('Adding network, current editedAgreement:', editedAgreement);
+      setEditedAgreement(prev => {
+        const newAgreement = { ...prev };
+        const pathArray = path.split('.');
+        let current = newAgreement;
+        
+        for (let i = 0; i < pathArray.length - 1; i++) {
+          if (!current[pathArray[i]]) {
+            current[pathArray[i]] = {};
+          }
+          current = current[pathArray[i]];
+        }
+        
+        const lastKey = pathArray[pathArray.length - 1];
+        if (!Array.isArray(current[lastKey])) {
+          current[lastKey] = [];
+        }
+        
+        // Create a new array with the additional item
+        current[lastKey] = [...current[lastKey], 'internet'];
+        console.log('Added internet network, new array:', current[lastKey]);
+        
+        console.log('New agreement after adding network:', newAgreement);
+        return newAgreement;
+      });
+    };
+
+    return (
+      <Box key={path} sx={{ mb: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+          <Typography variant="subtitle2" sx={{ 
+            color: currentTheme.text, 
+            fontWeight: 600
+          }}>
+            {label}
+          </Typography>
+        </Box>
+
+        {/* Existing networks */}
+        {(value || []).map((network, index) => (
+          <Box key={index} sx={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: 1, 
+            mb: 1.5
+          }}>
+            <Select
+              size="small"
+              value={network}
+              onChange={(e) => handleNetworkChange(index, e.target.value)}
+              sx={{ 
+                flex: 1,
+                '& .MuiInputLabel-root': { color: currentTheme.textSecondary },
+                '& .MuiOutlinedInput-root': { 
+                  color: currentTheme.text,
+                  '& fieldset': { borderColor: currentTheme.border },
+                  '&:hover fieldset': { borderColor: currentTheme.primary },
+                  '&.Mui-focused fieldset': { borderColor: currentTheme.primary }
+                },
+                '& .MuiInputBase-input': { color: currentTheme.text },
+              }}
+            >
+              {networkOptions.map((option) => (
+                <MenuItem key={option.value} value={option.value}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box sx={{ 
+                      width: 12, 
+                      height: 12, 
+                      borderRadius: '50%', 
+                      bgcolor: option.color 
+                    }} />
+                    {option.label}
+                  </Box>
+                </MenuItem>
+              ))}
+            </Select>
+            <IconButton
+              size="small"
+              onClick={() => handleDeleteNetwork(index)}
+              sx={{ 
+                color: 'error.main',
+                '&:hover': {
+                  bgcolor: 'error.main',
+                  color: 'white'
+                }
+              }}
+              title="Delete network"
+            >
+              <DeleteIcon />
+            </IconButton>
+          </Box>
+        ))}
+
+        {/* Add new network button */}
+        <Box sx={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          mt: 2
+        }}>
+          <Button
+            variant="outlined"
+            startIcon={<AddIcon />}
+            onClick={addNetwork}
+            sx={{
+              color: currentTheme.primary,
+              borderColor: currentTheme.border,
+              '&:hover': {
+                bgcolor: currentTheme.primary,
+                color: 'white'
+              }
+            }}
+          >
+            Add Network
+          </Button>
+        </Box>
+      </Box>
+    );
+  };
+
+  const renderSensitivityLevelField = (path, value, label) => {
+    console.log('renderSensitivityLevelField called with:', { path, value, label });
+
+    const sensitivityOptions = [
+      { value: 'public', label: 'Public', color: '#4caf50' },
+      { value: 'internal', label: 'Internal', color: '#ff9800' },
+      { value: 'confidential', label: 'Confidential', color: '#f44336' },
+      { value: 'highly_sensitive', label: 'Highly Sensitive', color: '#9c27b0' }
+    ];
+
+    const handleSensitivityChange = (index, newValue) => {
+      setEditedAgreement(prev => {
+        const newAgreement = { ...prev };
+        const pathArray = path.split('.');
+        let current = newAgreement;
+        
+        for (let i = 0; i < pathArray.length - 1; i++) {
+          if (!current[pathArray[i]]) {
+            current[pathArray[i]] = {};
+          }
+          current = current[pathArray[i]];
+        }
+        
+        const lastKey = pathArray[pathArray.length - 1];
+        if (!Array.isArray(current[lastKey])) {
+          current[lastKey] = [];
+        }
+        
+        // Create a new array with the updated item
+        const newArray = [...current[lastKey]];
+        newArray[index] = newValue;
+        current[lastKey] = newArray;
+        
+        return newAgreement;
+      });
+    };
+
+    const handleDeleteSensitivity = (indexToDelete) => {
+      setEditedAgreement(prev => {
+        const newAgreement = { ...prev };
+        const pathArray = path.split('.');
+        let current = newAgreement;
+        
+        for (let i = 0; i < pathArray.length - 1; i++) {
+          if (!current[pathArray[i]]) {
+            current[pathArray[i]] = {};
+          }
+          current = current[pathArray[i]];
+        }
+        
+        const lastKey = pathArray[pathArray.length - 1];
+        if (!Array.isArray(current[lastKey])) {
+          current[lastKey] = [];
+        }
+        
+        // Create a new array without the deleted item
+        const newArray = current[lastKey].filter((_, index) => index !== indexToDelete);
+        current[lastKey] = newArray;
+        
+        return newAgreement;
+      });
+    };
+
+    const addSensitivity = () => {
+      console.log('Adding sensitivity level, current editedAgreement:', editedAgreement);
+      setEditedAgreement(prev => {
+        const newAgreement = { ...prev };
+        const pathArray = path.split('.');
+        let current = newAgreement;
+        
+        for (let i = 0; i < pathArray.length - 1; i++) {
+          if (!current[pathArray[i]]) {
+            current[pathArray[i]] = {};
+          }
+          current = current[pathArray[i]];
+        }
+        
+        const lastKey = pathArray[pathArray.length - 1];
+        if (!Array.isArray(current[lastKey])) {
+          current[lastKey] = [];
+        }
+        
+        // Create a new array with the additional item
+        current[lastKey] = [...current[lastKey], 'public'];
+        console.log('Added public sensitivity level, new array:', current[lastKey]);
+        
+        console.log('New agreement after adding sensitivity level:', newAgreement);
+        return newAgreement;
+      });
+    };
+
+    return (
+      <Box key={path} sx={{ mb: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+          <Typography variant="subtitle2" sx={{ 
+            color: currentTheme.text, 
+            fontWeight: 600
+          }}>
+            {label}
+          </Typography>
+        </Box>
+
+        {/* Existing sensitivity levels */}
+        {(value || []).map((sensitivity, index) => (
+          <Box key={index} sx={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: 1, 
+            mb: 1.5
+          }}>
+            <Select
+              size="small"
+              value={sensitivity}
+              onChange={(e) => handleSensitivityChange(index, e.target.value)}
+              sx={{ 
+                flex: 1,
+                '& .MuiInputLabel-root': { color: currentTheme.textSecondary },
+                '& .MuiOutlinedInput-root': { 
+                  color: currentTheme.text,
+                  '& fieldset': { borderColor: currentTheme.border },
+                  '&:hover fieldset': { borderColor: currentTheme.primary },
+                  '&.Mui-focused fieldset': { borderColor: currentTheme.primary }
+                },
+                '& .MuiInputBase-input': { color: currentTheme.text },
+              }}
+            >
+              {sensitivityOptions.map((option) => (
+                <MenuItem key={option.value} value={option.value}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box sx={{ 
+                      width: 12, 
+                      height: 12, 
+                      borderRadius: '50%', 
+                      bgcolor: option.color 
+                    }} />
+                    {option.label}
+                  </Box>
+                </MenuItem>
+              ))}
+            </Select>
+            <IconButton
+              size="small"
+              onClick={() => handleDeleteSensitivity(index)}
+              sx={{ 
+                color: 'error.main',
+                '&:hover': {
+                  bgcolor: 'error.main',
+                  color: 'white'
+                }
+              }}
+              title="Delete sensitivity level"
+            >
+              <DeleteIcon />
+            </IconButton>
+          </Box>
+        ))}
+
+        {/* Add new sensitivity level button */}
+        <Box sx={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          mt: 2
+        }}>
+          <Button
+            variant="outlined"
+            startIcon={<AddIcon />}
+            onClick={addSensitivity}
+            sx={{
+              color: currentTheme.primary,
+              borderColor: currentTheme.border,
+              '&:hover': {
+                bgcolor: currentTheme.primary,
+                color: 'white'
+              }
+            }}
+          >
+            Add Sensitivity Level
+          </Button>
+        </Box>
+      </Box>
+    );
+  };
 
   const renderField = (path, value, label, type = 'text', options = null, isRequired = false, fieldType = null) => {
     console.log('renderField called with:', { path, value, label, type, isRequired });
@@ -1060,6 +1588,21 @@ const EditAgreementPage = () => {
       // Special handling for dataConsumer arrays
       if (path === 'dataConsumer') {
         return renderDataConsumerField(path, value, label);
+      }
+      
+      // Special handling for dataProducer arrays
+      if (path === 'dataProducer') {
+        return renderDataProducerField(path, value, label);
+      }
+      
+      // Special handling for network arrays
+      if (path === 'network') {
+        return renderNetworkField(path, value, label);
+      }
+      
+      // Special handling for sensitivity level arrays
+      if (path === 'sensitivityLevel') {
+        return renderSensitivityLevelField(path, value, label);
       }
       
       return (
@@ -1491,7 +2034,10 @@ const EditAgreementPage = () => {
             {renderField('parentSystem', editedAgreement.parentSystem, 'Parent System')}
           </Grid>
           <Grid item xs={12} md={6}>
-            {renderField('dataProducer', editedAgreement.dataProducer, 'Data Producer')}
+            {renderField('dataProducer', editedAgreement.dataProducer, 'Data Producer', 'text', null, false, 'array')}
+          </Grid>
+          <Grid item xs={12} md={6}>
+            {renderField('dataConsumer', editedAgreement.dataConsumer, 'Data Consumer', 'text', null, false, 'array')}
           </Grid>
           <Grid item xs={12} md={6}>
             {renderField('dataValidator', editedAgreement.dataValidator, 'Data Validator')}
@@ -1512,8 +2058,11 @@ const EditAgreementPage = () => {
           <Grid item xs={12} md={6}>
             {renderField('restricted', editedAgreement.restricted, 'Restricted', 'switch')}
           </Grid>
-          <Grid item xs={12}>
-            {renderField('dataConsumer', editedAgreement.dataConsumer, 'Data Consumer', 'text', null, false, 'array')}
+          <Grid item xs={12} md={6}>
+            {renderField('network', editedAgreement.network, 'Network', 'text', null, false, 'array')}
+          </Grid>
+          <Grid item xs={12} md={6}>
+            {renderField('sensitivityLevel', editedAgreement.sensitivityLevel, 'Sensitivity Level', 'text', null, false, 'array')}
           </Grid>
           <Grid item xs={12}>
             {renderField('deliveredVersion', editedAgreement.deliveredVersion, 'Delivered Version')}

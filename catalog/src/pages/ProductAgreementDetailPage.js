@@ -389,6 +389,25 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
     return { label: consumer, icon: ShoppingBasketIcon, description: 'Data consumer' };
   };
 
+  // Utility function to parse and format data producer
+  const parseDataProducer = (producer) => {
+    if (!producer) return { label: 'Not specified', icon: VerifiedUserIcon };
+    if (Array.isArray(producer)) {
+      return producer.map(prod => parseDataProducer(prod));
+    }
+    const lowerProd = producer.toLowerCase();
+    if (lowerProd.includes('service') || lowerProd.includes('api')) {
+      return { label: producer, icon: CodeIcon, description: 'Service/API producer' };
+    }
+    if (lowerProd.includes('app') || lowerProd.includes('application')) {
+      return { label: producer, icon: FactoryIcon, description: 'Application producer' };
+    }
+    if (lowerProd.includes('analytics') || lowerProd.includes('bi') || lowerProd.includes('reporting')) {
+      return { label: producer, icon: GroupIcon, description: 'Analytics/BI producer' };
+    }
+    return { label: producer, icon: VerifiedUserIcon, description: 'Data producer' };
+  };
+
   React.useEffect(() => {
     const loadAgreementAndModel = async () => {
       try {
@@ -664,12 +683,54 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
                 </Typography>
                 <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                   {(() => {
-                    const producers = Array.isArray(agreement.dataProducer) ? agreement.dataProducer : [agreement.dataProducer];
-                    return producers.map((producer, index) => (
-                      <Typography key={index} variant="h6" sx={{ color: currentTheme.text, userSelect: 'text' }}>
-                        {producer}
-                      </Typography>
-                    ));
+                    const producerInfo = parseDataProducer(agreement.dataProducer);
+                    const producers = Array.isArray(producerInfo) ? producerInfo : [producerInfo];
+                    return (
+                      <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0, mt: 1 }}>
+                        {producers.map((prod, index) => (
+                          <Box key={index} sx={{ width: '100%' }}>
+                            <Tooltip title="View application">
+                              <Box
+                                sx={{
+                                  width: '100%',
+                                  px: 2,
+                                  py: 1,
+                                  borderRadius: 1,
+                                  bgcolor: 'transparent',
+                                  transition: 'background 0.2s',
+                                  userSelect: 'text',
+                                  cursor: 'pointer',
+                                  '&:hover': {
+                                    bgcolor: currentTheme.hoverBackground || (currentTheme.darkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'),
+                                  },
+                                }}
+                                onClick={() => navigate(`/applications?search=${encodeURIComponent(prod.label)}`)}
+                              >
+                                <Typography
+                                  variant="h6"
+                                  sx={{
+                                    color: currentTheme.text,
+                                    fontWeight: 600,
+                                    userSelect: 'text',
+                                  }}
+                                >
+                                  {prod.label}
+                                </Typography>
+                              </Box>
+                            </Tooltip>
+                            {index < producers.length - 1 && (
+                              <Box sx={{
+                                width: '90%',
+                                height: '1px',
+                                mx: 'auto',
+                                bgcolor: currentTheme.border,
+                                opacity: 0.5,
+                              }} />
+                            )}
+                          </Box>
+                        ))}
+                      </Box>
+                    );
                   })()}
                 </Box>
                 <Typography variant="body2" sx={{ color: currentTheme.textSecondary, mt: 1 }}>
@@ -827,7 +888,31 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
                       </Box>
                     </TableCell>
                     <TableCell sx={{ color: currentTheme.text, borderBottom: `1px solid ${currentTheme.border}` }}>
-                      {agreement.dataProducer}
+                      {(() => {
+                        const producers = Array.isArray(agreement.dataProducer) ? agreement.dataProducer : [agreement.dataProducer];
+                        if (Array.isArray(producers)) {
+                          return (
+                            <Box>
+                              {producers.map((producer, index) => (
+                                <Box key={index} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: index < producers.length - 1 ? 1 : 0 }}>
+                                  <FactoryIcon sx={{ fontSize: 20, color: currentTheme.primary, opacity: 0.8 }} />
+                                  <Typography variant="body2" sx={{ color: currentTheme.text }}>
+                                    {producer}
+                                  </Typography>
+                                </Box>
+                              ))}
+                            </Box>
+                          );
+                        }
+                        return (
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <FactoryIcon sx={{ fontSize: 20, color: currentTheme.primary, opacity: 0.8 }} />
+                            <Typography variant="body2" sx={{ color: currentTheme.text }}>
+                              {producers[0]}
+                            </Typography>
+                          </Box>
+                        );
+                      })()}
                     </TableCell>
                   </TableRow>
                   <TableRow>
@@ -1193,6 +1278,70 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
                     }
                   }}
                 />
+              </Box>
+            </Box>
+
+            <Divider sx={{ my: 2 }} />
+
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
+                Network
+              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                {(agreement.network || []).map((network, index) => (
+                  <Chip
+                    key={index}
+                    label={network === 'internet' ? 'Internet' : 'Intranet'}
+                    size="small"
+                    sx={{
+                      bgcolor: network === 'internet' ? alpha('#4caf50', 0.1) : alpha('#2196f3', 0.1),
+                      color: network === 'internet' ? '#4caf50' : '#2196f3',
+                      '&:hover': {
+                        bgcolor: network === 'internet' ? alpha('#4caf50', 0.2) : alpha('#2196f3', 0.2),
+                      }
+                    }}
+                  />
+                ))}
+              </Box>
+            </Box>
+
+            <Divider sx={{ my: 2 }} />
+
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
+                Sensitivity Level
+              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                {(agreement.sensitivityLevel || []).map((level, index) => {
+                  const getSensitivityColor = (sensitivity) => {
+                    switch (sensitivity) {
+                      case 'public': return { bg: alpha('#4caf50', 0.1), color: '#4caf50' };
+                      case 'internal': return { bg: alpha('#ff9800', 0.1), color: '#ff9800' };
+                      case 'confidential': return { bg: alpha('#f44336', 0.1), color: '#f44336' };
+                      case 'highly_sensitive': return { bg: alpha('#9c27b0', 0.1), color: '#9c27b0' };
+                      default: return { bg: alpha('#9e9e9e', 0.1), color: '#9e9e9e' };
+                    }
+                  };
+                  
+                  const colors = getSensitivityColor(level);
+                  const label = level === 'highly_sensitive' ? 'Highly Sensitive' : 
+                               level.charAt(0).toUpperCase() + level.slice(1);
+                  
+                  return (
+                    <Chip
+                      key={index}
+                      label={label}
+                      size="small"
+                      sx={{
+                        bgcolor: colors.bg,
+                        color: colors.color,
+                        '&:hover': {
+                          bgcolor: colors.bg.replace('0.1', '0.2'),
+                        }
+                      }}
+                    />
+                  );
+                })}
               </Box>
             </Box>
 

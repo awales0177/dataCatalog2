@@ -74,7 +74,15 @@ const ProductAgreementsPage = () => {
         
         if (agreement.name) searchStr += agreement.name + ' ';
         if (agreement.description) searchStr += agreement.description + ' ';
-        if (agreement.dataProducer) searchStr += agreement.dataProducer + ' ';
+        if (agreement.dataProducer) {
+          if (Array.isArray(agreement.dataProducer)) {
+            agreement.dataProducer.forEach(producer => {
+              if (producer) searchStr += producer + ' ';
+            });
+          } else {
+            searchStr += agreement.dataProducer + ' ';
+          }
+        }
         if (agreement.dataConsumer) {
           if (Array.isArray(agreement.dataConsumer)) {
             agreement.dataConsumer.forEach(consumer => {
@@ -86,6 +94,24 @@ const ProductAgreementsPage = () => {
         }
         if (agreement.modelShortName) searchStr += agreement.modelShortName + ' ';
         if (agreement.status) searchStr += agreement.status + ' ';
+        if (agreement.network) {
+          if (Array.isArray(agreement.network)) {
+            agreement.network.forEach(network => {
+              if (network) searchStr += network + ' ';
+            });
+          } else {
+            searchStr += agreement.network + ' ';
+          }
+        }
+        if (agreement.sensitivityLevel) {
+          if (Array.isArray(agreement.sensitivityLevel)) {
+            agreement.sensitivityLevel.forEach(level => {
+              if (level) searchStr += level + ' ';
+            });
+          } else {
+            searchStr += agreement.sensitivityLevel + ' ';
+          }
+        }
         
         if (agreement.tags) {
           for (let i = 0; i < agreement.tags.length; i++) {
@@ -122,7 +148,7 @@ const ProductAgreementsPage = () => {
       status: 'draft',
       specificationMaintainer: '',
       parentSystem: '',
-      dataProducer: '',
+      dataProducer: [''],
       dataValidator: '',
       dataConsumer: [],
       modelShortName: '',
@@ -133,6 +159,8 @@ const ProductAgreementsPage = () => {
       endDate: '',
       fileFormat: 'JSON',
       restricted: false,
+      network: ['internet'],
+      sensitivityLevel: ['public'],
       location: {},
       todo: {
         date: new Date().toISOString(),

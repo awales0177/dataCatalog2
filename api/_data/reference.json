@@ -227,6 +227,12 @@
           "updatedBy": "a",
           "updateReason": "a",
           "timestamp": "2025-08-16T18:30:16.603Z"
+        },
+        {
+          "version": "h",
+          "updatedBy": "n",
+          "updateReason": "j",
+          "timestamp": "2025-08-21T03:25:23.040Z"
         }
       ],
       "childTables": [
@@ -242,8 +248,17 @@
             "e",
             "f"
           ],
-          "rows": [],
-          "rowCount": 0,
+          "rows": [
+            {
+              "a": "",
+              "b": "",
+              "c": "",
+              "d": "m",
+              "e": "m",
+              "f": "m"
+            }
+          ],
+          "rowCount": 1,
           "sourceType": "s",
           "derivedFrom": "ref-002",
           "transformations": [],
@@ -252,7 +267,7 @@
           "owner": "s"
         }
       ],
-      "lastUpdated": "2025-08-17 00:49:39",
+      "lastUpdated": "2025-08-20 23:26:04",
       "lineage": {
         "upstream": [
           {

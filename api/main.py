@@ -197,7 +197,9 @@ JSON_FILES = {
     "theme": "theme.json",
     "applications": "applications.json",
     "lexicon": "lexicon.json",
-    "reference": "reference.json"
+    "reference": "reference.json",
+    "toolkit": "toolkit.json",
+    "policies": "dataPolicies.json"
 }
 
 # Data type to key mapping for counting items
@@ -208,7 +210,9 @@ DATA_TYPE_KEYS = {
     "specifications": "models",  # Alias for specifications
     "applications": "applications",
     "lexicon": "terms",
-    "reference": "items"
+    "reference": "items",
+    "toolkit": "toolkit",
+    "policies": "policies"
 }
 
 def fetch_from_github(file_name: str) -> Dict:
@@ -1054,6 +1058,389 @@ async def delete_reference_item(item_id: str):
     except Exception as e:
         logger.error(f"Error deleting reference item: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error deleting reference item: {str(e)}")
+
+# Applications CRUD endpoints
+@app.post("/api/applications")
+async def create_application(application: Dict[str, Any]):
+    """
+    Create a new application.
+    
+    Args:
+        application (dict): The application data to create
+        
+    Returns:
+        dict: Success message and created application info
+        
+    Raises:
+        HTTPException: If creation fails
+    """
+    try:
+        logger.info(f"Create request for application: {application.get('name', 'Unknown')}")
+        applications_data = read_json_file(JSON_FILES['applications'])
+        
+        # Generate new ID
+        max_id = max([app['id'] for app in applications_data['applications']]) if applications_data['applications'] else 0
+        new_id = max_id + 1
+        
+        # Create new application with ID
+        new_application = {
+            "id": new_id,
+            "name": application.get('name', ''),
+            "description": application.get('description', ''),
+            "domains": application.get('domains', []),
+            "link": application.get('link', '')
+        }
+        
+        applications_data['applications'].append(new_application)
+        
+        local_file_path = JSON_FILES['applications']
+        write_json_file(local_file_path, applications_data)
+        
+        logger.info(f"Application created in local file {local_file_path}")
+        logger.info(f"Application {new_id} created successfully")
+        
+        return {
+            "message": "Application created successfully",
+            "id": new_id,
+            "application": new_application
+        }
+    except Exception as e:
+        logger.error(f"Error creating application: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error creating application: {str(e)}")
+
+@app.put("/api/applications/{application_id}")
+async def update_application(application_id: int, application: Dict[str, Any]):
+    """
+    Update an existing application by its ID.
+    
+    Args:
+        application_id (int): The ID of the application to update
+        application (dict): The updated application data
+        
+    Returns:
+        dict: Success message and updated application info
+        
+    Raises:
+        HTTPException: If the application is not found or update fails
+    """
+    try:
+        logger.info(f"Update request for application: {application_id}")
+        applications_data = read_json_file(JSON_FILES['applications'])
+        
+        # Find the application to update
+        app_to_update = None
+        for i, app in enumerate(applications_data['applications']):
+            if app['id'] == application_id:
+                app_to_update = i
+                break
+        
+        if app_to_update is None:
+            raise HTTPException(status_code=404, detail=f"Application with ID {application_id} not found")
+        
+        # Update the application
+        applications_data['applications'][app_to_update] = {
+            "id": application_id,
+            "name": application.get('name', ''),
+            "description": application.get('description', ''),
+            "domains": application.get('domains', []),
+            "link": application.get('link', '')
+        }
+        
+        local_file_path = JSON_FILES['applications']
+        write_json_file(local_file_path, applications_data)
+        
+        logger.info(f"Application updated in local file {local_file_path}")
+        logger.info(f"Application {application_id} updated successfully")
+        
+        return {
+            "message": "Application updated successfully",
+            "id": application_id,
+            "application": applications_data['applications'][app_to_update]
+        }
+    except Exception as e:
+        logger.error(f"Error updating application: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error updating application: {str(e)}")
+
+@app.delete("/api/applications/{application_id}")
+async def delete_application(application_id: int):
+    """
+    Delete an application by its ID.
+    
+    Args:
+        application_id (int): The ID of the application to delete
+        
+    Returns:
+        dict: Success message and deleted application info
+        
+    Raises:
+        HTTPException: If the application is not found or deletion fails
+    """
+    try:
+        logger.info(f"Delete request for application: {application_id}")
+        applications_data = read_json_file(JSON_FILES['applications'])
+        
+        app_to_delete = None
+        for app in applications_data['applications']:
+            if app['id'] == application_id:
+                app_to_delete = app
+                break
+        
+        if not app_to_delete:
+            raise HTTPException(status_code=404, detail=f"Application with ID {application_id} not found")
+        
+        applications_data['applications'] = [
+            app for app in applications_data['applications'] 
+            if app['id'] != application_id
+        ]
+        
+        local_file_path = JSON_FILES['applications']
+        write_json_file(local_file_path, applications_data)
+        
+        logger.info(f"Application deleted from local file {local_file_path}")
+        logger.info(f"Application {application_id} deleted successfully")
+        
+        return {
+            "message": "Application deleted successfully",
+            "id": application_id,
+            "deleted": True
+        }
+    except Exception as e:
+        logger.error(f"Error deleting application: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error deleting application: {str(e)}")
+
+# Toolkit CRUD endpoints
+@app.post("/api/toolkit")
+async def create_toolkit_component(component: Dict[str, Any]):
+    """
+    Create a new toolkit component.
+    
+    Args:
+        component (dict): The component data to create
+        
+    Returns:
+        dict: Success message and created component info
+        
+    Raises:
+        HTTPException: If creation fails
+    """
+    try:
+        logger.info(f"Create request for toolkit component: {component.get('name', 'Unknown')}")
+        toolkit_data = read_json_file(JSON_FILES['toolkit'])
+        
+        # Determine component type and generate ID
+        component_type = component.get('type', 'functions')
+        if component_type not in ['functions', 'containers', 'terraform']:
+            raise HTTPException(status_code=400, detail="Invalid component type")
+        
+        # Generate new ID based on type
+        existing_ids = [item['id'] for item in toolkit_data['toolkit'][component_type]]
+        if component_type == 'functions':
+            prefix = 'func_'
+        elif component_type == 'containers':
+            prefix = 'cont_'
+        else:
+            prefix = 'tf_'
+        
+        max_num = 0
+        for item_id in existing_ids:
+            if item_id.startswith(prefix):
+                try:
+                    num = int(item_id.split('_')[1])
+                    max_num = max(max_num, num)
+                except:
+                    pass
+        
+        new_id = f"{prefix}{max_num + 1:03d}"
+        
+        # Create new component with ID
+        new_component = {
+            "id": new_id,
+            "name": component.get('name', ''),
+            "description": component.get('description', ''),
+            "type": component_type,
+            "category": component.get('category', ''),
+            "tags": component.get('tags', []),
+            "author": component.get('author', ''),
+            "version": component.get('version', '1.0.0'),
+            "lastUpdated": datetime.now().isoformat(),
+            "usage": component.get('usage', ''),
+            "dependencies": component.get('dependencies', []),
+            "examples": component.get('examples', []),
+            "rating": component.get('rating', 5.0),
+            "downloads": 0
+        }
+        
+        # Add type-specific fields
+        if component_type == 'functions':
+            new_component['language'] = component.get('language', '')
+            new_component['code'] = component.get('code', '')
+        elif component_type == 'containers':
+            new_component['dockerfile'] = component.get('dockerfile', '')
+            new_component['dockerCompose'] = component.get('dockerCompose', '')
+        elif component_type == 'terraform':
+            new_component['provider'] = component.get('provider', '')
+            new_component['mainTf'] = component.get('mainTf', '')
+            new_component['variablesTf'] = component.get('variablesTf', '')
+            new_component['outputsTf'] = component.get('outputsTf', '')
+        
+        toolkit_data['toolkit'][component_type].append(new_component)
+        
+        local_file_path = JSON_FILES['toolkit']
+        write_json_file(local_file_path, toolkit_data)
+        
+        logger.info(f"Toolkit component created in local file {local_file_path}")
+        logger.info(f"Component {new_id} created successfully")
+        
+        return {
+            "message": "Toolkit component created successfully",
+            "id": new_id,
+            "component": new_component
+        }
+    except Exception as e:
+        logger.error(f"Error creating toolkit component: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error creating toolkit component: {str(e)}")
+
+@app.put("/api/toolkit/{component_type}/{component_id}")
+async def update_toolkit_component(component_type: str, component_id: str, component: Dict[str, Any]):
+    """
+    Update an existing toolkit component by its ID.
+    
+    Args:
+        component_type (str): The type of component (functions, containers, terraform)
+        component_id (str): The ID of the component to update
+        component (dict): The updated component data
+        
+    Returns:
+        dict: Success message and updated component info
+        
+    Raises:
+        HTTPException: If the component is not found or update fails
+    """
+    try:
+        logger.info(f"Update request for toolkit component: {component_id}")
+        
+        if component_type not in ['functions', 'containers', 'terraform']:
+            raise HTTPException(status_code=400, detail="Invalid component type")
+        
+        toolkit_data = read_json_file(JSON_FILES['toolkit'])
+        
+        # Find the component to update
+        comp_to_update = None
+        for i, comp in enumerate(toolkit_data['toolkit'][component_type]):
+            if comp['id'] == component_id:
+                comp_to_update = i
+                break
+        
+        if comp_to_update is None:
+            raise HTTPException(status_code=404, detail=f"Component with ID {component_id} not found")
+        
+        # Update the component
+        updated_component = {
+            **toolkit_data['toolkit'][component_type][comp_to_update],
+            "name": component.get('name', ''),
+            "description": component.get('description', ''),
+            "category": component.get('category', ''),
+            "tags": component.get('tags', []),
+            "author": component.get('author', ''),
+            "version": component.get('version', '1.0.0'),
+            "lastUpdated": datetime.now().isoformat(),
+            "usage": component.get('usage', ''),
+            "dependencies": component.get('dependencies', []),
+            "examples": component.get('examples', []),
+            "rating": component.get('rating', 5.0)
+        }
+        
+        # Update type-specific fields
+        if component_type == 'functions':
+            updated_component['language'] = component.get('language', '')
+            updated_component['code'] = component.get('code', '')
+        elif component_type == 'containers':
+            updated_component['dockerfile'] = component.get('dockerfile', '')
+            updated_component['dockerCompose'] = component.get('dockerCompose', '')
+        elif component_type == 'terraform':
+            updated_component['provider'] = component.get('provider', '')
+            updated_component['mainTf'] = component.get('mainTf', '')
+            updated_component['variablesTf'] = component.get('variablesTf', '')
+            updated_component['outputsTf'] = component.get('outputsTf', '')
+        
+        toolkit_data['toolkit'][component_type][comp_to_update] = updated_component
+        
+        local_file_path = JSON_FILES['toolkit']
+        write_json_file(local_file_path, toolkit_data)
+        
+        logger.info(f"Toolkit component updated in local file {local_file_path}")
+        logger.info(f"Component {component_id} updated successfully")
+        
+        return {
+            "message": "Toolkit component updated successfully",
+            "id": component_id,
+            "component": updated_component
+        }
+    except Exception as e:
+        logger.error(f"Error updating toolkit component: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error updating toolkit component: {str(e)}")
+
+@app.delete("/api/toolkit/{component_type}/{component_id}")
+async def delete_toolkit_component(component_type: str, component_id: str):
+    """
+    Delete a toolkit component by its ID.
+    
+    Args:
+        component_type (str): The type of component (functions, containers, terraform)
+        component_id (str): The ID of the component to delete
+        
+    Returns:
+        dict: Success message and deleted component info
+        
+    Raises:
+        HTTPException: If the component is not found or deletion fails
+    """
+    try:
+        logger.info(f"Delete request for toolkit component: {component_id}")
+        
+        if component_type not in ['functions', 'containers', 'terraform']:
+            raise HTTPException(status_code=400, detail="Invalid component type")
+        
+        toolkit_data = read_json_file(JSON_FILES['toolkit'])
+        
+        comp_to_delete = None
+        for comp in toolkit_data['toolkit'][component_type]:
+            if comp['id'] == component_id:
+                comp_to_delete = comp
+                break
+        
+        if not comp_to_delete:
+            raise HTTPException(status_code=404, detail=f"Component with ID {component_id} not found")
+        
+        toolkit_data['toolkit'][component_type] = [
+            comp for comp in toolkit_data['toolkit'][component_type] 
+            if comp['id'] != component_id
+        ]
+        
+        local_file_path = JSON_FILES['toolkit']
+        write_json_file(local_file_path, toolkit_data)
+        
+        logger.info(f"Toolkit component deleted from local file {local_file_path}")
+        logger.info(f"Component {component_id} deleted successfully")
+        
+        return {
+            "message": "Toolkit component deleted successfully",
+            "id": component_id,
+            "deleted": True
+        }
+    except Exception as e:
+        logger.error(f"Error deleting toolkit component: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error deleting toolkit component: {str(e)}")
+
+@app.get("/api/policies")
+def get_policies():
+    """Get all data policies."""
+    try:
+        policies_data = read_json_file(JSON_FILES['policies'])
+        return policies_data
+    except Exception as e:
+        logger.error(f"Error reading policies: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error reading policies: {str(e)}")
 
 # Debug endpoints
 @app.get("/api/debug/cache")

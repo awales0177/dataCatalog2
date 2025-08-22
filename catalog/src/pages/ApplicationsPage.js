@@ -6,25 +6,28 @@ import {
   InputAdornment,
   Typography,
   Container,
-  Paper,
   CircularProgress,
   Alert,
-  Chip,
   useTheme,
+  Fab,
 } from '@mui/material';
 import {
   Search as SearchIcon,
+  Add as AddIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
 } from '@mui/icons-material';
 import { ThemeContext } from '../App';
 import { fetchData } from '../services/api';
 import ApplicationCard from '../components/ApplicationCard';
 import Pagination from '../components/Pagination';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const ITEMS_PER_PAGE = 12;
 
 const ApplicationsPage = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { currentTheme } = useContext(ThemeContext);
   // Initialize searchQuery from URL param if present
   const getInitialSearch = () => {
@@ -37,6 +40,7 @@ const ApplicationsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+
 
   // Update searchQuery if URL param changes
   useEffect(() => {
@@ -81,6 +85,16 @@ const ApplicationsPage = () => {
     setCurrentPage(value);
   };
 
+  const handleCreateNewApplication = () => {
+    navigate('/applications/create');
+  };
+
+  const handleEditApplication = (applicationId) => {
+    navigate(`/applications/edit/${applicationId}`);
+  };
+
+
+
   const totalPages = Math.ceil(filteredApplications.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const paginatedApplications = filteredApplications.slice(startIndex, startIndex + ITEMS_PER_PAGE);
@@ -106,10 +120,10 @@ const ApplicationsPage = () => {
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
       <Typography variant="h4" sx={{ mb: 1, color: currentTheme.text }}>
-        Applications
+        Data Applications
       </Typography>
       <Typography variant="body1" sx={{ mb: 4, color: currentTheme.textSecondary }}>
-        Discover and manage applications in your data ecosystem. View application details, status, and their relationships with data models and contracts.
+        Discover and manage data applications in your data ecosystem. View application details, status, and their relationships with data models and contracts.
       </Typography>
 
       <Box sx={{ mb: 4 }}>
@@ -152,6 +166,7 @@ const ApplicationsPage = () => {
             <ApplicationCard
               application={application}
               currentTheme={currentTheme}
+              onEdit={handleEditApplication}
             />
           </Grid>
         ))}
@@ -165,6 +180,28 @@ const ApplicationsPage = () => {
           currentTheme={currentTheme}
         />
       </Box>
+
+      {/* Floating Action Button for creating new applications */}
+      <Fab
+        color="primary"
+        aria-label="add new application"
+        onClick={handleCreateNewApplication}
+        sx={{
+          position: 'fixed',
+          bottom: 24,
+          right: 24,
+          bgcolor: currentTheme.primary,
+          color: currentTheme.background,
+          '&:hover': {
+            bgcolor: currentTheme.primaryDark || currentTheme.primary
+          },
+          zIndex: 1000,
+        }}
+      >
+        <AddIcon />
+      </Fab>
+
+
     </Container>
   );
 };
