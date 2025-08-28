@@ -31,6 +31,7 @@ import {
   DialogContent,
   DialogActions,
 } from '@mui/material';
+import DeleteModal from '../components/DeleteModal';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   ArrowBack as ArrowBackIcon,
@@ -68,8 +69,7 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
   const [shortNameError, setShortNameError] = useState('');
   const [checkingShortName, setCheckingShortName] = useState(false);
   const [shortNameTimeout, setShortNameTimeout] = useState(null);
-  const [showDeleteModelDialog, setShowDeleteModelDialog] = useState(false);
-  const [deleteConfirmation, setDeleteConfirmation] = useState('');
+  const [showDeleteModelModal, setShowDeleteModelModal] = useState(false);
   const [showSelectionDialog, setShowSelectionDialog] = useState(false);
   const [selectionPath, setSelectionPath] = useState('');
   const [availableOptions, setAvailableOptions] = useState([]);
@@ -625,19 +625,10 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
   };
 
   const handleDeleteModel = () => {
-    setShowDeleteModelDialog(true);
+    setShowDeleteModelModal(true);
   };
 
   const confirmDeleteModel = async () => {
-    if (deleteConfirmation !== `delete ${model.name}`) {
-      setSnackbar({
-        open: true,
-        message: 'Please type the exact confirmation text to delete the model',
-        severity: 'error'
-      });
-      return;
-    }
-
     try {
       // Call the delete API
       await deleteModel(model.shortName);
@@ -660,9 +651,6 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
         message: `Failed to delete model: ${error.message}`,
         severity: 'error'
       });
-    } finally {
-      setShowDeleteModelDialog(false);
-      setDeleteConfirmation('');
     }
   };
 
@@ -1430,84 +1418,26 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
           </DialogActions>
         </Dialog>
 
-        {/* Delete Model Confirmation Dialog */}
-        <Dialog
-          open={showDeleteModelDialog}
-          onClose={() => setShowDeleteModelDialog(false)}
-          aria-labelledby="delete-model-dialog-title"
-          maxWidth="sm"
-          fullWidth
-          PaperProps={{
-            sx: {
-              bgcolor: currentTheme.card,
-              color: currentTheme.text,
-              border: `1px solid ${currentTheme.border}`
-            }
-          }}
+        {/* Delete Model Modal */}
+        <DeleteModal
+          open={showDeleteModelModal}
+          onClose={() => setShowDeleteModelModal(false)}
+          onConfirm={confirmDeleteModel}
+          title="Delete Model"
+          itemName={model?.name}
+          itemType="model"
+          theme={currentTheme}
         >
-          <DialogTitle id="delete-model-dialog-title" sx={{ color: currentTheme.text }}>
-            🗑️ Delete Model
-          </DialogTitle>
-          <DialogContent sx={{ color: currentTheme.text }}>
-            <Box sx={{ mb: 3, p: 2, bgcolor: 'error.light', borderRadius: 1, border: '1px solid', borderColor: 'error.main' }}>
-              <Typography variant="subtitle2" sx={{ color: 'error.dark', fontWeight: 'bold', mb: 1 }}>
-                ⚠️ This action cannot be undone!
-              </Typography>
-              <Typography variant="body2" sx={{ color: 'error.dark' }}>
-                Deleting this model will permanently remove it and all associated data.
-              </Typography>
-            </Box>
-            
-            <Typography sx={{ mb: 2 }}>
-              You are about to delete the model: <strong>"{model.name}"</strong>
-            </Typography>
-            
-            <Typography sx={{ mb: 3 }}>
-              This will:
-            </Typography>
-            <Box component="ul" sx={{ pl: 2, mb: 3 }}>
-              <Typography component="li">Permanently delete the model "{model.name}"</Typography>
-              <Typography component="li">Remove all model data and configurations</Typography>
-              <Typography component="li">Break any existing agreements that reference this model</Typography>
-              <Typography component="li">Require manual cleanup of external references</Typography>
-            </Box>
-            
-            <Typography sx={{ mb: 2, fontWeight: 'bold' }}>
-              To confirm deletion, type exactly: <strong>delete {model.name}</strong>
-            </Typography>
-            
-            <TextField
-              fullWidth
-              value={deleteConfirmation}
-              onChange={(e) => setDeleteConfirmation(e.target.value)}
-              placeholder={`delete ${model.name}`}
-              sx={{
-                '& .MuiInputLabel-root': { color: currentTheme.textSecondary },
-                '& .MuiOutlinedInput-root': { 
-                  color: currentTheme.text,
-                  '& fieldset': { borderColor: currentTheme.border },
-                  '&:hover fieldset': { borderColor: currentTheme.primary },
-                  '&.Mui-focused fieldset': { borderColor: currentTheme.primary }
-                },
-                '& .MuiInputBase-input': { color: currentTheme.text },
-                '& .MuiInputBase-input::placeholder': { color: currentTheme.textSecondary, opacity: 0.7 }
-              }}
-            />
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setShowDeleteModelDialog(false)} sx={{ color: currentTheme.text }}>
-              Cancel
-            </Button>
-            <Button 
-              onClick={confirmDeleteModel} 
-              color="error" 
-              variant="contained"
-              disabled={deleteConfirmation !== `delete ${model.name}`}
-            >
-              Delete Model
-            </Button>
-          </DialogActions>
-        </Dialog>
+          <Typography sx={{ mb: 2 }}>
+            This will:
+          </Typography>
+          <Box component="ul" sx={{ pl: 2, mb: 3 }}>
+            <Typography component="li">Permanently delete the model "{model?.name}"</Typography>
+            <Typography component="li">Remove all model data and configurations</Typography>
+            <Typography component="li">Break any existing agreements that reference this model</Typography>
+            <Typography component="li">Require manual cleanup of external references</Typography>
+          </Box>
+        </DeleteModal>
 
       {/* Snackbar for notifications */}
       <Snackbar

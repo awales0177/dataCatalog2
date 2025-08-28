@@ -9,10 +9,6 @@ import {
   Chip,
   Switch,
   FormControlLabel,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Snackbar,
   Alert,
   Select,
@@ -35,7 +31,12 @@ import {
   TableRow,
   TablePagination,
   alpha,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
+import DeleteModal from '../components/DeleteModal';
 
 import {
   ArrowBack as ArrowBackIcon,
@@ -63,8 +64,7 @@ const EditReferenceDataPage = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [deleteConfirmation, setDeleteConfirmation] = useState('');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
 
   // Form fields
@@ -258,15 +258,6 @@ const EditReferenceDataPage = () => {
   };
 
   const handleDelete = async () => {
-    if (deleteConfirmation !== editedItem.name) {
-      setSnackbar({
-        open: true,
-        message: 'Please type the exact name to confirm deletion',
-        severity: 'error'
-      });
-      return;
-    }
-
     setSaving(true);
     try {
       await deleteReferenceItem(id);
@@ -286,8 +277,6 @@ const EditReferenceDataPage = () => {
       });
     } finally {
       setSaving(false);
-      setShowDeleteDialog(false);
-      setDeleteConfirmation('');
     }
   };
 
@@ -658,7 +647,7 @@ const EditReferenceDataPage = () => {
               <Button
                 variant="outlined"
                 color="error"
-                onClick={() => setShowDeleteDialog(true)}
+                onClick={() => setShowDeleteModal(true)}
                 startIcon={<DeleteIcon />}
                 sx={{
                   borderColor: 'error.main',
@@ -1449,56 +1438,26 @@ const EditReferenceDataPage = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
-      <Dialog 
-        open={showDeleteDialog} 
-        onClose={() => setShowDeleteDialog(false)}
-        PaperProps={{
-          sx: {
-            bgcolor: currentTheme.card,
-            border: `1px solid ${currentTheme.border}`,
-          }
-        }}
+      {/* Delete Reference Data Modal */}
+      <DeleteModal
+        open={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleDelete}
+        title="Delete Reference Data"
+        itemName={editedItem?.name}
+        itemType="reference data"
+        theme={currentTheme}
       >
-        <DialogTitle sx={{ color: currentTheme.text }}>Confirm Deletion</DialogTitle>
-        <DialogContent sx={{ bgcolor: currentTheme.card }}>
-          <Typography sx={{ mb: 2, color: currentTheme.text }}>
-            Are you sure you want to delete "{editedItem?.name}"? This action cannot be undone.
-          </Typography>
-          <TextField
-            fullWidth
-            label={`Type "${editedItem?.name}" to confirm`}
-            value={deleteConfirmation}
-            onChange={(e) => setDeleteConfirmation(e.target.value)}
-            sx={getTextFieldThemeStyles()}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button 
-            onClick={() => setShowDeleteDialog(false)}
-            sx={{
-              color: currentTheme.textSecondary,
-              '&:hover': {
-                bgcolor: alpha(currentTheme.textSecondary, 0.1),
-              },
-            }}
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleDelete}
-            color="error"
-            disabled={deleteConfirmation !== editedItem?.name}
-            sx={{
-              '&:hover': {
-                opacity: 0.9,
-              },
-            }}
-          >
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
+        <Typography sx={{ mb: 2 }}>
+          This will:
+        </Typography>
+        <Box component="ul" sx={{ pl: 2, mb: 3 }}>
+          <Typography component="li">Permanently delete the reference data "{editedItem?.name}"</Typography>
+          <Typography component="li">Remove all associated data and configurations</Typography>
+          <Typography component="li">Break any existing references to this item</Typography>
+          <Typography component="li">Require manual cleanup of external references</Typography>
+        </Box>
+      </DeleteModal>
 
       {/* Save Confirmation Dialog */}
       <Dialog 

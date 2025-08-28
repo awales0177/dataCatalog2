@@ -11,11 +11,8 @@ import {
   CircularProgress,
   Snackbar,
   Alert,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
 } from '@mui/material';
+import DeleteModal from '../components/DeleteModal';
 import {
   ArrowBack as ArrowBackIcon,
   Save as SaveIcon,
@@ -40,9 +37,7 @@ const EditApplicationPage = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [deleteConfirmation, setDeleteConfirmation] = useState('');
-  const [canDelete, setCanDelete] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
 
   // Helper function for deep cloning
@@ -135,20 +130,11 @@ const EditApplicationPage = () => {
     } catch (error) {
       console.error('Error deleting application:', error);
       setSnackbar({ open: true, message: 'Failed to delete application', severity: 'error' });
-    } finally {
-      setShowDeleteDialog(false);
     }
   };
 
-  const handleDeleteConfirmationChange = (value) => {
-    setDeleteConfirmation(value);
-    setCanDelete(value.trim() === `delete ${editedApplication?.name}`);
-  };
-
   const handleOpenDeleteDialog = () => {
-    setShowDeleteDialog(true);
-    setDeleteConfirmation('');
-    setCanDelete(false);
+    setShowDeleteModal(true);
   };
 
 
@@ -333,116 +319,26 @@ const EditApplicationPage = () => {
         </Alert>
       </Snackbar>
 
-      {/* Delete Confirmation Dialog */}
-      <Dialog
-        open={showDeleteDialog}
-        onClose={() => {
-          setShowDeleteDialog(false);
-          setDeleteConfirmation('');
-          setCanDelete(false);
-        }}
-        maxWidth="sm"
-        fullWidth
-        PaperProps={{
-          sx: {
-            bgcolor: currentTheme.card,
-            color: currentTheme.text,
-            border: `1px solid ${currentTheme.border}`
-          }
-        }}
+      {/* Delete Application Modal */}
+      <DeleteModal
+        open={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleDelete}
+        title="Delete Application"
+        itemName={editedApplication?.name}
+        itemType="application"
+        theme={currentTheme}
       >
-        <DialogTitle sx={{ color: currentTheme.text }}>
-          🗑️ Delete Application
-        </DialogTitle>
-        <DialogContent sx={{ color: currentTheme.text }}>
-          <Box sx={{ mb: 3, p: 2, bgcolor: 'error.light', borderRadius: 1, border: '1px solid', borderColor: 'error.main' }}>
-            <Typography variant="subtitle2" sx={{ color: 'error.dark', fontWeight: 'bold', mb: 1 }}>
-              ⚠️ This action cannot be undone!
-            </Typography>
-            <Typography variant="body2" sx={{ color: 'error.dark' }}>
-              Deleting this application will permanently remove it and all associated data.
-            </Typography>
-          </Box>
-          
-          <Typography sx={{ mb: 2 }}>
-            You are about to delete the application: <strong>"{editedApplication?.name}"</strong>
-          </Typography>
-          
-          <Typography sx={{ mb: 3 }}>
-            This will:
-          </Typography>
-          <Box component="ul" sx={{ pl: 2, mb: 3 }}>
-            <Typography component="li">Permanently delete the application "{editedApplication?.name}"</Typography>
-            <Typography component="li">Remove all application data and configurations</Typography>
-            <Typography component="li">Break any existing agreements that reference this application</Typography>
-            <Typography component="li">Require manual cleanup of external references</Typography>
-          </Box>
-          
-          <Typography sx={{ mb: 2, fontWeight: 'bold' }}>
-            To confirm deletion, type exactly: <strong>delete {editedApplication?.name}</strong>
-          </Typography>
-          
-          <TextField
-            fullWidth
-            value={deleteConfirmation}
-            placeholder={`delete ${editedApplication?.name}`}
-            onChange={(e) => handleDeleteConfirmationChange(e.target.value)}
-            sx={{
-              '& .MuiInputLabel-root': { color: currentTheme.textSecondary },
-              '& .MuiOutlinedInput-root': {
-                color: currentTheme.text,
-                '& fieldset': { borderColor: currentTheme.border },
-                '&:hover fieldset': { borderColor: currentTheme.primary },
-                '&.Mui-focused fieldset': { borderColor: currentTheme.primary }
-              },
-              '& .MuiInputBase-input': { color: currentTheme.text },
-            }}
-          />
-          
-          <Box sx={{ mt: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
-            {canDelete ? (
-              <Typography variant="body2" sx={{ color: 'success.main', display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                ✓ Confirmation text matches
-              </Typography>
-            ) : (
-              <Typography variant="body2" sx={{ color: currentTheme.textSecondary, display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                Type exactly: <strong>delete {editedApplication?.name}</strong>
-              </Typography>
-            )}
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button 
-            onClick={() => {
-              setShowDeleteDialog(false);
-              setDeleteConfirmation('');
-              setCanDelete(false);
-            }} 
-            sx={{ color: currentTheme.text }}
-          >
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            color="error"
-            onClick={handleDelete}
-            disabled={!canDelete}
-            sx={{
-              bgcolor: '#f44336',
-              color: 'white',
-              '&:hover': {
-                bgcolor: '#d32f2f',
-              },
-              '&:disabled': {
-                bgcolor: '#ccc',
-                color: '#666',
-              },
-            }}
-          >
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
+        <Typography sx={{ mb: 2 }}>
+          This will:
+        </Typography>
+        <Box component="ul" sx={{ pl: 2, mb: 3 }}>
+          <Typography component="li">Permanently delete the application "{editedApplication?.name}"</Typography>
+          <Typography component="li">Remove all application data and configurations</Typography>
+          <Typography component="li">Break any existing agreements that reference this application</Typography>
+          <Typography component="li">Require manual cleanup of external references</Typography>
+        </Box>
+      </DeleteModal>
 
     </Container>
   );

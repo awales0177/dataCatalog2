@@ -7,14 +7,88 @@
         "description": "A comprehensive data validation function that checks data types, formats, and business rules",
         "language": "python",
         "category": "data-processing",
-        "tags": ["validation", "data", "python", "utility"],
+        "tags": [
+          "validation",
+          "data",
+          "python",
+          "utility"
+        ],
         "code": "def validate_data(data, schema):\n    # Data validation logic here\n    pass",
         "author": "Data Team",
         "version": "1.0.0",
         "lastUpdated": "2024-01-15T10:00:00Z",
         "usage": "Import and use for any data validation needs",
-        "dependencies": ["pydantic", "jsonschema"],
-        "examples": ["data_cleaning", "api_validation", "database_checks"],
+        "dependencies": [
+          "pydantic",
+          "jsonschema"
+        ],
+        "examples": [
+          "data_cleaning",
+          "api_validation",
+          "database_checks"
+        ],
+        "parameters": [
+          {
+            "name": "data",
+            "type": "any",
+            "description": "The data to be validated against the schema",
+            "required": true,
+            "example": {
+              "name": "John",
+              "age": 30
+            }
+          },
+          {
+            "name": "schema",
+            "type": "dict",
+            "description": "The validation schema defining the expected data structure",
+            "required": true,
+            "example": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "age": {
+                  "type": "number"
+                }
+              }
+            }
+          },
+          {
+            "name": "strict",
+            "type": "boolean",
+            "description": "Whether to enforce strict validation rules",
+            "required": false,
+            "default": false,
+            "allowedValues": [
+              true,
+              false
+            ]
+          },
+          {
+            "name": "maxErrors",
+            "type": "integer",
+            "description": "Maximum number of validation errors to collect before stopping",
+            "required": false,
+            "default": 10,
+            "min": 1,
+            "max": 100
+          },
+          {
+            "name": "datetype",
+            "type": "string",
+            "description": "Type of data to validate - either date or time format",
+            "required": true,
+            "allowedValues": [
+              "date",
+              "time"
+            ],
+            "default": "date",
+            "example": "date"
+          }
+        ],
+        "git": "https://github.com/example/data-validation-utility",
         "rating": 4.8,
         "downloads": 156
       },
@@ -24,14 +98,69 @@
         "description": "Efficient rate limiting implementation for API endpoints with Redis backend",
         "language": "javascript",
         "category": "api-management",
-        "tags": ["rate-limiting", "api", "redis", "performance"],
+        "tags": [
+          "rate-limiting",
+          "api",
+          "redis",
+          "performance"
+        ],
         "code": "class RateLimiter {\n  constructor(options) {\n    // Rate limiting logic\n  }\n}",
         "author": "DevOps Team",
         "version": "2.1.0",
         "lastUpdated": "2024-01-20T14:30:00Z",
         "usage": "Add to Express.js middleware for API protection",
-        "dependencies": ["redis", "express"],
-        "examples": ["user_api", "public_api", "webhook_endpoints"],
+        "dependencies": [
+          "redis",
+          "express"
+        ],
+        "examples": [
+          "user_api",
+          "public_api",
+          "webhook_endpoints"
+        ],
+        "parameters": [
+          {
+            "name": "options",
+            "type": "object",
+            "description": "Configuration options for the rate limiter including limits and time windows",
+            "required": true,
+            "example": {
+              "maxRequests": 100,
+              "windowMs": 60000
+            }
+          },
+          {
+            "name": "maxRequests",
+            "type": "integer",
+            "description": "Maximum number of requests allowed per time window",
+            "required": false,
+            "default": 100,
+            "min": 1,
+            "max": 10000
+          },
+          {
+            "name": "windowMs",
+            "type": "integer",
+            "description": "Time window in milliseconds for rate limiting",
+            "required": false,
+            "default": 60000,
+            "min": 1000,
+            "max": 3600000,
+            "example": 60000
+          },
+          {
+            "name": "skipSuccessfulRequests",
+            "type": "boolean",
+            "description": "Whether to skip rate limiting for successful requests",
+            "required": false,
+            "default": false,
+            "allowedValues": [
+              true,
+              false
+            ]
+          }
+        ],
+        "git": "https://github.com/example/api-rate-limiter",
         "rating": 4.9,
         "downloads": 89
       }
@@ -43,15 +172,27 @@
         "description": "Ready-to-use PostgreSQL container with common development tools and extensions",
         "type": "docker",
         "category": "database",
-        "tags": ["postgresql", "database", "development", "docker"],
+        "tags": [
+          "postgresql",
+          "database",
+          "development",
+          "docker"
+        ],
         "dockerfile": "FROM postgres:15\n# Development setup\nRUN apt-get update && apt-get install -y \\\n    postgresql-contrib \\\n    postgresql-15-postgis-3",
         "dockerCompose": "version: '3.8'\nservices:\n  postgres:\n    build: .\n    environment:\n      POSTGRES_DB: devdb\n      POSTGRES_USER: devuser",
         "author": "Infrastructure Team",
         "version": "1.2.0",
         "lastUpdated": "2024-01-18T09:15:00Z",
         "usage": "Perfect for local development and testing",
-        "dependencies": ["docker", "docker-compose"],
-        "examples": ["local_dev", "testing", "ci_cd"],
+        "dependencies": [
+          "docker",
+          "docker-compose"
+        ],
+        "examples": [
+          "local_dev",
+          "testing",
+          "ci_cd"
+        ],
         "rating": 4.7,
         "downloads": 203
       },
@@ -61,27 +202,44 @@
         "description": "Lightweight Node.js container optimized for microservices with health checks",
         "type": "docker",
         "category": "runtime",
-        "tags": ["nodejs", "microservice", "health-check", "optimized"],
+        "tags": [
+          "nodejs",
+          "microservice",
+          "health-check",
+          "optimized"
+        ],
         "dockerfile": "FROM node:18-alpine\nWORKDIR /app\nCOPY package*.json ./\nRUN npm ci --only=production",
         "dockerCompose": "version: '3.8'\nservices:\n  app:\n    build: .\n    ports:\n      - '3000:3000'\n    healthcheck:\n      test: ['CMD', 'curl', '-f', 'http://localhost:3000/health']",
         "author": "Backend Team",
         "version": "1.0.0",
         "lastUpdated": "2024-01-22T16:45:00Z",
         "usage": "Base image for Node.js microservices",
-        "dependencies": ["docker"],
-        "examples": ["api_service", "worker_service", "webhook_service"],
+        "dependencies": [
+          "docker"
+        ],
+        "examples": [
+          "api_service",
+          "worker_service",
+          "webhook_service"
+        ],
         "rating": 4.6,
         "downloads": 134
       }
     ],
-    "terraform": [
+    "infrastructure": [
       {
         "id": "tf_001",
         "name": "AWS VPC with Private Subnets",
         "description": "Complete VPC setup with public/private subnets, NAT gateway, and security groups",
         "provider": "aws",
         "category": "networking",
-        "tags": ["aws", "vpc", "networking", "security", "terraform"],
+        "tags": [
+          "aws",
+          "vpc",
+          "networking",
+          "security",
+          "infrastructure"
+        ],
         "mainTf": "resource \"aws_vpc\" \"main\" {\n  cidr_block = var.vpc_cidr\n  \n  tags = {\n    Name = \"${var.environment}-vpc\"\n  }\n}",
         "variablesTf": "variable \"vpc_cidr\" {\n  description = \"CIDR block for VPC\"\n  type        = string\n  default     = \"10.0.0.0/16\"\n}",
         "outputsTf": "output \"vpc_id\" {\n  value = aws_vpc.main.id\n}",
@@ -89,8 +247,15 @@
         "version": "2.0.0",
         "lastUpdated": "2024-01-19T11:20:00Z",
         "usage": "Deploy secure VPC infrastructure for production workloads",
-        "dependencies": ["terraform", "aws_provider"],
-        "examples": ["production_env", "staging_env", "multi_az_setup"],
+        "dependencies": [
+          "terraform",
+          "aws_provider"
+        ],
+        "examples": [
+          "production_env",
+          "staging_env",
+          "multi_az_setup"
+        ],
         "rating": 4.9,
         "downloads": 312
       },
@@ -100,7 +265,13 @@
         "description": "Production-ready GKE cluster with node pools, monitoring, and logging",
         "provider": "gcp",
         "category": "kubernetes",
-        "tags": ["gcp", "kubernetes", "gke", "monitoring", "terraform"],
+        "tags": [
+          "gcp",
+          "kubernetes",
+          "gke",
+          "monitoring",
+          "infrastructure"
+        ],
         "mainTf": "resource \"google_container_cluster\" \"primary\" {\n  name     = var.cluster_name\n  location = var.region\n  \n  node_config {\n    machine_type = var.machine_type\n  }\n}",
         "variablesTf": "variable \"cluster_name\" {\n  description = \"Name of the GKE cluster\"\n  type        = string\n}",
         "outputsTf": "output \"cluster_endpoint\" {\n  value = google_container_cluster.primary.endpoint\n}",
@@ -108,8 +279,15 @@
         "version": "1.5.0",
         "lastUpdated": "2024-01-21T13:10:00Z",
         "usage": "Deploy managed Kubernetes clusters on Google Cloud",
-        "dependencies": ["terraform", "google_provider"],
-        "examples": ["production_cluster", "development_cluster", "multi_region"],
+        "dependencies": [
+          "terraform",
+          "google_provider"
+        ],
+        "examples": [
+          "production_cluster",
+          "development_cluster",
+          "multi_region"
+        ],
         "rating": 4.8,
         "downloads": 178
       }
@@ -124,8 +302,23 @@
     "kubernetes": "Kubernetes manifests, operators, and configurations"
   },
   "tags": [
-    "python", "javascript", "docker", "terraform", "aws", "gcp", "kubernetes",
-    "validation", "api", "database", "microservice", "networking", "security",
-    "monitoring", "development", "production", "testing", "ci_cd"
+    "python",
+    "javascript",
+    "docker",
+    "infrastructure",
+    "aws",
+    "gcp",
+    "kubernetes",
+    "validation",
+    "api",
+    "database",
+    "microservice",
+    "networking",
+    "security",
+    "monitoring",
+    "development",
+    "production",
+    "testing",
+    "ci_cd"
   ]
 }

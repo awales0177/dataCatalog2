@@ -3,22 +3,22 @@ import {
   Box,
   Container,
   Typography,
-  TextField,
-  InputAdornment,
+  Paper,
   Chip,
   Grid,
+  Divider,
+  Link,
   Card,
   CardContent,
-  CardActions,
-  Button,
-  Rating,
   Badge,
   alpha,
-  Fab,
-  Snackbar,
-  Alert,
+  LinearProgress,
+  Tooltip,
+  TextField,
+  InputAdornment,
   Tabs,
   Tab,
+  Fab,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -27,25 +27,22 @@ import {
   Cloud as CloudIcon,
   Add as AddIcon,
   Download as DownloadIcon,
-  Person as PersonIcon,
-  Schedule as ScheduleIcon,
-  Info as InfoIcon,
-  Visibility as ViewIcon,
 } from '@mui/icons-material';
 import { ThemeContext } from '../App';
 import { fetchData } from '../services/api';
+import { useNavigate } from 'react-router-dom';
 
 const ToolkitPage = () => {
   const { currentTheme } = useContext(ThemeContext);
+  const navigate = useNavigate();
   const [toolkitData, setToolkitData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTab, setSelectedTab] = useState(0);
-  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
 
-  // Load toolkit data
   useEffect(() => {
-    const loadToolkitData = async () => {
+    const loadData = async () => {
       try {
         const data = await fetchData('toolkit');
         setToolkitData(data);
@@ -57,28 +54,27 @@ const ToolkitPage = () => {
       }
     };
 
-    loadToolkitData();
+    loadData();
   }, []);
 
   // Filter components based on search
   const getFilteredComponents = () => {
-    if (!toolkitData) return { functions: [], containers: [], terraform: [] };
+    if (!toolkitData) return { functions: [], containers: [], infrastructure: [] };
 
     let filtered = {
       functions: toolkitData.toolkit.functions || [],
       containers: toolkitData.toolkit.containers || [],
-      terraform: toolkitData.toolkit.terraform || []
+      infrastructure: toolkitData.toolkit.infrastructure || []
     };
 
-    // Apply search filter
-    if (searchTerm) {
+    if (searchTerm.trim()) {
       const searchLower = searchTerm.toLowerCase();
       Object.keys(filtered).forEach(key => {
-        filtered[key] = filtered[key].filter(item =>
-          item.name.toLowerCase().includes(searchLower) ||
-          item.description.toLowerCase().includes(searchLower) ||
-          item.tags.some(tag => tag.toLowerCase().includes(searchLower)) ||
-          item.author.toLowerCase().includes(searchLower)
+        filtered[key] = filtered[key].filter(component =>
+          component.name.toLowerCase().includes(searchLower) ||
+          component.description.toLowerCase().includes(searchLower) ||
+          component.tags.some(tag => tag.toLowerCase().includes(searchLower)) ||
+          component.author.toLowerCase().includes(searchLower)
         );
       });
     }
@@ -88,81 +84,148 @@ const ToolkitPage = () => {
 
   const filteredComponents = getFilteredComponents();
 
-
-
   // Component card renderer
   const renderComponentCard = (component, type) => {
+    const getLanguageIcon = (language) => {
+      if (!language) return <CodeIcon />;
+      
+      const languageLower = language.toLowerCase();
+      switch (languageLower) {
+        case 'python':
+          return <img src="/python.svg" alt="Python" style={{ width: 20, height: 20 }} />;
+        case 'javascript':
+        case 'js':
+          return <img src="/javascript.svg" alt="JavaScript" style={{ width: 20, height: 20 }} />;
+        case 'java':
+          return <img src="/java.svg" alt="Java" style={{ width: 20, height: 20 }} />;
+        case 'ruby':
+          return <img src="/ruby.svg" alt="Ruby" style={{ width: 20, height: 20 }} />;
+        case 'typescript':
+        case 'ts':
+          return <img src="/typescript.svg" alt="TypeScript" style={{ width: 20, height: 20 }} />;
+        case 'go':
+          return <img src="/go.svg" alt="Go" style={{ width: 20, height: 20 }} />;
+        case 'rust':
+          return <img src="/rust.svg" alt="Rust" style={{ width: 20, height: 20 }} />;
+        case 'php':
+          return <img src="/php.svg" alt="PHP" style={{ width: 20, height: 20 }} />;
+        case 'swift':
+          return <img src="/swift.svg" alt="Swift" style={{ width: 20, height: 20 }} />;
+        case 'kotlin':
+          return <img src="/kotlin.svg" alt="Kotlin" style={{ width: 20, height: 20 }} />;
+        case 'scala':
+          return <img src="/scala.svg" alt="Scala" style={{ width: 20, height: 20 }} />;
+        case 'r':
+          return <img src="/r.svg" alt="R" style={{ width: 20, height: 20 }} />;
+        case 'sql':
+          return <img src="/sql.svg" alt="SQL" style={{ width: 20, height: 20 }} />;
+        case 'bash':
+        case 'shell':
+          return <img src="/bash.svg" alt="Bash" style={{ width: 20, height: 20 }} />;
+        case 'yaml':
+        case 'yml':
+          return <img src="/yaml.svg" alt="YAML" style={{ width: 20, height: 20 }} />;
+        case 'json':
+          return <img src="/json.svg" alt="JSON" style={{ width: 20, height: 20 }} />;
+        case 'xml':
+          return <img src="/xml.svg" alt="XML" style={{ width: 20, height: 20 }} />;
+        case 'html':
+          return <img src="/html.svg" alt="HTML" style={{ width: 20, height: 20 }} />;
+        case 'css':
+          return <img src="/css.svg" alt="CSS" style={{ width: 20, height: 20 }} />;
+        default:
+          return <CodeIcon />;
+      }
+    };
+
     const getTypeIcon = () => {
       switch (type) {
-        case 'functions': return <CodeIcon />;
-        case 'containers': return <StorageIcon />;
-        case 'terraform': return <CloudIcon />;
-        default: return <CodeIcon />;
+        case 'functions': 
+          return getLanguageIcon(component.language);
+        case 'containers': 
+          return <StorageIcon />;
+        case 'infrastructure': 
+          return <CloudIcon />;
+        default: 
+          return <CodeIcon />;
       }
     };
 
     const getTypeColor = () => {
       switch (type) {
-        case 'functions': return 'primary';
-        case 'containers': return 'secondary';
-        case 'terraform': return 'success';
-        default: return 'primary';
+        case 'functions': return currentTheme.primary;
+        case 'containers': return currentTheme.secondary || '#9c27b0';
+        case 'infrastructure': return currentTheme.success || '#4caf50';
+        default: return currentTheme.primary;
       }
     };
+
+    // Convert rating to percentage for progress bar
+    const ratingPercentage = (component.rating / 5) * 100;
 
     return (
       <Card 
         key={component.id} 
         elevation={0}
+        onClick={() => handleViewComponent(component, type)}
         sx={{ 
           height: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          bgcolor: currentTheme.card,
-          border: `1px solid ${currentTheme.border}`,
           borderRadius: 2,
           transition: 'all 0.2s ease-in-out',
+          bgcolor: currentTheme.card,
+          border: `1px solid ${currentTheme.border}`,
+          cursor: 'pointer',
           '&:hover': {
             transform: 'translateY(-4px)',
             boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
           }
         }}
       >
-        <CardContent sx={{ flexGrow: 1 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-            <Chip
-              icon={getTypeIcon()}
-              label={type.charAt(0).toUpperCase() + type.slice(1)}
-              color={getTypeColor()}
-              size="small"
-            />
-            <Box sx={{ ml: 'auto' }}>
-              <Rating value={component.rating} readOnly size="small" />
+        <CardContent>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+            <Box>
+              <Typography variant="h6" sx={{ fontWeight: 600, color: currentTheme.text }}>
+                {component.name}
+              </Typography>
+              <Typography 
+                variant="caption" 
+                sx={{ 
+                  color: currentTheme.textSecondary,
+                  fontWeight: 500,
+                  letterSpacing: '0.5px',
+                }}
+              >
+                {component.id}
+              </Typography>
+            </Box>
+            <Box
+              sx={{
+                p: 1,
+                borderRadius: 1,
+                bgcolor: alpha(getTypeColor(), 0.1),
+                color: getTypeColor(),
+                display: 'flex',
+                alignItems: 'center'
+              }}
+            >
+              {getTypeIcon()}
             </Box>
           </Box>
 
-          <Typography variant="h6" sx={{ mb: 1, color: currentTheme.text, fontWeight: 600 }}>
-            {component.name}
-          </Typography>
-
-          <Typography variant="body2" sx={{ mb: 2, color: currentTheme.textSecondary, lineHeight: 1.5 }}>
+          <Typography variant="body2" sx={{ color: currentTheme.textSecondary, mb: 2 }}>
             {component.description}
           </Typography>
 
-          <Box sx={{ mb: 2 }}>
+          <Box sx={{ mb: 2, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
             {component.tags.slice(0, 4).map((tag, index) => (
               <Chip
                 key={index}
                 label={tag}
                 size="small"
-                sx={{ 
-                  mr: 0.5, 
-                  mb: 0.5,
+                sx={{
                   bgcolor: alpha(currentTheme.primary, 0.1),
                   color: currentTheme.primary,
-                  '&:hover': {
-                    bgcolor: alpha(currentTheme.primary, 0.2),
-                  }
+                  fontWeight: 500,
                 }}
               />
             ))}
@@ -170,89 +233,89 @@ const ToolkitPage = () => {
               <Chip
                 label={`+${component.tags.length - 4} more`}
                 size="small"
-                variant="outlined"
-                sx={{ 
-                  mr: 0.5, 
-                  mb: 0.5,
-                  borderColor: currentTheme.border,
-                  color: currentTheme.textSecondary
+                sx={{
+                  bgcolor: alpha(currentTheme.primary, 0.1),
+                  color: currentTheme.primary,
+                  fontWeight: 500,
                 }}
               />
             )}
           </Box>
 
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2, fontSize: '0.875rem' }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: currentTheme.textSecondary }}>
-              <PersonIcon fontSize="small" />
-              {component.author}
+          <Box sx={{ mb: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
+              <Typography variant="caption" sx={{ color: currentTheme.textSecondary, mr: 1 }}>
+                Rating
+              </Typography>
+              <Typography variant="caption" sx={{ color: currentTheme.primary, fontWeight: 600 }}>
+                {component.rating}/5
+              </Typography>
             </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: currentTheme.textSecondary }}>
-              <ScheduleIcon fontSize="small" />
-              {new Date(component.lastUpdated).toLocaleDateString()}
-            </Box>
+            <LinearProgress
+              variant="determinate"
+              value={ratingPercentage}
+              sx={{
+                height: 6,
+                borderRadius: 3,
+                bgcolor: alpha(currentTheme.primary, 0.1),
+                '& .MuiLinearProgress-bar': {
+                  bgcolor: currentTheme.primary,
+                  borderRadius: 3,
+                },
+              }}
+            />
           </Box>
 
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, fontSize: '0.875rem' }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: currentTheme.textSecondary }}>
-              <InfoIcon fontSize="small" />
-              v{component.version}
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Tooltip title={`${component.downloads} downloads`}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  <Typography variant="body2" sx={{ color: currentTheme.textSecondary }}>
+                    {component.downloads}
+                  </Typography>
+                  <DownloadIcon sx={{ fontSize: 16, color: '#FF9800' }} />
+                </Box>
+              </Tooltip>
             </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: currentTheme.textSecondary }}>
-              <DownloadIcon fontSize="small" />
-              {component.downloads} downloads
-            </Box>
+            <Tooltip title={`v${component.version} - ${new Date(component.lastUpdated).toLocaleDateString()}`}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Box
+                  sx={{
+                    px: 1,
+                    py: 0.5,
+                    borderRadius: 1,
+                    bgcolor: alpha(currentTheme.primary, 0.1),
+                    color: currentTheme.primary,
+                    fontSize: '0.75rem',
+                  }}
+                >
+                  v{component.version}
+                </Box>
+              </Box>
+            </Tooltip>
           </Box>
         </CardContent>
-
-        <CardActions sx={{ p: 2, pt: 0 }}>
-          <Button
-            size="small"
-            variant="outlined"
-            startIcon={<ViewIcon />}
-            onClick={() => handleViewComponent(component, type)}
-            sx={{
-              color: currentTheme.primary,
-              borderColor: currentTheme.border,
-              '&:hover': {
-                borderColor: currentTheme.primary,
-                bgcolor: alpha(currentTheme.primary, 0.1),
-              },
-            }}
-          >
-            View Details
-          </Button>
-          <Button
-            size="small"
-            variant="contained"
-            startIcon={<DownloadIcon />}
-            onClick={() => handleDownloadComponent(component, type)}
-            sx={{
-              bgcolor: currentTheme.primary,
-              '&:hover': {
-                bgcolor: currentTheme.primary,
-                opacity: 0.9,
-              },
-            }}
-          >
-            Download
-          </Button>
-        </CardActions>
       </Card>
     );
   };
 
   // Handle component viewing
   const handleViewComponent = (component, type) => {
-    // TODO: Implement detailed view modal
-    console.log('View component:', component, type);
+    if (type === 'functions') {
+      navigate(`/toolkit/function/${component.id}`);
+    } else {
+      // TODO: Implement detailed view for containers and infrastructure
+      console.log('View component:', component, type);
+      setSnackbar({ open: true, message: `Viewing ${component.name} details`, severity: 'info' });
+    }
   };
 
-  // Handle component download
-  const handleDownloadComponent = (component, type) => {
-    // TODO: Implement download functionality
-    console.log('Download component:', component, type);
-    setSnackbar({ open: true, message: 'Download started!', severity: 'success' });
-  };
+  // Handle component download - removed as cards are now clickable for viewing
+  // const handleDownloadComponent = (component, type) => {
+  //   // TODO: Implement download functionality
+  //   console.log('Download component:', component, type);
+  //   setSnackbar({ open: true, message: 'Download started!', severity: 'success' });
+  // };
 
   if (loading) {
     return (
@@ -293,27 +356,22 @@ const ToolkitPage = () => {
           sx={{
             '& .MuiOutlinedInput-root': {
               bgcolor: currentTheme.card,
-              '& fieldset': {
-                borderColor: currentTheme.border,
-              },
-              '&:hover fieldset': {
+              borderColor: currentTheme.border,
+              '&:hover .MuiOutlinedInput-notchedOutline': {
                 borderColor: currentTheme.primary,
               },
-              '&.Mui-focused fieldset': {
+              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
                 borderColor: currentTheme.primary,
               },
-            },
-            '& .MuiInputBase-input': {
-              color: currentTheme.text,
             },
           }}
         />
       </Box>
 
       {/* Tabs */}
-      <Box sx={{ borderBottom: 1, borderColor: currentTheme.border, mb: 3 }}>
-        <Tabs 
-          value={selectedTab} 
+      <Box sx={{ mb: 3 }}>
+        <Tabs
+          value={selectedTab}
           onChange={(e, newValue) => setSelectedTab(newValue)}
           sx={{
             '& .MuiTab-root': {
@@ -327,38 +385,38 @@ const ToolkitPage = () => {
             },
           }}
         >
-          <Tab 
+          <Tab
             label={
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 <CodeIcon />
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                   Functions
-                  <Badge badgeContent={filteredComponents.functions.length} color="primary" />
+                  <Badge badgeContent={filteredComponents.functions.length} />
                 </Box>
               </Box>
-            } 
+            }
           />
-          <Tab 
+          <Tab
             label={
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 <StorageIcon />
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                   Containers
-                  <Badge badgeContent={filteredComponents.containers.length} color="secondary" />
+                  <Badge badgeContent={filteredComponents.containers.length} />
                 </Box>
               </Box>
-            } 
+            }
           />
-          <Tab 
+          <Tab
             label={
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 <CloudIcon />
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  Terraform
-                  <Badge badgeContent={filteredComponents.terraform.length} color="success" />
+                  Infrastructure
+                  <Badge badgeContent={filteredComponents.infrastructure.length} />
                 </Box>
               </Box>
-            } 
+            }
           />
         </Tabs>
       </Box>
@@ -377,33 +435,18 @@ const ToolkitPage = () => {
           </Grid>
         ))}
         
-        {selectedTab === 2 && filteredComponents.terraform.map(component => (
+        {selectedTab === 2 && filteredComponents.infrastructure.map(component => (
           <Grid item xs={12} sm={6} md={4} lg={3} key={component.id}>
-            {renderComponentCard(component, 'terraform')}
+            {renderComponentCard(component, 'infrastructure')}
           </Grid>
         ))}
       </Grid>
 
-      {/* Empty State */}
-      {Object.values(filteredComponents).every(arr => arr.length === 0) && (
-        <Box sx={{ textAlign: 'center', py: 8 }}>
-          <Typography variant="h6" sx={{ color: currentTheme.textSecondary, mb: 2 }}>
-            No components found
-          </Typography>
-          <Typography variant="body2" sx={{ color: currentTheme.textSecondary }}>
-            Try adjusting your search terms or filters
-          </Typography>
-        </Box>
-      )}
-
-      {/* Add Component FAB */}
+      {/* Floating Action Button for creating new function */}
       <Fab
         color="primary"
-        aria-label="add component"
-        onClick={() => {
-          // TODO: Implement add component dialog
-          setSnackbar({ open: true, message: 'Add component feature coming soon!', severity: 'info' });
-        }}
+        aria-label="add new function"
+        onClick={() => navigate('/toolkit/function/new')}
         sx={{
           position: 'fixed',
           bottom: 24,
@@ -411,7 +454,7 @@ const ToolkitPage = () => {
           bgcolor: currentTheme.primary,
           color: currentTheme.background,
           '&:hover': {
-            bgcolor: currentTheme.primaryDark || currentTheme.primary
+            bgcolor: currentTheme.primaryDark || currentTheme.primary,
           },
           zIndex: 1000,
         }}
@@ -420,24 +463,27 @@ const ToolkitPage = () => {
       </Fab>
 
       {/* Snackbar */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-      >
-        <Alert
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
-          severity={snackbar.severity}
-          sx={{ 
-            width: '100%',
-            bgcolor: currentTheme.card,
-            color: currentTheme.text,
-            border: `1px solid ${currentTheme.border}`,
+      {snackbar.open && (
+        <Box
+          sx={{
+            position: 'fixed',
+            bottom: 24,
+            left: 24,
+            zIndex: 1000,
+            bgcolor: snackbar.severity === 'error' ? '#f44336' : 
+                     snackbar.severity === 'success' ? '#4caf50' : '#2196f3',
+            color: 'white',
+            px: 3,
+            py: 2,
+            borderRadius: 2,
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+            cursor: 'pointer',
           }}
+          onClick={() => setSnackbar({ ...snackbar, open: false })}
         >
           {snackbar.message}
-        </Alert>
-      </Snackbar>
+        </Box>
+      )}
     </Container>
   );
 };

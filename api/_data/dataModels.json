@@ -723,42 +723,6 @@
       "shortName": "TEST",
       "name": "Test Model",
       "description": "Test Description"
-    },
-    {
-      "id": 20,
-      "shortName": "ASY",
-      "name": "Product Team Model",
-      "description": "hi",
-      "version": "1.0.0",
-      "extendedDescription": "",
-      "owner": "",
-      "specMaintainer": "",
-      "maintainerEmail": "",
-      "domain": [],
-      "referenceData": [],
-      "meta": {
-        "tier": "gold",
-        "verified": false
-      },
-      "changelog": [
-        {
-          "version": "1.0.0",
-          "date": "2025-08-12",
-          "changes": [
-            "Initial model creation"
-          ]
-        }
-      ],
-      "resources": {
-        "code": "",
-        "documentation": "",
-        "rules": "",
-        "tools": {},
-        "git": "",
-        "validation": ""
-      },
-      "users": [],
-      "lastUpdated": "2025-08-13 20:19:51"
     }
   ]
 }

@@ -9,10 +9,6 @@ import {
   Chip,
   Switch,
   FormControlLabel,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Snackbar,
   Alert,
   Select,
@@ -24,7 +20,12 @@ import {
   Divider,
   Tooltip,
   CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
+import DeleteModal from '../components/DeleteModal';
 
 import {
   ArrowBack as ArrowBackIcon,
@@ -73,8 +74,7 @@ const EditAgreementPage = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [deleteConfirmation, setDeleteConfirmation] = useState('');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showDeleteArrayDialog, setShowDeleteArrayDialog] = useState(false);
   const [deleteArrayItem, setDeleteArrayItem] = useState({ path: '', index: -1, label: '' });
 
@@ -680,19 +680,10 @@ const EditAgreementPage = () => {
   };
 
   const handleDeleteAgreement = () => {
-    setShowDeleteDialog(true);
+    setShowDeleteModal(true);
   };
 
   const confirmDeleteAgreement = async () => {
-    if (deleteConfirmation !== `delete ${agreement.name}`) {
-      setSnackbar({
-        open: true,
-        message: 'Please type the exact confirmation text',
-        severity: 'error'
-      });
-      return;
-    }
-
     try {
       await deleteAgreement(finalAgreementId);
       setSnackbar({
@@ -2120,66 +2111,34 @@ const EditAgreementPage = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Delete Agreement Confirmation Dialog */}
-      <Dialog
-        open={showDeleteDialog}
-        onClose={() => setShowDeleteDialog(false)}
-        maxWidth="sm"
-        fullWidth
-        PaperProps={{
-          sx: {
-            bgcolor: currentTheme.card,
-            color: currentTheme.text,
-            border: `1px solid ${currentTheme.border}`
-          }
-        }}
+      {/* Delete Agreement Modal */}
+      <DeleteModal
+        open={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={confirmDeleteAgreement}
+        title="Delete Agreement"
+        itemName={agreement?.name}
+        itemType="agreement"
+        theme={currentTheme}
       >
-        <DialogTitle sx={{ color: currentTheme.text }}>
-          Delete Agreement
-        </DialogTitle>
-        <DialogContent sx={{ color: currentTheme.text }}>
-          <Typography sx={{ mb: 2 }}>
-            This action cannot be undone. This will permanently delete the agreement:
+        <Box sx={{ p: 2, bgcolor: currentTheme.darkMode ? 'rgba(255, 0, 0, 0.1)' : 'rgba(255, 0, 0, 0.05)', borderRadius: 1, mb: 2 }}>
+          <Typography variant="h6" sx={{ color: 'error.main', mb: 1 }}>
+            {agreement?.name}
           </Typography>
-          <Box sx={{ p: 2, bgcolor: currentTheme.darkMode ? 'rgba(255, 0, 0, 0.1)' : 'rgba(255, 0, 0, 0.05)', borderRadius: 1, mb: 2 }}>
-            <Typography variant="h6" sx={{ color: 'error.main', mb: 1 }}>
-              {agreement?.name}
-            </Typography>
-            <Typography variant="body2" sx={{ color: currentTheme.textSecondary }}>
-              ID: {agreement?.id}
-            </Typography>
-          </Box>
-          <Typography sx={{ mb: 2 }}>
-            To confirm deletion, type <strong>"delete {agreement?.name}"</strong> below:
+          <Typography variant="body2" sx={{ color: currentTheme.textSecondary }}>
+            ID: {agreement?.id}
           </Typography>
-          <TextField
-            fullWidth
-            value={deleteConfirmation}
-            onChange={(e) => setDeleteConfirmation(e.target.value)}
-            placeholder="Type the confirmation text"
-            sx={{
-              '& .MuiInputLabel-root': { color: currentTheme.textSecondary },
-              '& .MuiOutlinedInput-root': { 
-                color: currentTheme.text,
-                '& fieldset': { borderColor: currentTheme.border }
-              }
-            }}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setShowDeleteDialog(false)} sx={{ color: currentTheme.text }}>
-            Cancel
-          </Button>
-          <Button
-            onClick={confirmDeleteAgreement}
-            color="error"
-            variant="contained"
-            disabled={deleteConfirmation !== `delete ${agreement?.name}`}
-          >
-            Delete Agreement
-          </Button>
-        </DialogActions>
-      </Dialog>
+        </Box>
+        <Typography sx={{ mb: 2 }}>
+          This will:
+        </Typography>
+        <Box component="ul" sx={{ pl: 2, mb: 3 }}>
+          <Typography component="li">Permanently delete the agreement "{agreement?.name}"</Typography>
+          <Typography component="li">Remove all agreement data and configurations</Typography>
+          <Typography component="li">Break any existing references to this agreement</Typography>
+          <Typography component="li">Require manual cleanup of external references</Typography>
+        </Box>
+      </DeleteModal>
 
       {/* Snackbar */}
       <Snackbar

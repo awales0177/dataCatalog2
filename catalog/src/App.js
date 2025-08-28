@@ -83,6 +83,8 @@ import ProductAgreementDetailPage from './pages/ProductAgreementDetailPage';
 import EditAgreementPage from './pages/EditAgreementPage';
 import ReferenceDataDetailPage from './pages/ReferenceDataDetailPage';
 import ToolkitPage from './pages/ToolkitPage';
+import ToolkitFunctionDetailPage from './pages/ToolkitFunctionDetailPage';
+import EditToolkitFunctionPage from './pages/EditToolkitFunctionPage';
 import DataPoliciesPage from './pages/DataPoliciesPage';
 
 import InfoSidebar from './components/InfoSidebar';
@@ -725,12 +727,6 @@ const menuItems = [
     id: 'specifications'
   },
   {
-    name: 'Product Agreements',
-    path: '/agreements',
-    icon: <MdHandshake />,
-    id: 'agreements'
-  },
-  {
     name: 'Toolkit',
     path: '/toolkit',
     icon: <FiTool />,
@@ -747,6 +743,12 @@ const menuItems = [
     path: '/applications',
     icon: <AiOutlineAppstore />,
     id: 'applications'
+  },
+  {
+    name: 'Product Agreements',
+    path: '/agreements',
+    icon: <MdHandshake />,
+    id: 'agreements'
   },
   {
     name: 'Data Policies',
@@ -798,6 +800,8 @@ function AppContent() {
       title = 'Data Applications';
     } else if (path === '/toolkit') {
       title = 'Developer Toolkit';
+    } else if (path.startsWith('/toolkit/function/')) {
+      title = 'Function Details';
     } else if (path === '/policies') {
       title = 'Data Policies';
     } else if (path === '/reference') {
@@ -882,16 +886,19 @@ function AppContent() {
     }
   };
 
-  // Add effect to handle sidebar collapse on 2-level navigation and edit mode
+  // Add effect to handle sidebar collapse on detail pages, 2-level navigation and edit mode
   useEffect(() => {
     const pathSegments = location.pathname.split('/').filter(segment => segment !== '');
     console.log('Current path segments:', pathSegments);
     
     // Collapse if we're exactly 2 levels deep (e.g., /specifications/CUST)
     // OR if we're in edit mode (e.g., /specifications/CUST/edit)
+    // OR if we're in detail view (e.g., /toolkit/function/123, /reference/456)
     if (pathSegments.length === 2 || 
-        (pathSegments.length === 3 && pathSegments[2] === 'edit')) {
-      console.log('Collapsing sidebar - 2-level navigation or edit mode detected');
+        (pathSegments.length === 3 && pathSegments[2] === 'edit') ||
+        (pathSegments.length === 3 && pathSegments[1] === 'function') ||
+        (pathSegments.length === 3 && pathSegments[1] === 'reference')) {
+      console.log('Collapsing sidebar - detail page, 2-level navigation or edit mode detected');
       setIsDrawerCollapsed(true);
     } else {
       console.log('Expanding sidebar - top level navigation');
@@ -957,8 +964,8 @@ function AppContent() {
     <>
       <List>
         {(menuData?.items || []).map((item, index) => {
-          // Add divider before Applications (start of second section)
-          const shouldAddDivider = item.id === 'applications' && !isDrawerCollapsed;
+          // Add divider before Product Agreements (start of second section)
+          const shouldAddDivider = item.id === 'agreements' && !isDrawerCollapsed;
           
           return (
             <React.Fragment key={item.path}>
@@ -1345,6 +1352,9 @@ function AppContent() {
         <Route path="/applications/create" element={<EditApplicationPage />} />
         <Route path="/applications/edit/:id" element={<EditApplicationPage />} />
         <Route path="/toolkit" element={<ToolkitPage />} />
+        <Route path="/toolkit/function/new" element={<EditToolkitFunctionPage />} />
+        <Route path="/toolkit/function/:functionId/edit" element={<EditToolkitFunctionPage />} />
+        <Route path="/toolkit/function/:functionId" element={<ToolkitFunctionDetailPage />} />
         <Route path="/policies" element={<DataPoliciesPage />} />
             <Route path="/reference" element={<ReferenceDataPage />} />
             <Route path="/reference/create" element={<EditReferenceDataPage currentTheme={currentTheme} />} />
