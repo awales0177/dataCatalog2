@@ -148,7 +148,7 @@
             "min": 1000,
             "max": 3600000,
             "example": 60000
-            },
+          },
           {
             "name": "skipSuccessfulRequests",
             "type": "boolean",

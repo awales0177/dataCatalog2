@@ -8,16 +8,13 @@ import {
   Container,
   CircularProgress,
   Alert,
-  useTheme,
   Fab,
 } from '@mui/material';
 import {
   Search as SearchIcon,
   Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
 } from '@mui/icons-material';
-import { ThemeContext } from '../App';
+import { ThemeContext } from '../contexts/ThemeContext';
 import { fetchData } from '../services/api';
 import ApplicationCard from '../components/ApplicationCard';
 import Pagination from '../components/Pagination';

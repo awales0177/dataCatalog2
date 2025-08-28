@@ -17,7 +17,7 @@ import {
   Search as SearchIcon,
   Add as AddIcon,
 } from '@mui/icons-material';
-import { ThemeContext } from '../App';
+import { ThemeContext } from '../contexts/ThemeContext';
 import { fetchAgreements } from '../services/api';
 import ProductAgreementCard from '../components/ProductAgreementCard';
 import Pagination from '../components/Pagination';

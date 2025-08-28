@@ -47,7 +47,7 @@ import {
   ExpandMore as ExpandMoreIcon,
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ThemeContext } from '../App';
+import { ThemeContext } from '../contexts/ThemeContext';
 import { fetchData, createReferenceItem, updateReferenceItem, deleteReferenceItem } from '../services/api';
 import cacheService from '../services/cache';
 

@@ -35,7 +35,7 @@ import SourceIcon from '@mui/icons-material/Source';
 import ApiIcon from '@mui/icons-material/Api';
 import StorageIcon from '@mui/icons-material/Storage';
 import { fetchData } from '../services/api';
-import { formatDate } from '../utils/dateUtils';
+import { formatDate } from '../utils/themeUtils';
 
 const ReferenceDataDetailPage = ({ currentTheme }) => {
   const { id } = useParams();
@@ -122,7 +122,7 @@ const ReferenceDataDetailPage = ({ currentTheme }) => {
           <Typography variant="h4" sx={{ color: currentTheme?.text }}>
             {item.name}
           </Typography>
-          <Typography variant="subtitle1" sx={{ color: currentTheme?.textSecondary }}>
+          <Typography variant="subtitle1" sx={{ color: currentTheme?.textSecondary, fontFamily: 'monospace' }}>
             {item.id}
           </Typography>
         </Box>

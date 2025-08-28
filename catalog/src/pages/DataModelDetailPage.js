@@ -141,7 +141,7 @@ const DataModelDetailPage = ({ currentTheme }) => {
     <Box sx={{ p: 3, maxWidth: 1200, margin: '0 auto' }}>
       <Box sx={{ mb: 3, display: 'flex', alignItems: 'flex-start', gap: 2 }}>
         <ArrowBackIcon 
-          onClick={() => navigate('/specifications')} 
+          onClick={() => navigate('/models')} 
           sx={{ 
             cursor: 'pointer',
             color: currentTheme.text,
@@ -176,6 +176,7 @@ const DataModelDetailPage = ({ currentTheme }) => {
                 color: currentTheme.textSecondary,
                 fontWeight: 500,
                 letterSpacing: '0.5px',
+                fontFamily: 'monospace',
               }}
             >
               {model.shortName}
@@ -186,7 +187,7 @@ const DataModelDetailPage = ({ currentTheme }) => {
         {/* Edit Mode Toggle */}
         <Tooltip title="Edit Model">
           <IconButton
-            onClick={() => navigate(`/specifications/${model.shortName}/edit`)}
+            onClick={() => navigate(`/models/${model.shortName}/edit`)}
             sx={{
               color: currentTheme.primary,
               bgcolor: alpha(currentTheme.primary, 0.1),

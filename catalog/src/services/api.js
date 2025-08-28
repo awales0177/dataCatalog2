@@ -544,5 +544,64 @@ export const deleteToolkitComponent = async (componentType, componentId) => {
   }
 };
 
+// Data Policy Management Functions
+export const createDataPolicy = async (policyData) => {
+  try {
+    const response = await fetch(`${API_URL}/policies`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(policyData),
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+    }
+    const result = await response.json();
+    cacheService.invalidateByPrefix('policies');
+    return result;
+  } catch (error) {
+    console.error('Error creating data policy:', error);
+    throw error;
+  }
+};
+
+export const updateDataPolicy = async (policyId, policyData) => {
+  try {
+    const response = await fetch(`${API_URL}/policies/${policyId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(policyData),
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+    }
+    const result = await response.json();
+    cacheService.invalidateByPrefix('policies');
+    return result;
+  } catch (error) {
+    console.error('Error updating data policy:', error);
+    throw error;
+  }
+};
+
+export const deleteDataPolicy = async (policyId) => {
+  try {
+    const response = await fetch(`${API_URL}/policies/${policyId}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+    }
+    const result = await response.json();
+    cacheService.invalidateByPrefix('policies');
+    return result;
+  } catch (error) {
+    console.error('Error deleting data policy:', error);
+    throw error;
+  }
+};
+
 // Export cache service for direct access when needed
 export { default as cacheService } from './cache';

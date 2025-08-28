@@ -48,7 +48,7 @@ import {
 } from '@mui/icons-material';
 import { GoVerified } from "react-icons/go";
 import { fetchData, updateModel, createModel, deleteModel } from '../services/api';
-import { formatDate, getQualityColor } from '../utils/themeUtils';
+import { formatDate } from '../utils/themeUtils';
 import cacheService from '../services/cache';
 import ChangelogEditor from '../components/ChangelogEditor';
 import DomainSelector from '../components/DomainSelector';
@@ -78,8 +78,8 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
   // Simple back function that goes back one level in the URL path
   const goToViewMode = () => {
     if (shortName === 'new') {
-      // For new models, go directly to specifications page
-      navigate('/specifications', { replace: true });
+      // For new models, go directly to models page
+      navigate('/models', { replace: true });
     } else {
       // Just go back one step in the URL path
       navigate(-1);
@@ -101,9 +101,9 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
             setLoading(false);
             return;
           } else {
-            // If no template found, redirect to specifications page
-            console.log('No new model template found, redirecting to specifications page');
-            navigate('/specifications', { replace: true });
+            // If no template found, redirect to models page
+            console.log('No new model template found, redirecting to models page');
+            navigate('/models', { replace: true });
             return;
           }
         }
@@ -149,8 +149,8 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
   useEffect(() => {
     const handlePopState = () => {
       if (shortName === 'new') {
-        // For new models, go directly to specifications page
-        navigate('/specifications', { replace: true });
+        // For new models, go directly to models page
+        navigate('/models', { replace: true });
       } else {
         // When browser back button is pressed, just go back one step
         navigate(-1);
@@ -511,7 +511,7 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
   const refreshModelData = async () => {
     try {
       if (shortName !== 'new') {
-        // Invalidate models cache (specifications is an alias for the same data)
+        // Invalidate models cache
         cacheService.invalidateByPrefix('models');
         
         const modelData = await fetchData('models', {}, { forceRefresh: true });
@@ -571,7 +571,7 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
         
         // Navigate to the new model's view page and replace the edit page in history
         setTimeout(() => {
-          navigate(`/specifications/${updatedModel.shortName}`, { replace: true });
+          navigate(`/models/${updatedModel.shortName}`, { replace: true });
         }, 1500);
       } else {
         // Update existing model
@@ -590,7 +590,7 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
         setTimeout(() => {
           if (isShortNameChanging) {
             // If shortName changed, navigate to the new model URL
-            navigate(`/specifications/${updatedModel.shortName}`);
+            navigate(`/models/${updatedModel.shortName}`);
           } else {
             // Otherwise, go back to view mode
             goToViewMode();
@@ -616,8 +616,8 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
       setShowSaveDialog(true);
     } else {
       if (shortName === 'new') {
-        // For new models, go directly to specifications page
-        navigate('/specifications', { replace: true });
+        // For new models, go directly to models page
+        navigate('/models', { replace: true });
       } else {
         goToViewMode();
       }
@@ -639,9 +639,9 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
         severity: 'success'
       });
 
-      // Navigate back to specifications page
+      // Navigate back to models page
       setTimeout(() => {
-        navigate('/specifications');
+        navigate('/models');
       }, 1500);
 
     } catch (error) {
@@ -1337,7 +1337,7 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
               This will:
             </Typography>
             <Box component="ul" sx={{ pl: 2, mb: 2 }}>
-              <Typography component="li">Change the URL for this model to /specifications/{editedModel.shortName}</Typography>
+                              <Typography component="li">Change the URL for this model to /models/{editedModel.shortName}</Typography>
               {updateAssociatedLinks && (
                 <Typography component="li">Update all agreements that reference this model</Typography>
               )}

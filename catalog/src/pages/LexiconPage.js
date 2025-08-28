@@ -28,7 +28,7 @@ import {
   ArrowDownward as ArrowDownwardIcon,
   FilterList as FilterListIcon,
 } from '@mui/icons-material';
-import { ThemeContext } from '../App';
+import { ThemeContext } from '../contexts/ThemeContext';
 import { fetchData } from '../services/api';
 
 const LexiconPage = () => {

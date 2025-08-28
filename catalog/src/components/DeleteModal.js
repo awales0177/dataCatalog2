@@ -8,7 +8,6 @@ import {
   Typography,
   TextField,
   Box,
-  alpha,
 } from '@mui/material';
 
 const DeleteModal = ({

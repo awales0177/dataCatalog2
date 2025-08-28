@@ -27,7 +27,7 @@ import {
   KeyboardArrowRight,
   GitHub as GitHubIcon,
 } from '@mui/icons-material';
-import { ThemeContext } from '../App';
+import { ThemeContext } from '../contexts/ThemeContext';
 import { useContext } from 'react';
 import lotusRed from '../imgs/lotus-red.svg';
 import lotusWhite from '../imgs/lotus-white.svg';
@@ -35,9 +35,9 @@ import lotusWhite from '../imgs/lotus-white.svg';
 const features = [
   {
     icon: StorageIcon,
-    title: "Data Specifications",
-    description: "Create, manage, and discover data specifications with comprehensive schema information and quality metrics.",
-    path: "/specifications"
+    title: "Data Models",
+    description: "Create, manage, and discover data models with comprehensive schema information and quality metrics.",
+    path: "/models"
   },
   {
     icon: DescriptionIcon,

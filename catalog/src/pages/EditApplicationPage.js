@@ -20,7 +20,7 @@ import {
   Delete as DeleteIcon,
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ThemeContext } from '../App';
+import { ThemeContext } from '../contexts/ThemeContext';
 import { fetchData, createApplication, updateApplication, deleteApplication } from '../services/api';
 import DomainSelector from '../components/DomainSelector';
 

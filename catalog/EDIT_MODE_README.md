@@ -15,9 +15,9 @@ The edit mode provides a comprehensive form interface for editing all aspects of
 
 ### 1. Accessing Edit Mode
 
-1. **Navigate to a data model detail page** (e.g., `/specifications/CUST`)
+1. **Navigate to a data model detail page** (e.g., `/models/CUST`)
 2. **Click the lock/unlock icon** (🔓) in the top-right corner of the model header
-3. **You'll be redirected to the edit page** (`/specifications/CUST/edit`)
+3. **You'll be redirected to the edit page** (`/models/CUST/edit`)
 
 ### 2. Edit Mode Interface
 

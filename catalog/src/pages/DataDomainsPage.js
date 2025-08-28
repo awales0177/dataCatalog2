@@ -13,7 +13,7 @@ import {
 } from '@mui/icons-material';
 import DomainCard from '../components/DomainCard';
 import DomainModal from '../components/DomainModal';
-import { ThemeContext } from '../App';
+import { ThemeContext } from '../contexts/ThemeContext';
 import { fetchDomains } from '../services/api';
 
 const DataDomainsPage = () => {

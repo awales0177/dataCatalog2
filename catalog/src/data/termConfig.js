@@ -1,7 +1,7 @@
 export const termConfig = {
   // Main Categories
   dataModels: {
-    displayName: "Data Specifications",
+    displayName: "Data Models",
     description: "Structured representations of data entities and their relationships",
     icon: "StorageIcon",
     shortDescription: "Data structure definitions"

@@ -61,7 +61,7 @@ import {
   Description as DescriptionIcon,
   Upload as UploadIcon,
 } from '@mui/icons-material';
-import { formatDate } from '../utils/dateUtils';
+import { formatDate } from '../utils/themeUtils';
 import { fetchAgreements, fetchModels } from '../services/api';
 
 const ProductAgreementDetailPage = ({ currentTheme }) => {
@@ -1115,7 +1115,7 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
               <Tooltip title="View Data Specification">
                 <IconButton
                   component={Link}
-                  to={`/specifications/${agreement.modelShortName.toLowerCase()}`}
+                  to={`/models/${agreement.modelShortName.toLowerCase()}`}
                   sx={{
                     position: 'absolute',
                     top: 12,

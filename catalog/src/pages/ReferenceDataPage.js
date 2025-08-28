@@ -19,7 +19,7 @@ import {
   Search as SearchIcon,
   Add as AddIcon,
 } from '@mui/icons-material';
-import { ThemeContext } from '../App';
+import { ThemeContext } from '../contexts/ThemeContext';
 import { fetchData } from '../services/api';
 import ReferenceDataCard from '../components/ReferenceDataCard';
 import Pagination from '../components/Pagination';

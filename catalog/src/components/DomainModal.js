@@ -6,10 +6,8 @@ import {
   DialogContent,
   IconButton,
   Typography,
-  Chip,
-  Stack,
 } from '@mui/material';
-import { formatDate } from '../utils/dateUtils';
+import { formatDate } from '../utils/themeUtils';
 import {
   Close as CloseIcon,
   People as PeopleIcon,

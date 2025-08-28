@@ -11,12 +11,9 @@ import {
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import {
-  EmojiEvents as EmojiEventsIcon,
   Whatshot as WhatshotIcon,
 } from '@mui/icons-material';
-import { formatDate } from '../utils/themeUtils';
 import { calculateModelScore, getModelQualityColor } from '../utils/modelScoreUtils';
-import verifiedLogo from '../imgs/verified.svg';
 import { GoVerified } from "react-icons/go";
 
 // DataModelCard component for displaying individual data model information
@@ -52,7 +49,7 @@ const DataModelCard = ({ model, currentTheme }) => {
   return (
     <Card 
       elevation={0}
-      onClick={() => model.shortName ? navigate(`/specifications/${model.shortName.toLowerCase()}`) : null}
+      onClick={() => model.shortName ? navigate(`/models/${model.shortName.toLowerCase()}`) : null}
       sx={{ 
         height: '100%',
         borderRadius: 2,
@@ -78,6 +75,7 @@ const DataModelCard = ({ model, currentTheme }) => {
                 color: currentTheme.textSecondary,
                 fontWeight: 500,
                 letterSpacing: '0.5px',
+                fontFamily: 'monospace',
               }}
             >
               {model.shortName || 'N/A'}

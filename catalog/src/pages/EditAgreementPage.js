@@ -36,7 +36,7 @@ import {
   DeleteForever as DeleteForeverIcon,
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ThemeContext } from '../App';
+import { ThemeContext } from '../contexts/ThemeContext';
 import { fetchData, createAgreement, updateAgreement, deleteAgreement } from '../services/api';
 import cacheService from '../services/cache';
 import ChangelogEditor from '../components/ChangelogEditor';

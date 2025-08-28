@@ -31,7 +31,7 @@ import {
   Delete as DeleteIcon,
   Code as CodeIcon,
 } from '@mui/icons-material';
-import { ThemeContext } from '../App';
+import { ThemeContext } from '../contexts/ThemeContext';
 import { fetchData, createToolkitComponent, updateToolkitComponent, deleteToolkitComponent } from '../services/api';
 
 const EditToolkitFunctionPage = () => {

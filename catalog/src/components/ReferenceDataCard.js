@@ -4,13 +4,12 @@ import {
   CardContent,
   Typography,
   Box,
-  Chip,
   alpha,
   IconButton,
   Tooltip,
 } from '@mui/material';
 import DataObjectIcon from '@mui/icons-material/DataObject';
-import { formatDate } from '../utils/dateUtils';
+import { formatDate } from '../utils/themeUtils';
 import { useNavigate } from 'react-router-dom';
 
 const ReferenceDataCard = ({ item, currentTheme }) => {

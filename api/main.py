@@ -1459,6 +1459,115 @@ def get_policies():
         logger.error(f"Error reading policies: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error reading policies: {str(e)}")
 
+@app.post("/api/policies")
+def create_policy(policy: Dict[str, Any]):
+    """Create a new data policy."""
+    try:
+        logger.info(f"Create request for new policy: {policy.get('name', 'Unknown')}")
+        
+        policies_data = read_json_file(JSON_FILES['policies'])
+        
+        # Generate new ID if not provided
+        if not policy.get('id'):
+            policy['id'] = f"{policy.get('type', 'policy')}_{policy.get('name', 'unknown').lower().replace(' ', '_')}_{int(time.time())}"
+        
+        # Add timestamp
+        policy['lastUpdated'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        
+        # Add to policies list
+        policies_data['policies'].append(policy)
+        
+        # Write to file
+        local_file_path = JSON_FILES['policies']
+        write_json_file(local_file_path, policies_data)
+        
+        logger.info(f"Policy created successfully with ID: {policy['id']}")
+        
+        return {
+            "message": "Policy created successfully",
+            "id": policy['id'],
+            "policy": policy
+        }
+    except Exception as e:
+        logger.error(f"Error creating policy: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error creating policy: {str(e)}")
+
+@app.put("/api/policies/{policy_id}")
+def update_policy(policy_id: str, policy: Dict[str, Any]):
+    """Update an existing data policy."""
+    try:
+        logger.info(f"Update request for policy: {policy_id}")
+        
+        policies_data = read_json_file(JSON_FILES['policies'])
+        
+        # Find existing policy
+        existing_policy = None
+        for i, p in enumerate(policies_data['policies']):
+            if p['id'] == policy_id:
+                existing_policy = i
+                break
+        
+        if existing_policy is None:
+            raise HTTPException(status_code=404, detail=f"Policy with ID {policy_id} not found")
+        
+        # Update timestamp
+        policy['lastUpdated'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        
+        # Update the policy
+        policies_data['policies'][existing_policy] = policy
+        
+        # Write to file
+        local_file_path = JSON_FILES['policies']
+        write_json_file(local_file_path, policies_data)
+        
+        logger.info(f"Policy {policy_id} updated successfully")
+        
+        return {
+            "message": "Policy updated successfully",
+            "id": policy_id,
+            "policy": policy
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating policy: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error updating policy: {str(e)}")
+
+@app.delete("/api/policies/{policy_id}")
+def delete_policy(policy_id: str):
+    """Delete a data policy."""
+    try:
+        logger.info(f"Delete request for policy: {policy_id}")
+        
+        policies_data = read_json_file(JSON_FILES['policies'])
+        
+        # Find and remove policy
+        original_length = len(policies_data['policies'])
+        policies_data['policies'] = [
+            p for p in policies_data['policies'] 
+            if p['id'] != policy_id
+        ]
+        
+        if len(policies_data['policies']) == original_length:
+            raise HTTPException(status_code=404, detail=f"Policy with ID {policy_id} not found")
+        
+        # Write to file
+        local_file_path = JSON_FILES['policies']
+        write_json_file(local_file_path, policies_data)
+        
+        logger.info(f"Policy {policy_id} deleted successfully")
+        
+        return {
+            "message": "Policy deleted successfully",
+            "id": policy_id,
+            "deleted": True
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting policy: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error deleting policy: {str(e)}")
+
 # Debug endpoints
 @app.get("/api/debug/cache")
 def get_cache_status():

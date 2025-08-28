@@ -1,4 +1,4 @@
-// Expected fields for data model specifications
+// Expected fields for data models
 export const EXPECTED_MODEL_FIELDS = {
   // Basic Information
   name: { required: true, weight: 1 },

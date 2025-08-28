@@ -1,8 +1,14 @@
 import React from 'react';
-import { Box, Paper, Typography, Chip } from '@mui/material';
+import {
+  Card,
+  CardContent,
+  Typography,
+  Box,
+  Chip,
+  alpha,
+} from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { formatDate } from '../utils/dateUtils';
-import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import { formatDate } from '../utils/themeUtils';
 import ShoppingBasketIcon from '@mui/icons-material/ShoppingBasket';
 
 // ProductAgreementCard component for displaying individual product agreement information
@@ -31,35 +37,23 @@ const ProductAgreementCard = ({ agreement, currentTheme }) => {
   };
 
   return (
-    <Paper
+    <Card 
       elevation={0}
       onClick={handleClick}
-      sx={{
-        p: 2,
-        height: '180px',
-        width: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        position: 'relative',
-        border: '1px solid',
-        borderColor: currentTheme.border,
-        borderRadius: '20px',
-        bgcolor: currentTheme.card,
+      sx={{ 
+        height: '100%',
+        borderRadius: 2,
         transition: 'all 0.2s ease-in-out',
+        bgcolor: currentTheme.card,
+        border: `1px solid ${currentTheme.border}`,
         cursor: 'pointer',
         '&:hover': {
-          transform: 'translateY(-2px)',
+          transform: 'translateY(-4px)',
           boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
-          borderColor: currentTheme.border,
         },
       }}
     >
-      {/* Content */}
-      <Box sx={{ 
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-      }}>
+      <CardContent>
         <Typography 
           variant="h6" 
           sx={{ 
@@ -81,7 +75,7 @@ const ProductAgreementCard = ({ agreement, currentTheme }) => {
           display: 'flex',
           flexWrap: 'wrap',
           gap: 0.5,
-          mb: 1,
+          mb: 2,
         }}>
           {(() => {
             const consumers = Array.isArray(agreement.dataConsumer)
@@ -97,7 +91,7 @@ const ProductAgreementCard = ({ agreement, currentTheme }) => {
                   label="No Consumer"
                   size="small"
                   sx={{
-                    bgcolor: currentTheme.card,
+                    bgcolor: alpha(currentTheme.primary, 0.1),
                     color: currentTheme.textSecondary,
                     border: `1px solid ${currentTheme.border}`,
                     fontWeight: 500,
@@ -123,8 +117,8 @@ const ProductAgreementCard = ({ agreement, currentTheme }) => {
                     label={consumer}
                     size="small"
                     sx={{
-                      bgcolor: currentTheme.card,
-                      color: currentTheme.text,
+                      bgcolor: alpha(currentTheme.primary, 0.1),
+                      color: currentTheme.primary,
                       border: `1px solid ${currentTheme.border}`,
                       fontWeight: 500,
                       fontSize: '0.7rem',
@@ -154,7 +148,7 @@ const ProductAgreementCard = ({ agreement, currentTheme }) => {
 
         {/* Contract Version */}
         {agreement.contractVersion && (
-          <Box sx={{ mb: 1 }}>
+          <Box sx={{ mb: 2 }}>
             <Typography variant="caption" sx={{ 
               color: currentTheme.textSecondary,
               fontSize: '0.7rem',
@@ -179,10 +173,11 @@ const ProductAgreementCard = ({ agreement, currentTheme }) => {
               px: 1,
               py: 0.5,
               borderRadius: 1,
-              bgcolor: `${statusColor}20`,
+              bgcolor: alpha(statusColor, 0.1),
               color: statusColor,
               fontSize: '0.75rem',
               fontWeight: 500,
+              border: `1px solid ${alpha(statusColor, 0.3)}`,
             }}
           >
             {(agreement.status || 'unknown').split('_').map(word => 
@@ -190,8 +185,8 @@ const ProductAgreementCard = ({ agreement, currentTheme }) => {
             ).join(' ')}
           </Box>
         </Box>
-      </Box>
-    </Paper>
+      </CardContent>
+    </Card>
   );
 };
 

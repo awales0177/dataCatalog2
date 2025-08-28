@@ -1,6 +1,6 @@
 import React, { useState, useContext, useEffect } from 'react';
-import { 
-  Box, 
+import {
+  Box,
   Grid,
   TextField,
   InputAdornment,
@@ -9,8 +9,6 @@ import {
   CircularProgress,
   Alert,
   Chip,
-  useTheme,
-  Button,
   Fab
 } from '@mui/material';
 import {
@@ -19,13 +17,13 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import DataModelCard from '../components/DataModelCard';
-import { ThemeContext } from '../App';
+import { ThemeContext } from '../contexts/ThemeContext';
 import { fetchData } from '../services/api';
 import Pagination from '../components/Pagination';
 
 const ITEMS_PER_PAGE = 12;
 
-const DataSpecificationsPage = () => {
+const DataModelsPage = () => {
   const { currentTheme } = useContext(ThemeContext);
   const navigate = useNavigate();
   const [allModels, setAllModels] = useState([]);
@@ -34,26 +32,25 @@ const DataSpecificationsPage = () => {
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(1);
-  const theme = useTheme();
   const [favorites, setFavorites] = useState([]);
   const [selectedQuality, setSelectedQuality] = useState('all');
 
   useEffect(() => {
-    const loadSpecifications = async () => {
-      try {
-        const data = await fetchData('models');
-        setAllModels(data.models || []);
-        setFilteredModels(data.models || []);
-        setError(null);
-      } catch (err) {
-        setError('Failed to load specifications');
-        console.error('Error loading specifications:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
+      const loadDataModels = async () => {
+    try {
+      const data = await fetchData('models');
+      setAllModels(data.models || []);
+      setFilteredModels(data.models || []);
+      setError(null);
+    } catch (err) {
+      setError('Failed to load data models');
+      console.error('Error loading data models:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    loadSpecifications();
+    loadDataModels();
   }, []);
 
   useEffect(() => {
@@ -148,7 +145,7 @@ const DataSpecificationsPage = () => {
     localStorage.setItem('newModelTemplate', JSON.stringify(newModel));
     
     // Navigate to the edit page with a special "new" parameter
-    navigate('/specifications/new/edit');
+            navigate('/models/new/edit');
   };
 
   const totalPages = Math.ceil(filteredModels.length / ITEMS_PER_PAGE);
@@ -184,17 +181,17 @@ const DataSpecificationsPage = () => {
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
       <Typography variant="h4" sx={{ mb: 1, color: currentTheme.text }}>
-        Data Specifications
+        Data Models
       </Typography>
       <Typography variant="body1" sx={{ mb: 4, color: currentTheme.textSecondary }}>
-        Explore and manage your data specifications. View specification details, quality metrics, and relationships between different data structures.
+        Explore and manage your data models. View model details, quality metrics, and relationships between different data structures.
       </Typography>
 
       <Box sx={{ mb: 4 }}>
         <TextField
           fullWidth
           variant="outlined"
-          placeholder="Search data specifications..."
+          placeholder="Search data models..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           InputProps={{
@@ -289,4 +286,4 @@ const DataSpecificationsPage = () => {
   );
 };
 
-export default DataSpecificationsPage; 
+export default DataModelsPage; 

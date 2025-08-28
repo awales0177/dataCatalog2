@@ -12,7 +12,7 @@ import {
 import {
   Edit as EditIcon,
 } from '@mui/icons-material';
-import { formatDate } from '../utils/dateUtils';
+import { formatDate } from '../utils/themeUtils';
 
 const ApplicationCard = ({ application, currentTheme, onEdit }) => {
   return (
