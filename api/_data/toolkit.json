@@ -2,21 +2,21 @@
   "toolkit": {
     "functions": [
       {
-        "id": "func_001",
-        "name": "Data Validation Utility",
+        "id": "data_validation_utility",
+        "name": "data_validation_utility",
+        "displayName": "Data Validation Utility",
         "description": "A comprehensive data validation function that checks data types, formats, and business rules",
         "language": "python",
         "category": "data-processing",
         "tags": [
           "validation",
           "data",
-          "python",
           "utility"
         ],
         "code": "def validate_data(data, schema):\n    # Data validation logic here\n    pass",
         "author": "Data Team",
         "version": "1.0.0",
-        "lastUpdated": "2024-01-15T10:00:00Z",
+        "lastUpdated": "2025-08-28T00:01:34.133730",
         "usage": "Import and use for any data validation needs",
         "dependencies": [
           "pydantic",
@@ -93,8 +93,9 @@
         "downloads": 156
       },
       {
-        "id": "func_002",
-        "name": "API Rate Limiter",
+        "id": "api_rate_limiter",
+        "name": "api_rate_limiter",
+        "displayName": "API Rate Limiter",
         "description": "Efficient rate limiting implementation for API endpoints with Redis backend",
         "language": "javascript",
         "category": "api-management",
@@ -147,7 +148,7 @@
             "min": 1000,
             "max": 3600000,
             "example": 60000
-          },
+            },
           {
             "name": "skipSuccessfulRequests",
             "type": "boolean",
@@ -163,6 +164,124 @@
         "git": "https://github.com/example/api-rate-limiter",
         "rating": 4.9,
         "downloads": 89
+      },
+      {
+        "id": "what_do_i_do",
+        "name": "what_do_i_do",
+        "displayName": "What Do I Do Function",
+        "description": "A placeholder function for testing and demonstration purposes",
+        "type": "functions",
+        "category": "utility",
+        "tags": [
+          "placeholder",
+          "test",
+          "demo"
+        ],
+        "author": "Developer",
+        "version": "1.0.0",
+        "lastUpdated": "2025-08-28T00:10:59.568073",
+        "usage": "This is a placeholder function for testing the toolkit system",
+        "dependencies": [],
+        "examples": [
+          "testing",
+          "demonstration"
+        ],
+        "git": "",
+        "rating": 5,
+        "downloads": 0,
+        "language": "python",
+        "code": "# This is a placeholder function\ndef what_do_i_do():\n    return 'This is a test function'",
+        "parameters": []
+      },
+      {
+        "id": "data_transformer",
+        "name": "data_transformer",
+        "displayName": "Data Transformer",
+        "description": "Flexible data transformation utility that can convert between various data formats and structures",
+        "language": "python",
+        "category": "data-processing",
+        "tags": [
+          "transformation",
+          "data",
+          "conversion",
+          "utility"
+        ],
+        "code": "def transform_data(data, transformation_rules):\n    # Data transformation logic here\n    transformed = {}\n    for rule in transformation_rules:\n        # Apply transformation rules\n        pass\n    return transformed",
+        "author": "Data Engineering Team",
+        "version": "1.0.0",
+        "lastUpdated": "2025-01-15T10:30:00Z",
+        "usage": "Use for converting data between different formats and schemas",
+        "dependencies": [
+          "pandas",
+          "numpy"
+        ],
+        "examples": [
+          "csv_to_json",
+          "schema_migration",
+          "data_cleaning"
+        ],
+        "parameters": [
+          {
+            "name": "data",
+            "type": "any",
+            "description": "Input data to be transformed",
+            "required": true
+          },
+          {
+            "name": "transformation_rules",
+            "type": "list",
+            "description": "List of transformation rules to apply",
+            "required": true
+          }
+        ],
+        "git": "https://github.com/example/data-transformer",
+        "rating": 4.7,
+        "downloads": 78
+      },
+      {
+        "id": "file_processor",
+        "name": "file_processor",
+        "displayName": "File Processor",
+        "description": "Efficient file processing utility with support for multiple file formats and batch operations",
+        "language": "python",
+        "category": "file-management",
+        "tags": [
+          "file",
+          "processing",
+          "batch",
+          "utility"
+        ],
+        "code": "def process_files(file_paths, processor_func):\n    results = []\n    for file_path in file_paths:\n        # Process each file\n        result = processor_func(file_path)\n        results.append(result)\n    return results",
+        "author": "Backend Team",
+        "version": "1.2.0",
+        "lastUpdated": "2025-01-10T14:20:00Z",
+        "usage": "Process multiple files in batch with custom processing logic",
+        "dependencies": [
+          "pathlib",
+          "pandas"
+        ],
+        "examples": [
+          "batch_csv_processing",
+          "log_file_analysis",
+          "image_processing"
+        ],
+        "parameters": [
+          {
+            "name": "file_paths",
+            "type": "list",
+            "description": "List of file paths to process",
+            "required": true
+          },
+          {
+            "name": "processor_func",
+            "type": "function",
+            "description": "Function to apply to each file",
+            "required": true
+          }
+        ],
+        "git": "https://github.com/example/file-processor",
+        "rating": 4.6,
+        "downloads": 92
       }
     ],
     "containers": [
@@ -296,6 +415,8 @@
   "categories": {
     "data-processing": "Data manipulation, validation, and processing utilities",
     "api-management": "API development, testing, and management tools",
+    "file-management": "File processing, manipulation, and management utilities",
+    "utility": "General utility functions and helpers",
     "database": "Database containers, scripts, and utilities",
     "runtime": "Application runtime environments and base images",
     "networking": "Network infrastructure and security configurations",

@@ -18,6 +18,8 @@ import {
   CircularProgress,
   Divider,
   alpha,
+  Switch,
+  FormControlLabel,
 } from '@mui/material';
 import DeleteModal from '../components/DeleteModal';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -52,8 +54,9 @@ const EditToolkitFunctionPage = () => {
         if (isNewFunction) {
           // Create new function template
           const newFunction = {
-            id: '',
+            id: '', // This will be set to the function name when saving
             name: '',
+            displayName: '',
             description: '',
             language: 'python',
             category: '',
@@ -194,13 +197,56 @@ const EditToolkitFunctionPage = () => {
     });
   };
 
+  const validateFunctionName = (name) => {
+    // Function name should be lowercase, no spaces, alphanumeric + underscores only
+    const functionNameRegex = /^[a-z][a-z0-9_]*$/;
+    return functionNameRegex.test(name);
+  };
+
+  const formatFunctionName = (name) => {
+    // Convert to lowercase, replace spaces and special chars with underscores
+    return name.toLowerCase()
+      .replace(/[^a-z0-9]/g, '_')
+      .replace(/_+/g, '_')
+      .replace(/^_|_$/g, '');
+  };
+
   const handleSave = async () => {
+    // Validation
+    if (!editedFunction.displayName?.trim()) {
+      setSnackbar({
+        open: true,
+        message: 'Display name is required',
+        severity: 'error'
+      });
+      return;
+    }
+
+    if (!editedFunction.name?.trim()) {
+      setSnackbar({
+        open: true,
+        message: 'Function name (ID) is required',
+        severity: 'error'
+      });
+      return;
+    }
+
+    if (!validateFunctionName(editedFunction.name)) {
+      setSnackbar({
+        open: true,
+        message: 'Function name must be lowercase, start with a letter, and contain only letters, numbers, and underscores',
+        severity: 'error'
+      });
+      return;
+    }
+
     setSaving(true);
     try {
       if (isNewFunction) {
         await createToolkitComponent({
           ...editedFunction,
-          type: 'functions'
+          type: 'functions',
+          id: editedFunction.name // Use function name as ID
         });
         setSnackbar({
           open: true,
@@ -335,7 +381,7 @@ const EditToolkitFunctionPage = () => {
           
           <Box sx={{ flex: 1 }}>
             <Typography variant="h4" sx={{ color: currentTheme.text, mb: 1 }}>
-              {isNewFunction ? 'Create New Function' : `Edit ${editedFunction?.name || 'Function'}`}
+              {isNewFunction ? 'Create New Function' : `Edit ${editedFunction?.displayName || editedFunction?.name || 'Function'}`}
             </Typography>
             <Typography variant="body1" sx={{ color: currentTheme.textSecondary }}>
               {isNewFunction ? 'Add a new reusable function to the toolkit' : 'Modify function details and parameters'}
@@ -365,9 +411,10 @@ const EditToolkitFunctionPage = () => {
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
-                  label="Function Name *"
-                  value={editedFunction?.name || ''}
-                  onChange={(e) => handleFieldChange('name', e.target.value)}
+                  label="Display Name *"
+                  value={editedFunction?.displayName || ''}
+                  onChange={(e) => handleFieldChange('displayName', e.target.value)}
+                  placeholder="User-friendly name shown on cards"
                   sx={{
                     '& .MuiInputLabel-root': { color: currentTheme.textSecondary },
                     '& .MuiInputLabel-root.Mui-focused': { color: currentTheme.primary },
@@ -380,6 +427,56 @@ const EditToolkitFunctionPage = () => {
                     '& .MuiInputBase-input': { color: currentTheme.text }
                   }}
                 />
+              </Grid>
+              
+              <Grid item xs={12} sm={6}>
+                <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
+                  <TextField
+                    fullWidth
+                    label="Function Name (ID) *"
+                    value={editedFunction?.name || ''}
+                    onChange={(e) => handleFieldChange('name', e.target.value)}
+                    placeholder="Technical identifier (no spaces, lowercase)"
+                    sx={{
+                      '& .MuiInputLabel-root': { color: currentTheme.textSecondary },
+                      '& .MuiInputLabel-root.Mui-focused': { color: currentTheme.primary },
+                      '& .MuiOutlinedInput-root': { 
+                        color: currentTheme.text,
+                        '& fieldset': { borderColor: currentTheme.border },
+                        '&:hover fieldset': { borderColor: currentTheme.primary },
+                        '&.Mui-focused fieldset': { borderColor: currentTheme.primary }
+                      },
+                      '& .MuiInputBase-input': { color: currentTheme.text }
+                    }}
+                  />
+                  {editedFunction?.displayName && (
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      onClick={() => {
+                        const suggestedName = formatFunctionName(editedFunction.displayName);
+                        handleFieldChange('name', suggestedName);
+                      }}
+                      sx={{
+                        mt: 1,
+                        minWidth: 'auto',
+                        px: 1,
+                        color: currentTheme.primary,
+                        borderColor: currentTheme.primary,
+                        '&:hover': { 
+                          borderColor: currentTheme.primary, 
+                          bgcolor: alpha(currentTheme.primary, 0.1) 
+                        }
+                      }}
+                      title="Generate function name from display name"
+                    >
+                      Generate
+                    </Button>
+                  )}
+                </Box>
+                <Typography variant="caption" sx={{ color: currentTheme.textSecondary, mt: 0.5, display: 'block' }}>
+                  Use lowercase letters, numbers, and underscores only. Must start with a letter.
+                </Typography>
               </Grid>
               
               <Grid item xs={12} sm={6}>
@@ -610,13 +707,15 @@ const EditToolkitFunctionPage = () => {
                 }}
               >
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                  <Typography variant="subtitle2" sx={{ color: currentTheme.text, fontWeight: 600 }}>
-                    Parameter {index + 1}
-                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography variant="subtitle2" sx={{ color: currentTheme.text, fontWeight: 600 }}>
+                      Parameter {index + 1}
+                    </Typography>
+                  </Box>
                   <IconButton
                     size="small"
                     onClick={() => removeArrayItem('parameters', index)}
-                    sx={{ color: 'error.main' }}
+                    sx={{ color: '#f44336' }}
                   >
                     <DeleteIcon />
                   </IconButton>
@@ -704,11 +803,58 @@ const EditToolkitFunctionPage = () => {
                   </Grid>
 
                   <Grid item xs={12} sm={6}>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={param.required !== false}
+                          onChange={(e) => handleArrayFieldChange('parameters', index, { ...param, required: e.target.checked })}
+                          color="primary"
+                          size="small"
+                        />
+                      }
+                      label={
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Typography variant="body2" sx={{ color: currentTheme.text }}>
+                            Required Parameter
+                          </Typography>
+                          <Typography 
+                            variant="caption" 
+                            sx={{ 
+                              color: param.required !== false ? '#f44336' : '#4caf50',
+                              fontWeight: 500
+                            }}
+                          >
+                            {param.required !== false ? '●' : '○'}
+                          </Typography>
+                        </Box>
+                      }
+                      sx={{
+                        '& .MuiFormControlLabel-label': { color: currentTheme.text },
+                        '& .MuiSwitch-root': {
+                          '& .MuiSwitch-switchBase': {
+                            color: currentTheme.border,
+                          },
+                          '& .MuiSwitch-track': {
+                            backgroundColor: currentTheme.border,
+                          },
+                          '& .Mui-checked': {
+                            color: currentTheme.primary,
+                            '& + .MuiSwitch-track': {
+                              backgroundColor: currentTheme.primary,
+                            },
+                          },
+                        },
+                      }}
+                    />
+                  </Grid>
+
+                  <Grid item xs={12} sm={6}>
                     <TextField
                       fullWidth
-                      label="Default Value"
+                      label={param.required !== false ? "Default Value (Optional)" : "Default Value (Recommended)"}
                       value={param.default !== undefined ? param.default : ''}
                       onChange={(e) => handleArrayFieldChange('parameters', index, { ...param, default: e.target.value || undefined })}
+                      placeholder={param.required !== false ? "Leave empty if no default" : "Provide a default value"}
                       size="small"
                       sx={{
                         '& .MuiInputLabel-root': { color: currentTheme.textSecondary },
@@ -722,6 +868,11 @@ const EditToolkitFunctionPage = () => {
                         '& .MuiInputBase-input': { color: currentTheme.text }
                       }}
                     />
+                    {param.required !== false && (
+                      <Typography variant="caption" sx={{ color: currentTheme.textSecondary || '#666', mt: 0.5, display: 'block' }}>
+                        Required parameters should typically not have default values
+                      </Typography>
+                    )}
                   </Grid>
 
                   <Grid item xs={12} sm={6}>
@@ -868,9 +1019,9 @@ const EditToolkitFunctionPage = () => {
                   startIcon={<DeleteIcon />}
                   onClick={() => setShowDeleteModal(true)}
                   sx={{
-                    color: 'error.main',
-                    borderColor: 'error.main',
-                    '&:hover': { borderColor: 'error.main', bgcolor: alpha('#f44336', 0.1) }
+                    color: '#f44336',
+                    borderColor: '#f44336',
+                    '&:hover': { borderColor: '#f44336', bgcolor: alpha('#f44336', 0.1) }
                   }}
                 >
                   Delete Function
@@ -979,7 +1130,7 @@ const EditToolkitFunctionPage = () => {
         onClose={() => setShowDeleteModal(false)}
         onConfirm={handleDelete}
         title="Delete Function"
-        itemName={editedFunction?.name}
+        itemName={editedFunction?.displayName || editedFunction?.name}
         itemType="function"
         theme={currentTheme}
       >
@@ -987,7 +1138,7 @@ const EditToolkitFunctionPage = () => {
           This will:
         </Typography>
         <Box component="ul" sx={{ pl: 2, mb: 3 }}>
-          <Typography component="li">Permanently delete the function "{editedFunction?.name}"</Typography>
+          <Typography component="li">Permanently delete the function "{editedFunction?.displayName || editedFunction?.name}"</Typography>
           <Typography component="li">Remove all function data and configurations</Typography>
           <Typography component="li">Break any existing references to this function</Typography>
           <Typography component="li">Require manual cleanup of external references</Typography>

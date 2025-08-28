@@ -72,6 +72,7 @@ const ToolkitPage = () => {
       Object.keys(filtered).forEach(key => {
         filtered[key] = filtered[key].filter(component =>
           component.name.toLowerCase().includes(searchLower) ||
+          (component.displayName && component.displayName.toLowerCase().includes(searchLower)) ||
           component.description.toLowerCase().includes(searchLower) ||
           component.tags.some(tag => tag.toLowerCase().includes(searchLower)) ||
           component.author.toLowerCase().includes(searchLower)
@@ -185,7 +186,7 @@ const ToolkitPage = () => {
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
             <Box>
               <Typography variant="h6" sx={{ fontWeight: 600, color: currentTheme.text }}>
-                {component.name}
+                {component.displayName || component.name}
               </Typography>
               <Typography 
                 variant="caption" 
@@ -195,7 +196,7 @@ const ToolkitPage = () => {
                   letterSpacing: '0.5px',
                 }}
               >
-                {component.id}
+                {component.name}
               </Typography>
             </Box>
             <Box

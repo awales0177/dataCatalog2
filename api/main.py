@@ -1232,30 +1232,42 @@ async def create_toolkit_component(component: Dict[str, Any]):
         if component_type not in ['functions', 'containers', 'terraform']:
             raise HTTPException(status_code=400, detail="Invalid component type")
         
-        # Generate new ID based on type
-        existing_ids = [item['id'] for item in toolkit_data['toolkit'][component_type]]
+        # For functions, use the function name as the ID
         if component_type == 'functions':
-            prefix = 'func_'
-        elif component_type == 'containers':
-            prefix = 'cont_'
+            function_name = component.get('name', '')
+            if not function_name:
+                raise HTTPException(status_code=400, detail="Function name is required")
+            
+            # Check if function name already exists
+            existing_names = [item['name'] for item in toolkit_data['toolkit'][component_type]]
+            if function_name in existing_names:
+                raise HTTPException(status_code=400, detail=f"Function with name '{function_name}' already exists")
+            
+            new_id = function_name
         else:
-            prefix = 'tf_'
-        
-        max_num = 0
-        for item_id in existing_ids:
-            if item_id.startswith(prefix):
-                try:
-                    num = int(item_id.split('_')[1])
-                    max_num = max(max_num, num)
-                except:
-                    pass
-        
-        new_id = f"{prefix}{max_num + 1:03d}"
+            # Generate new ID based on type for other component types
+            existing_ids = [item['id'] for item in toolkit_data['toolkit'][component_type]]
+            if component_type == 'containers':
+                prefix = 'cont_'
+            else:
+                prefix = 'tf_'
+            
+            max_num = 0
+            for item_id in existing_ids:
+                if item_id.startswith(prefix):
+                    try:
+                        num = int(item_id.split('_')[1])
+                        max_num = max(max_num, num)
+                    except:
+                        pass
+            
+            new_id = f"{prefix}{max_num + 1:03d}"
         
         # Create new component with ID
         new_component = {
             "id": new_id,
             "name": component.get('name', ''),
+            "displayName": component.get('displayName', component.get('name', '')),
             "description": component.get('description', ''),
             "type": component_type,
             "category": component.get('category', ''),
@@ -1266,6 +1278,7 @@ async def create_toolkit_component(component: Dict[str, Any]):
             "usage": component.get('usage', ''),
             "dependencies": component.get('dependencies', []),
             "examples": component.get('examples', []),
+            "git": component.get('git', ''),
             "rating": component.get('rating', 5.0),
             "downloads": 0
         }
@@ -1274,6 +1287,7 @@ async def create_toolkit_component(component: Dict[str, Any]):
         if component_type == 'functions':
             new_component['language'] = component.get('language', '')
             new_component['code'] = component.get('code', '')
+            new_component['parameters'] = component.get('parameters', [])
         elif component_type == 'containers':
             new_component['dockerfile'] = component.get('dockerfile', '')
             new_component['dockerCompose'] = component.get('dockerCompose', '')
@@ -1338,6 +1352,7 @@ async def update_toolkit_component(component_type: str, component_id: str, compo
         updated_component = {
             **toolkit_data['toolkit'][component_type][comp_to_update],
             "name": component.get('name', ''),
+            "displayName": component.get('displayName', component.get('name', '')),
             "description": component.get('description', ''),
             "category": component.get('category', ''),
             "tags": component.get('tags', []),
@@ -1347,6 +1362,7 @@ async def update_toolkit_component(component_type: str, component_id: str, compo
             "usage": component.get('usage', ''),
             "dependencies": component.get('dependencies', []),
             "examples": component.get('examples', []),
+            "git": component.get('git', ''),
             "rating": component.get('rating', 5.0)
         }
         
@@ -1354,6 +1370,7 @@ async def update_toolkit_component(component_type: str, component_id: str, compo
         if component_type == 'functions':
             updated_component['language'] = component.get('language', '')
             updated_component['code'] = component.get('code', '')
+            updated_component['parameters'] = component.get('parameters', [])
         elif component_type == 'containers':
             updated_component['dockerfile'] = component.get('dockerfile', '')
             updated_component['dockerCompose'] = component.get('dockerCompose', '')

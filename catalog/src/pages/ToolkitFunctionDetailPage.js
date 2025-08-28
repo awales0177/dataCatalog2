@@ -261,6 +261,9 @@ const ToolkitFunctionDetailPage = () => {
           <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, flex: 1 }}>
             <Box sx={{ flex: 1 }}>
               <Typography variant="h4" sx={{ color: currentTheme.text, mb: 1 }}>
+                {functionData.displayName || functionData.name}
+              </Typography>
+              <Typography variant="body2" sx={{ color: currentTheme.textSecondary, mb: 1, fontFamily: 'monospace' }}>
                 {functionData.name}
               </Typography>
               <Typography variant="body1" sx={{ color: currentTheme.textSecondary, mb: 2 }}>
