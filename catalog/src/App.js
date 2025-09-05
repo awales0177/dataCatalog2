@@ -55,7 +55,7 @@ function AppContent() {
     handleMenuClose,
     handleThemeToggle,
     handleDrawerCollapse,
-    handleInfoSidebarOpen,
+    handleInfoSidebarToggle,
   } = useAppState();
 
   const [avatarColor] = React.useState(getRandomColor());
@@ -115,7 +115,7 @@ function AppContent() {
           darkMode={darkMode}
           onDrawerToggle={handleDrawerToggle}
           onThemeToggle={handleThemeToggle}
-          onInfoSidebarToggle={handleInfoSidebarOpen}
+          onInfoSidebarToggle={handleInfoSidebarToggle}
           isSplashPage={isSplashPage}
         />
 
@@ -244,7 +244,7 @@ function AppContent() {
 
         <InfoSidebar
           open={infoSidebarOpen}
-          onClose={() => handleInfoSidebarOpen()}
+          onClose={handleInfoSidebarToggle}
           currentTheme={currentTheme}
         />
       </Box>

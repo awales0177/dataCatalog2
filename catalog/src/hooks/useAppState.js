@@ -16,6 +16,16 @@ export const useAppState = () => {
   });
   const [themeData, setThemeData] = useState(null);
   const [menuData, setMenuData] = useState({ items: menuItems });
+  
+  // Safety function to ensure menu data is never empty
+  const safeSetMenuData = (newData) => {
+    if (newData && newData.items && newData.items.length > 0) {
+      setMenuData(newData);
+    } else {
+      console.warn('Attempted to set empty menu data, using fallback');
+      setMenuData({ items: menuItems });
+    }
+  };
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [countsLoaded, setCountsLoaded] = useState(false);
@@ -61,7 +71,7 @@ export const useAppState = () => {
       try {
         const theme = await fetchTheme();
         setThemeData(theme);
-        setMenuData(menuItems); // Use local menuItems directly
+        safeSetMenuData({ items: menuItems }); // Use local menuItems directly
       } catch (error) {
         console.error('Error loading initial data:', error);
         setError('Failed to load initial data');
@@ -84,7 +94,7 @@ export const useAppState = () => {
             textSecondary: '#b0b0b0' 
           } 
         });
-        setMenuData(menuItems); // Use local menuItems even if API fails
+        safeSetMenuData({ items: menuItems }); // Use local menuItems even if API fails
       } finally {
         setLoading(false);
       }
@@ -98,7 +108,8 @@ export const useAppState = () => {
     const loadMenuCounts = async () => {
       if (countsLoaded) return;
       try {
-        const itemsWithCounts = await Promise.all(
+        console.log('Loading menu counts...');
+        const itemsWithCounts = await Promise.allSettled(
           menuItems.map(async (item) => {
             if (item.id === 'home') return item;
             try {
@@ -108,16 +119,33 @@ export const useAppState = () => {
               return { ...item, count };
             } catch (error) {
               console.error(`Error fetching count for ${item.name}:`, error);
-              return item;
+              // Return item without count on error, don't break the entire menu
+              return { ...item, count: undefined };
             }
           })
         );
-        setMenuData({ items: itemsWithCounts });
+        
+        // Process results and handle any failures gracefully
+        const processedItems = itemsWithCounts.map((result, index) => {
+          if (result.status === 'fulfilled') {
+            return result.value;
+          } else {
+            console.error(`Failed to load count for ${menuItems[index].name}:`, result.reason);
+            // Return the original item without count on failure
+            return { ...menuItems[index], count: undefined };
+          }
+        });
+        
+        console.log('Menu items with counts loaded:', processedItems);
+        safeSetMenuData({ items: processedItems });
         setCountsLoaded(true);
         setError(null);
       } catch (err) {
-        setError('Failed to load menu counts');
-        console.error('Error loading menu counts:', err);
+        console.error('Critical error loading menu counts:', err);
+        // Fallback to original menu items without counts
+        safeSetMenuData({ items: menuItems });
+        setCountsLoaded(true);
+        setError('Failed to load menu counts, using fallback');
       }
     };
     loadMenuCounts();

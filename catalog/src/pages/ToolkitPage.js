@@ -356,14 +356,19 @@ const ToolkitPage = () => {
           }}
           sx={{
             '& .MuiOutlinedInput-root': {
-              bgcolor: currentTheme.card,
-              borderColor: currentTheme.border,
-              '&:hover .MuiOutlinedInput-notchedOutline': {
+              backgroundColor: currentTheme.card,
+              '& fieldset': {
+                borderColor: currentTheme.border,
+              },
+              '&:hover fieldset': {
                 borderColor: currentTheme.primary,
               },
-              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+              '&.Mui-focused fieldset': {
                 borderColor: currentTheme.primary,
               },
+            },
+            '& .MuiInputBase-input': {
+              color: currentTheme.text,
             },
           }}
         />

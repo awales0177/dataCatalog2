@@ -27,26 +27,66 @@ const NavigationDrawer = ({
   avatarColor 
 }) => {
   const location = useLocation();
+  
+  // Monitor menu data changes for debugging
+  React.useEffect(() => {
+    console.log('NavigationDrawer: menuData changed', { 
+      menuData, 
+      hasItems: menuData?.items?.length > 0,
+      itemCount: menuData?.items?.length || 0
+    });
+  }, [menuData]);
 
   const drawer = (
     <>
       <List>
-        {(menuData?.items || []).map((item, index) => {
-          // Add divider before Product Agreements (start of second section)
-          const shouldAddDivider = item.id === 'agreements' && !isDrawerCollapsed;
-          
-          return (
-            <React.Fragment key={item.path}>
-              {shouldAddDivider && (
-                <Divider 
-                  sx={{ 
-                    my: 1, 
-                    mx: 2, 
-                    borderColor: alpha(currentTheme.border, 0.5),
-                    opacity: 0.6
-                  }} 
+        {(() => {
+          // Debug logging and safety checks
+          if (!menuData || !menuData.items) {
+            console.warn('NavigationDrawer: menuData or menuData.items is missing', { menuData });
+            return (
+              <ListItem>
+                <ListItemText 
+                  primary="Loading..." 
+                  sx={{ color: currentTheme.textSecondary, fontStyle: 'italic' }}
                 />
-              )}
+              </ListItem>
+            );
+          }
+          
+          if (menuData.items.length === 0) {
+            console.warn('NavigationDrawer: menuData.items is empty', { menuData });
+            return (
+              <ListItem>
+                <ListItemText 
+                  primary="No menu items available" 
+                  sx={{ color: currentTheme.textSecondary, fontStyle: 'italic' }}
+                />
+              </ListItem>
+            );
+          }
+          
+          console.log('NavigationDrawer: Rendering menu items', { 
+            itemCount: menuData.items.length, 
+            items: menuData.items 
+          });
+          
+          return menuData.items.map((item, index) => {
+            // Add divider before Product Agreements (start of second section)
+            const shouldAddDivider = item.id === 'agreements' && !isDrawerCollapsed;
+            
+            return (
+              <React.Fragment key={item.path}>
+                {shouldAddDivider && (
+                  <Divider 
+                    sx={{ 
+                      my: 1, 
+                      mx: 2, 
+                      borderColor: alpha(currentTheme.border, 0.5),
+                      opacity: 0.6
+                    }} 
+                  />
+                )}
               <Tooltip
                 title={item.name}
                 placement="right"
@@ -126,7 +166,8 @@ const NavigationDrawer = ({
               </Tooltip>
             </React.Fragment>
           );
-        })}
+          });
+        })()}
       </List>
 
       {/* Avatar Section */}
