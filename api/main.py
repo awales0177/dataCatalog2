@@ -13,6 +13,11 @@ import threading
 import time
 from time import perf_counter
 
+# Import authentication modules
+from auth import get_current_user_optional, require_editor_or_admin, require_admin, UserRole
+from endpoints.auth import router as auth_router
+from services.search_service import search_service
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -116,6 +121,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Include authentication router
+app.include_router(auth_router)
+
 # GitHub configuration
 GITHUB_RAW_BASE_URL = "https://raw.githubusercontent.com/awales0177/test_data/main"
 CACHE_DURATION = timedelta(minutes=15)
@@ -130,6 +138,16 @@ logger.info(f"Test Mode: {'ENABLED' if TEST_MODE else 'DISABLED'}")
 logger.info(f"Caching: DISABLED - Always fresh data")
 logger.info(f"GitHub Base URL: {GITHUB_RAW_BASE_URL}")
 logger.info("=" * 50)
+
+# Initialize search index
+logger.info("Initializing search index...")
+try:
+    search_service.build_index()
+    stats = search_service.get_stats()
+    logger.info(f"Search index initialized with {stats['total_documents']} documents")
+except Exception as e:
+    logger.error(f"Failed to initialize search index: {e}")
+    logger.info("Search functionality will be limited until index is rebuilt")
 
 # Cache storage - Disabled
 # cache = {
@@ -293,6 +311,96 @@ def get_cached_data(file_name: str) -> Dict:
         log_performance("github_fetch", start_time)
         return data
 
+# Search endpoints (must be before generic {file_name} route)
+@app.get("/api/search")
+def global_search(
+    q: str = Query(..., description="Search query"),
+    types: str = Query(None, description="Comma-separated list of data types to search"),
+    limit: int = Query(50, ge=1, le=200, description="Maximum number of results")
+):
+    """Global search across all data types."""
+    try:
+        # Parse types parameter
+        doc_types = None
+        if types:
+            doc_types = [t.strip() for t in types.split(',') if t.strip()]
+        
+        # Perform search
+        results = search_service.search(q, doc_types, limit)
+        
+        return {
+            "query": q,
+            "results": results,
+            "total": len(results),
+            "types_searched": doc_types or "all"
+        }
+    except Exception as e:
+        logger.error(f"Error in global search: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Search error: {str(e)}")
+
+@app.post("/api/search/rebuild")
+def rebuild_search_index(current_user: dict = Depends(require_admin)):
+    """Rebuild the search index (admin only)."""
+    try:
+        success = search_service.rebuild_index()
+        if success:
+            stats = search_service.get_stats()
+            return {
+                "message": "Search index rebuilt successfully",
+                "stats": stats
+            }
+        else:
+            raise HTTPException(status_code=500, detail="Failed to rebuild search index")
+    except Exception as e:
+        logger.error(f"Error rebuilding search index: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error rebuilding index: {str(e)}")
+
+@app.get("/api/search/stats")
+def get_search_stats():
+    """Get search index statistics."""
+    try:
+        stats = search_service.get_stats()
+        return stats
+    except Exception as e:
+        logger.error(f"Error getting search stats: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error getting stats: {str(e)}")
+
+@app.get("/api/search/suggest")
+def search_suggestions(
+    q: str = Query(..., description="Partial search query"),
+    limit: int = Query(10, ge=1, le=50, description="Maximum number of suggestions")
+):
+    """Get search suggestions based on partial query."""
+    try:
+        # Get search results for suggestions
+        results = search_service.search(q, limit=limit)
+        
+        # Extract unique suggestions from results
+        suggestions = set()
+        for result in results:
+            # Add name/title suggestions
+            if 'name' in result:
+                suggestions.add(result['name'])
+            if 'shortName' in result:
+                suggestions.add(result['shortName'])
+            if 'title' in result:
+                suggestions.add(result['title'])
+            
+            # Add domain suggestions
+            if 'domain' in result and isinstance(result['domain'], list):
+                suggestions.update(result['domain'])
+        
+        # Convert to list and limit
+        suggestions_list = list(suggestions)[:limit]
+        
+        return {
+            "query": q,
+            "suggestions": suggestions_list
+        }
+    except Exception as e:
+        logger.error(f"Error getting search suggestions: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error getting suggestions: {str(e)}")
+
 @app.get("/api/{file_name}")
 def get_json_file(file_name: str):
     """Get JSON file content with direct file reading or passthrough mode."""
@@ -395,7 +503,7 @@ async def get_agreements_by_model(model_short_name: str):
         )
 
 @app.post("/api/models")
-async def create_model(request: CreateModelRequest):
+async def create_model(request: CreateModelRequest, current_user: dict = Depends(require_editor_or_admin)):
     """
     Create a new data model.
     
@@ -453,6 +561,9 @@ async def create_model(request: CreateModelRequest):
         write_json_file(local_file_path, models_data)
         logger.info(f"Created new model in local file {local_file_path}")
         
+        # Update search index
+        update_search_index("models", "add", new_model, str(new_id))
+        
         logger.info(f"Model {request.shortName} created successfully with ID {new_id}")
         
         return {
@@ -470,7 +581,7 @@ async def create_model(request: CreateModelRequest):
         )
 
 @app.delete("/api/models/{short_name}")
-async def delete_model(short_name: str):
+async def delete_model(short_name: str, current_user: dict = Depends(require_editor_or_admin)):
     """
     Delete a data model by its short name.
     
@@ -510,6 +621,9 @@ async def delete_model(short_name: str):
         write_json_file(local_file_path, models_data)
         logger.info(f"Model deleted from local file {local_file_path}")
         
+        # Update search index
+        update_search_index("models", "delete", item_id=short_name)
+        
         logger.info(f"Model {short_name} deleted successfully")
         
         return {
@@ -526,7 +640,7 @@ async def delete_model(short_name: str):
         )
 
 @app.put("/api/models/{short_name}")
-async def update_model(short_name: str, request: UpdateModelRequest):
+async def update_model(short_name: str, request: UpdateModelRequest, current_user: dict = Depends(require_editor_or_admin)):
     """
     Update a data model by its short name.
     
@@ -627,6 +741,9 @@ async def update_model(short_name: str, request: UpdateModelRequest):
         write_json_file(local_file_path, models_data)
         logger.info(f"Updated local file {local_file_path}")
         
+        # Update search index
+        update_search_index("models", "update", updated_model, short_name)
+        
         # No cache to clear - always fresh data
         logger.info("No caching - data will be fresh on next request")
         
@@ -719,9 +836,28 @@ def write_json_file(file_path: str, data: Dict):
         logger.error(f"Error writing file {data_path}: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+def update_search_index(data_type: str, action: str, item: Dict[str, Any] = None, item_id: str = None):
+    """Update search index after data changes"""
+    try:
+        if action == "add" and item:
+            search_service.add_document(data_type, item_id or str(item.get('id', '')), item)
+            logger.info(f"Added {data_type}:{item_id} to search index")
+        elif action == "update" and item:
+            search_service.update_document(data_type, item_id or str(item.get('id', '')), item)
+            logger.info(f"Updated {data_type}:{item_id} in search index")
+        elif action == "delete" and item_id:
+            search_service.remove_document(data_type, item_id)
+            logger.info(f"Removed {data_type}:{item_id} from search index")
+        elif action == "rebuild":
+            search_service.rebuild_index()
+            logger.info(f"Rebuilt search index")
+    except Exception as e:
+        logger.error(f"Error updating search index: {str(e)}")
+        # Don't raise exception here as it shouldn't break the main operation
+
 # Agreement Management Endpoints
 @app.post("/api/agreements")
-async def create_agreement(request: Dict[str, Any]):
+async def create_agreement(request: Dict[str, Any], current_user: dict = Depends(require_editor_or_admin)):
     """
     Create a new agreement.
     
@@ -750,6 +886,9 @@ async def create_agreement(request: Dict[str, Any]):
         local_file_path = JSON_FILES['dataAgreements']
         write_json_file(local_file_path, agreements_data)
         
+        # Update search index
+        update_search_index("dataAgreements", "add", new_agreement, new_id)
+        
         logger.info(f"Created new agreement in local file {local_file_path}")
         logger.info(f"Agreement {new_id} created successfully")
         
@@ -763,7 +902,7 @@ async def create_agreement(request: Dict[str, Any]):
         raise HTTPException(status_code=500, detail=f"Error creating agreement: {str(e)}")
 
 @app.put("/api/agreements/{agreement_id}")
-async def update_agreement(agreement_id: str, request: Dict[str, Any]):
+async def update_agreement(agreement_id: str, request: Dict[str, Any], current_user: dict = Depends(require_editor_or_admin)):
     """
     Update an existing agreement.
     
@@ -806,6 +945,9 @@ async def update_agreement(agreement_id: str, request: Dict[str, Any]):
         local_file_path = JSON_FILES['dataAgreements']
         write_json_file(local_file_path, agreements_data)
         
+        # Update search index
+        update_search_index("dataAgreements", "update", updated_agreement, agreement_id)
+        
         logger.info(f"Agreement updated in local file {local_file_path}")
         logger.info(f"Agreement {agreement_id} updated successfully")
         
@@ -819,7 +961,7 @@ async def update_agreement(agreement_id: str, request: Dict[str, Any]):
         raise HTTPException(status_code=500, detail=f"Error updating agreement: {str(e)}")
 
 @app.delete("/api/agreements/{agreement_id}")
-async def delete_agreement(agreement_id: str):
+async def delete_agreement(agreement_id: str, current_user: dict = Depends(require_editor_or_admin)):
     """
     Delete an agreement by its ID.
     
@@ -852,6 +994,9 @@ async def delete_agreement(agreement_id: str):
         
         local_file_path = JSON_FILES['dataAgreements']
         write_json_file(local_file_path, agreements_data)
+        
+        # Update search index
+        update_search_index("dataAgreements", "delete", item_id=agreement_id)
         
         logger.info(f"Agreement deleted from local file {local_file_path}")
         logger.info(f"Agreement {agreement_id} deleted successfully")
@@ -915,7 +1060,7 @@ def generate_next_agreement_id(agreements_data: Dict) -> str:
 
 # Reference Data Management Endpoints
 @app.post("/api/reference")
-async def create_reference_item(request: Dict[str, Any]):
+async def create_reference_item(request: Dict[str, Any], current_user: dict = Depends(require_editor_or_admin)):
     """
     Create a new reference data item.
     
@@ -957,7 +1102,7 @@ async def create_reference_item(request: Dict[str, Any]):
         raise HTTPException(status_code=500, detail=f"Error creating reference item: {str(e)}")
 
 @app.put("/api/reference/{item_id}")
-async def update_reference_item(item_id: str, request: Dict[str, Any]):
+async def update_reference_item(item_id: str, request: Dict[str, Any], current_user: dict = Depends(require_editor_or_admin)):
     """
     Update an existing reference data item.
     
@@ -1013,7 +1158,7 @@ async def update_reference_item(item_id: str, request: Dict[str, Any]):
         raise HTTPException(status_code=500, detail=f"Error updating reference item: {str(e)}")
 
 @app.delete("/api/reference/{item_id}")
-async def delete_reference_item(item_id: str):
+async def delete_reference_item(item_id: str, current_user: dict = Depends(require_editor_or_admin)):
     """
     Delete a reference data item by its ID.
     
@@ -1061,7 +1206,7 @@ async def delete_reference_item(item_id: str):
 
 # Applications CRUD endpoints
 @app.post("/api/applications")
-async def create_application(application: Dict[str, Any]):
+async def create_application(application: Dict[str, Any], current_user: dict = Depends(require_editor_or_admin)):
     """
     Create a new application.
     
@@ -1109,7 +1254,7 @@ async def create_application(application: Dict[str, Any]):
         raise HTTPException(status_code=500, detail=f"Error creating application: {str(e)}")
 
 @app.put("/api/applications/{application_id}")
-async def update_application(application_id: int, application: Dict[str, Any]):
+async def update_application(application_id: int, application: Dict[str, Any], current_user: dict = Depends(require_editor_or_admin)):
     """
     Update an existing application by its ID.
     
@@ -1162,7 +1307,7 @@ async def update_application(application_id: int, application: Dict[str, Any]):
         raise HTTPException(status_code=500, detail=f"Error updating application: {str(e)}")
 
 @app.delete("/api/applications/{application_id}")
-async def delete_application(application_id: int):
+async def delete_application(application_id: int, current_user: dict = Depends(require_editor_or_admin)):
     """
     Delete an application by its ID.
     
@@ -1210,7 +1355,7 @@ async def delete_application(application_id: int):
 
 # Toolkit CRUD endpoints
 @app.post("/api/toolkit")
-async def create_toolkit_component(component: Dict[str, Any]):
+async def create_toolkit_component(component: Dict[str, Any], current_user: dict = Depends(require_editor_or_admin)):
     """
     Create a new toolkit component.
     
@@ -1315,7 +1460,7 @@ async def create_toolkit_component(component: Dict[str, Any]):
         raise HTTPException(status_code=500, detail=f"Error creating toolkit component: {str(e)}")
 
 @app.put("/api/toolkit/{component_type}/{component_id}")
-async def update_toolkit_component(component_type: str, component_id: str, component: Dict[str, Any]):
+async def update_toolkit_component(component_type: str, component_id: str, component: Dict[str, Any], current_user: dict = Depends(require_editor_or_admin)):
     """
     Update an existing toolkit component by its ID.
     
@@ -1398,7 +1543,7 @@ async def update_toolkit_component(component_type: str, component_id: str, compo
         raise HTTPException(status_code=500, detail=f"Error updating toolkit component: {str(e)}")
 
 @app.delete("/api/toolkit/{component_type}/{component_id}")
-async def delete_toolkit_component(component_type: str, component_id: str):
+async def delete_toolkit_component(component_type: str, component_id: str, current_user: dict = Depends(require_editor_or_admin)):
     """
     Delete a toolkit component by its ID.
     
@@ -1460,7 +1605,7 @@ def get_policies():
         raise HTTPException(status_code=500, detail=f"Error reading policies: {str(e)}")
 
 @app.post("/api/policies")
-def create_policy(policy: Dict[str, Any]):
+def create_policy(policy: Dict[str, Any], current_user: dict = Depends(require_editor_or_admin)):
     """Create a new data policy."""
     try:
         logger.info(f"Create request for new policy: {policy.get('name', 'Unknown')}")
@@ -1493,7 +1638,7 @@ def create_policy(policy: Dict[str, Any]):
         raise HTTPException(status_code=500, detail=f"Error creating policy: {str(e)}")
 
 @app.put("/api/policies/{policy_id}")
-def update_policy(policy_id: str, policy: Dict[str, Any]):
+def update_policy(policy_id: str, policy: Dict[str, Any], current_user: dict = Depends(require_editor_or_admin)):
     """Update an existing data policy."""
     try:
         logger.info(f"Update request for policy: {policy_id}")
@@ -1534,7 +1679,7 @@ def update_policy(policy_id: str, policy: Dict[str, Any]):
         raise HTTPException(status_code=500, detail=f"Error updating policy: {str(e)}")
 
 @app.delete("/api/policies/{policy_id}")
-def delete_policy(policy_id: str):
+def delete_policy(policy_id: str, current_user: dict = Depends(require_editor_or_admin)):
     """Delete a data policy."""
     try:
         logger.info(f"Delete request for policy: {policy_id}")
@@ -1616,6 +1761,7 @@ def get_model_relationships():
     except Exception as e:
         logger.error(f"Error in model relationships debug: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
 
 if __name__ == "__main__":
     import uvicorn

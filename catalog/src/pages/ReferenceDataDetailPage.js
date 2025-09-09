@@ -23,7 +23,8 @@ import {
   ListItemText,
   Divider,
   alpha,
-  Button
+  Button,
+  Tooltip
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import EditIcon from '@mui/icons-material/Edit';
@@ -126,20 +127,6 @@ const ReferenceDataDetailPage = ({ currentTheme }) => {
             {item.id}
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          startIcon={<EditIcon />}
-          onClick={() => navigate(`/reference/${item.id}/edit`)}
-          sx={{
-            bgcolor: currentTheme?.primary,
-            color: 'white',
-            '&:hover': {
-              bgcolor: currentTheme?.darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
-            },
-          }}
-        >
-          Edit
-        </Button>
         <Box sx={{ display: 'flex', gap: 1 }}>
           <Chip 
             label={item.category} 
@@ -167,6 +154,22 @@ const ReferenceDataDetailPage = ({ currentTheme }) => {
             />
           )}
         </Box>
+        <Tooltip title="Edit Reference Data">
+          <IconButton
+            onClick={() => navigate(`/reference/${item.id}/edit`)}
+            sx={{
+              color: currentTheme?.primary,
+              bgcolor: alpha(currentTheme?.primary, 0.1),
+              '&:hover': {
+                bgcolor: alpha(currentTheme?.primary, 0.2),
+                color: currentTheme?.primary,
+              },
+              border: `1px solid ${alpha(currentTheme?.primary, 0.3)}`,
+            }}
+          >
+            <EditIcon />
+          </IconButton>
+        </Tooltip>
       </Box>
 
       <Grid container spacing={3}>

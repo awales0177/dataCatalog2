@@ -333,7 +333,7 @@ const ToolkitPage = () => {
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
       <Typography variant="h4" sx={{ mb: 1, color: currentTheme.text }}>
-        Developer Toolkit
+        Data Tools
       </Typography>
       <Typography variant="body1" sx={{ mb: 4, color: currentTheme.textSecondary }}>
         Discover, share, and use modular components for faster development

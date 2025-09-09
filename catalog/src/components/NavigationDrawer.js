@@ -12,10 +12,19 @@ import {
   IconButton,
   Tooltip,
   alpha,
+  Chip,
+  Button,
 } from '@mui/material';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
-import { drawerWidth, collapsedDrawerWidth } from '../constants/navigation';
+import {
+  Visibility as EyeIcon,
+  Edit as EditIcon,
+  Diamond as CrownIcon,
+  SwapHoriz as SwapHorizIcon,
+} from '@mui/icons-material';
+import { drawerWidth, collapsedDrawerWidth, DIVIDER_AFTER_ITEM_ID } from '../constants/navigation';
+import { useAuth } from '../contexts/AuthContext';
 
 const NavigationDrawer = ({ 
   currentTheme, 
@@ -27,6 +36,30 @@ const NavigationDrawer = ({
   avatarColor 
 }) => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, currentRole } = useAuth();
+
+  const getRoleIcon = (role) => {
+    switch (role) {
+      case 'admin': return <CrownIcon />;
+      case 'editor': return <EditIcon />;
+      case 'reader': return <EyeIcon />;
+      default: return <EyeIcon />;
+    }
+  };
+
+  const getRoleColor = (role) => {
+    switch (role) {
+      case 'admin': return 'error';
+      case 'editor': return 'secondary';
+      case 'reader': return 'primary';
+      default: return 'primary';
+    }
+  };
+
+  const handleChangeRole = () => {
+    navigate('/role', { state: { changeRole: true, from: { pathname: window.location.pathname } } });
+  };
   
   // Monitor menu data changes for debugging
   React.useEffect(() => {
@@ -72,8 +105,8 @@ const NavigationDrawer = ({
           });
           
           return menuData.items.map((item, index) => {
-            // Add divider before Product Agreements (start of second section)
-            const shouldAddDivider = item.id === 'agreements' && !isDrawerCollapsed;
+            // Add divider after the specified item (start of second section)
+            const shouldAddDivider = item.id === DIVIDER_AFTER_ITEM_ID && !isDrawerCollapsed;
             
             return (
               <React.Fragment key={item.path}>
@@ -185,35 +218,96 @@ const NavigationDrawer = ({
         <Box
           sx={{
             display: 'flex',
-            alignItems: 'center',
-            gap: 2,
-            justifyContent: isDrawerCollapsed ? 'center' : 'space-between',
+            flexDirection: 'column',
+            gap: 1,
+            alignItems: isDrawerCollapsed ? 'center' : 'stretch',
           }}
         >
-          {!isDrawerCollapsed && (
-            <Box>
-              <Typography
-                variant="subtitle2"
-                sx={{
-                  color: currentTheme.text,
-                  fontSize: '0.875rem',
-                  fontWeight: 500,
-                }}
-              >
-                {process.env.REACT_APP_USERNAME || 'User'}
-              </Typography>
-            </Box>
-          )}
-          <Avatar
+          <Box
             sx={{
-              width: 32,
-              height: 32,
-              bgcolor: avatarColor,
-              fontSize: '0.875rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 2,
+              justifyContent: isDrawerCollapsed ? 'center' : 'space-between',
             }}
           >
-            {(process.env.REACT_APP_USERNAME || 'U').charAt(0).toUpperCase()}
-          </Avatar>
+            {!isDrawerCollapsed && (
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                  <Typography
+                    variant="subtitle2"
+                    sx={{
+                      color: currentTheme.text,
+                      fontSize: '0.875rem',
+                      fontWeight: 500,
+                    }}
+                  >
+                    {user?.full_name || user?.username || 'User'}
+                  </Typography>
+                  <Chip
+                    icon={getRoleIcon(currentRole || 'reader')}
+                    label={(currentRole || 'reader').charAt(0).toUpperCase() + (currentRole || 'reader').slice(1)}
+                    color={getRoleColor(currentRole || 'reader')}
+                    size="small"
+                    sx={{
+                      fontSize: '0.7rem',
+                      height: '20px',
+                    }}
+                  />
+                </Box>
+              </Box>
+            )}
+            <Avatar
+              sx={{
+                width: 32,
+                height: 32,
+                bgcolor: avatarColor,
+                fontSize: '0.875rem',
+              }}
+            >
+              {(user?.full_name || user?.username || 'U').charAt(0).toUpperCase()}
+            </Avatar>
+          </Box>
+          
+          {!isDrawerCollapsed && user && (
+            <Button
+              size="small"
+              startIcon={<SwapHorizIcon />}
+              onClick={handleChangeRole}
+              sx={{
+                alignSelf: 'flex-start',
+                fontSize: '0.75rem',
+                minWidth: 'auto',
+                px: 1,
+                py: 0.5,
+                color: currentTheme.textSecondary,
+                '&:hover': {
+                  bgcolor: currentTheme.background,
+                  color: currentTheme.text,
+                },
+              }}
+            >
+              Change Role
+            </Button>
+          )}
+          
+          {isDrawerCollapsed && user && (
+            <Tooltip title={`Current Role: ${(currentRole || 'reader').charAt(0).toUpperCase() + (currentRole || 'reader').slice(1)} - Click to change`} placement="right">
+              <IconButton
+                onClick={handleChangeRole}
+                size="small"
+                sx={{
+                  color: currentTheme.textSecondary,
+                  '&:hover': {
+                    bgcolor: currentTheme.background,
+                    color: currentTheme.text,
+                  },
+                }}
+              >
+                {getRoleIcon(currentRole || 'reader')}
+              </IconButton>
+            </Tooltip>
+          )}
         </Box>
       </Box>
     </>

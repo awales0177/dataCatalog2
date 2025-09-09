@@ -26,6 +26,7 @@ import {
   KeyboardArrowLeft,
   KeyboardArrowRight,
   GitHub as GitHubIcon,
+  Grass as GrassIcon,
 } from '@mui/icons-material';
 import { ThemeContext } from '../contexts/ThemeContext';
 import { useContext } from 'react';
@@ -299,9 +300,13 @@ const SplashPage = () => {
           <Typography variant="h4" sx={{ mb: 1, color: currentTheme.text }}>
             Welcome to Data Catalog
           </Typography>
-          <Typography variant="body1" sx={{ mb: 4, color: currentTheme.textSecondary }}>
-            Your central hub for discovering, understanding, and managing data assets across your organization. Get started by exploring data models, contracts, and applications.
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mb: 2 }}>
+            <GrassIcon sx={{ color: currentTheme.primary, fontSize: 28 }} />
+            <Typography variant="body1" sx={{ color: currentTheme.textSecondary }}>
+              The data landscaping platform to organize data across your organization.
+            </Typography>
+            <GrassIcon sx={{ color: currentTheme.primary, fontSize: 28 }} />
+          </Box>
         </Box>
 
         {/* Features Carousel */}

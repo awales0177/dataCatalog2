@@ -28,9 +28,14 @@ import ToolkitFunctionDetailPage from './pages/ToolkitFunctionDetailPage';
 import EditToolkitFunctionPage from './pages/EditToolkitFunctionPage';
 import DataPoliciesPage from './pages/DataPoliciesPage';
 import EditDataPolicyPage from './pages/EditDataPolicyPage';
+import RolePage from './pages/RolePage';
+import UnauthorizedPage from './pages/UnauthorizedPage';
+import UserManagementPage from './pages/UserManagementPage';
 import InfoSidebar from './components/InfoSidebar';
 import AppHeader from './components/AppHeader';
 import NavigationDrawer from './components/NavigationDrawer';
+import ProtectedRoute from './components/ProtectedRoute';
+import GlobalSearch from './components/GlobalSearch';
 
 // Import theme and hooks
 import { theme, addGoogleFonts } from './theme/theme';
@@ -38,6 +43,7 @@ import { useAppState } from './hooks/useAppState';
 import { getRandomColor } from './utils/common';
 import { drawerWidth, collapsedDrawerWidth } from './constants/navigation';
 import { ThemeContext } from './contexts/ThemeContext';
+import { AuthProvider } from './contexts/AuthContext';
 
 function AppContent() {
   const {
@@ -57,11 +63,26 @@ function AppContent() {
     handleDrawerCollapse,
     handleInfoSidebarToggle,
   } = useAppState();
+  
+  const [searchOpen, setSearchOpen] = React.useState(false);
 
   const [avatarColor] = React.useState(getRandomColor());
 
   // Check if we're on the splash page
   const isSplashPage = window.location.pathname === '/';
+
+  // Keyboard shortcut for search (Ctrl+K or Cmd+K)
+  React.useEffect(() => {
+    const handleKeyDown = (event) => {
+      if ((event.ctrlKey || event.metaKey) && event.key === 'k') {
+        event.preventDefault();
+        setSearchOpen(true);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   if (loading || !themeData || !menuData) {
     return (
@@ -149,61 +170,152 @@ function AppContent() {
         >
           <Routes>
             <Route path="/" element={<SplashPage />} />
-            <Route path="/models" element={<DataModelsPage />} />
-            <Route path="/agreements" element={<ProductAgreementsPage />} />
-            <Route path="/domains" element={<DataDomainsPage />} />
-            <Route path="/applications" element={<ApplicationsPage />} />
-            <Route path="/applications/create" element={<EditApplicationPage />} />
-            <Route path="/applications/edit/:id" element={<EditApplicationPage />} />
-            <Route path="/toolkit" element={<ToolkitPage />} />
-            <Route path="/toolkit/function/new" element={<EditToolkitFunctionPage />} />
-            <Route path="/toolkit/function/:functionId/edit" element={<EditToolkitFunctionPage />} />
-            <Route path="/toolkit/function/:functionId" element={<ToolkitFunctionDetailPage />} />
-            <Route path="/policies" element={<DataPoliciesPage />} />
-            <Route path="/policies/create" element={<EditDataPolicyPage />} />
-            <Route path="/policies/edit/:id" element={<EditDataPolicyPage />} />
-            <Route path="/reference" element={<ReferenceDataPage />} />
-            <Route path="/reference/create" element={<EditReferenceDataPage currentTheme={currentTheme} />} />
-            <Route path="/reference/:id/edit" element={<EditReferenceDataPage currentTheme={currentTheme} />} />
-            <Route path="/reference/:id" element={<ReferenceDataDetailPage currentTheme={currentTheme} />} />
+            <Route path="/role" element={<RolePage />} />
+            <Route path="/unauthorized" element={<UnauthorizedPage />} />
+            
+            {/* Protected routes - require authentication */}
+            <Route path="/models" element={
+              <ProtectedRoute>
+                <DataModelsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/agreements" element={
+              <ProtectedRoute>
+                <ProductAgreementsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/domains" element={
+              <ProtectedRoute>
+                <DataDomainsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/applications" element={
+              <ProtectedRoute>
+                <ApplicationsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/toolkit" element={
+              <ProtectedRoute>
+                <ToolkitPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/policies" element={
+              <ProtectedRoute>
+                <DataPoliciesPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/reference" element={
+              <ProtectedRoute>
+                <ReferenceDataPage />
+              </ProtectedRoute>
+            } />
+            
+            {/* Admin-only routes */}
+            <Route path="/users" element={
+              <ProtectedRoute requiredRole="admin">
+                <UserManagementPage />
+              </ProtectedRoute>
+            } />
+            
+            {/* Editor-only routes */}
+            <Route path="/applications/create" element={
+              <ProtectedRoute requiredRole="editor">
+                <EditApplicationPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/applications/edit/:id" element={
+              <ProtectedRoute requiredRole="editor">
+                <EditApplicationPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/toolkit/function/new" element={
+              <ProtectedRoute requiredRole="editor">
+                <EditToolkitFunctionPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/toolkit/function/:functionId/edit" element={
+              <ProtectedRoute requiredRole="editor">
+                <EditToolkitFunctionPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/toolkit/function/:functionId" element={
+              <ProtectedRoute>
+                <ToolkitFunctionDetailPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/policies/create" element={
+              <ProtectedRoute requiredRole="editor">
+                <EditDataPolicyPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/policies/edit/:id" element={
+              <ProtectedRoute requiredRole="editor">
+                <EditDataPolicyPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/reference/create" element={
+              <ProtectedRoute requiredRole="editor">
+                <EditReferenceDataPage currentTheme={currentTheme} />
+              </ProtectedRoute>
+            } />
+            <Route path="/reference/:id/edit" element={
+              <ProtectedRoute requiredRole="editor">
+                <EditReferenceDataPage currentTheme={currentTheme} />
+              </ProtectedRoute>
+            } />
+            <Route path="/reference/:id" element={
+              <ProtectedRoute>
+                <ReferenceDataDetailPage currentTheme={currentTheme} />
+              </ProtectedRoute>
+            } />
             <Route 
               path="/models/:shortName" 
               element={
-                <DataModelDetailPage 
-                  currentTheme={currentTheme}
-                />
+                <ProtectedRoute>
+                  <DataModelDetailPage 
+                    currentTheme={currentTheme}
+                  />
+                </ProtectedRoute>
               } 
             />
             <Route 
               path="/models/:shortName/edit" 
               element={
-                <EditDataModelDetailPage 
-                  currentTheme={currentTheme}
-                />
+                <ProtectedRoute requiredRole="editor">
+                  <EditDataModelDetailPage 
+                    currentTheme={currentTheme}
+                  />
+                </ProtectedRoute>
               } 
             />
             <Route 
               path="/agreements/create" 
               element={
-                <EditAgreementPage 
-                  currentTheme={currentTheme}
-                />
+                <ProtectedRoute requiredRole="editor">
+                  <EditAgreementPage 
+                    currentTheme={currentTheme}
+                  />
+                </ProtectedRoute>
               } 
             />
             <Route 
               path="/agreements/:id" 
               element={
-                <ProductAgreementDetailPage 
-                  currentTheme={currentTheme}
-                />
+                <ProtectedRoute>
+                  <ProductAgreementDetailPage 
+                    currentTheme={currentTheme}
+                  />
+                </ProtectedRoute>
               } 
             />
             <Route 
               path="/agreements/:id/edit" 
               element={
-                <EditAgreementPage 
-                  currentTheme={currentTheme}
-                />
+                <ProtectedRoute requiredRole="editor">
+                  <EditAgreementPage 
+                    currentTheme={currentTheme}
+                  />
+                </ProtectedRoute>
               } 
             />
           </Routes>
@@ -247,6 +359,12 @@ function AppContent() {
           onClose={handleInfoSidebarToggle}
           currentTheme={currentTheme}
         />
+        
+        {/* Global Search Dialog */}
+        <GlobalSearch 
+          open={searchOpen} 
+          onClose={() => setSearchOpen(false)} 
+        />
       </Box>
     </ThemeContext.Provider>
   );
@@ -260,9 +378,11 @@ function App() {
 
   return (
     <BrowserRouter>
-      <ThemeProvider theme={theme}>
-        <AppContent />
-      </ThemeProvider>
+      <AuthProvider>
+        <ThemeProvider theme={theme}>
+          <AppContent />
+        </ThemeProvider>
+      </AuthProvider>
     </BrowserRouter>
   );
 }

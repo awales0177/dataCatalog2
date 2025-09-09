@@ -415,7 +415,7 @@
           "version": "2.1.0",
           "date": "2024-02-10T09:30:00Z",
           "changes": [
-            "Added social login support",
+            "Added social role change support",
             "Enhanced security logging"
           ]
         }

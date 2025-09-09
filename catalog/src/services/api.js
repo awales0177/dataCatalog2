@@ -33,6 +33,11 @@ determineApiUrl().then(url => {
   console.log('API URL determined:', API_URL);
 });
 
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('authToken');
+  return token ? { 'Authorization': `Bearer ${token}` } : {};
+};
+
 const fetchWithCache = async (endpoint, params = {}, options = {}) => {
   const { forceRefresh = false, ttl } = options;
   const cacheKey = cacheService.generateKey(endpoint, params);
@@ -57,7 +62,12 @@ const fetchWithCache = async (endpoint, params = {}, options = {}) => {
   try {
     const url = `${API_URL}/${endpoint}`;
     console.log('Fetching data from:', url);
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
+      }
+    });
     console.log('Response status:', response.status);
     console.log('Response headers:', Object.fromEntries(response.headers.entries()));
     
@@ -203,6 +213,7 @@ export const createModel = async (modelData) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        ...getAuthHeaders()
       },
       body: JSON.stringify(modelData),
     });
@@ -236,6 +247,7 @@ export const deleteModel = async (shortName) => {
   try {
     const response = await fetch(`${API_URL}/models/${shortName}`, {
       method: 'DELETE',
+      headers: getAuthHeaders()
     });
 
     if (!response.ok) {
@@ -269,6 +281,7 @@ export const updateModel = async (shortName, modelData, options = {}) => {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
+        ...getAuthHeaders()
       },
       body: JSON.stringify({
         shortName: shortName,
@@ -313,7 +326,10 @@ export const createAgreement = async (agreementData) => {
   try {
     const response = await fetch(`${API_URL}/agreements`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
+      },
       body: JSON.stringify(agreementData),
     });
     if (!response.ok) {
@@ -333,7 +349,10 @@ export const updateAgreement = async (agreementId, agreementData) => {
   try {
     const response = await fetch(`${API_URL}/agreements/${agreementId}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
+      },
       body: JSON.stringify(agreementData),
     });
     if (!response.ok) {
@@ -353,6 +372,7 @@ export const deleteAgreement = async (agreementId) => {
   try {
     const response = await fetch(`${API_URL}/agreements/${agreementId}`, {
       method: 'DELETE',
+      headers: getAuthHeaders()
     });
     if (!response.ok) {
       const errorData = await response.json();
@@ -372,7 +392,10 @@ export const createReferenceItem = async (referenceData) => {
   try {
     const response = await fetch(`${API_URL}/reference`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
+      },
       body: JSON.stringify(referenceData),
     });
     if (!response.ok) {
@@ -392,7 +415,10 @@ export const updateReferenceItem = async (itemId, referenceData) => {
   try {
     const response = await fetch(`${API_URL}/reference/${itemId}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
+      },
       body: JSON.stringify(referenceData),
     });
     if (!response.ok) {
@@ -412,6 +438,7 @@ export const deleteReferenceItem = async (itemId) => {
   try {
     const response = await fetch(`${API_URL}/reference/${itemId}`, {
       method: 'DELETE',
+      headers: getAuthHeaders()
     });
     if (!response.ok) {
       const errorData = await response.json();
@@ -431,7 +458,10 @@ export const createApplication = async (applicationData) => {
   try {
     const response = await fetch(`${API_URL}/applications`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
+      },
       body: JSON.stringify(applicationData),
     });
     if (!response.ok) {
@@ -451,7 +481,10 @@ export const updateApplication = async (applicationId, applicationData) => {
   try {
     const response = await fetch(`${API_URL}/applications/${applicationId}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
+      },
       body: JSON.stringify(applicationData),
     });
     if (!response.ok) {
@@ -471,6 +504,7 @@ export const deleteApplication = async (applicationId) => {
   try {
     const response = await fetch(`${API_URL}/applications/${applicationId}`, {
       method: 'DELETE',
+      headers: getAuthHeaders()
     });
     if (!response.ok) {
       const errorData = await response.json();
@@ -490,7 +524,10 @@ export const createToolkitComponent = async (componentData) => {
   try {
     const response = await fetch(`${API_URL}/toolkit`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
+      },
       body: JSON.stringify(componentData),
     });
     if (!response.ok) {
@@ -510,7 +547,10 @@ export const updateToolkitComponent = async (componentType, componentId, compone
   try {
     const response = await fetch(`${API_URL}/toolkit/${componentType}/${componentId}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
+      },
       body: JSON.stringify(componentData),
     });
     if (!response.ok) {
@@ -530,6 +570,7 @@ export const deleteToolkitComponent = async (componentType, componentId) => {
   try {
     const response = await fetch(`${API_URL}/toolkit/${componentType}/${componentId}`, {
       method: 'DELETE',
+      headers: getAuthHeaders()
     });
     if (!response.ok) {
       const errorData = await response.json();
@@ -549,7 +590,10 @@ export const createDataPolicy = async (policyData) => {
   try {
     const response = await fetch(`${API_URL}/policies`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
+      },
       body: JSON.stringify(policyData),
     });
     if (!response.ok) {
@@ -569,7 +613,10 @@ export const updateDataPolicy = async (policyId, policyData) => {
   try {
     const response = await fetch(`${API_URL}/policies/${policyId}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
+      },
       body: JSON.stringify(policyData),
     });
     if (!response.ok) {
@@ -589,6 +636,7 @@ export const deleteDataPolicy = async (policyId) => {
   try {
     const response = await fetch(`${API_URL}/policies/${policyId}`, {
       method: 'DELETE',
+      headers: getAuthHeaders()
     });
     if (!response.ok) {
       const errorData = await response.json();
@@ -599,6 +647,89 @@ export const deleteDataPolicy = async (policyId) => {
     return result;
   } catch (error) {
     console.error('Error deleting data policy:', error);
+    throw error;
+  }
+};
+
+// Search Functions
+export const globalSearch = async (query, options = {}) => {
+  try {
+    const { types, limit = 50 } = options;
+    let url = `${API_URL}/search?q=${encodeURIComponent(query)}&limit=${limit}`;
+    
+    if (types && types.length > 0) {
+      url += `&types=${types.join(',')}`;
+    }
+    
+    const response = await fetch(url, {
+      headers: getAuthHeaders()
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error in global search:', error);
+    throw error;
+  }
+};
+
+export const getSearchSuggestions = async (query, limit = 10) => {
+  try {
+    const response = await fetch(
+      `${API_URL}/search/suggest?q=${encodeURIComponent(query)}&limit=${limit}`,
+      { headers: getAuthHeaders() }
+    );
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error getting search suggestions:', error);
+    throw error;
+  }
+};
+
+export const getSearchStats = async () => {
+  try {
+    const response = await fetch(`${API_URL}/search/stats`, {
+      headers: getAuthHeaders()
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error getting search stats:', error);
+    throw error;
+  }
+};
+
+export const rebuildSearchIndex = async () => {
+  try {
+    const response = await fetch(`${API_URL}/search/rebuild`, {
+      method: 'POST',
+      headers: getAuthHeaders()
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error rebuilding search index:', error);
     throw error;
   }
 };

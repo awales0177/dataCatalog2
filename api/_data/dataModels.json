@@ -722,7 +722,8 @@
       "id": 19,
       "shortName": "TEST",
       "name": "Test Model",
-      "description": "Test Description"
+      "description": "Test Description",
+      "lastUpdated": "2025-09-09 03:50:20"
     }
   ]
 }

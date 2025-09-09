@@ -18,6 +18,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import DataModelCard from '../components/DataModelCard';
 import { ThemeContext } from '../contexts/ThemeContext';
+import { useAuth } from '../contexts/AuthContext';
 import { fetchData } from '../services/api';
 import Pagination from '../components/Pagination';
 
@@ -25,6 +26,7 @@ const ITEMS_PER_PAGE = 12;
 
 const DataModelsPage = () => {
   const { currentTheme } = useContext(ThemeContext);
+  const { canCreate } = useAuth();
   const navigate = useNavigate();
   const [allModels, setAllModels] = useState([]);
   const [filteredModels, setFilteredModels] = useState([]);

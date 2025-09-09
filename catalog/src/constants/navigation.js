@@ -11,6 +11,9 @@ import { Policy as PolicyIcon } from '@mui/icons-material';
 export const drawerWidth = 280;
 export const collapsedDrawerWidth = 56;
 
+// Define where the divider should appear in the navigation
+export const DIVIDER_AFTER_ITEM_ID = 'applications';
+
 export const menuItems = [
   {
     name: 'Home',
@@ -37,7 +40,7 @@ export const menuItems = [
     id: 'reference'
   },
   {
-    name: 'Data Applications',
+    name: 'Data Teams',
     path: '/applications',
     icon: <AiOutlineAppstore />,
     id: 'applications'

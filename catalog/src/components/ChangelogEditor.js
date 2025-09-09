@@ -101,10 +101,7 @@ const ChangelogEditor = ({
       <Typography variant="h6" sx={{ 
         color: currentTheme.text, 
         mb: 2,
-        fontWeight: 600,
-        borderBottom: `2px solid ${currentTheme.primary}`,
-        pb: 1,
-        display: 'inline-block'
+        fontWeight: 600
       }}>
         {label}
       </Typography>
