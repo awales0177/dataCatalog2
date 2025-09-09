@@ -24,6 +24,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  alpha,
 } from '@mui/material';
 import DeleteModal from '../components/DeleteModal';
 
@@ -80,6 +81,10 @@ const EditAgreementPage = () => {
 
   const [newChangelogVersion, setNewChangelogVersion] = useState('');
   const [newChangelogChanges, setNewChangelogChanges] = useState('');
+  
+  // Data policies state
+  const [dataPolicies, setDataPolicies] = useState([]);
+  const [selectedPolicies, setSelectedPolicies] = useState([]);
   
 
 
@@ -317,6 +322,32 @@ const EditAgreementPage = () => {
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   });
+
+  // Fetch data policies
+  useEffect(() => {
+    const fetchDataPolicies = async () => {
+      try {
+        const response = await fetch('http://localhost:8000/api/policies');
+        if (response.ok) {
+          const data = await response.json();
+          setDataPolicies(data.policies || []);
+        } else {
+          console.error('Failed to fetch data policies');
+        }
+      } catch (error) {
+        console.error('Error fetching data policies:', error);
+      }
+    };
+
+    fetchDataPolicies();
+  }, []);
+
+  // Initialize selected policies when agreement data loads
+  useEffect(() => {
+    if (editedAgreement && editedAgreement.dataPolicies) {
+      setSelectedPolicies(editedAgreement.dataPolicies);
+    }
+  }, [editedAgreement]);
 
   const hasChanges = () => {
     if (!agreement || !editedAgreement) return false;
@@ -2054,6 +2085,100 @@ const EditAgreementPage = () => {
           </Grid>
           <Grid item xs={12} md={6}>
             {renderField('sensitivityLevel', editedAgreement.sensitivityLevel, 'Sensitivity Level', 'text', null, false, 'array')}
+          </Grid>
+          <Grid item xs={12}>
+            <FormControl fullWidth sx={{ mb: 2 }}>
+              <InputLabel sx={{ color: currentTheme.textSecondary }}>
+                Data Policies
+              </InputLabel>
+              <Select
+                multiple
+                value={selectedPolicies}
+                onChange={(e) => {
+                  const selected = e.target.value;
+                  setSelectedPolicies(selected);
+                  setEditedAgreement(prev => ({
+                    ...prev,
+                    dataPolicies: selected
+                  }));
+                }}
+                label="Data Policies"
+                sx={{
+                  color: currentTheme.text,
+                  '& .MuiOutlinedInput-notchedOutline': { borderColor: currentTheme.border },
+                  '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: currentTheme.primary },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: currentTheme.primary },
+                  '& .MuiSelect-icon': { color: currentTheme.textSecondary }
+                }}
+                MenuProps={{
+                  PaperProps: {
+                    sx: {
+                      bgcolor: currentTheme.card,
+                      color: currentTheme.text,
+                      '& .MuiMenuItem-root': {
+                        color: currentTheme.text,
+                        '&:hover': { bgcolor: currentTheme.primary + '20' },
+                        '&.Mui-selected': { bgcolor: currentTheme.primary + '40' }
+                      }
+                    }
+                  }
+                }}
+                renderValue={(selected) => (
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                    {selected.map((policyId) => {
+                      const policy = dataPolicies.find(p => p.id === policyId);
+                      return (
+                        <Chip
+                          key={policyId}
+                          label={policy ? policy.name : policyId}
+                          size="small"
+                          sx={{
+                            bgcolor: currentTheme.primary + '20',
+                            color: currentTheme.text,
+                            '& .MuiChip-deleteIcon': { color: currentTheme.textSecondary }
+                          }}
+                        />
+                      );
+                    })}
+                  </Box>
+                )}
+              >
+                {dataPolicies.map((policy) => (
+                  <MenuItem key={policy.id} value={policy.id}>
+                    <Box>
+                      <Typography sx={{ color: currentTheme.text, fontWeight: 500 }}>
+                        {policy.name}
+                      </Typography>
+                      <Typography sx={{ color: currentTheme.textSecondary, fontSize: '0.875rem' }}>
+                        {policy.description}
+                      </Typography>
+                      <Box sx={{ display: 'flex', gap: 1, mt: 0.5 }}>
+                        <Chip
+                          label={policy.status}
+                          size="small"
+                          sx={{
+                            bgcolor: policy.status === 'active' ? alpha('#4caf50', 0.1) : alpha('#ff9800', 0.1),
+                            color: policy.status === 'active' ? '#4caf50' : '#ff9800',
+                            fontSize: '0.7rem',
+                            height: '20px'
+                          }}
+                        />
+                        <Chip
+                          label={policy.type}
+                          size="small"
+                          sx={{
+                            bgcolor: currentTheme.primary + '20',
+                            color: currentTheme.primary,
+                            fontSize: '0.7rem',
+                            height: '20px'
+                          }}
+                        />
+                      </Box>
+                    </Box>
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
           </Grid>
           <Grid item xs={12}>
             {renderField('deliveredVersion', editedAgreement.deliveredVersion, 'Delivered Version')}

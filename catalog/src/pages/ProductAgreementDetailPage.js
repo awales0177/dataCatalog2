@@ -71,6 +71,7 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
   const [model, setModel] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState(null);
+  const [dataPolicies, setDataPolicies] = React.useState([]);
 
   // Set document title to "{modelShortName} Agreement" or just "Agreement" if no model
   React.useEffect(() => {
@@ -82,6 +83,23 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
       }
     }
   }, [agreement]);
+
+  // Fetch data policies
+  React.useEffect(() => {
+    const fetchDataPolicies = async () => {
+      try {
+        const response = await fetch('http://localhost:8000/api/policies');
+        if (response.ok) {
+          const data = await response.json();
+          setDataPolicies(data.policies || []);
+        }
+      } catch (error) {
+        console.error('Error fetching data policies:', error);
+      }
+    };
+
+    fetchDataPolicies();
+  }, []);
 
   const calculateVersionDifference = (agreementVersions, modelVersion) => {
     if (!agreementVersions || !modelVersion) return null;
@@ -1168,6 +1186,15 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
 
             <Box sx={{ mb: 2 }}>
               <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
+                File Format
+              </Typography>
+              <Typography variant="body1" sx={{ color: currentTheme.text }}>
+                {agreement.fileFormat || 'Not specified'}
+              </Typography>
+            </Box>
+
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
                 Delivery Frequency
               </Typography>
               <List dense sx={{ bgcolor: 'transparent', borderRadius: 1, p: 0.5, pl: 0, ml: '-12px' }}>
@@ -1376,6 +1403,44 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
               <Typography variant="body1" sx={{ color: currentTheme.text }}>
                 {formatDate(agreement.lastUpdated)}
               </Typography>
+            </Box>
+
+            <Divider sx={{ my: 2 }} />
+
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary, mb: 1 }}>
+                Data Policies
+              </Typography>
+              {agreement.dataPolicies && agreement.dataPolicies.length > 0 ? (
+                <List dense sx={{ bgcolor: 'transparent', borderRadius: 1, p: 0.5, pl: 0, ml: '-12px' }}>
+                  {agreement.dataPolicies.map((policyId, index) => {
+                    const policy = dataPolicies.find(p => p.id === policyId);
+                    return (
+                      <ListItem key={index} sx={{ py: 0.5, bgcolor: 'transparent' }}>
+                        <ListItemIcon sx={{ minWidth: 30 }}>
+                          <DescriptionIcon sx={{ fontSize: 20, color: currentTheme.primary, opacity: 0.8 }} />
+                        </ListItemIcon>
+                        <ListItemText
+                          primary={
+                            <Typography sx={{ color: currentTheme.text }}>
+                              {policy ? policy.name : `Policy ${index + 1}`}
+                            </Typography>
+                          }
+                          secondary={
+                            <Typography sx={{ color: currentTheme.textSecondary, fontSize: '0.875rem' }}>
+                              {policy ? policy.description : 'No description available'}
+                            </Typography>
+                          }
+                        />
+                      </ListItem>
+                    );
+                  })}
+                </List>
+              ) : (
+                <Typography variant="body2" sx={{ color: currentTheme.textSecondary, fontStyle: 'italic' }}>
+                  No data policies associated with this agreement
+                </Typography>
+              )}
             </Box>
           </Paper>
         </Grid>
