@@ -27,6 +27,7 @@ import ToolkitPage from './pages/ToolkitPage';
 import ToolkitFunctionDetailPage from './pages/ToolkitFunctionDetailPage';
 import EditToolkitFunctionPage from './pages/EditToolkitFunctionPage';
 import DataPoliciesPage from './pages/DataPoliciesPage';
+import DataPolicyDetailPage from './pages/DataPolicyDetailPage';
 import EditDataPolicyPage from './pages/EditDataPolicyPage';
 import RolePage from './pages/RolePage';
 import UnauthorizedPage from './pages/UnauthorizedPage';
@@ -202,6 +203,11 @@ function AppContent() {
             <Route path="/policies" element={
               <ProtectedRoute>
                 <DataPoliciesPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/policies/:id" element={
+              <ProtectedRoute>
+                <DataPolicyDetailPage />
               </ProtectedRoute>
             } />
             <Route path="/reference" element={

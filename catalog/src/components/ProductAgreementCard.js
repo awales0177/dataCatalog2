@@ -42,6 +42,8 @@ const ProductAgreementCard = ({ agreement, currentTheme }) => {
       onClick={handleClick}
       sx={{ 
         height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
         borderRadius: 2,
         transition: 'all 0.2s ease-in-out',
         bgcolor: currentTheme.card,
@@ -53,102 +55,67 @@ const ProductAgreementCard = ({ agreement, currentTheme }) => {
         },
       }}
     >
-      <CardContent>
-        <Typography 
-          variant="h6" 
-          sx={{ 
-            color: currentTheme.text, 
-            fontWeight: 600, 
-            mb: 1,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            display: '-webkit-box',
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: 'vertical',
-          }}
-        >
-          {agreement.name}
-        </Typography>
-
-        {/* Consumer Chips */}
-        <Box sx={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: 0.5,
-          mb: 2,
-        }}>
-          {(() => {
-            const consumers = Array.isArray(agreement.dataConsumer)
-              ? agreement.dataConsumer
-              : agreement.dataConsumer
-                ? [agreement.dataConsumer]
-                : [];
-            
-            if (consumers.length === 0) {
-              return (
-                <Chip
-                  icon={<ShoppingBasketIcon sx={{ color: currentTheme.primary, opacity: 0.8 }} />}
-                  label="No Consumer"
-                  size="small"
-                  sx={{
-                    bgcolor: alpha(currentTheme.primary, 0.1),
-                    color: currentTheme.textSecondary,
-                    border: `1px solid ${currentTheme.border}`,
-                    fontWeight: 500,
-                    fontSize: '0.7rem',
-                    opacity: 0.7,
-                    height: '24px',
-                  }}
-                />
-              );
-            }
-            
-            // Show only first 2 consumers to prevent title from being hidden
-            const maxVisible = 2;
-            const visibleConsumers = consumers.slice(0, maxVisible);
-            const hiddenCount = consumers.length - maxVisible;
-            
-            return (
-              <>
-                {visibleConsumers.map((consumer, idx) => (
-                  <Chip
-                    key={idx}
-                    icon={<ShoppingBasketIcon sx={{ color: currentTheme.primary, opacity: 0.8 }} />}
-                    label={consumer}
-                    size="small"
-                    sx={{
-                      bgcolor: alpha(currentTheme.primary, 0.1),
-                      color: currentTheme.primary,
-                      border: `1px solid ${currentTheme.border}`,
-                      fontWeight: 500,
-                      fontSize: '0.7rem',
-                      opacity: 0.95,
-                      height: '24px',
-                    }}
-                  />
-                ))}
-                {hiddenCount > 0 && (
-                  <Chip
-                    label={`+${hiddenCount} more`}
-                    size="small"
-                    sx={{
-                      bgcolor: currentTheme.textSecondary,
-                      color: currentTheme.card,
-                      fontWeight: 500,
-                      fontSize: '0.7rem',
-                      opacity: 0.8,
-                      height: '24px',
-                    }}
-                  />
-                )}
-              </>
-            );
-          })()}
+      <CardContent sx={{ 
+        display: 'flex', 
+        flexDirection: 'column',
+        flex: 1
+      }}>
+        <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 2 }}>
+          <Box sx={{ flex: 1 }}>
+            <Typography 
+              variant="h6" 
+              sx={{ 
+                color: currentTheme.text, 
+                fontWeight: 600, 
+                mb: 1,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
+              }}
+            >
+              {agreement.name}
+            </Typography>
+            <Typography 
+              variant="body2" 
+              sx={{ 
+                color: currentTheme.textSecondary,
+                mb: 2,
+                lineHeight: 1.4,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
+              }}
+            >
+              {agreement.description || 'No description available'}
+            </Typography>
+          </Box>
+          <Chip
+            label={(agreement.status || 'unknown').split('_').map(word => 
+              word.charAt(0).toUpperCase() + word.slice(1)
+            ).join(' ')}
+            size="small"
+            sx={{
+              bgcolor: alpha(statusColor, 0.1),
+              color: statusColor,
+              fontWeight: 600,
+              textTransform: 'capitalize',
+              ml: 1
+            }}
+          />
         </Box>
 
-        {/* Contract Version */}
-        {agreement.contractVersion && (
-          <Box sx={{ mb: 2 }}>
+        <Box sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'space-between',
+          gap: 1, 
+          mt: 'auto'
+        }}>
+          {agreement.contractVersion && (
             <Typography variant="caption" sx={{ 
               color: currentTheme.textSecondary,
               fontSize: '0.7rem',
@@ -156,34 +123,10 @@ const ProductAgreementCard = ({ agreement, currentTheme }) => {
             }}>
               v{agreement.contractVersion}
             </Typography>
-          </Box>
-        )}
-
-        <Box sx={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center',
-          mt: 'auto',
-        }}>
+          )}
           <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
             {formatDate(agreement.lastUpdated)}
           </Typography>
-          <Box
-            sx={{
-              px: 1,
-              py: 0.5,
-              borderRadius: 1,
-              bgcolor: alpha(statusColor, 0.1),
-              color: statusColor,
-              fontSize: '0.75rem',
-              fontWeight: 500,
-              border: `1px solid ${alpha(statusColor, 0.3)}`,
-            }}
-          >
-            {(agreement.status || 'unknown').split('_').map(word => 
-              word.charAt(0).toUpperCase() + word.slice(1)
-            ).join(' ')}
-          </Box>
         </Box>
       </CardContent>
     </Card>

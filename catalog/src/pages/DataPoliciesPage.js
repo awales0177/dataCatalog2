@@ -32,6 +32,7 @@ import {
   CheckCircle as CheckCircleIcon,
   Warning as WarningIcon,
   Error as ErrorIcon,
+  ReadMore as ReadMoreIcon,
 } from '@mui/icons-material';
 import { ThemeContext } from '../contexts/ThemeContext';
 import { fetchData } from '../services/api';
@@ -153,6 +154,7 @@ const DataPoliciesPage = () => {
       <Card 
         key={policy.id}
         elevation={0}
+        onClick={() => navigate(`/policies/${policy.id}`)}
         sx={{ 
           height: '100%',
           display: 'flex',
@@ -161,6 +163,7 @@ const DataPoliciesPage = () => {
           border: `1px solid ${currentTheme.border}`,
           borderRadius: 2,
           transition: 'all 0.2s ease-in-out',
+          cursor: 'pointer',
           '&:hover': {
             transform: 'translateY(-4px)',
             boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
@@ -168,17 +171,7 @@ const DataPoliciesPage = () => {
         }}
       >
         <CardContent sx={{ flexGrow: 1, p: 2 }}>
-          <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, mb: 2 }}>
-            <Box sx={{ 
-              p: 1, 
-              borderRadius: 1, 
-              bgcolor: alpha(typeColor, 0.1),
-              color: typeColor,
-              display: 'flex',
-              alignItems: 'center'
-            }}>
-              {getPolicyTypeIcon(policy.type)}
-            </Box>
+          <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 2 }}>
             <Box sx={{ flex: 1 }}>
               <Typography variant="h6" sx={{ 
                 color: currentTheme.text, 
@@ -196,29 +189,6 @@ const DataPoliciesPage = () => {
                 {policy.description}
               </Typography>
             </Box>
-          </Box>
-
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
-            <Chip
-              label={policy.type}
-              size="small"
-              sx={{
-                bgcolor: alpha(typeColor, 0.1),
-                color: typeColor,
-                fontWeight: 600,
-                textTransform: 'capitalize'
-              }}
-            />
-            <Chip
-              label={policy.priority}
-              size="small"
-              sx={{
-                bgcolor: alpha(priorityColor, 0.1),
-                color: priorityColor,
-                fontWeight: 600,
-                textTransform: 'capitalize'
-              }}
-            />
             <Chip
               label={policy.status}
               size="small"
@@ -226,7 +196,8 @@ const DataPoliciesPage = () => {
                 bgcolor: alpha(statusColor, 0.1),
                 color: statusColor,
                 fontWeight: 600,
-                textTransform: 'capitalize'
+                textTransform: 'capitalize',
+                ml: 1
               }}
             />
           </Box>
@@ -238,12 +209,6 @@ const DataPoliciesPage = () => {
             </Typography>
           </Box>
 
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-            <ScheduleIcon sx={{ fontSize: 16, color: currentTheme.textSecondary }} />
-            <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
-              Effective: {policy.effectiveDate} | Review: {policy.reviewDate}
-            </Typography>
-          </Box>
 
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
             {policy.tags.slice(0, 3).map((tag, index) => (
@@ -274,27 +239,11 @@ const DataPoliciesPage = () => {
           </Box>
         </CardContent>
 
-        <CardActions sx={{ p: 2, pt: 0 }}>
+        <CardActions sx={{ p: 2, pt: 0, justifyContent: 'flex-end' }}>
           <Button
             size="small"
-            startIcon={<EditIcon />}
-            onClick={() => navigate(`/policies/edit/${policy.id}`)}
-            sx={{
-              color: currentTheme.primary,
-              '&:hover': {
-                bgcolor: alpha(currentTheme.primary, 0.1)
-              }
-            }}
-          >
-            Edit
-          </Button>
-          <Button
-            size="small"
-            startIcon={<CheckCircleIcon />}
-            onClick={() => {
-              // TODO: Implement view details
-              setSnackbar({ open: true, message: 'View details feature coming soon!', severity: 'info' });
-            }}
+            startIcon={<ReadMoreIcon />}
+            onClick={() => navigate(`/policies/${policy.id}`)}
             sx={{
               color: currentTheme.textSecondary,
               '&:hover': {
