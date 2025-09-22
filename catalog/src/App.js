@@ -11,6 +11,9 @@ import { ThemeProvider } from '@mui/material/styles';
 
 // Import components
 import DataModelsPage from './pages/DataModelsPage';
+import DataProductMarketplacePage from './pages/DataProductMarketplacePage';
+import DatasetDetailPage from './pages/DatasetDetailPage';
+import DataProductDetailPage from './pages/DataProductDetailPage';
 import ProductAgreementsPage from './pages/ProductAgreementsPage';
 import DataDomainsPage from './pages/DataDomainsPage';
 import SplashPage from './pages/SplashPage';
@@ -177,6 +180,26 @@ function AppContent() {
             <Route path="/models" element={
               <ProtectedRoute>
                 <DataModelsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/data-products" element={
+              <ProtectedRoute>
+                <DataProductMarketplacePage />
+              </ProtectedRoute>
+            } />
+            <Route path="/data-products/:datasetId" element={
+              <ProtectedRoute>
+                <DatasetDetailPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/data-products/:datasetId/products/:productId" element={
+              <ProtectedRoute>
+                <DataProductDetailPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/data-products/:id" element={
+              <ProtectedRoute>
+                <DataProductDetailPage />
               </ProtectedRoute>
             } />
             <Route path="/agreements" element={

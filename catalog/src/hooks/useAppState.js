@@ -114,7 +114,8 @@ export const useAppState = () => {
             if (item.id === 'home') return item;
             try {
               const endpoint = item.id === 'agreements' ? 'dataAgreements' : 
-                              item.id === 'models' ? 'models' : item.id;
+                              item.id === 'models' ? 'models' : 
+                              item.id === 'data-products' ? 'dataProducts' : item.id;
               const count = await fetchItemCount(endpoint);
               return { ...item, count };
             } catch (error) {
@@ -170,24 +171,21 @@ export const useAppState = () => {
     }
   };
 
-  // Add effect to handle sidebar collapse on detail pages, 2-level navigation and edit mode
+  // Add effect to handle sidebar collapse - only expand on main listing pages
   useEffect(() => {
     const pathSegments = location.pathname.split('/').filter(segment => segment !== '');
     console.log('Current path segments:', pathSegments);
     
-    // Collapse if we're exactly 2 levels deep (e.g., /models/CUST)
-    // OR if we're in edit mode (e.g., /models/CUST/edit, /applications/edit/123, /policies/edit/456)
-    // OR if we're in detail view (e.g., /toolkit/function/123, /reference/456)
-    if (pathSegments.length === 2 || 
-        (pathSegments.length === 3 && pathSegments[2] === 'edit') ||
-        (pathSegments.length === 3 && pathSegments[1] === 'edit') ||
-        (pathSegments.length === 3 && pathSegments[1] === 'function') ||
-        (pathSegments.length === 3 && pathSegments[1] === 'reference')) {
-      console.log('Collapsing sidebar - detail page, 2-level navigation or edit mode detected');
-      setIsDrawerCollapsed(true);
-    } else {
-      console.log('Expanding sidebar - top level navigation');
+    // Only expand sidebar on main listing pages (exactly 1 level deep)
+    // Collapse on all other pages (detail views, edit modes, etc.)
+    const isMainListingPage = pathSegments.length === 1;
+    
+    if (isMainListingPage) {
+      console.log('Expanding sidebar - main listing page');
       setIsDrawerCollapsed(false);
+    } else {
+      console.log('Collapsing sidebar - detail page or sub-page detected');
+      setIsDrawerCollapsed(true);
     }
   }, [location.pathname]);
 

@@ -1,0 +1,1886 @@
+{
+  "dataProducts": [
+    {
+      "id": "ds-customer-analytics",
+      "name": "Customer Analytics Dataset",
+      "description": "Comprehensive customer behavior analytics with purchase history and engagement metrics",
+      "category": "Analytics",
+      "provider": "Data Analytics Team",
+      "rating": 4.8,
+      "downloads": 1247,
+      "price": "Free",
+      "lastUpdated": "2024-03-15",
+      "format": "Dataset",
+      "size": "2.3 GB",
+      "tags": ["customer", "analytics", "behavior", "purchase"],
+      "verified": true,
+      "documentation": "https://docs.example.com/customer-analytics",
+      "type": "dataset",
+      "trustworthiness": "high",
+      "relatedEntities": {
+        "dataModels": ["CUST", "USER"],
+        "agreements": ["contract-001", "contract-002"],
+        "referenceData": ["ref-001", "ref-002"],
+        "dataPolicies": ["policy-001", "policy-002"]
+      },
+      "products": [
+        {
+          "id": "dp-001",
+          "name": "Customer Profiles",
+          "description": "Individual customer profile data with demographics and preferences",
+          "format": "Parquet",
+          "size": "800 MB",
+          "lastUpdated": "2024-03-15",
+          "tables": [
+            {
+              "name": "customer_profiles",
+              "s3Location": "s3://data-catalog/customer-analytics/customer_profiles",
+              "schema": [
+                {
+                  "name": "customer_id",
+                  "source": "source",
+                  "type": "VARCHAR",
+                  "nullable": false,
+                  "description": "Unique customer identifier"
+                },
+                {
+                  "name": "first_name",
+                  "source": "source",
+                  "type": "VARCHAR",
+                  "nullable": true,
+                  "description": "Customer's first name"
+                },
+                {
+                  "name": "last_name",
+                  "source": "source",
+                  "type": "VARCHAR",
+                  "nullable": true,
+                  "description": "Customer's last name"
+                },
+                {
+                  "name": "email",
+                  "source": "source",
+                  "type": "VARCHAR",
+                  "nullable": true,
+                  "description": "Customer's email address"
+                },
+                {
+                  "name": "age",
+                  "source": "source",
+                  "type": "INTEGER",
+                  "nullable": true,
+                  "description": "Customer's age"
+                },
+                {
+                  "name": "gender",
+                  "source": "source",
+                  "type": "VARCHAR",
+                  "nullable": true,
+                  "description": "Customer's gender"
+                },
+                {
+                  "name": "city",
+                  "source": "source",
+                  "type": "VARCHAR",
+                  "nullable": true,
+                  "description": "Customer's city"
+                },
+                {
+                  "name": "country",
+                  "source": "source",
+                  "type": "VARCHAR",
+                  "nullable": true,
+                  "description": "Customer's country"
+                },
+                {
+                  "name": "registration_date",
+                  "source": "source",
+                  "type": "TIMESTAMP",
+                  "nullable": true,
+                  "description": "Date when customer registered"
+                },
+                {
+                  "name": "last_login",
+                  "source": "etl",
+                  "type": "TIMESTAMP",
+                  "nullable": true,
+                  "description": "Last login timestamp"
+                }
+              ]
+            },
+            {
+              "name": "customer_preferences",
+              "s3Location": "s3://data-catalog/customer-analytics/customer_preferences",
+              "schema": [
+                {
+                  "name": "customer_id",
+                  "source": "source",
+                  "type": "VARCHAR",
+                  "nullable": false,
+                  "description": "Foreign key to customer_profiles"
+                },
+                {
+                  "name": "preference_category",
+                  "source": "source",
+                  "type": "VARCHAR",
+                  "nullable": false,
+                  "description": "Category of preference (e.g., product, communication)"
+                },
+                {
+                  "name": "preference_value",
+                  "source": "source",
+                  "type": "VARCHAR",
+                  "nullable": false,
+                  "description": "The actual preference value"
+                },
+                {
+                  "name": "preference_strength",
+                  "source": "etl",
+                  "type": "DECIMAL",
+                  "nullable": true,
+                  "description": "Strength of preference (0.0 to 1.0)"
+                },
+                {
+                  "name": "created_at",
+                  "source": "source",
+                  "type": "TIMESTAMP",
+                  "nullable": false,
+                  "description": "When preference was recorded"
+                },
+                {
+                  "name": "updated_at",
+                  "source": "etl",
+                  "type": "TIMESTAMP",
+                  "nullable": true,
+                  "description": "When preference was last updated"
+                }
+              ]
+            }
+          ],
+          "accessLevel": "Internal",
+          "trustworthiness": "high",
+          "relatedEntities": {
+            "dataModels": ["CUST"],
+            "agreements": ["contract-001"],
+            "referenceData": ["ref-001"],
+            "dataPolicies": ["policy-001"]
+          },
+          "technicalMetadata": {
+            "triageReports": [
+              {
+                "id": "tr-001",
+                "title": "Data Quality Assessment",
+                "status": "Completed",
+                "date": "2024-03-10",
+                "severity": "Low",
+                "description": "Comprehensive data quality check completed with 99.2% accuracy",
+                "findings": ["Missing values in 0.8% of records", "Duplicate entries cleaned", "Schema validation passed"]
+              }
+            ],
+            "codeVersions": [
+              {
+                "version": "2.1.0",
+                "releaseDate": "2024-03-15",
+                "changes": ["Added new customer segments", "Improved data validation", "Enhanced performance"],
+                "commitHash": "a1b2c3d4e5f6",
+                "author": "Data Team",
+                "status": "Production"
+              }
+            ],
+            "engines": [
+              {
+                "name": "Apache Spark",
+                "version": "3.4.0",
+                "type": "Processing Engine",
+                "configuration": {
+                  "executorMemory": "8GB",
+                  "executorCores": "4",
+                  "driverMemory": "4GB"
+                }
+              }
+            ],
+            "datasetLineage": {
+              "upstream": [
+                {
+                  "id": "ds-raw-customers",
+                  "name": "Raw Customer Data",
+                  "type": "Source",
+                  "lastUpdated": "2024-03-15T08:00:00Z",
+                  "status": "Active"
+                }
+              ],
+              "downstream": [
+                {
+                  "id": "ds-customer-insights",
+                  "name": "Customer Insights Dashboard",
+                  "type": "Consumer",
+                  "lastUpdated": "2024-03-15T09:00:00Z",
+                  "status": "Active"
+                }
+              ]
+            },
+            "tableCounts": {
+              "totalTables": 2,
+              "tables": [
+                {
+                  "name": "customer_profiles",
+                  "rowCount": 2500000,
+                  "size": "800 MB",
+                  "lastUpdated": "2024-03-15T08:00:00Z"
+                },
+                {
+                  "name": "customer_preferences",
+                  "rowCount": 500000,
+                  "size": "200 MB",
+                  "lastUpdated": "2024-03-15T08:00:00Z"
+                }
+              ]
+            },
+            "qualityMetrics": {
+              "accuracy": "99.2%",
+              "completeness": "97.8%",
+              "consistency": "98.5%",
+              "timeliness": "95.3%"
+            },
+            "knownIssues": [
+              {
+                "title": "Missing Email Addresses",
+                "description": "Approximately 2.2% of customer records are missing email addresses",
+                "priority": "Medium"
+              },
+              {
+                "title": "Duplicate Customer IDs",
+                "description": "Some customer IDs appear in multiple records due to data migration issues",
+                "priority": "High"
+              }
+            ]
+          }
+        },
+        {
+          "id": "dp-002",
+          "name": "Purchase History",
+          "description": "Complete transaction history and purchase patterns",
+          "format": "Parquet", 
+          "size": "1.2 GB",
+          "lastUpdated": "2024-03-15",
+          "tables": [
+            {
+              "name": "purchase_history",
+              "s3Location": "s3://data-catalog/customer-analytics/purchase_history",
+              "schema": [
+                {
+                  "name": "transaction_id",
+                  "source": "source",
+                  "type": "VARCHAR",
+                  "nullable": false,
+                  "description": "Unique transaction identifier"
+                },
+                {
+                  "name": "customer_id",
+                  "source": "source",
+                  "type": "VARCHAR",
+                  "nullable": false,
+                  "description": "Foreign key to customer_profiles"
+                },
+                {
+                  "name": "product_id",
+                  "source": "source",
+                  "type": "VARCHAR",
+                  "nullable": false,
+                  "description": "Product identifier"
+                },
+                {
+                  "name": "product_name",
+                  "source": "etl",
+                  "type": "VARCHAR",
+                  "nullable": true,
+                  "description": "Product name"
+                },
+                {
+                  "name": "category",
+                  "source": "etl",
+                  "type": "VARCHAR",
+                  "nullable": true,
+                  "description": "Product category"
+                },
+                {
+                  "name": "quantity",
+                  "source": "source",
+                  "type": "INTEGER",
+                  "nullable": false,
+                  "description": "Quantity purchased"
+                },
+                {
+                  "name": "unit_price",
+                  "source": "source",
+                  "type": "DECIMAL",
+                  "nullable": false,
+                  "description": "Price per unit"
+                },
+                {
+                  "name": "total_amount",
+                  "source": "etl",
+                  "type": "DECIMAL",
+                  "nullable": false,
+                  "description": "Total transaction amount"
+                },
+                {
+                  "name": "discount_amount",
+                  "source": "etl",
+                  "type": "DECIMAL",
+                  "nullable": true,
+                  "description": "Discount applied"
+                },
+                {
+                  "name": "purchase_date",
+                  "source": "source",
+                  "type": "TIMESTAMP",
+                  "nullable": false,
+                  "description": "Date and time of purchase"
+                },
+                {
+                  "name": "payment_method",
+                  "source": "source",
+                  "type": "VARCHAR",
+                  "nullable": true,
+                  "description": "Payment method used"
+                }
+              ]
+            },
+            {
+              "name": "transaction_details",
+              "s3Location": "s3://data-catalog/customer-analytics/transaction_details",
+              "schema": [
+                {
+                  "name": "transaction_id",
+                  "source": "source",
+                  "type": "VARCHAR",
+                  "nullable": false,
+                  "description": "Foreign key to purchase_history"
+                },
+                {
+                  "name": "customer_id",
+                  "source": "source",
+                  "type": "VARCHAR",
+                  "nullable": false,
+                  "description": "Customer identifier"
+                },
+                {
+                  "name": "session_id",
+                  "source": "etl",
+                  "type": "VARCHAR",
+                  "nullable": true,
+                  "description": "Web session identifier"
+                },
+                {
+                  "name": "device_type",
+                  "source": "etl",
+                  "type": "VARCHAR",
+                  "nullable": true,
+                  "description": "Device used for purchase"
+                },
+                {
+                  "name": "browser",
+                  "source": "etl",
+                  "type": "VARCHAR",
+                  "nullable": true,
+                  "description": "Browser used"
+                },
+                {
+                  "name": "referrer",
+                  "source": "etl",
+                  "type": "VARCHAR",
+                  "nullable": true,
+                  "description": "Referrer URL"
+                },
+                {
+                  "name": "promo_code",
+                  "source": "source",
+                  "type": "VARCHAR",
+                  "nullable": true,
+                  "description": "Promotional code used"
+                },
+                {
+                  "name": "shipping_address",
+                  "source": "source",
+                  "type": "VARCHAR",
+                  "nullable": true,
+                  "description": "Shipping address"
+                },
+                {
+                  "name": "billing_address",
+                  "source": "source",
+                  "type": "VARCHAR",
+                  "nullable": true,
+                  "description": "Billing address"
+                },
+                {
+                  "name": "created_at",
+                  "source": "etl",
+                  "type": "TIMESTAMP",
+                  "nullable": false,
+                  "description": "Record creation timestamp"
+                }
+              ]
+            }
+          ],
+          "accessLevel": "Confidential",
+          "trustworthiness": "high",
+          "technicalMetadata": {
+            "triageReports": [
+              {
+                "id": "tr-002",
+                "title": "Performance Optimization",
+                "status": "In Progress",
+                "date": "2024-03-12",
+                "severity": "Medium",
+                "description": "Query performance optimization for large-scale analytics",
+                "findings": ["Index optimization recommended", "Partition strategy implemented"]
+              }
+            ],
+            "codeVersions": [
+              {
+                "version": "1.8.2",
+                "releaseDate": "2024-03-12",
+                "changes": ["Optimized query performance", "Added new indexes", "Improved data compression"],
+                "commitHash": "b2c3d4e5f6a1",
+                "author": "Data Team",
+                "status": "Production"
+              }
+            ],
+            "engines": [
+              {
+                "name": "Apache Spark",
+                "version": "3.4.0",
+                "type": "Processing Engine",
+                "configuration": {
+                  "executorMemory": "16GB",
+                  "executorCores": "8",
+                  "driverMemory": "8GB"
+                }
+              },
+              {
+                "name": "Apache Airflow",
+                "version": "2.6.0",
+                "type": "Orchestration",
+                "configuration": {
+                  "maxActiveRuns": "10",
+                  "dagConcurrency": "16"
+                }
+              }
+            ],
+            "datasetLineage": {
+              "upstream": [
+                {
+                  "id": "ds-transactions",
+                  "name": "Transaction Logs",
+                  "type": "Source",
+                  "lastUpdated": "2024-03-15T07:30:00Z",
+                  "status": "Active"
+                }
+              ],
+              "downstream": [
+                {
+                  "id": "ds-ml-features",
+                  "name": "ML Feature Store",
+                  "type": "Consumer",
+                  "lastUpdated": "2024-03-15T08:45:00Z",
+                  "status": "Active"
+                }
+              ]
+            },
+            "tableCounts": {
+              "totalTables": 2,
+              "tables": [
+                {
+                  "name": "purchase_history",
+                  "rowCount": 15000000,
+                  "size": "1.0 GB",
+                  "lastUpdated": "2024-03-15T08:00:00Z"
+                },
+                {
+                  "name": "transaction_details",
+                  "rowCount": 5000000,
+                  "size": "200 MB",
+                  "lastUpdated": "2024-03-15T08:00:00Z"
+                }
+              ]
+            },
+            "qualityMetrics": {
+              "accuracy": "98.7%",
+              "completeness": "99.1%",
+              "consistency": "97.9%",
+              "timeliness": "96.8%"
+            },
+            "knownIssues": [
+              {
+                "title": "Currency Conversion Errors",
+                "description": "Some international transactions have incorrect currency conversion rates",
+                "priority": "High"
+              }
+            ]
+          }
+        },
+        {
+          "id": "dp-003",
+          "name": "Engagement Metrics",
+          "description": "Customer engagement scores and interaction data",
+          "format": "Parquet",
+          "size": "300 MB", 
+          "lastUpdated": "2024-03-15",
+          "tables": [
+            {
+              "name": "engagement_metrics",
+              "s3Location": "s3://data-catalog/customer-analytics/engagement_metrics",
+              "schema": [
+                {
+                  "name": "customer_id",
+                  "source": "source",
+                  "type": "VARCHAR",
+                  "nullable": false,
+                  "description": "Foreign key to customer_profiles"
+                },
+                {
+                  "name": "metric_date",
+                  "source": "etl",
+                  "type": "DATE",
+                  "nullable": false,
+                  "description": "Date for which metrics are calculated"
+                },
+                {
+                  "name": "page_views",
+                  "source": "etl",
+                  "type": "INTEGER",
+                  "nullable": false,
+                  "description": "Number of page views"
+                },
+                {
+                  "name": "session_duration",
+                  "source": "etl",
+                  "type": "INTEGER",
+                  "nullable": true,
+                  "description": "Session duration in seconds"
+                },
+                {
+                  "name": "bounce_rate",
+                  "source": "etl",
+                  "type": "DECIMAL",
+                  "nullable": true,
+                  "description": "Bounce rate (0.0 to 1.0)"
+                },
+                {
+                  "name": "conversion_rate",
+                  "source": "etl",
+                  "type": "DECIMAL",
+                  "nullable": true,
+                  "description": "Conversion rate (0.0 to 1.0)"
+                },
+                {
+                  "name": "email_opens",
+                  "source": "etl",
+                  "type": "INTEGER",
+                  "nullable": true,
+                  "description": "Number of email opens"
+                },
+                {
+                  "name": "email_clicks",
+                  "source": "etl",
+                  "type": "INTEGER",
+                  "nullable": true,
+                  "description": "Number of email clicks"
+                },
+                {
+                  "name": "social_engagement",
+                  "source": "etl",
+                  "type": "INTEGER",
+                  "nullable": true,
+                  "description": "Social media engagement count"
+                },
+                {
+                  "name": "engagement_score",
+                  "source": "etl",
+                  "type": "DECIMAL",
+                  "nullable": true,
+                  "description": "Overall engagement score (0.0 to 10.0)"
+                }
+              ]
+            },
+            {
+              "name": "interaction_logs",
+              "s3Location": "s3://data-catalog/customer-analytics/interaction_logs",
+              "schema": [
+                {
+                  "name": "interaction_id",
+                  "source": "etl",
+                  "type": "VARCHAR",
+                  "nullable": false,
+                  "description": "Unique interaction identifier"
+                },
+                {
+                  "name": "customer_id",
+                  "source": "source",
+                  "type": "VARCHAR",
+                  "nullable": false,
+                  "description": "Foreign key to customer_profiles"
+                },
+                {
+                  "name": "interaction_type",
+                  "source": "source",
+                  "type": "VARCHAR",
+                  "nullable": false,
+                  "description": "Type of interaction (click, view, download, etc.)"
+                },
+                {
+                  "name": "page_url",
+                  "source": "source",
+                  "type": "VARCHAR",
+                  "nullable": true,
+                  "description": "URL where interaction occurred"
+                },
+                {
+                  "name": "element_id",
+                  "source": "source",
+                  "type": "VARCHAR",
+                  "nullable": true,
+                  "description": "ID of the element interacted with"
+                },
+                {
+                  "name": "session_id",
+                  "source": "etl",
+                  "type": "VARCHAR",
+                  "nullable": true,
+                  "description": "Session identifier"
+                },
+                {
+                  "name": "device_type",
+                  "source": "etl",
+                  "type": "VARCHAR",
+                  "nullable": true,
+                  "description": "Device type used"
+                },
+                {
+                  "name": "user_agent",
+                  "source": "source",
+                  "type": "VARCHAR",
+                  "nullable": true,
+                  "description": "User agent string"
+                },
+                {
+                  "name": "ip_address",
+                  "source": "source",
+                  "type": "VARCHAR",
+                  "nullable": true,
+                  "description": "IP address of the user"
+                },
+                {
+                  "name": "timestamp",
+                  "source": "source",
+                  "type": "TIMESTAMP",
+                  "nullable": false,
+                  "description": "When interaction occurred"
+                },
+                {
+                  "name": "duration",
+                  "source": "etl",
+                  "type": "INTEGER",
+                  "nullable": true,
+                  "description": "Duration of interaction in milliseconds"
+                }
+              ]
+            }
+          ],
+          "accessLevel": "Internal",
+          "trustworthiness": "medium",
+          "technicalMetadata": {
+            "triageReports": [
+              {
+                "id": "tr-003",
+                "title": "Data Freshness Check",
+                "status": "Completed",
+                "date": "2024-03-14",
+                "severity": "Low",
+                "description": "Verified data freshness and update frequency",
+                "findings": ["Data updated every 4 hours", "No stale data detected", "Real-time processing working correctly"]
+              }
+            ],
+            "codeVersions": [
+              {
+                "version": "1.5.1",
+                "releaseDate": "2024-03-14",
+                "changes": ["Added real-time processing", "Improved engagement scoring", "Enhanced data validation"],
+                "commitHash": "c3d4e5f6a1b2",
+                "author": "Data Team",
+                "status": "Production"
+              }
+            ],
+            "engines": [
+              {
+                "name": "Apache Kafka",
+                "version": "3.4.0",
+                "type": "Stream Processing",
+                "configuration": {
+                  "partitions": "12",
+                  "replicationFactor": "3",
+                  "retentionHours": "168"
+                }
+              }
+            ],
+            "datasetLineage": {
+              "upstream": [
+                {
+                  "id": "ds-interaction-logs",
+                  "name": "Interaction Logs",
+                  "type": "Source",
+                  "lastUpdated": "2024-03-15T07:45:00Z",
+                  "status": "Active"
+                }
+              ],
+              "downstream": [
+                {
+                  "id": "ds-customer-insights",
+                  "name": "Customer Insights Dashboard",
+                  "type": "Consumer",
+                  "lastUpdated": "2024-03-15T09:00:00Z",
+                  "status": "Active"
+                }
+              ]
+            },
+            "tableCounts": {
+              "totalTables": 2,
+              "tables": [
+                {
+                  "name": "engagement_metrics",
+                  "rowCount": 5000000,
+                  "size": "250 MB",
+                  "lastUpdated": "2024-03-15T08:00:00Z"
+                },
+                {
+                  "name": "interaction_logs",
+                  "rowCount": 20000000,
+                  "size": "50 MB",
+                  "lastUpdated": "2024-03-15T08:00:00Z"
+                }
+              ]
+            },
+            "qualityMetrics": {
+              "accuracy": "96.4%",
+              "completeness": "94.2%",
+              "consistency": "95.8%",
+              "timeliness": "98.1%"
+            },
+            "knownIssues": []
+          }
+        }
+      ],
+      "technicalMetadata": {
+        "triageReports": [
+          {
+            "id": "tr-001",
+            "title": "Data Quality Assessment",
+            "status": "Completed",
+            "date": "2024-03-10",
+            "severity": "Low",
+            "description": "Comprehensive data quality check completed with 99.2% accuracy",
+            "findings": ["Missing values in 0.8% of records", "Duplicate entries cleaned", "Schema validation passed"]
+          },
+          {
+            "id": "tr-002",
+            "title": "Performance Optimization",
+            "status": "In Progress",
+            "date": "2024-03-12",
+            "severity": "Medium",
+            "description": "Query performance optimization for large-scale analytics",
+            "findings": ["Index optimization recommended", "Partition strategy implemented"]
+          }
+        ],
+        "codeVersions": [
+          {
+            "version": "2.1.0",
+            "releaseDate": "2024-03-15",
+            "changes": ["Added new customer segments", "Improved data validation", "Enhanced performance"],
+            "commitHash": "a1b2c3d4e5f6",
+            "author": "Data Team",
+            "status": "Production"
+          },
+          {
+            "version": "2.0.5",
+            "releaseDate": "2024-02-28",
+            "changes": ["Bug fixes", "Schema updates"],
+            "commitHash": "f6e5d4c3b2a1",
+            "author": "Data Team",
+            "status": "Stable"
+          }
+        ],
+        "engines": [
+          {
+            "name": "Apache Spark",
+            "version": "3.4.0",
+            "type": "Processing Engine",
+            "configuration": {
+              "executorMemory": "8GB",
+              "executorCores": "4",
+              "driverMemory": "4GB"
+            }
+          },
+          {
+            "name": "Apache Airflow",
+            "version": "2.6.0",
+            "type": "Orchestration",
+            "configuration": {
+              "maxActiveRuns": "10",
+              "dagConcurrency": "16"
+            }
+          }
+        ],
+        "datasetLineage": {
+          "upstream": [
+            {
+              "id": "ds-master-financial",
+              "name": "Master Financial Dataset",
+              "type": "Parent Dataset",
+              "lastUpdated": "2024-03-20T08:00:00Z",
+              "status": "Active"
+            },
+            {
+              "id": "ds-master-customer",
+              "name": "Master Customer Dataset",
+              "type": "Parent Dataset",
+              "lastUpdated": "2024-03-19T08:00:00Z",
+              "status": "Active"
+            },
+            {
+              "id": "ds-master-transactions",
+              "name": "Master Transaction Dataset",
+              "type": "Parent Dataset",
+              "lastUpdated": "2024-03-21T08:00:00Z",
+              "status": "Active"
+            },
+            {
+              "id": "ds-raw-customers",
+              "name": "Raw Customer Data",
+              "type": "Source",
+              "lastUpdated": "2024-03-15T08:00:00Z",
+              "status": "Active"
+            },
+            {
+              "id": "ds-transactions",
+              "name": "Transaction Logs",
+              "type": "Source",
+              "lastUpdated": "2024-03-15T07:30:00Z",
+              "status": "Active"
+            }
+          ],
+          "downstream": [
+            {
+              "id": "ds-customer-insights",
+              "name": "Customer Insights Dashboard",
+              "type": "Consumer",
+              "lastUpdated": "2024-03-15T09:00:00Z",
+              "status": "Active"
+            },
+            {
+              "id": "ds-ml-features",
+              "name": "ML Feature Store",
+              "type": "Consumer",
+              "lastUpdated": "2024-03-15T08:45:00Z",
+              "status": "Active"
+            }
+          ]
+        },
+        "tableCounts": {
+          "totalTables": 12,
+          "tables": [
+            {
+              "name": "customer_profiles",
+              "rowCount": 2500000,
+              "size": "1.2 GB",
+              "lastUpdated": "2024-03-15T08:00:00Z"
+            },
+            {
+              "name": "purchase_history",
+              "rowCount": 15000000,
+              "size": "800 MB",
+              "lastUpdated": "2024-03-15T08:00:00Z"
+            },
+            {
+              "name": "engagement_metrics",
+              "rowCount": 5000000,
+              "size": "300 MB",
+              "lastUpdated": "2024-03-15T08:00:00Z"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "dp-002",
+      "name": "Financial Risk Models",
+      "description": "Advanced machine learning models for credit risk assessment and fraud detection",
+      "category": "Machine Learning",
+      "provider": "Risk Management Team",
+      "rating": 4.9,
+      "downloads": 892,
+      "price": "Premium",
+      "lastUpdated": "2024-03-12",
+      "format": "Python Package",
+      "size": "156 MB",
+      "tags": ["finance", "risk", "ml", "fraud", "credit"],
+      "verified": true,
+      "documentation": "https://docs.example.com/risk-models",
+      "trustworthiness": "high",
+      "technicalMetadata": {
+        "triageReports": [
+          {
+            "id": "tr-003",
+            "title": "Model Performance Review",
+            "status": "Completed",
+            "date": "2024-03-08",
+            "severity": "Low",
+            "description": "Quarterly model performance assessment with 98.5% accuracy maintained",
+            "findings": ["Model drift detected in 2% of predictions", "Retraining recommended for Q2", "Feature importance updated"]
+          }
+        ],
+        "codeVersions": [
+          {
+            "version": "3.2.1",
+            "releaseDate": "2024-03-12",
+            "changes": ["Updated fraud detection algorithms", "Improved model explainability", "Enhanced security features"],
+            "commitHash": "b2c3d4e5f6a1",
+            "author": "ML Team",
+            "status": "Production"
+          }
+        ],
+        "engines": [
+          {
+            "name": "TensorFlow",
+            "version": "2.13.0",
+            "type": "ML Framework",
+            "configuration": {
+              "gpuMemory": "16GB",
+              "batchSize": "32",
+              "learningRate": "0.001"
+            }
+          },
+          {
+            "name": "MLflow",
+            "version": "2.5.0",
+            "type": "MLOps",
+            "configuration": {
+              "experimentTracking": "enabled",
+              "modelRegistry": "production"
+            }
+          }
+        ],
+        "datasetLineage": {
+          "upstream": [
+            {
+              "id": "ds-transaction-data",
+              "name": "Transaction Data",
+              "type": "Source",
+              "lastUpdated": "2024-03-12T06:00:00Z",
+              "status": "Active"
+            }
+          ],
+          "downstream": [
+            {
+              "id": "ds-risk-dashboard",
+              "name": "Risk Dashboard",
+              "type": "Consumer",
+              "lastUpdated": "2024-03-12T07:00:00Z",
+              "status": "Active"
+            }
+          ]
+        },
+        "tableCounts": {
+          "totalTables": 3,
+          "tables": [
+            {
+              "name": "model_predictions",
+              "rowCount": 500000,
+              "size": "50 MB",
+              "lastUpdated": "2024-03-12T06:00:00Z"
+            },
+            {
+              "name": "feature_store",
+              "rowCount": 1000000,
+              "size": "100 MB",
+              "lastUpdated": "2024-03-12T06:00:00Z"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "dp-003",
+      "name": "Product Catalog API",
+      "description": "Real-time product information API with inventory levels and pricing",
+      "category": "API",
+      "provider": "Product Team",
+      "rating": 4.6,
+      "downloads": 2156,
+      "price": "Free",
+      "lastUpdated": "2024-03-18",
+      "format": "REST API",
+      "size": "N/A",
+      "tags": ["api", "products", "inventory", "pricing"],
+      "verified": true,
+      "documentation": "https://api.example.com/products",
+      "trustworthiness": "medium"
+    },
+    {
+      "id": "dp-004",
+      "name": "Market Research Insights",
+      "description": "Quarterly market research data with competitor analysis and trends",
+      "category": "Research",
+      "provider": "Market Research Team",
+      "rating": 4.3,
+      "downloads": 456,
+      "price": "Premium",
+      "lastUpdated": "2024-03-10",
+      "format": "Excel",
+      "size": "45 MB",
+      "tags": ["market", "research", "competitors", "trends"],
+      "verified": false,
+      "documentation": "https://docs.example.com/market-research",
+      "trustworthiness": "low"
+    },
+    {
+      "id": "dp-005",
+      "name": "Supply Chain Optimization",
+      "description": "Supply chain data and optimization algorithms for logistics management",
+      "category": "Operations",
+      "provider": "Supply Chain Team",
+      "rating": 4.7,
+      "downloads": 678,
+      "price": "Free",
+      "lastUpdated": "2024-03-14",
+      "format": "CSV",
+      "size": "890 MB",
+      "tags": ["supply-chain", "logistics", "optimization", "inventory"],
+      "verified": true,
+      "documentation": "https://docs.example.com/supply-chain",
+      "trustworthiness": "high"
+    },
+    {
+      "id": "dp-006",
+      "name": "Customer Support Analytics",
+      "description": "Customer support ticket data with sentiment analysis and metrics",
+      "category": "Analytics",
+      "provider": "Support Team",
+      "rating": 4.4,
+      "downloads": 334,
+      "price": "Free",
+      "lastUpdated": "2024-03-16",
+      "format": "JSON",
+      "size": "123 MB",
+      "tags": ["support", "analytics", "sentiment", "tickets"],
+      "verified": false,
+      "documentation": "https://docs.example.com/support-analytics",
+      "trustworthiness": "medium"
+    },
+    {
+      "id": "dp-007",
+      "name": "Sales Performance Dashboard",
+      "description": "Real-time sales metrics and performance tracking dashboard",
+      "category": "Analytics",
+      "provider": "Sales Operations Team",
+      "rating": 4.5,
+      "downloads": 789,
+      "price": "Free",
+      "lastUpdated": "2024-03-20",
+      "format": "Tableau Workbook",
+      "size": "67 MB",
+      "tags": ["sales", "dashboard", "performance", "metrics"],
+      "verified": true,
+      "documentation": "https://docs.example.com/sales-dashboard",
+      "trustworthiness": "high"
+    },
+    {
+      "id": "dp-008",
+      "name": "HR Employee Database",
+      "description": "Comprehensive employee information and organizational structure data",
+      "category": "Human Resources",
+      "provider": "HR Information Systems",
+      "rating": 4.2,
+      "downloads": 234,
+      "price": "Internal",
+      "lastUpdated": "2024-03-19",
+      "format": "SQL Database",
+      "size": "1.2 GB",
+      "tags": ["hr", "employees", "organization", "structure"],
+      "verified": true,
+      "documentation": "https://docs.example.com/hr-database",
+      "trustworthiness": "high"
+    },
+    {
+      "id": "dp-009",
+      "name": "Marketing Campaign Analytics",
+      "description": "Campaign performance data with ROI metrics and customer acquisition costs",
+      "category": "Marketing",
+      "provider": "Marketing Analytics Team",
+      "rating": 4.6,
+      "downloads": 567,
+      "price": "Free",
+      "lastUpdated": "2024-03-17",
+      "format": "Google Analytics Export",
+      "size": "89 MB",
+      "tags": ["marketing", "campaigns", "roi", "acquisition"],
+      "verified": true,
+      "documentation": "https://docs.example.com/marketing-analytics",
+      "trustworthiness": "medium"
+    },
+    {
+      "id": "dp-010",
+      "name": "IoT Sensor Data",
+      "description": "Real-time sensor data from manufacturing equipment and environmental monitoring",
+      "category": "IoT",
+      "provider": "Manufacturing Technology Team",
+      "rating": 4.1,
+      "downloads": 123,
+      "price": "Internal",
+      "lastUpdated": "2024-03-21",
+      "format": "Time Series Database",
+      "size": "5.7 GB",
+      "tags": ["iot", "sensors", "manufacturing", "environmental"],
+      "verified": false,
+      "documentation": "https://docs.example.com/iot-sensors",
+      "trustworthiness": "low"
+    },
+    {
+      "id": "ds-financial-risk",
+      "name": "Financial Risk Dataset",
+      "description": "Comprehensive financial risk assessment data with market analysis and credit scoring",
+      "category": "Finance",
+      "provider": "Risk Management Team",
+      "rating": 4.6,
+      "downloads": 892,
+      "lastUpdated": "2024-03-18",
+      "format": "Dataset",
+      "size": "1.8 GB",
+      "tags": ["finance", "risk", "credit", "market"],
+      "verified": true,
+      "documentation": "https://docs.example.com/financial-risk",
+      "type": "dataset",
+      "trustworthiness": "high",
+      "parentDataset": "ds-master-financial",
+      "products": [
+        {
+          "id": "dp-011",
+          "name": "Credit Risk Scores",
+          "description": "Individual credit risk assessments and scoring models",
+          "format": "Parquet",
+          "size": "600 MB",
+          "lastUpdated": "2024-03-18",
+          "tables": [
+            {
+              "name": "credit_scores",
+              "s3Location": "s3://data-catalog/financial-risk/credit_scores",
+              "schema": [
+                {
+                  "name": "customer_id",
+                  "source": "source",
+                  "type": "VARCHAR",
+                  "nullable": false,
+                  "description": "Unique customer identifier"
+                },
+                {
+                  "name": "credit_score",
+                  "source": "etl",
+                  "type": "INTEGER",
+                  "nullable": false,
+                  "description": "Credit score (300-850)"
+                },
+                {
+                  "name": "score_date",
+                  "source": "etl",
+                  "type": "DATE",
+                  "nullable": false,
+                  "description": "Date when score was calculated"
+                },
+                {
+                  "name": "score_model_version",
+                  "source": "etl",
+                  "type": "VARCHAR",
+                  "nullable": false,
+                  "description": "Version of scoring model used"
+                },
+                {
+                  "name": "payment_history",
+                  "source": "etl",
+                  "type": "DECIMAL",
+                  "nullable": true,
+                  "description": "Payment history score component"
+                },
+                {
+                  "name": "credit_utilization",
+                  "source": "etl",
+                  "type": "DECIMAL",
+                  "nullable": true,
+                  "description": "Credit utilization ratio"
+                },
+                {
+                  "name": "length_of_credit",
+                  "source": "etl",
+                  "type": "INTEGER",
+                  "nullable": true,
+                  "description": "Length of credit history in months"
+                },
+                {
+                  "name": "new_credit",
+                  "source": "etl",
+                  "type": "INTEGER",
+                  "nullable": true,
+                  "description": "Number of new credit accounts"
+                },
+                {
+                  "name": "credit_mix",
+                  "source": "etl",
+                  "type": "VARCHAR",
+                  "nullable": true,
+                  "description": "Types of credit accounts"
+                },
+                {
+                  "name": "risk_category",
+                  "source": "etl",
+                  "type": "VARCHAR",
+                  "nullable": true,
+                  "description": "Risk category (Low, Medium, High)"
+                }
+              ]
+            },
+            {
+              "name": "risk_models",
+              "s3Location": "s3://data-catalog/financial-risk/risk_models",
+              "schema": [
+                {
+                  "name": "model_id",
+                  "source": "etl",
+                  "type": "VARCHAR",
+                  "nullable": false,
+                  "description": "Unique model identifier"
+                },
+                {
+                  "name": "model_name",
+                  "source": "source",
+                  "type": "VARCHAR",
+                  "nullable": false,
+                  "description": "Name of the risk model"
+                },
+                {
+                  "name": "model_type",
+                  "source": "source",
+                  "type": "VARCHAR",
+                  "nullable": false,
+                  "description": "Type of model (ML, Statistical, etc.)"
+                },
+                {
+                  "name": "version",
+                  "source": "source",
+                  "type": "VARCHAR",
+                  "nullable": false,
+                  "description": "Model version"
+                },
+                {
+                  "name": "accuracy",
+                  "source": "etl",
+                  "type": "DECIMAL",
+                  "nullable": true,
+                  "description": "Model accuracy score"
+                },
+                {
+                  "name": "precision",
+                  "source": "etl",
+                  "type": "DECIMAL",
+                  "nullable": true,
+                  "description": "Model precision score"
+                },
+                {
+                  "name": "recall",
+                  "source": "etl",
+                  "type": "DECIMAL",
+                  "nullable": true,
+                  "description": "Model recall score"
+                },
+                {
+                  "name": "f1_score",
+                  "source": "etl",
+                  "type": "DECIMAL",
+                  "nullable": true,
+                  "description": "Model F1 score"
+                },
+                {
+                  "name": "created_date",
+                  "source": "source",
+                  "type": "DATE",
+                  "nullable": false,
+                  "description": "Date model was created"
+                },
+                {
+                  "name": "last_trained",
+                  "source": "etl",
+                  "type": "TIMESTAMP",
+                  "nullable": true,
+                  "description": "Last training timestamp"
+                },
+                {
+                  "name": "status",
+                  "source": "source",
+                  "type": "VARCHAR",
+                  "nullable": false,
+                  "description": "Model status (Active, Deprecated, Testing)"
+                }
+              ]
+            }
+          ],
+          "accessLevel": "Confidential",
+          "trustworthiness": "high",
+          "technicalMetadata": {
+            "triageReports": [
+              {
+                "id": "tr-011",
+                "title": "Model Validation",
+                "status": "Completed",
+                "date": "2024-03-15",
+                "severity": "Low",
+                "description": "Credit risk model validation completed with 98.5% accuracy",
+                "findings": ["Model performance within acceptable range", "No bias detected", "Validation metrics passed"]
+              }
+            ],
+            "codeVersions": [
+              {
+                "version": "3.2.1",
+                "releaseDate": "2024-03-18",
+                "changes": ["Updated risk algorithms", "Improved data validation", "Enhanced performance"],
+                "commitHash": "f1e2d3c4b5a6",
+                "author": "Risk Team",
+                "status": "Production"
+              }
+            ],
+            "engines": [
+              {
+                "name": "Apache Spark",
+                "version": "3.4.0",
+                "type": "Processing Engine",
+                "configuration": {
+                  "executorMemory": "12GB",
+                  "executorCores": "6",
+                  "driverMemory": "6GB"
+                }
+              }
+            ],
+            "datasetLineage": {
+              "upstream": [
+                {
+                  "id": "ds-master-financial",
+                  "name": "Master Financial Dataset",
+                  "type": "Parent Dataset",
+                  "lastUpdated": "2024-03-18T08:00:00Z",
+                  "status": "Active"
+                }
+              ],
+              "downstream": [
+                {
+                  "id": "ds-risk-dashboard",
+                  "name": "Risk Dashboard",
+                  "type": "Consumer",
+                  "lastUpdated": "2024-03-18T09:00:00Z",
+                  "status": "Active"
+                }
+              ]
+            },
+            "tableCounts": {
+              "totalTables": 2,
+              "tables": [
+                {
+                  "name": "credit_scores",
+                  "rowCount": 1000000,
+                  "size": "400 MB",
+                  "lastUpdated": "2024-03-18T08:00:00Z"
+                },
+                {
+                  "name": "risk_models",
+                  "rowCount": 50000,
+                  "size": "200 MB",
+                  "lastUpdated": "2024-03-18T08:00:00Z"
+                }
+              ]
+            },
+            "qualityMetrics": {
+              "accuracy": "98.5%",
+              "completeness": "99.1%",
+              "consistency": "97.8%",
+              "timeliness": "96.2%"
+            },
+            "knownIssues": []
+          }
+        },
+        {
+          "id": "dp-012",
+          "name": "Market Analysis",
+          "description": "Market trends and volatility analysis data",
+          "format": "Parquet",
+          "size": "800 MB",
+          "lastUpdated": "2024-03-18",
+          "tables": [
+            {
+              "name": "market_trends",
+              "s3Location": "s3://data-catalog/financial-risk/market_trends",
+              "schema": [
+                {
+                  "name": "date",
+                  "source": "source",
+                  "type": "DATE",
+                  "nullable": false,
+                  "description": "Date of market data"
+                },
+                {
+                  "name": "symbol",
+                  "source": "source",
+                  "type": "VARCHAR",
+                  "nullable": false,
+                  "description": "Stock or asset symbol"
+                },
+                {
+                  "name": "open_price",
+                  "source": "source",
+                  "type": "DECIMAL",
+                  "nullable": false,
+                  "description": "Opening price"
+                },
+                {
+                  "name": "high_price",
+                  "source": "source",
+                  "type": "DECIMAL",
+                  "nullable": false,
+                  "description": "Highest price of the day"
+                },
+                {
+                  "name": "low_price",
+                  "source": "source",
+                  "type": "DECIMAL",
+                  "nullable": false,
+                  "description": "Lowest price of the day"
+                },
+                {
+                  "name": "close_price",
+                  "source": "source",
+                  "type": "DECIMAL",
+                  "nullable": false,
+                  "description": "Closing price"
+                },
+                {
+                  "name": "volume",
+                  "source": "source",
+                  "type": "BIGINT",
+                  "nullable": false,
+                  "description": "Trading volume"
+                },
+                {
+                  "name": "market_cap",
+                  "source": "etl",
+                  "type": "DECIMAL",
+                  "nullable": true,
+                  "description": "Market capitalization"
+                },
+                {
+                  "name": "sector",
+                  "source": "etl",
+                  "type": "VARCHAR",
+                  "nullable": true,
+                  "description": "Market sector"
+                },
+                {
+                  "name": "trend_direction",
+                  "source": "etl",
+                  "type": "VARCHAR",
+                  "nullable": true,
+                  "description": "Trend direction (Up, Down, Sideways)"
+                }
+              ]
+            },
+            {
+              "name": "volatility_metrics",
+              "s3Location": "s3://data-catalog/financial-risk/volatility_metrics",
+              "schema": [
+                {
+                  "name": "date",
+                  "source": "source",
+                  "type": "DATE",
+                  "nullable": false,
+                  "description": "Date of volatility calculation"
+                },
+                {
+                  "name": "symbol",
+                  "source": "source",
+                  "type": "VARCHAR",
+                  "nullable": false,
+                  "description": "Asset symbol"
+                },
+                {
+                  "name": "volatility_30d",
+                  "source": "etl",
+                  "type": "DECIMAL",
+                  "nullable": true,
+                  "description": "30-day volatility"
+                },
+                {
+                  "name": "volatility_90d",
+                  "source": "etl",
+                  "type": "DECIMAL",
+                  "nullable": true,
+                  "description": "90-day volatility"
+                },
+                {
+                  "name": "volatility_1y",
+                  "source": "etl",
+                  "type": "DECIMAL",
+                  "nullable": true,
+                  "description": "1-year volatility"
+                },
+                {
+                  "name": "beta",
+                  "source": "etl",
+                  "type": "DECIMAL",
+                  "nullable": true,
+                  "description": "Beta coefficient"
+                },
+                {
+                  "name": "sharpe_ratio",
+                  "source": "etl",
+                  "type": "DECIMAL",
+                  "nullable": true,
+                  "description": "Sharpe ratio"
+                },
+                {
+                  "name": "max_drawdown",
+                  "source": "etl",
+                  "type": "DECIMAL",
+                  "nullable": true,
+                  "description": "Maximum drawdown"
+                },
+                {
+                  "name": "var_95",
+                  "source": "etl",
+                  "type": "DECIMAL",
+                  "nullable": true,
+                  "description": "95% Value at Risk"
+                },
+                {
+                  "name": "var_99",
+                  "source": "etl",
+                  "type": "DECIMAL",
+                  "nullable": true,
+                  "description": "99% Value at Risk"
+                },
+                {
+                  "name": "risk_level",
+                  "source": "etl",
+                  "type": "VARCHAR",
+                  "nullable": true,
+                  "description": "Risk level (Low, Medium, High, Very High)"
+                }
+              ]
+            }
+          ],
+          "accessLevel": "Internal",
+          "trustworthiness": "high",
+          "technicalMetadata": {
+            "triageReports": [
+              {
+                "id": "tr-012",
+                "title": "Data Freshness Check",
+                "status": "In Progress",
+                "date": "2024-03-17",
+                "severity": "Medium",
+                "description": "Verifying real-time market data feeds",
+                "findings": ["Data latency within acceptable range", "Feed reliability improved"]
+              }
+            ],
+            "codeVersions": [
+              {
+                "version": "2.8.3",
+                "releaseDate": "2024-03-17",
+                "changes": ["Real-time processing improvements", "Enhanced market data validation"],
+                "commitHash": "g2f3e4d5c6b7",
+                "author": "Risk Team",
+                "status": "Production"
+              }
+            ],
+            "engines": [
+              {
+                "name": "Apache Kafka",
+                "version": "3.4.0",
+                "type": "Stream Processing",
+                "configuration": {
+                  "partitions": "8",
+                  "replicationFactor": "3",
+                  "retentionHours": "72"
+                }
+              }
+            ],
+            "datasetLineage": {
+              "upstream": [
+                {
+                  "id": "ds-master-financial",
+                  "name": "Master Financial Dataset",
+                  "type": "Parent Dataset",
+                  "lastUpdated": "2024-03-18T07:30:00Z",
+                  "status": "Active"
+                }
+              ],
+              "downstream": [
+                {
+                  "id": "ds-risk-dashboard",
+                  "name": "Risk Dashboard",
+                  "type": "Consumer",
+                  "lastUpdated": "2024-03-18T09:15:00Z",
+                  "status": "Active"
+                }
+              ]
+            },
+            "tableCounts": {
+              "totalTables": 2,
+              "tables": [
+                {
+                  "name": "market_trends",
+                  "rowCount": 5000000,
+                  "size": "600 MB",
+                  "lastUpdated": "2024-03-18T08:00:00Z"
+                },
+                {
+                  "name": "volatility_metrics",
+                  "rowCount": 2000000,
+                  "size": "200 MB",
+                  "lastUpdated": "2024-03-18T08:00:00Z"
+                }
+              ]
+            },
+            "qualityMetrics": {
+              "accuracy": "97.2%",
+              "completeness": "98.8%",
+              "consistency": "96.5%",
+              "timeliness": "99.1%"
+            },
+            "knownIssues": []
+          }
+        }
+      ],
+      "technicalMetadata": {
+        "triageReports": [
+          {
+            "id": "tr-010",
+            "title": "Financial Data Quality Assessment",
+            "status": "Completed",
+            "date": "2024-03-15",
+            "severity": "Low",
+            "description": "Comprehensive financial data quality check completed with 98.5% accuracy",
+            "findings": ["Data validation passed", "No anomalies detected", "Compliance requirements met"]
+          }
+        ],
+        "codeVersions": [],
+        "engines": [],
+        "datasetLineage": {
+          "upstream": [
+            {
+              "id": "ds-master-financial",
+              "name": "Master Financial Dataset",
+              "type": "Parent Dataset",
+              "lastUpdated": "2024-03-18T08:00:00Z",
+              "status": "Active"
+            }
+          ],
+          "downstream": []
+        },
+        "tableCounts": {
+          "totalTables": 0,
+          "tables": []
+        },
+        "qualityMetrics": {
+          "accuracy": "98.5%",
+          "completeness": "99.0%",
+          "consistency": "97.5%",
+          "timeliness": "97.8%"
+        },
+        "knownIssues": []
+      }
+    },
+    {
+      "id": "ds-master-customer",
+      "name": "Master Customer Dataset",
+      "description": "Master dataset containing all customer-related data and demographics",
+      "category": "Customer",
+      "provider": "Customer Data Team",
+      "rating": 4.7,
+      "downloads": 1834,
+      "lastUpdated": "2024-03-19",
+      "format": "Dataset",
+      "size": "8.5 GB",
+      "tags": ["customer", "master", "demographics", "profiles"],
+      "verified": true,
+      "documentation": "https://docs.example.com/master-customer",
+      "type": "dataset",
+      "trustworthiness": "high",
+      "parentDataset": null,
+      "products": [],
+      "technicalMetadata": {
+        "triageReports": [
+          {
+            "id": "tr-master-customer",
+            "title": "Master Customer Dataset Quality Assessment",
+            "status": "Completed",
+            "date": "2024-03-19",
+            "severity": "Low",
+            "description": "Master customer dataset quality assessment completed with 98.8% accuracy",
+            "findings": ["All customer data sources validated", "No data quality issues", "GDPR compliance verified"]
+          }
+        ],
+        "codeVersions": [],
+        "engines": [],
+        "datasetLineage": {
+          "upstream": [],
+          "downstream": [
+            {
+              "id": "ds-customer-analytics",
+              "name": "Customer Analytics Dataset",
+              "type": "Child Dataset",
+              "lastUpdated": "2024-03-15T08:00:00Z",
+              "status": "Active"
+            }
+          ]
+        },
+        "tableCounts": {
+          "totalTables": 0,
+          "tables": []
+        },
+        "qualityMetrics": {
+          "accuracy": "98.8%",
+          "completeness": "99.2%",
+          "consistency": "98.5%",
+          "timeliness": "97.9%"
+        },
+        "knownIssues": []
+      }
+    },
+    {
+      "id": "ds-master-transactions",
+      "name": "Master Transaction Dataset",
+      "description": "Master dataset containing all transaction and payment data",
+      "category": "Transactions",
+      "provider": "Transaction Data Team",
+      "rating": 4.9,
+      "downloads": 2156,
+      "lastUpdated": "2024-03-21",
+      "format": "Dataset",
+      "size": "12.3 GB",
+      "tags": ["transactions", "master", "payments", "financial"],
+      "verified": true,
+      "documentation": "https://docs.example.com/master-transactions",
+      "type": "dataset",
+      "trustworthiness": "high",
+      "parentDataset": null,
+      "products": [],
+      "technicalMetadata": {
+        "triageReports": [
+          {
+            "id": "tr-master-transactions",
+            "title": "Master Transaction Dataset Quality Assessment",
+            "status": "Completed",
+            "date": "2024-03-21",
+            "severity": "Low",
+            "description": "Master transaction dataset quality assessment completed with 99.3% accuracy",
+            "findings": ["All transaction data sources validated", "No data quality issues", "PCI compliance verified"]
+          }
+        ],
+        "codeVersions": [],
+        "engines": [],
+        "datasetLineage": {
+          "upstream": [],
+          "downstream": [
+            {
+              "id": "ds-customer-analytics",
+              "name": "Customer Analytics Dataset",
+              "type": "Child Dataset",
+              "lastUpdated": "2024-03-15T08:00:00Z",
+              "status": "Active"
+            }
+          ]
+        },
+        "tableCounts": {
+          "totalTables": 0,
+          "tables": []
+        },
+        "qualityMetrics": {
+          "accuracy": "99.3%",
+          "completeness": "99.1%",
+          "consistency": "99.0%",
+          "timeliness": "98.5%"
+        },
+        "knownIssues": []
+      }
+    },
+    {
+      "id": "ds-master-financial",
+      "name": "Master Financial Dataset",
+      "description": "Master dataset containing all financial data and market information",
+      "category": "Finance",
+      "provider": "Financial Data Team",
+      "rating": 4.9,
+      "downloads": 2156,
+      "lastUpdated": "2024-03-20",
+      "format": "Dataset",
+      "size": "15.2 GB",
+      "tags": ["finance", "master", "comprehensive", "market"],
+      "verified": true,
+      "documentation": "https://docs.example.com/master-financial",
+      "type": "dataset",
+      "trustworthiness": "high",
+      "parentDataset": null,
+      "products": [],
+      "technicalMetadata": {
+        "triageReports": [
+          {
+            "id": "tr-master",
+            "title": "Master Dataset Quality Assessment",
+            "status": "Completed",
+            "date": "2024-03-20",
+            "severity": "Low",
+            "description": "Master financial dataset quality assessment completed with 99.1% accuracy",
+            "findings": ["All data sources validated", "No data quality issues", "Performance optimized"]
+          }
+        ],
+        "codeVersions": [],
+        "engines": [],
+        "datasetLineage": {
+          "upstream": [],
+          "downstream": [
+            {
+              "id": "ds-customer-analytics",
+              "name": "Customer Analytics Dataset",
+              "type": "Child Dataset",
+              "lastUpdated": "2024-03-15T08:00:00Z",
+              "status": "Active"
+            },
+            {
+              "id": "ds-financial-risk",
+              "name": "Financial Risk Dataset",
+              "type": "Child Dataset",
+              "lastUpdated": "2024-03-18T08:00:00Z",
+              "status": "Active"
+            }
+          ]
+        },
+        "tableCounts": {
+          "totalTables": 0,
+          "tables": []
+        },
+        "qualityMetrics": {
+          "accuracy": "99.1%",
+          "completeness": "99.5%",
+          "consistency": "98.8%",
+          "timeliness": "98.2%"
+        },
+        "knownIssues": []
+      }
+    }
+  ]
+}

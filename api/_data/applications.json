@@ -2,7 +2,7 @@
   "applications": [
     {
       "id": 1,
-      "name": "Customer Porta",
+      "name": "Customer Portal",
       "description": "Self-service portal for customers to manage their accounts and services",
       "domains": [
         "customer",

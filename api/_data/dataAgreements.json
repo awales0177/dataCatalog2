@@ -1,75 +1,6 @@
 {
   "agreements": [
     {
-      "id": "contract-007",
-      "name": "Content Management",
-      "description": "Product agreement for content validation and publishing",
-      "status": "in_progress",
-      "specificationMaintainer": "Content Management Team",
-      "parentSystem": "Content Management System",
-      "dataProducer": [
-        "CMS Service"
-      ],
-      "dataValidator": "Content Management Team",
-      "dataConsumer": [
-        "Frontend Service"
-      ],
-      "modelShortName": "TECH",
-      "contractVersion": "2.0.0",
-      "deliveredVersion": "2.1.0",
-      "deliveryFrequency": "1hour",
-      "startDate": "2024-02-01T09:30:00Z",
-      "endDate": null,
-      "fileFormat": "JSON",
-      "restricted": false,
-      "network": [
-        "internet"
-      ],
-      "sensitivityLevel": [
-        "public"
-      ],
-      "location": [
-        {
-          "bucket": "us-east-1",
-          "description": "Primary AWS region for content management data"
-        }
-      ],
-      "todo": {
-        "date": "2024-03-31T10:00:00Z",
-        "items": [
-          "Implement rich text editor features",
-          "Add media optimization pipeline",
-          "Update content validation rules"
-        ]
-      },
-      "changelog": [
-        {
-          "version": "2.1.0",
-          "date": "2024-03-09T13:15:00Z",
-          "changes": [
-            "Added rich text editor support",
-            "Enhanced media handling"
-          ]
-        },
-        {
-          "version": "2.0.0",
-          "date": "2024-02-20T11:45:00Z",
-          "changes": [
-            "Major content model update",
-            "Added version control"
-          ]
-        },
-        {
-          "version": "1.0.0",
-          "date": "2024-02-01T09:30:00Z",
-          "changes": [
-            "Initial contract release"
-          ]
-        }
-      ],
-      "lastUpdated": "2025-08-17 01:00:57"
-    },
-    {
       "id": "contract-008",
       "name": "API Gateway",
       "description": "Product agreement for API request/response validation",
@@ -727,6 +658,79 @@
         "goog3",
         "goog4",
         "goog5"
+      ]
+    },
+    {
+      "id": "contract-007",
+      "name": "Content Management",
+      "description": "Product agreement for content validation and publishing",
+      "status": "in_progress",
+      "specificationMaintainer": "Content Management Team",
+      "parentSystem": "Content Management System",
+      "dataProducer": [
+        "CMS Service"
+      ],
+      "dataValidator": "Content Management Team",
+      "dataConsumer": [
+        "Frontend Service"
+      ],
+      "modelShortName": "TECH",
+      "contractVersion": "2.0.0",
+      "deliveredVersion": "2.1.0",
+      "deliveryFrequency": "1hour",
+      "startDate": "2024-02-01T09:30:00Z",
+      "endDate": null,
+      "fileFormat": "nsjdon",
+      "restricted": false,
+      "network": [
+        "internet"
+      ],
+      "sensitivityLevel": [
+        "public"
+      ],
+      "location": [
+        {
+          "bucket": "us-east-1",
+          "description": "Primary AWS region for content management data"
+        }
+      ],
+      "todo": {
+        "date": "2024-03-31T10:00:00Z",
+        "items": [
+          "Implement rich text editor features",
+          "Add media optimization pipeline",
+          "Update content validation rules"
+        ]
+      },
+      "changelog": [
+        {
+          "version": "2.1.0",
+          "date": "2024-03-09T13:15:00Z",
+          "changes": [
+            "Added rich text editor support",
+            "Enhanced media handling"
+          ]
+        },
+        {
+          "version": "2.0.0",
+          "date": "2024-02-20T11:45:00Z",
+          "changes": [
+            "Major content model update",
+            "Added version control"
+          ]
+        },
+        {
+          "version": "1.0.0",
+          "date": "2024-02-01T09:30:00Z",
+          "changes": [
+            "Initial contract release"
+          ]
+        }
+      ],
+      "lastUpdated": "2025-09-09 04:46:21",
+      "dataPolicies": [
+        "retention_policy_001",
+        "access_policy_001"
       ]
     }
   ]

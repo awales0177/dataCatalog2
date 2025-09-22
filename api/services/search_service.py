@@ -38,7 +38,7 @@ class SearchService:
                         return data
                     elif isinstance(data, dict):
                         # Look for common array keys
-                        for key in ['models', 'dataAgreements', 'domains', 'applications', 'reference', 'toolkit', 'policies', 'lexicon', 'agreements']:
+                        for key in ['models', 'dataAgreements', 'domains', 'applications', 'reference', 'toolkit', 'policies', 'lexicon', 'agreements', 'dataProducts']:
                             if key in data and isinstance(data[key], list):
                                 return data[key]
                         # If no array found, return the dict as a single item
@@ -91,7 +91,8 @@ class SearchService:
                 'reference': 'reference.json',
                 'toolkit': 'toolkit.json',
                 'policies': 'dataPolicies.json',
-                'lexicon': 'lexicon.json'
+                'lexicon': 'lexicon.json',
+                'dataProducts': 'dataProducts.json'
             }
             
             total_documents = 0
