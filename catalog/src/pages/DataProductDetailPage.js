@@ -391,7 +391,7 @@ const DataProductDetailPage = () => {
           >
             <Tab label="Schema" />
             <Tab label="Engines & Code" />
-            <Tab label="Lineage" />
+            <Tab label="Product Lineage" />
           </Tabs>
 
           {/* Tab Content */}
@@ -729,92 +729,52 @@ const DataProductDetailPage = () => {
                 </CardContent>
               </Card>
 
-              {/* Detailed Lineage Information */}
-              <Grid container spacing={3}>
-                {/* Upstream Sources Details */}
-                <Grid item xs={12} md={6}>
-                  <Typography variant="h6" sx={{ color: currentTheme.text, mb: 2 }}>
-                Upstream Sources
+              {/* All Lineage Sources */}
+              <Typography variant="h6" sx={{ color: currentTheme.text, mb: 2 }}>
+                Lineage Sources
               </Typography>
-                  {product.technicalMetadata?.datasetLineage?.upstream?.length > 0 ? (
-                    product.technicalMetadata.datasetLineage.upstream.map((source, index) => (
-                <Card key={index} variant="outlined" sx={{ mb: 2, bgcolor: currentTheme.card, borderColor: currentTheme.border }}>
-                  <CardContent>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <Box>
-                        <Typography variant="h6" sx={{ color: currentTheme.text }}>
-                          {source.name}
+              {(() => {
+                const allSources = [
+                  ...(product.technicalMetadata?.datasetLineage?.upstream || []),
+                  ...(product.technicalMetadata?.datasetLineage?.downstream || [])
+                ];
+                
+                return allSources.length > 0 ? (
+                  allSources.map((source, index) => (
+                    <Card key={index} variant="outlined" sx={{ mb: 2, bgcolor: currentTheme.card, borderColor: currentTheme.border }}>
+                      <CardContent>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                          <Box>
+                            <Typography variant="h6" sx={{ color: currentTheme.text }}>
+                              {source.name}
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: currentTheme.textSecondary }}>
+                              {source.type}
+                            </Typography>
+                          </Box>
+                          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                            <Chip
+                              label={source.status}
+                              size="small"
+                              sx={{
+                                bgcolor: source.status === 'Active' ? `${currentTheme.success}15` : `${currentTheme.error}15`,
+                                color: source.status === 'Active' ? currentTheme.success : currentTheme.error,
+                              }}
+                            />
+                          </Box>
+                        </Box>
+                        <Typography variant="caption" sx={{ color: currentTheme.textSecondary, mt: 1, display: 'block' }}>
+                          Last Updated: {source.lastUpdated ? new Date(source.lastUpdated).toLocaleDateString() : 'N/A'}
                         </Typography>
-                        <Typography variant="body2" sx={{ color: currentTheme.textSecondary }}>
-                          {source.type}
-                        </Typography>
-                      </Box>
-                      <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                        <Chip
-                          label={source.status}
-                          size="small"
-                          sx={{
-                            bgcolor: source.status === 'Active' ? `${currentTheme.success}15` : `${currentTheme.error}15`,
-                            color: source.status === 'Active' ? currentTheme.success : currentTheme.error,
-                          }}
-                        />
-                      </Box>
-                    </Box>
-                    <Typography variant="caption" sx={{ color: currentTheme.textSecondary, mt: 1, display: 'block' }}>
-                      Last Updated: {source.lastUpdated ? new Date(source.lastUpdated).toLocaleDateString() : 'N/A'}
-                    </Typography>
-                  </CardContent>
-                </Card>
-                    ))
-                  ) : (
-                    <Typography variant="body2" sx={{ color: currentTheme.textSecondary, fontStyle: 'italic' }}>
-                      No upstream sources defined
-                    </Typography>
-                  )}
-                </Grid>
-
-                {/* Downstream Consumers Details */}
-                <Grid item xs={12} md={6}>
-                  <Typography variant="h6" sx={{ color: currentTheme.text, mb: 2 }}>
-                Downstream Consumers
-              </Typography>
-                  {product.technicalMetadata?.datasetLineage?.downstream?.length > 0 ? (
-                    product.technicalMetadata.datasetLineage.downstream.map((consumer, index) => (
-                <Card key={index} variant="outlined" sx={{ mb: 2, bgcolor: currentTheme.card, borderColor: currentTheme.border }}>
-                  <CardContent>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <Box>
-                        <Typography variant="h6" sx={{ color: currentTheme.text }}>
-                          {consumer.name}
-                        </Typography>
-                        <Typography variant="body2" sx={{ color: currentTheme.textSecondary }}>
-                          {consumer.type}
-                        </Typography>
-                      </Box>
-                      <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                        <Chip
-                          label={consumer.status}
-                          size="small"
-                          sx={{
-                            bgcolor: consumer.status === 'Active' ? `${currentTheme.success}15` : `${currentTheme.error}15`,
-                            color: consumer.status === 'Active' ? currentTheme.success : currentTheme.error,
-                          }}
-                        />
-                      </Box>
-                    </Box>
-                    <Typography variant="caption" sx={{ color: currentTheme.textSecondary, mt: 1, display: 'block' }}>
-                      Last Updated: {consumer.lastUpdated ? new Date(consumer.lastUpdated).toLocaleDateString() : 'N/A'}
-                    </Typography>
-                  </CardContent>
-                </Card>
-                    ))
-                  ) : (
-                    <Typography variant="body2" sx={{ color: currentTheme.textSecondary, fontStyle: 'italic' }}>
-                      No downstream consumers defined
-                    </Typography>
-                  )}
-                </Grid>
-              </Grid>
+                      </CardContent>
+                    </Card>
+                  ))
+                ) : (
+                  <Typography variant="body2" sx={{ color: currentTheme.textSecondary, fontStyle: 'italic' }}>
+                    No lineage sources defined
+                  </Typography>
+                );
+              })()}
             </Box>
           )}
 
@@ -965,7 +925,7 @@ const DataProductDetailPage = () => {
                       <ScheduleIcon sx={{ color: currentTheme.primary }} />
                     </ListItemIcon>
                     <ListItemText
-                      primary="Last Updated"
+                      primary="Data Freshness"
                       secondary={product.lastUpdated ? new Date(product.lastUpdated).toLocaleDateString() : product.technicalMetadata?.lastUpdated ? new Date(product.technicalMetadata.lastUpdated).toLocaleDateString() : 'N/A'}
                       primaryTypographyProps={{ color: currentTheme.text }}
                       secondaryTypographyProps={{ color: currentTheme.textSecondary }}

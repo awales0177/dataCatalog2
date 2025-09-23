@@ -23,7 +23,7 @@ import {
   Diamond as CrownIcon,
   SwapHoriz as SwapHorizIcon,
 } from '@mui/icons-material';
-import { drawerWidth, collapsedDrawerWidth, DIVIDER_AFTER_ITEM_ID } from '../constants/navigation';
+import { drawerWidth, collapsedDrawerWidth, DIVIDER_AFTER_ITEM_ID, DIVIDER_BEFORE_ITEM_ID } from '../constants/navigation';
 import { useAuth } from '../contexts/AuthContext';
 
 const NavigationDrawer = ({ 
@@ -106,11 +106,23 @@ const NavigationDrawer = ({
           
           return menuData.items.map((item, index) => {
             // Add divider after the specified item (start of second section)
-            const shouldAddDivider = item.id === DIVIDER_AFTER_ITEM_ID && !isDrawerCollapsed;
+            const shouldAddDividerAfter = item.id === DIVIDER_AFTER_ITEM_ID && !isDrawerCollapsed;
+            // Add divider before the specified item (before data products)
+            const shouldAddDividerBefore = item.id === DIVIDER_BEFORE_ITEM_ID && !isDrawerCollapsed;
             
             return (
               <React.Fragment key={item.path}>
-                {shouldAddDivider && (
+                {shouldAddDividerBefore && (
+                  <Divider 
+                    sx={{ 
+                      my: 1, 
+                      mx: 2, 
+                      borderColor: alpha(currentTheme.border, 0.5),
+                      opacity: 0.6
+                    }} 
+                  />
+                )}
+                {shouldAddDividerAfter && (
                   <Divider 
                     sx={{ 
                       my: 1, 

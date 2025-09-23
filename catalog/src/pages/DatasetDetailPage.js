@@ -58,7 +58,8 @@ import {
   OpenInNew as OpenInNewIcon,
   AccountTree as AccountTreeIcon,
   Update as UpdateIcon,
-  LibraryBooks as LibraryBooksIcon
+  LibraryBooks as LibraryBooksIcon,
+  Merge as MergeIcon
 } from '@mui/icons-material';
 import { useParams, useNavigate, Link as RouterLink } from 'react-router-dom';
 import { ThemeContext } from '../contexts/ThemeContext';
@@ -332,7 +333,7 @@ const DatasetDetailPage = () => {
         <Tab label="Products" />
         <Tab label="Parent Datasets" />
         <Tab label="Triage" />
-        <Tab label="Lineage" />
+        <Tab label="Data Lineage" />
       </Tabs>
 
       {/* Tab Content */}
@@ -371,14 +372,40 @@ const DatasetDetailPage = () => {
                       <Typography variant="h6" sx={{ color: currentTheme.text, fontWeight: 600 }}>
                         {relatedProduct.name}
                       </Typography>
-                      <Chip
-                        label={relatedProduct.format}
-                        size="small"
-                        sx={{
-                          bgcolor: `${currentTheme.primary}15`,
-                          color: currentTheme.primary,
-                        }}
-                      />
+                      <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                        {/* Product Type Indicator */}
+                        <Tooltip 
+                          title={relatedProduct.parentDataset ? "Child Product - Derived from parent dataset" : "Aggregated Product - Master dataset"}
+                          arrow
+                          placement="top"
+                        >
+                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                            {relatedProduct.parentDataset ? (
+                              <AccountTreeIcon 
+                                sx={{ 
+                                  color: currentTheme.warning, 
+                                  fontSize: '1.2rem' 
+                                }} 
+                              />
+                            ) : (
+                              <MergeIcon 
+                                sx={{ 
+                                  color: currentTheme.success, 
+                                  fontSize: '1.2rem' 
+                                }} 
+                              />
+                            )}
+                          </Box>
+                        </Tooltip>
+                        <Chip
+                          label={relatedProduct.format}
+                          size="small"
+                          sx={{
+                            bgcolor: `${currentTheme.primary}15`,
+                            color: currentTheme.primary,
+                          }}
+                        />
+                      </Box>
                     </Box>
 
                     {/* Description */}
@@ -412,13 +439,6 @@ const DatasetDetailPage = () => {
                       </Box>
                     </Box>
 
-                    {/* Trustworthiness */}
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                      <SecurityIcon sx={{ color: getTrustworthinessColor(relatedProduct.trustworthiness), fontSize: '1rem' }} />
-                      <Typography variant="caption" sx={{ color: currentTheme.textSecondary, textTransform: 'capitalize' }}>
-                        {relatedProduct.trustworthiness} Trustworthiness
-                      </Typography>
-                    </Box>
                   </CardContent>
 
                   <CardActions sx={{ p: 3, pt: 0 }}>

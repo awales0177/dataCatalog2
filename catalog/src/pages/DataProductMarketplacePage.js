@@ -14,7 +14,8 @@ import {
   CardActions,
   Button,
   Tabs,
-  Tab
+  Tab,
+  Tooltip
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -91,12 +92,30 @@ const mockDataProducts = [
 ];
 
 const DataProductCard = ({ product, currentTheme, onView, onFavorite, isFavorite }) => {
+  const getTrustworthinessColor = (level) => {
+    switch (level?.toLowerCase()) {
+      case 'high': return currentTheme.success;
+      case 'medium': return currentTheme.warning;
+      case 'low': return currentTheme.error;
+      default: return currentTheme.textSecondary;
+    }
+  };
+
+  const getTrustworthinessPercentage = (level) => {
+    switch (level?.toLowerCase()) {
+      case 'high': return 90;
+      case 'medium': return 60;
+      case 'low': return 30;
+      default: return 0;
+    }
+  };
+
   return (
     <Card
       onClick={() => onView(product)}
       sx={{
-        height: '280px',
-        minHeight: '280px',
+        height: '220px',
+        minHeight: '220px',
         display: 'flex',
         flexDirection: 'column',
         bgcolor: currentTheme.card,
@@ -137,13 +156,27 @@ const DataProductCard = ({ product, currentTheme, onView, onFavorite, isFavorite
             fontWeight: 700,
             fontSize: '1.1rem',
             lineHeight: 1.4,
-            mb: 1.5,
+            mb: 0.5,
             letterSpacing: '-0.01em',
           }}
         >
           {product.name}
         </Typography>
-
+        
+        {/* Dataset ID */}
+        <Typography
+          variant="caption"
+          sx={{
+            color: currentTheme.textSecondary,
+            mb: 1,
+            fontSize: '0.75rem',
+            fontFamily: 'monospace',
+            opacity: 0.7,
+            display: 'block',
+          }}
+        >
+          ID: {product.id}
+        </Typography>
 
         {/* Description */}
         <Typography
@@ -173,15 +206,50 @@ const DataProductCard = ({ product, currentTheme, onView, onFavorite, isFavorite
           pt: 1.5,
           borderTop: `1px solid ${currentTheme.border}30`,
         }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            <StarIcon fontSize="small" sx={{ color: currentTheme.favorite }} />
-            <Typography variant="caption" sx={{ 
-              color: currentTheme.textSecondary,
-              fontWeight: 600,
-              fontSize: '0.8rem',
-            }}>
-              {product.rating}
-            </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Tooltip 
+              title={`${product.products?.length || 0} data products in this dataset`}
+              arrow
+              placement="top"
+            >
+              <Typography variant="caption" sx={{ 
+                color: currentTheme.textSecondary,
+                fontWeight: 600,
+                fontSize: '0.8rem',
+              }}>
+                🔥 {product.products?.length || 0}
+              </Typography>
+            </Tooltip>
+            <Tooltip 
+              title={`Trustworthiness: ${product.trustworthiness?.charAt(0).toUpperCase() + product.trustworthiness?.slice(1) || 'Unknown'} (${getTrustworthinessPercentage(product.trustworthiness)}%)`}
+              arrow
+              placement="top"
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <CircularProgress
+                  variant="determinate"
+                  value={getTrustworthinessPercentage(product.trustworthiness)}
+                  size={20}
+                  thickness={3}
+                  sx={{
+                    color: getTrustworthinessColor(product.trustworthiness),
+                    '& .MuiCircularProgress-circle': {
+                      strokeLinecap: 'round',
+                    },
+                  }}
+                />
+                <Typography
+                  variant="caption"
+                  sx={{
+                    fontSize: '0.7rem',
+                    fontWeight: 600,
+                    color: currentTheme.textSecondary,
+                  }}
+                >
+                  {getTrustworthinessPercentage(product.trustworthiness)}%
+                </Typography>
+              </Box>
+            </Tooltip>
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
             <Button
