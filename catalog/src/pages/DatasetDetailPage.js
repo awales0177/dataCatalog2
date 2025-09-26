@@ -366,62 +366,51 @@ const DatasetDetailPage = () => {
                   }}
                   onClick={() => navigate(`/data-products/${dataset.id}/products/${relatedProduct.id}`)}
                 >
-                  <CardContent sx={{ flexGrow: 1, p: 3 }}>
+                  <CardContent sx={{ flexGrow: 1, p: 3, position: 'relative' }}>
+                    {/* Product Type Indicator - Top Right Corner */}
+                    <Tooltip 
+                      title={relatedProduct.parentDataset ? "Child Product - Derived from parent dataset" : "Aggregated Product - Master dataset"}
+                      arrow
+                      placement="top"
+                    >
+                      <Box sx={{ 
+                        position: 'absolute', 
+                        top: 16, 
+                        right: 16, 
+                        zIndex: 1 
+                      }}>
+                        {relatedProduct.parentDataset ? (
+                          <AccountTreeIcon 
+                            sx={{ 
+                              color: currentTheme.warning, 
+                              fontSize: '1.2rem' 
+                            }} 
+                          />
+                        ) : (
+                          <MergeIcon 
+                            sx={{ 
+                              color: currentTheme.success, 
+                              fontSize: '1.2rem' 
+                            }} 
+                          />
+                        )}
+                      </Box>
+                    </Tooltip>
+
                     {/* Header */}
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2, pr: 4 }}>
                       <Typography variant="h6" sx={{ color: currentTheme.text, fontWeight: 600 }}>
                         {relatedProduct.name}
                       </Typography>
-                      <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                        {/* Product Type Indicator */}
-                        <Tooltip 
-                          title={relatedProduct.parentDataset ? "Child Product - Derived from parent dataset" : "Aggregated Product - Master dataset"}
-                          arrow
-                          placement="top"
-                        >
-                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                            {relatedProduct.parentDataset ? (
-                              <AccountTreeIcon 
-                                sx={{ 
-                                  color: currentTheme.warning, 
-                                  fontSize: '1.2rem' 
-                                }} 
-                              />
-                            ) : (
-                              <MergeIcon 
-                                sx={{ 
-                                  color: currentTheme.success, 
-                                  fontSize: '1.2rem' 
-                                }} 
-                              />
-                            )}
-                          </Box>
-                        </Tooltip>
-                        <Chip
-                          label={relatedProduct.format}
-                          size="small"
-                          sx={{
-                            bgcolor: `${currentTheme.primary}15`,
-                            color: currentTheme.primary,
-                          }}
-                        />
-                      </Box>
                     </Box>
 
-                    {/* Description */}
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        color: currentTheme.textSecondary,
-                        mb: 2,
-                        display: '-webkit-box',
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: 'vertical',
-                        overflow: 'hidden',
-                      }}
-                    >
-                      {relatedProduct.description}
-                    </Typography>
+                    {/* Format */}
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                      <CodeIcon sx={{ color: currentTheme.textSecondary, fontSize: '1rem' }} />
+                      <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
+                        {relatedProduct.format}
+                      </Typography>
+                    </Box>
 
                     {/* Stats */}
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
