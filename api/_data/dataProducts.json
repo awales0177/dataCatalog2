@@ -254,7 +254,8 @@
                 "priority": "High"
               }
             ]
-          }
+          },
+          "parentDataset": "ds-master-customer"
         },
         {
           "id": "dp-002",
