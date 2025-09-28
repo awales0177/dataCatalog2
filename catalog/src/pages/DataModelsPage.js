@@ -132,6 +132,15 @@ const DataModelsPage = () => {
           changes: ['Initial model creation']
         }
       ],
+      versionHistory: [
+        {
+          version: '1.0.0',
+          timestamp: new Date().toISOString(),
+          updatedBy: 'System',
+          changeDescription: 'Initial model creation',
+          changedFields: ['name', 'description', 'version']
+        }
+      ],
       resources: {
         code: '',
         documentation: '',

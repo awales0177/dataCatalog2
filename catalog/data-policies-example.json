@@ -1,0 +1,122 @@
+[
+  {
+    "id": "policy-001",
+    "name": "Customer Data Retention Policy",
+    "description": "Establishes guidelines for retaining and disposing of customer personal information in compliance with GDPR and CCPA regulations. Defines retention periods for different types of customer data and outlines secure deletion procedures.",
+    "status": "active",
+    "owner": "Sarah Johnson",
+    "externalLink": "https://company.com/policies/customer-data-retention",
+    "tags": ["GDPR", "CCPA", "retention", "customer-data", "privacy"],
+    "createdAt": "2024-01-15T10:30:00Z",
+    "updatedAt": "2024-03-20T14:45:00Z",
+    "version": "2.1"
+  },
+  {
+    "id": "policy-002", 
+    "name": "Data Quality Standards",
+    "description": "Defines minimum data quality thresholds and validation rules for all enterprise data assets. Includes completeness, accuracy, consistency, and timeliness requirements across all data domains.",
+    "status": "review",
+    "owner": "Michael Chen",
+    "externalLink": "https://company.com/policies/data-quality-standards",
+    "tags": ["data-quality", "validation", "standards", "governance"],
+    "createdAt": "2024-02-01T09:15:00Z",
+    "updatedAt": "2024-03-18T11:20:00Z",
+    "version": "1.3"
+  },
+  {
+    "id": "policy-003",
+    "name": "Financial Data Access Control",
+    "description": "Controls access to sensitive financial information including revenue, costs, and budget data. Implements role-based access controls and audit logging for all financial data access.",
+    "status": "active",
+    "owner": "Jennifer Martinez",
+    "externalLink": "https://company.com/policies/financial-data-access",
+    "tags": ["access-control", "financial", "security", "audit", "RBAC"],
+    "createdAt": "2024-01-20T16:00:00Z",
+    "updatedAt": "2024-03-15T13:30:00Z",
+    "version": "1.8"
+  },
+  {
+    "id": "policy-004",
+    "name": "Employee Data Privacy Policy",
+    "description": "Governs the collection, processing, and storage of employee personal information. Ensures compliance with employment law and protects employee privacy rights while enabling necessary HR operations.",
+    "status": "draft",
+    "owner": "David Thompson",
+    "externalLink": "https://company.com/policies/employee-data-privacy",
+    "tags": ["employee-data", "privacy", "HR", "employment-law", "confidential"],
+    "createdAt": "2024-03-10T14:20:00Z",
+    "updatedAt": "2024-03-22T09:45:00Z",
+    "version": "0.9"
+  },
+  {
+    "id": "policy-005",
+    "name": "Data Backup and Recovery",
+    "description": "Establishes procedures for regular data backups, disaster recovery planning, and business continuity. Defines backup frequencies, retention periods, and recovery time objectives.",
+    "status": "active",
+    "owner": "Lisa Wang",
+    "externalLink": "https://company.com/policies/data-backup-recovery",
+    "tags": ["backup", "disaster-recovery", "business-continuity", "infrastructure"],
+    "createdAt": "2024-01-05T08:45:00Z",
+    "updatedAt": "2024-03-12T16:15:00Z",
+    "version": "3.2"
+  },
+  {
+    "id": "policy-006",
+    "name": "Third-Party Data Sharing",
+    "description": "Regulates the sharing of company data with external partners, vendors, and service providers. Includes data sharing agreements, security requirements, and compliance monitoring.",
+    "status": "expired",
+    "owner": "Robert Kim",
+    "externalLink": "https://company.com/policies/third-party-data-sharing",
+    "tags": ["third-party", "data-sharing", "vendors", "partnerships", "agreements"],
+    "createdAt": "2023-11-15T12:30:00Z",
+    "updatedAt": "2024-02-28T10:00:00Z",
+    "version": "2.0"
+  },
+  {
+    "id": "policy-007",
+    "name": "AI/ML Data Usage Guidelines",
+    "description": "Provides guidelines for using company data in artificial intelligence and machine learning models. Addresses data bias, model transparency, and ethical AI practices.",
+    "status": "review",
+    "owner": "Amanda Rodriguez",
+    "externalLink": "https://company.com/policies/ai-ml-data-usage",
+    "tags": ["AI", "machine-learning", "ethics", "bias", "transparency"],
+    "createdAt": "2024-02-15T11:00:00Z",
+    "updatedAt": "2024-03-19T15:30:00Z",
+    "version": "1.1"
+  },
+  {
+    "id": "policy-008",
+    "name": "Data Classification Framework",
+    "description": "Defines data classification levels (public, internal, confidential, restricted) and corresponding handling requirements. Establishes labeling standards and access controls for each classification level.",
+    "status": "active",
+    "owner": "Thomas Anderson",
+    "externalLink": "https://company.com/policies/data-classification",
+    "tags": ["classification", "security", "labeling", "access-control", "framework"],
+    "createdAt": "2024-01-08T13:45:00Z",
+    "updatedAt": "2024-03-14T12:00:00Z",
+    "version": "2.4"
+  },
+  {
+    "id": "policy-009",
+    "name": "Data Lineage Documentation",
+    "description": "Requires comprehensive documentation of data lineage for all critical data assets. Includes source systems, transformations, and downstream usage tracking.",
+    "status": "draft",
+    "owner": "Maria Garcia",
+    "externalLink": "https://company.com/policies/data-lineage-documentation",
+    "tags": ["lineage", "documentation", "tracking", "transformations", "metadata"],
+    "createdAt": "2024-03-05T10:15:00Z",
+    "updatedAt": "2024-03-21T14:20:00Z",
+    "version": "0.7"
+  },
+  {
+    "id": "policy-010",
+    "name": "Data Breach Response Protocol",
+    "description": "Establishes procedures for detecting, reporting, and responding to data breaches. Includes notification requirements, containment procedures, and post-incident analysis.",
+    "status": "active",
+    "owner": "James Wilson",
+    "externalLink": "https://company.com/policies/data-breach-response",
+    "tags": ["breach", "incident-response", "security", "notification", "compliance"],
+    "createdAt": "2024-01-12T15:30:00Z",
+    "updatedAt": "2024-03-16T11:45:00Z",
+    "version": "1.9"
+  }
+]

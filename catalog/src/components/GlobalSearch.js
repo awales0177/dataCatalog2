@@ -41,8 +41,11 @@ const GlobalSearch = ({ open, onClose, currentTheme, darkMode }) => {
   const [loading, setLoading] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [searchStats, setSearchStats] = useState(null);
+  const [hasSearched, setHasSearched] = useState(false);
+  const [showSkeleton, setShowSkeleton] = useState(false);
   const navigate = useNavigate();
   const searchTimeoutRef = useRef(null);
+  const skeletonTimeoutRef = useRef(null);
   const inputRef = useRef(null);
 
   // Focus input when dialog opens
@@ -154,16 +157,26 @@ const GlobalSearch = ({ open, onClose, currentTheme, darkMode }) => {
     if (!searchQuery.trim()) {
       setResults([]);
       setSuggestions([]);
+      setHasSearched(false);
+      setLoading(false);
+      setShowSkeleton(false);
       return;
     }
 
-    setLoading(true);
+    // Loading state is already set in handleQueryChange
+    setHasSearched(false);
+    // Don't clear results immediately - let them show until new results arrive
     try {
       const data = await globalSearch(searchQuery, { limit: 20 });
       setResults(data.results || []);
+      setHasSearched(true);
+      // Clear skeleton when results arrive
+      setShowSkeleton(false);
     } catch (error) {
       console.error('Search error:', error);
       setResults([]);
+      setHasSearched(true);
+      setShowSkeleton(false);
     } finally {
       setLoading(false);
     }
@@ -188,9 +201,26 @@ const GlobalSearch = ({ open, onClose, currentTheme, darkMode }) => {
     setQuery(value);
     setShowSuggestions(value.length > 0);
 
-    // Clear existing timeout
+    // Clear existing timeouts
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
+    }
+    if (skeletonTimeoutRef.current) {
+      clearTimeout(skeletonTimeoutRef.current);
+    }
+
+    // Set loading state immediately if user is typing a search query
+    if (value.trim()) {
+      setLoading(true);
+      // Show skeleton for 4 seconds when transitioning from no results to results
+      if (results.length === 0) {
+        setShowSkeleton(true);
+        skeletonTimeoutRef.current = setTimeout(() => {
+          setShowSkeleton(false);
+        }, 4000);
+      }
+    } else {
+      setShowSkeleton(false);
     }
 
     // Debounce search
@@ -201,6 +231,9 @@ const GlobalSearch = ({ open, onClose, currentTheme, darkMode }) => {
       } else {
         setResults([]);
         setSuggestions([]);
+        setHasSearched(false);
+        setLoading(false);
+        setShowSkeleton(false);
       }
     }, 300);
   };
@@ -222,6 +255,9 @@ const GlobalSearch = ({ open, onClose, currentTheme, darkMode }) => {
     setResults([]);
     setSuggestions([]);
     setShowSuggestions(false);
+    setHasSearched(false);
+    setShowSkeleton(false);
+    setLoading(false);
     if (inputRef.current) {
       inputRef.current.focus();
     }
@@ -230,7 +266,9 @@ const GlobalSearch = ({ open, onClose, currentTheme, darkMode }) => {
   const highlightText = (text, query) => {
     if (!query || !text || typeof text !== 'string') return text;
     
-    const regex = new RegExp(`(${query})`, 'gi');
+    // Escape special regex characters in the query
+    const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`(${escapedQuery})`, 'gi');
     const parts = text.split(regex);
     
     return parts.map((part, index) => 
@@ -299,7 +337,7 @@ const GlobalSearch = ({ open, onClose, currentTheme, darkMode }) => {
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  {loading ? <CircularProgress size={20} sx={{ color: currentTheme?.primary || '#3498db' }} /> : <SearchIcon sx={{ color: currentTheme?.textSecondary || '#7f8c8d' }} />}
+                  <SearchIcon sx={{ color: currentTheme?.textSecondary || '#7f8c8d' }} />
                 </InputAdornment>
               ),
               endAdornment: query && (
@@ -372,11 +410,17 @@ const GlobalSearch = ({ open, onClose, currentTheme, darkMode }) => {
           </Paper>
         )}
 
-        {results.length > 0 && (
-          <Box sx={{ px: 2, pb: 2 }}>
-            <Typography variant="subtitle2" sx={{ mb: 1, color: currentTheme?.textSecondary || '#7f8c8d' }}>
-              Results ({results.length})
-            </Typography>
+        {results.length > 0 && !showSkeleton && (
+          <Box sx={{ 
+            px: 2, 
+            pb: 2,
+            animation: 'fadeIn 0.3s ease-in-out'
+          }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+              <Typography variant="subtitle2" sx={{ color: currentTheme?.textSecondary || '#7f8c8d' }}>
+                Results ({results.length})
+              </Typography>
+            </Box>
             <List>
               {results.map((item, index) => {
                 const type = item._search_type;
@@ -471,14 +515,83 @@ const GlobalSearch = ({ open, onClose, currentTheme, darkMode }) => {
           </Box>
         )}
 
-        {query && !loading && results.length === 0 && (
-          <Box sx={{ p: 4, textAlign: 'center' }}>
+        {query && !loading && hasSearched && results.length === 0 && !showSkeleton && (
+          <Box sx={{ 
+            p: 4, 
+            textAlign: 'center',
+            animation: 'fadeIn 0.3s ease-in-out'
+          }}>
             <Typography variant="body1" sx={{ color: currentTheme?.textSecondary || '#7f8c8d' }}>
               No results found for "{query}"
             </Typography>
             <Typography variant="body2" sx={{ mt: 1, color: currentTheme?.textSecondary || '#7f8c8d' }}>
               Try different keywords or check your spelling
             </Typography>
+          </Box>
+        )}
+
+        {query && showSkeleton && (
+          <Box sx={{ 
+            px: 2, 
+            pb: 2,
+            animation: 'fadeIn 0.2s ease-in-out'
+          }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+              <Typography variant="subtitle2" sx={{ color: currentTheme?.textSecondary || '#7f8c8d' }}>
+                Searching...
+              </Typography>
+            </Box>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              {[1, 2, 3].map((i) => (
+                <Box key={i} sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: 2, 
+                  p: 2, 
+                  borderRadius: 1,
+                  bgcolor: currentTheme?.background || '#f5f5f5',
+                  border: `1px solid ${currentTheme?.border || 'rgba(0, 0, 0, 0.08)'}`
+                }}>
+                  <Box sx={{ 
+                    width: 40, 
+                    height: 40, 
+                    borderRadius: 1, 
+                    bgcolor: currentTheme?.border || 'rgba(0, 0, 0, 0.08)',
+                    animation: 'pulse 1.5s ease-in-out infinite'
+                  }} />
+                  <Box sx={{ flex: 1 }}>
+                    <Box sx={{ 
+                      height: 20, 
+                      width: '60%', 
+                      mb: 1, 
+                      borderRadius: 0.5, 
+                      bgcolor: currentTheme?.border || 'rgba(0, 0, 0, 0.08)',
+                      animation: 'pulse 1.5s ease-in-out infinite'
+                    }} />
+                    <Box sx={{ 
+                      height: 16, 
+                      width: '40%', 
+                      borderRadius: 0.5, 
+                      bgcolor: currentTheme?.border || 'rgba(0, 0, 0, 0.08)',
+                      animation: 'pulse 1.5s ease-in-out infinite'
+                    }} />
+                  </Box>
+                </Box>
+              ))}
+            </Box>
+            <style>
+              {`
+                @keyframes pulse {
+                  0% { opacity: 1; }
+                  50% { opacity: 0.5; }
+                  100% { opacity: 1; }
+                }
+                @keyframes fadeIn {
+                  0% { opacity: 0; transform: translateY(10px); }
+                  100% { opacity: 1; transform: translateY(0); }
+                }
+              `}
+            </style>
           </Box>
         )}
 

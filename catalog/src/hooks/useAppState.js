@@ -176,10 +176,11 @@ export const useAppState = () => {
     console.log('Current path segments:', pathSegments);
     
     // Collapse if we're exactly 2 levels deep (e.g., /models/CUST)
-    // OR if we're in edit mode (e.g., /models/CUST/edit)
+    // OR if we're in edit mode (e.g., /models/CUST/edit, /applications/edit/123, /policies/edit/456)
     // OR if we're in detail view (e.g., /toolkit/function/123, /reference/456)
     if (pathSegments.length === 2 || 
         (pathSegments.length === 3 && pathSegments[2] === 'edit') ||
+        (pathSegments.length === 3 && pathSegments[1] === 'edit') ||
         (pathSegments.length === 3 && pathSegments[1] === 'function') ||
         (pathSegments.length === 3 && pathSegments[1] === 'reference')) {
       console.log('Collapsing sidebar - detail page, 2-level navigation or edit mode detected');

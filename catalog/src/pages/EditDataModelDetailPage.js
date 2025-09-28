@@ -52,10 +52,12 @@ import { formatDate } from '../utils/themeUtils';
 import cacheService from '../services/cache';
 import ChangelogEditor from '../components/ChangelogEditor';
 import DomainSelector from '../components/DomainSelector';
+import { useAuth } from '../contexts/AuthContext';
 
 const EditDataModelDetailPage = ({ currentTheme }) => {
   const { shortName } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [model, setModel] = useState(null);
   const [editedModel, setEditedModel] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -115,6 +117,18 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
         console.log('Found model:', foundModel);
         
         if (foundModel) {
+          // Ensure versionHistory exists
+          if (!foundModel.versionHistory) {
+            foundModel.versionHistory = [
+              {
+                version: foundModel.version || '1.0.0',
+                timestamp: foundModel.lastUpdated || new Date().toISOString(),
+                updatedBy: 'System',
+                changeDescription: 'Initial model load',
+                changedFields: []
+              }
+            ];
+          }
           setModel(foundModel);
           setEditedModel(JSON.parse(JSON.stringify(foundModel))); // Deep copy
         } else {
@@ -418,11 +432,23 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
       // Get the old tool URL
       const toolUrl = current[oldToolName];
       
-      // Remove the old tool
-      delete current[oldToolName];
+      // Create a new tools object preserving order
+      const newTools = {};
+      const toolEntries = Object.entries(current);
       
-      // Add the new tool with the same URL
-      current[newToolName] = toolUrl;
+      for (const [key, value] of toolEntries) {
+        if (key === oldToolName) {
+          // Replace the old tool name with the new one
+          newTools[newToolName] = toolUrl;
+        } else {
+          // Keep other tools as they are
+          newTools[key] = value;
+        }
+      }
+      
+      // Replace the tools object
+      Object.keys(current).forEach(key => delete current[key]);
+      Object.assign(current, newTools);
       
       return newModel;
     });
@@ -526,17 +552,118 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
     }
   };
 
+  // Function to generate version history entry
+  const generateVersionHistoryEntry = (originalModel, updatedModel, changeType = 'update') => {
+    const fieldChanges = [];
+    
+    // Compare fields and identify changes
+    const fieldsToCheck = [
+      'name', 'shortName', 'description', 'extendedDescription', 'version',
+      'owner', 'specMaintainer', 'maintainerEmail', 'domain', 'referenceData',
+      'users', 'meta.tier', 'meta.verified', 'resources.code', 'resources.documentation',
+      'resources.rules', 'resources.tools', 'resources.git', 'resources.validation'
+    ];
+    
+    fieldsToCheck.forEach(field => {
+      const fieldPath = field.split('.');
+      let originalValue, updatedValue;
+      
+      // Get original value
+      if (fieldPath.length === 1) {
+        originalValue = originalModel[fieldPath[0]];
+        updatedValue = updatedModel[fieldPath[0]];
+      } else if (fieldPath.length === 2) {
+        originalValue = originalModel[fieldPath[0]]?.[fieldPath[1]];
+        updatedValue = updatedModel[fieldPath[0]]?.[fieldPath[1]];
+      }
+      
+      // Compare values (handle arrays and objects)
+      if (JSON.stringify(originalValue) !== JSON.stringify(updatedValue)) {
+        fieldChanges.push({
+          field: field,
+          oldValue: formatValueForDisplay(originalValue),
+          newValue: formatValueForDisplay(updatedValue)
+        });
+      }
+    });
+    
+    // Generate change description
+    let changeDescription = '';
+    if (changeType === 'create') {
+      changeDescription = 'Model created';
+    } else if (fieldChanges.length === 0) {
+      changeDescription = 'No changes detected';
+    } else if (fieldChanges.length === 1) {
+      changeDescription = `Updated ${fieldChanges[0].field}`;
+    } else if (fieldChanges.length <= 3) {
+      changeDescription = `Updated ${fieldChanges.map(f => f.field).join(', ')}`;
+    } else {
+      changeDescription = `Updated ${fieldChanges.length} fields`;
+    }
+    
+    return {
+      version: updatedModel.version || '1.0.0',
+      timestamp: new Date().toISOString(),
+      updatedBy: user?.username || user?.full_name || 'Unknown User',
+      changeDescription,
+      fieldChanges
+    };
+  };
+
+  // Helper function to format values for display
+  const formatValueForDisplay = (value) => {
+    if (value === null || value === undefined) {
+      return 'empty';
+    }
+    if (typeof value === 'boolean') {
+      return value.toString();
+    }
+    if (Array.isArray(value)) {
+      if (value.length === 0) {
+        return 'empty array';
+      }
+      return `[${value.join(', ')}]`;
+    }
+    if (typeof value === 'object') {
+      const keys = Object.keys(value);
+      if (keys.length === 0) {
+        return 'empty object';
+      }
+      return `{${keys.join(', ')}}`;
+    }
+    if (typeof value === 'string' && value.length > 50) {
+      return `"${value.substring(0, 47)}..."`;
+    }
+    return value.toString();
+  };
+
   const performSave = async () => {
     setSaving(true);
     try {
       // Update the lastUpdated field to current timestamp
       const currentTimestamp = new Date().toISOString().slice(0, 19).replace('T', ' '); // YYYY-MM-DD HH:MM:SS format
       
+      // Generate version history entry for changes
+      let versionHistoryEntry = null;
+      if (shortName !== 'new' && model) {
+        versionHistoryEntry = generateVersionHistoryEntry(model, editedModel);
+      } else if (shortName === 'new') {
+        versionHistoryEntry = generateVersionHistoryEntry({}, editedModel, 'create');
+      }
+      
       // Include the shortName in the update since it's now editable
       const updatedModel = {
         ...editedModel,
         lastUpdated: currentTimestamp
       };
+      
+      // Add version history entry if there are changes
+      if (versionHistoryEntry && versionHistoryEntry.fieldChanges.length > 0) {
+        updatedModel.versionHistory = [
+          ...(editedModel.versionHistory || []),
+          versionHistoryEntry
+        ];
+      }
       
       // Check if this is a new model creation
       const isNewModel = shortName === 'new';
@@ -677,7 +804,7 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
             </IconButton>
           </Box>
           {Object.entries(value).map(([toolName, toolUrl], index) => (
-            <Box key={`${path}.${toolName}`} sx={{ mb: 2, p: 2, border: `1px solid ${currentTheme.border}`, borderRadius: 1 }}>
+            <Box key={`${path}.${index}`} sx={{ mb: 2, p: 2, border: `1px solid ${currentTheme.border}`, borderRadius: 1 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                               <TextField
                 size="small"
@@ -1206,11 +1333,11 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
             <Grid item xs={12} md={6}>
               {renderField('resources.code', editedModel.resources?.code, 'Code Repository')}
               {renderField('resources.documentation', editedModel.resources?.documentation, 'Documentation URL')}
+              {renderField('resources.git', editedModel.resources?.git, 'Git Repository')}
+              {renderField('resources.validation', editedModel.resources?.validation, 'Validation')}
             </Grid>
             <Grid item xs={12} md={6}>
               {renderField('resources.tools', editedModel.resources?.tools, 'Tools')}
-              {renderField('resources.git', editedModel.resources?.git, 'Git Repository')}
-              {renderField('resources.validation', editedModel.resources?.validation, 'Validation')}
             </Grid>
           </Grid>
         </Box>

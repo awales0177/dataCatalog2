@@ -37,6 +37,7 @@ import {
   DialogActions,
 } from '@mui/material';
 import DeleteModal from '../components/DeleteModal';
+import DomainSelector from '../components/DomainSelector';
 
 import {
   ArrowBack as ArrowBackIcon,
@@ -130,11 +131,10 @@ const EditReferenceDataPage = () => {
         // Create template for new item
         const template = {
           name: '',
-          category: '',
+          domain: [],
           description: '',
           version: '1.0.0',
           status: 'active',
-          sensitivityLevel: 'public',
           sourceDatasets: [],
           owner: '',
           upstreamLineage: [],
@@ -202,6 +202,16 @@ const EditReferenceDataPage = () => {
       setSnackbar({
         open: true,
         message: 'Name is required',
+        severity: 'error'
+      });
+      return;
+    }
+
+
+    if (!editedItem.description) {
+      setSnackbar({
+        open: true,
+        message: 'Description is required',
         severity: 'error'
       });
       return;
@@ -683,25 +693,29 @@ const EditReferenceDataPage = () => {
       </Paper>
 
       {/* Main Form */}
-      <Paper elevation={0} sx={{ p: 3, bgcolor: currentTheme.card, border: `1px solid ${currentTheme.border}`, borderRadius: 2 }}>
+      <Paper elevation={0} sx={{ p: 3, mb: 3, bgcolor: currentTheme.card, border: `1px solid ${currentTheme.border}`, borderRadius: 2 }}>
         <Grid container spacing={3}>
           {/* Basic Information */}
           <Grid item xs={12} md={6}>
             <TextField
               fullWidth
-              label="Name"
+              label="Name *"
               value={editedItem?.name || ''}
               onChange={(e) => setEditedItem(prev => ({ ...prev, name: e.target.value }))}
               sx={{ mb: 2, ...getTextFieldThemeStyles() }}
             />
           </Grid>
           <Grid item xs={12} md={6}>
-            <TextField
-              fullWidth
-              label="Category"
-              value={editedItem?.category || ''}
-              onChange={(e) => setEditedItem(prev => ({ ...prev, category: e.target.value }))}
-              sx={{ mb: 2, ...getTextFieldThemeStyles() }}
+            <DomainSelector
+              selectedDomains={editedItem?.domain || []}
+              onDomainsChange={(newDomains) => {
+                setEditedItem(prev => ({
+                  ...prev,
+                  domain: newDomains
+                }));
+              }}
+              currentTheme={currentTheme}
+              label="Domain"
             />
           </Grid>
           <Grid item xs={12} md={6}>
@@ -718,7 +732,7 @@ const EditReferenceDataPage = () => {
               fullWidth
               multiline
               rows={3}
-              label="Description"
+              label="Description *"
               value={editedItem?.description || ''}
               onChange={(e) => setEditedItem(prev => ({ ...prev, description: e.target.value }))}
               sx={{ mb: 2, ...getTextFieldThemeStyles() }}
@@ -736,22 +750,6 @@ const EditReferenceDataPage = () => {
                 <MenuItem value="active">Active</MenuItem>
                 <MenuItem value="inactive">Inactive</MenuItem>
                 <MenuItem value="deprecated">Deprecated</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <FormControl fullWidth sx={{ mb: 2 }}>
-              <InputLabel sx={{ color: currentTheme.textSecondary }}>Sensitivity Level</InputLabel>
-              <Select
-                value={editedItem?.sensitivityLevel || 'public'}
-                onChange={(e) => setEditedItem(prev => ({ ...prev, sensitivityLevel: e.target.value }))}
-                label="Sensitivity Level"
-                sx={getSelectThemeStyles()}
-              >
-                <MenuItem value="public">Public</MenuItem>
-                <MenuItem value="internal">Internal</MenuItem>
-                <MenuItem value="confidential">Confidential</MenuItem>
-                <MenuItem value="restricted">Restricted</MenuItem>
               </Select>
             </FormControl>
           </Grid>

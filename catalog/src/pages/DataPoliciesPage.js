@@ -16,6 +16,8 @@ import {
   Fab,
   Snackbar,
   Alert,
+  IconButton,
+  Tooltip,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -154,63 +156,97 @@ const DataPoliciesPage = () => {
       <Card 
         key={policy.id}
         elevation={0}
-        onClick={() => navigate(`/policies/${policy.id}`)}
         sx={{ 
           height: '100%',
+          minHeight: '320px',
           display: 'flex',
           flexDirection: 'column',
           bgcolor: currentTheme.card,
           border: `1px solid ${currentTheme.border}`,
           borderRadius: 2,
           transition: 'all 0.2s ease-in-out',
-          cursor: 'pointer',
           '&:hover': {
             transform: 'translateY(-4px)',
             boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+            '& .action-buttons': {
+              opacity: 1,
+            },
           },
+          position: 'relative',
         }}
       >
-        <CardContent sx={{ flexGrow: 1, p: 2 }}>
-          <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 2 }}>
-            <Box sx={{ flex: 1 }}>
-              <Typography variant="h6" sx={{ 
-                color: currentTheme.text, 
-                fontWeight: 600,
-                mb: 1,
-                lineHeight: 1.2
-              }}>
-                {policy.name}
-              </Typography>
-              <Typography variant="body2" sx={{ 
-                color: currentTheme.textSecondary,
-                mb: 2,
-                lineHeight: 1.4
-              }}>
-                {policy.description}
-              </Typography>
-            </Box>
-            <Chip
-              label={policy.status}
+        {/* Action buttons */}
+        <Box 
+          className="action-buttons"
+          sx={{ 
+            position: 'absolute', 
+            top: 8, 
+            right: 8, 
+            display: 'flex', 
+            gap: 0.5,
+            opacity: 0,
+            transition: 'opacity 0.2s ease-in-out',
+          }}
+        >
+          <Tooltip title="Edit Policy">
+            <IconButton
               size="small"
-              sx={{
-                bgcolor: alpha(statusColor, 0.1),
-                color: statusColor,
-                fontWeight: 600,
-                textTransform: 'capitalize',
-                ml: 1
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/policies/edit/${policy.id}`);
               }}
-            />
+              sx={{ 
+                bgcolor: alpha(currentTheme.primary, 0.1),
+                color: currentTheme.primary,
+                '&:hover': {
+                  bgcolor: currentTheme.primary,
+                  color: 'white',
+                },
+              }}
+            >
+              <EditIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </Box>
+
+        <CardContent sx={{ flexGrow: 1, p: 3, pr: 6 }}>
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="h6" sx={{ 
+              color: currentTheme.text, 
+              fontWeight: 600,
+              mb: 2,
+              lineHeight: 1.3,
+              pr: 1
+            }}>
+              {policy.name}
+            </Typography>
+            <Typography 
+              variant="body2" 
+              sx={{ 
+                color: currentTheme.textSecondary,
+                mb: 3,
+                lineHeight: 1.5,
+                display: '-webkit-box',
+                WebkitLineClamp: 'unset',
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                maxHeight: '120px',
+                overflowY: 'auto'
+              }}
+            >
+              {policy.description}
+            </Typography>
           </Box>
 
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
             <PersonIcon sx={{ fontSize: 16, color: currentTheme.textSecondary }} />
             <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
               {policy.owner}
             </Typography>
           </Box>
 
-
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 1 }}>
             {policy.tags.slice(0, 3).map((tag, index) => (
               <Chip
                 key={index}
@@ -239,11 +275,25 @@ const DataPoliciesPage = () => {
           </Box>
         </CardContent>
 
-        <CardActions sx={{ p: 2, pt: 0, justifyContent: 'flex-end' }}>
+        <CardActions sx={{ p: 3, pt: 1, justifyContent: 'space-between', alignItems: 'center' }}>
+          <Chip
+            label={policy.status}
+            size="small"
+            sx={{
+              bgcolor: alpha(statusColor, 0.1),
+              color: statusColor,
+              fontWeight: 600,
+              textTransform: 'capitalize'
+            }}
+          />
           <Button
             size="small"
             startIcon={<ReadMoreIcon />}
-            onClick={() => navigate(`/policies/${policy.id}`)}
+            onClick={() => {
+              // Use policy.externalLink if available, otherwise create a default external link
+              const externalLink = policy.externalLink || policy.documentation || `https://company.com/policies/${policy.id}`;
+              window.open(externalLink, '_blank', 'noopener,noreferrer');
+            }}
             sx={{
               color: currentTheme.textSecondary,
               '&:hover': {

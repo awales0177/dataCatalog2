@@ -73,15 +73,6 @@ const ReferenceDataDetailPage = ({ currentTheme }) => {
     }
   };
 
-  const getSensitivityColor = (level) => {
-    switch (level?.toLowerCase()) {
-      case 'public': return '#4caf50';
-      case 'internal': return '#ff9800';
-      case 'confidential': return '#f44336';
-      case 'restricted': return '#9c27b0';
-      default: return currentTheme?.textSecondary;
-    }
-  };
 
   const getSourceTypeColor = (type) => {
     switch (type?.toLowerCase()) {
@@ -127,28 +118,35 @@ const ReferenceDataDetailPage = ({ currentTheme }) => {
             {item.id}
           </Typography>
         </Box>
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          <Chip 
-            label={item.category} 
-            sx={{ bgcolor: alpha(currentTheme?.primary, 0.1), color: currentTheme?.primary }} 
-          />
+        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+          {item.domain && item.domain.length > 0 ? (
+            item.domain.map((domain, index) => (
+              <Chip
+                key={index}
+                label={domain}
+                sx={{ 
+                  bgcolor: alpha(currentTheme?.primary, 0.1), 
+                  color: currentTheme?.primary,
+                  fontWeight: 500
+                }} 
+              />
+            ))
+          ) : (
+            <Chip 
+              label="No domains assigned" 
+              sx={{ 
+                bgcolor: alpha(currentTheme?.textSecondary, 0.1), 
+                color: currentTheme?.textSecondary,
+                fontStyle: 'italic'
+              }} 
+            />
+          )}
           {item.status && (
             <Chip 
               label={item.status} 
               sx={{ 
                 bgcolor: alpha(getStatusColor(item.status), 0.1), 
                 color: getStatusColor(item.status),
-                fontWeight: 600
-              }} 
-            />
-          )}
-          {item.sensitivityLevel && (
-            <Chip 
-              icon={<SecurityIcon />}
-              label={item.sensitivityLevel} 
-              sx={{ 
-                bgcolor: alpha(getSensitivityColor(item.sensitivityLevel), 0.1), 
-                color: getSensitivityColor(item.sensitivityLevel),
                 fontWeight: 600
               }} 
             />

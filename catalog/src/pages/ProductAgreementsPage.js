@@ -9,13 +9,21 @@ import {
   Paper,
   CircularProgress,
   Alert,
-  Chip,
   Fab,
   useTheme,
+  Tabs,
+  Tab,
+  Badge,
+  alpha,
 } from '@mui/material';
 import {
   Search as SearchIcon,
   Add as AddIcon,
+  Assignment as AssignmentIcon,
+  PlayArrow as PlayArrowIcon,
+  RateReview as RateReviewIcon,
+  Schedule as ScheduleIcon,
+  CheckCircle as CheckCircleIcon,
 } from '@mui/icons-material';
 import { ThemeContext } from '../contexts/ThemeContext';
 import { fetchAgreements } from '../services/api';
@@ -29,11 +37,10 @@ const ProductAgreementsPage = () => {
   const { currentTheme } = useContext(ThemeContext);
   const navigate = useNavigate();
   const [allAgreements, setAllAgreements] = useState([]);
-  const [filteredAgreements, setFilteredAgreements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState('all');
+  const [selectedTab, setSelectedTab] = useState(0);
   const [page, setPage] = useState(1);
   const theme = useTheme();
 
@@ -48,7 +55,6 @@ const ProductAgreementsPage = () => {
         );
         console.log('Valid agreements:', validAgreements);
         setAllAgreements(validAgreements);
-        setFilteredAgreements(validAgreements);
         setError(null);
       } catch (err) {
         console.error('Error loading agreements:', err);
@@ -61,9 +67,32 @@ const ProductAgreementsPage = () => {
     loadAgreements();
   }, []);
 
-  useEffect(() => {
+  // Get unique producers from all agreements
+  const getUniqueProducers = () => {
+    const producers = new Set();
+    allAgreements.forEach(agreement => {
+      if (agreement && agreement.dataProducer) {
+        if (Array.isArray(agreement.dataProducer)) {
+          agreement.dataProducer.forEach(producer => {
+            if (producer && producer.trim()) {
+              producers.add(producer.trim());
+            }
+          });
+        } else if (agreement.dataProducer.trim()) {
+          producers.add(agreement.dataProducer.trim());
+        }
+      }
+    });
+    return Array.from(producers).sort();
+  };
+
+  const uniqueProducers = getUniqueProducers();
+
+  // Filter agreements based on search and tab selection
+  const getFilteredAgreements = () => {
     let filtered = [...allAgreements];
 
+    // Apply search filter
     if (searchQuery) {
       const searchLower = searchQuery.toLowerCase();
       
@@ -125,15 +154,26 @@ const ProductAgreementsPage = () => {
       });
     }
 
-    if (selectedStatus !== 'all') {
-      filtered = filtered.filter(agreement => 
-        agreement && agreement.status === selectedStatus
-      );
+    // Apply tab filter by producer
+    if (selectedTab < uniqueProducers.length) {
+      const selectedProducer = uniqueProducers[selectedTab];
+      filtered = filtered.filter(agreement => {
+        if (!agreement || !agreement.dataProducer) return false;
+        
+        if (Array.isArray(agreement.dataProducer)) {
+          return agreement.dataProducer.some(producer => 
+            producer && producer.trim() === selectedProducer
+          );
+        } else {
+          return agreement.dataProducer.trim() === selectedProducer;
+        }
+      });
     }
 
-    setFilteredAgreements(filtered);
-    setPage(1);
-  }, [searchQuery, selectedStatus, allAgreements]);
+    return filtered;
+  };
+
+  const filteredAgreements = getFilteredAgreements();
 
   const handlePageChange = (event, value) => {
     setPage(value);
@@ -201,19 +241,23 @@ const ProductAgreementsPage = () => {
     ).join(' ');
   };
 
-  const statusOptions = [
-    { id: 'all', label: 'All' },
-    { id: 'active', label: 'Active' },
-    { id: 'in_progress', label: 'In Progress' },
-    { id: 'in_review', label: 'In Review' },
-    { id: 'expired', label: 'Expired' }
-  ];
-
   const totalPages = Math.ceil(filteredAgreements.length / ITEMS_PER_PAGE);
   const paginatedAgreements = filteredAgreements.slice(
     (page - 1) * ITEMS_PER_PAGE,
     page * ITEMS_PER_PAGE
   );
+
+  // Reset page when tab changes
+  useEffect(() => {
+    setPage(1);
+  }, [selectedTab]);
+
+  // Reset tab when producers change (in case of data refresh)
+  useEffect(() => {
+    if (selectedTab >= uniqueProducers.length) {
+      setSelectedTab(0);
+    }
+  }, [uniqueProducers.length, selectedTab]);
 
   if (loading) {
     return (
@@ -276,23 +320,55 @@ const ProductAgreementsPage = () => {
           }}
         />
 
-        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-          {statusOptions.map((status) => (
-            <Chip
-              key={status.id}
-              label={status.label}
-              onClick={() => setSelectedStatus(status.id)}
-              sx={{
-                backgroundColor: selectedStatus === status.id ? getStatusColor(status.id) : 'transparent',
-                color: selectedStatus === status.id ? 'white' : getStatusColor(status.id),
-                border: `1px solid ${getStatusColor(status.id)}`,
-                '&:hover': {
-                  backgroundColor: selectedStatus === status.id ? getStatusColor(status.id) : `${getStatusColor(status.id)}20`,
+        {/* Tabs */}
+        <Box sx={{ mb: 3 }}>
+          <Tabs
+            value={selectedTab}
+            onChange={(e, newValue) => setSelectedTab(newValue)}
+            variant="scrollable"
+            scrollButtons="auto"
+            sx={{
+              '& .MuiTab-root': {
+                color: currentTheme.textSecondary,
+                '&.Mui-selected': {
+                  color: currentTheme.primary,
                 },
-                transition: 'all 0.2s ease-in-out',
-              }}
-            />
-          ))}
+              },
+              '& .MuiTabs-indicator': {
+                bgcolor: currentTheme.primary,
+              },
+              '& .MuiTabs-scrollButtons': {
+                color: currentTheme.primary,
+                '&.Mui-disabled': {
+                  color: currentTheme.textSecondary,
+                  opacity: 0.3,
+                },
+              },
+            }}
+          >
+            {uniqueProducers.map((producer, index) => (
+              <Tab
+                key={producer}
+                label={
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    {producer}
+                    <Badge 
+                      badgeContent={
+                        allAgreements.filter(agreement => {
+                          if (!agreement || !agreement.dataProducer) return false;
+                          if (Array.isArray(agreement.dataProducer)) {
+                            return agreement.dataProducer.some(p => p && p.trim() === producer);
+                          } else {
+                            return agreement.dataProducer.trim() === producer;
+                          }
+                        }).length
+                      } 
+                    />
+                  </Box>
+                }
+              />
+            ))}
+          </Tabs>
         </Box>
       </Box>
 

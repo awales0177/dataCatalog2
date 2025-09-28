@@ -1858,7 +1858,7 @@ const EditAgreementPage = () => {
       <TextField
         key={path}
         fullWidth
-        label={label}
+        label={isRequired ? `${label} *` : label}
         value={value || ''}
         onChange={(e) => handleFieldChange(path, e.target.value)}
         variant="outlined"

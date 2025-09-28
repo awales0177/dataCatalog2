@@ -164,15 +164,35 @@ const NavigationDrawer = ({
                     <ListItemText 
                       primary={
                         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                          <Typography 
-                            variant="body2" 
-                            sx={{ 
-                              fontSize: '0.875rem',
-                              fontWeight: 500,
-                            }}
-                          >
-                            {item.name}
-                          </Typography>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Typography 
+                              variant="body2" 
+                              sx={{ 
+                                fontSize: '0.875rem',
+                                fontWeight: 500,
+                              }}
+                            >
+                              {item.name}
+                            </Typography>
+                            {(item.id === 'toolkit' || item.id === 'reference' || item.id === 'policies' || item.id === 'domains') && (
+                              <Chip
+                                label="BETA"
+                                size="small"
+                                sx={{
+                                  height: 16,
+                                  fontSize: '0.65rem',
+                                  fontWeight: 600,
+                                  bgcolor: alpha(currentTheme.primary, 0.1),
+                                  color: currentTheme.primary,
+                                  border: `1px solid ${alpha(currentTheme.primary, 0.3)}`,
+                                  '& .MuiChip-label': {
+                                    px: 0.75,
+                                    py: 0
+                                  }
+                                }}
+                              />
+                            )}
+                          </Box>
                           {item.count !== undefined && (
                             <Typography 
                               variant="caption" 

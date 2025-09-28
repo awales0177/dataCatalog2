@@ -94,12 +94,21 @@ const EditApplicationPage = () => {
 
     setSaving(true);
     try {
+      // Update the lastUpdated field to current timestamp
+      const currentTimestamp = new Date().toISOString().slice(0, 19).replace('T', ' '); // YYYY-MM-DD HH:MM:SS format
+      
+      // Create updated application with new timestamp
+      const updatedApplication = {
+        ...editedApplication,
+        lastUpdated: currentTimestamp
+      };
+
       if (isNewApplication) {
-        await createApplication(editedApplication);
+        await createApplication(updatedApplication);
         setSnackbar({ open: true, message: 'Application created successfully', severity: 'success' });
       } else {
-        await updateApplication(editedApplication.id, editedApplication);
-        setSnackbar({ open: true, message: 'Application updated successfully', severity: 'success' });
+        await updateApplication(updatedApplication.id, updatedApplication);
+        setSnackbar({ open: true, message: `Application updated successfully! Last updated: ${currentTimestamp}`, severity: 'success' });
       }
       
       // Navigate back to applications page after a short delay

@@ -15,6 +15,10 @@ import {
 import { formatDate } from '../utils/themeUtils';
 
 const ApplicationCard = ({ application, currentTheme, onEdit }) => {
+  // Debug: Log application object to see available fields
+  console.log('ApplicationCard - application object:', application);
+  console.log('ApplicationCard - lastUpdated field:', application.lastUpdated);
+  
   return (
     <Card 
       elevation={0}
@@ -99,7 +103,7 @@ const ApplicationCard = ({ application, currentTheme, onEdit }) => {
             display: 'block'
           }}
         >
-          Last Updated: {formatDate(application.lastUpdated)}
+          Last Updated: {formatDate(application.lastUpdated || application.updatedAt || application.modifiedAt || application.lastModified)}
         </Typography>
       </CardContent>
     </Card>
