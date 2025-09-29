@@ -22,6 +22,7 @@ import {
   FormControlLabel,
 } from '@mui/material';
 import DeleteModal from '../components/DeleteModal';
+import TeamSelector from '../components/TeamSelector';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   ArrowBack as ArrowBackIcon,
@@ -561,22 +562,16 @@ const EditToolkitFunctionPage = () => {
               </Grid>
 
               <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Author"
-                  value={editedFunction?.author || ''}
-                  onChange={(e) => handleFieldChange('author', e.target.value)}
-                  sx={{
-                    '& .MuiInputLabel-root': { color: currentTheme.textSecondary },
-                    '& .MuiInputLabel-root.Mui-focused': { color: currentTheme.primary },
-                    '& .MuiOutlinedInput-root': { 
-                      color: currentTheme.text,
-                      '& fieldset': { borderColor: currentTheme.border },
-                      '&:hover fieldset': { borderColor: currentTheme.primary },
-                      '&.Mui-focused fieldset': { borderColor: currentTheme.primary }
-                    },
-                    '& .MuiInputBase-input': { color: currentTheme.text }
+                <TeamSelector
+                  selectedTeams={editedFunction?.author ? [editedFunction.author] : []}
+                  onTeamsChange={(teams) => {
+                    handleFieldChange('author', teams.length > 0 ? teams[0] : '');
                   }}
+                  currentTheme={currentTheme}
+                  label="Maintainer"
+                  showLabel={true}
+                  maxSelections={1}
+                  placeholder="No maintainer selected"
                 />
               </Grid>
 

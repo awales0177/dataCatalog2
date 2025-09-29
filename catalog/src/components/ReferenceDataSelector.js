@@ -15,42 +15,42 @@ import {
 } from '@mui/icons-material';
 import { fetchData } from '../services/api';
 
-const DomainSelector = ({ 
-  selectedDomains = [], 
-  onDomainsChange, 
+const ReferenceDataSelector = ({ 
+  selectedReferenceData = [], 
+  onReferenceDataChange, 
   currentTheme,
-  label = 'Domains',
+  label = 'Reference Data',
   showLabel = true 
 }) => {
-  const [domainsData, setDomainsData] = useState([]);
+  const [referenceData, setReferenceData] = useState([]);
   const [showSelectionDialog, setShowSelectionDialog] = useState(false);
   const [availableOptions, setAvailableOptions] = useState([]);
 
   useEffect(() => {
-    const loadDomains = async () => {
+    const loadReferenceData = async () => {
       try {
-        const response = await fetchData('domains');
-        setDomainsData(response.domains || []);
+        const response = await fetchData('reference');
+        setReferenceData(response.items || []);
       } catch (error) {
-        console.error('Error loading domains:', error);
+        console.error('Error loading reference data:', error);
       }
     };
 
-    loadDomains();
+    loadReferenceData();
   }, []);
 
-  const handleAddDomain = () => {
-    // Get available domain options (filter out already selected ones)
-    const currentDomains = selectedDomains || [];
-    const availableOptions = domainsData
-      .filter(domain => !currentDomains.includes(domain.name || domain.shortName || domain.id))
-      .map(domain => ({
-        value: domain.name || domain.shortName || domain.id,
-        label: domain.name || domain.shortName || domain.id
+  const handleAddReferenceData = () => {
+    // Get available reference data options (filter out already selected ones)
+    const currentReferenceData = selectedReferenceData || [];
+    const availableOptions = referenceData
+      .filter(item => !currentReferenceData.includes(item.name || item.shortName || item.id))
+      .map(item => ({
+        value: item.name || item.shortName || item.id,
+        label: item.name || item.shortName || item.id,
+        description: item.description || item.shortDescription || ''
       }));
 
     if (availableOptions.length === 0) {
-      // You could add a snackbar here if needed
       return;
     }
 
@@ -58,16 +58,16 @@ const DomainSelector = ({
     setShowSelectionDialog(true);
   };
 
-  const handleRemoveDomain = (domainToRemove) => {
-    const newDomains = selectedDomains.filter(domain => domain !== domainToRemove);
-    onDomainsChange(newDomains);
+  const handleRemoveReferenceData = (referenceDataToRemove) => {
+    const newReferenceData = selectedReferenceData.filter(item => item !== referenceDataToRemove);
+    onReferenceDataChange(newReferenceData);
   };
 
-  const handleDomainSelection = (selectedDomain) => {
-    if (!selectedDomain) return;
+  const handleReferenceDataSelection = (selectedReferenceData) => {
+    if (!selectedReferenceData) return;
     
-    const newDomains = [...(selectedDomains || []), selectedDomain];
-    onDomainsChange(newDomains);
+    const newReferenceData = [...(selectedReferenceData || []), selectedReferenceData];
+    onReferenceDataChange(newReferenceData);
     
     setShowSelectionDialog(false);
     setAvailableOptions([]);
@@ -82,7 +82,7 @@ const DomainSelector = ({
           </Typography>
           <IconButton
             size="small"
-            onClick={handleAddDomain}
+            onClick={handleAddReferenceData}
             sx={{
               color: currentTheme.primary,
               '&:hover': {
@@ -90,7 +90,7 @@ const DomainSelector = ({
                 color: 'white'
               }
             }}
-            title="Add domain"
+            title="Add reference data"
           >
             <AddIcon />
           </IconButton>
@@ -98,13 +98,13 @@ const DomainSelector = ({
       )}
       
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-        {selectedDomains && selectedDomains.length > 0 ? (
+        {selectedReferenceData && selectedReferenceData.length > 0 ? (
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
-            {selectedDomains.map((domain, index) => (
+            {selectedReferenceData.map((item, index) => (
               <Chip
                 key={index}
-                label={domain}
-                onDelete={() => handleRemoveDomain(domain)}
+                label={item}
+                onDelete={() => handleRemoveReferenceData(item)}
                 sx={{
                   bgcolor: currentTheme.primary,
                   color: 'white',
@@ -130,7 +130,7 @@ const DomainSelector = ({
         
       </Box>
 
-      {/* Domain Selection Dialog */}
+      {/* Reference Data Selection Dialog */}
       <Dialog
         open={showSelectionDialog}
         onClose={() => setShowSelectionDialog(false)}
@@ -145,17 +145,17 @@ const DomainSelector = ({
         }}
       >
         <DialogTitle sx={{ color: currentTheme.text }}>
-          🌐 Select Domain
+          📊 Select Reference Data
         </DialogTitle>
         <DialogContent sx={{ color: currentTheme.text }}>
           <Box sx={{ mb: 2, p: 2, bgcolor: 'info.light', borderRadius: 1, border: '1px solid', borderColor: 'info.main' }}>
             <Typography variant="body2" sx={{ color: 'info.dark', fontSize: '0.875rem' }}>
-              ℹ️ <strong>Note:</strong> Selected domains will be read-only and cannot be manually edited. 
-              Use the delete button to remove domains if needed.
+              ℹ️ <strong>Note:</strong> Selected reference data will be read-only and cannot be manually edited. 
+              Use the delete button to remove reference data if needed.
             </Typography>
           </Box>
           <Typography sx={{ mb: 2 }}>
-            Choose from available domains:
+            Choose from available reference data:
           </Typography>
           
           <Box sx={{ maxHeight: 300, overflow: 'auto' }}>
@@ -164,7 +164,7 @@ const DomainSelector = ({
                 key={index}
                 fullWidth
                 variant="outlined"
-                onClick={() => handleDomainSelection(option.value)}
+                onClick={() => handleReferenceDataSelection(option.value)}
                 sx={{
                   mb: 1,
                   justifyContent: 'flex-start',
@@ -174,19 +174,28 @@ const DomainSelector = ({
                   '&:hover': {
                     bgcolor: currentTheme.primary,
                     color: 'white',
-                    borderColor: currentTheme.primary,
+                    borderColor: currentTheme.primary
                   }
                 }}
               >
-                {option.label}
+                <Box>
+                  <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                    {option.label}
+                  </Typography>
+                  {option.description && (
+                    <Typography variant="caption" sx={{ opacity: 0.8, display: 'block' }}>
+                      {option.description}
+                    </Typography>
+                  )}
+                </Box>
               </Button>
             ))}
           </Box>
         </DialogContent>
         <DialogActions>
           <Button 
-            onClick={() => setShowSelectionDialog(false)} 
-            sx={{ color: currentTheme.text }}
+            onClick={() => setShowSelectionDialog(false)}
+            sx={{ color: currentTheme.textSecondary }}
           >
             Cancel
           </Button>
@@ -196,4 +205,4 @@ const DomainSelector = ({
   );
 };
 
-export default DomainSelector;
+export default ReferenceDataSelector;

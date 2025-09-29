@@ -38,6 +38,7 @@ import {
 } from '@mui/material';
 import DeleteModal from '../components/DeleteModal';
 import DomainSelector from '../components/DomainSelector';
+import TeamSelector from '../components/TeamSelector';
 
 import {
   ArrowBack as ArrowBackIcon,
@@ -754,12 +755,19 @@ const EditReferenceDataPage = () => {
             </FormControl>
           </Grid>
           <Grid item xs={12} md={6}>
-            <TextField
-              fullWidth
+            <TeamSelector
+              selectedTeams={editedItem?.owner ? [editedItem.owner] : []}
+              onTeamsChange={(teams) => {
+                setEditedItem(prev => ({
+                  ...prev,
+                  owner: teams.length > 0 ? teams[0] : ''
+                }));
+              }}
+              currentTheme={currentTheme}
               label="Owner"
-              value={editedItem?.owner || ''}
-              onChange={(e) => setEditedItem(prev => ({ ...prev, owner: e.target.value }))}
-              sx={{ mb: 2, ...getTextFieldThemeStyles() }}
+              showLabel={true}
+              maxSelections={1}
+              placeholder="No owner selected"
             />
           </Grid>
         </Grid>

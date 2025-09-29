@@ -54,6 +54,8 @@ const DataModelDetailPage = ({ currentTheme }) => {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState(null);
   const [currentAgreementIndex, setCurrentAgreementIndex] = React.useState(0);
+  const [applications, setApplications] = React.useState([]);
+  const [maintainerEmail, setMaintainerEmail] = React.useState(null);
 
   React.useEffect(() => {
     const loadModelAndAgreements = async () => {
@@ -67,11 +69,26 @@ const DataModelDetailPage = ({ currentTheme }) => {
         const agreementsData = await fetchAgreementsByModel(shortName, { forceRefresh: true });
         console.log('Agreements data received:', agreementsData);
         
+        console.log('Fetching applications data...');
+        const applicationsData = await fetchData('applications', { forceRefresh: true });
+        console.log('Applications data received:', applicationsData);
+        setApplications(applicationsData.applications || []);
+        
         const foundModel = modelData.models.find(m => m.shortName.toLowerCase() === shortName.toLowerCase());
         if (foundModel) {
           console.log('Found model:', foundModel);
           setModel(foundModel);
           setAgreements(agreementsData.agreements || []);
+          
+          // Find maintainer email from applications
+          if (foundModel.specMaintainer) {
+            const maintainerApp = applicationsData.applications.find(app => 
+              app.name === foundModel.specMaintainer
+            );
+            if (maintainerApp && maintainerApp.email) {
+              setMaintainerEmail(maintainerApp.email);
+            }
+          }
         } else {
           console.error('Model not found:', {
             shortName,
@@ -502,13 +519,13 @@ const DataModelDetailPage = ({ currentTheme }) => {
                 <Typography variant="body1" sx={{ color: currentTheme.text }}>
                   {model.specMaintainer}
                 </Typography>
-                {model.maintainerEmail && (
+                {maintainerEmail && (
                   <Tooltip title="Email Maintainer">
                     <Button
                       size="small"
                       variant="outlined"
                       startIcon={<EmailIcon sx={{ fontSize: 14 }} />}
-                      onClick={() => window.location.href = `mailto:${model.maintainerEmail}`}
+                      onClick={() => window.location.href = `mailto:${maintainerEmail}`}
                       sx={{
                         color: currentTheme.primary,
                         borderColor: currentTheme.primary,

@@ -112,11 +112,28 @@ const TeamSelector = ({
           }}>
             {label}
           </Typography>
+          {canAddMore && (
+            <IconButton
+              size="small"
+              onClick={addTeam}
+              sx={{
+                color: currentTheme.primary,
+                '&:hover': {
+                  bgcolor: currentTheme.primary,
+                  color: 'white'
+                }
+              }}
+              title="Add team"
+            >
+              <AddIcon />
+            </IconButton>
+          )}
         </Box>
       )}
 
       {/* Existing teams */}
-      {(selectedTeams || []).map((team, index) => (
+      {selectedTeams && selectedTeams.length > 0 ? (
+        (selectedTeams || []).map((team, index) => (
         <Box key={index} sx={{ 
           display: 'flex', 
           alignItems: 'center', 
@@ -160,32 +177,17 @@ const TeamSelector = ({
             <DeleteIcon />
           </IconButton>
         </Box>
-      ))}
-
-      {/* Add new team button */}
-      {canAddMore && (
-        <Box sx={{ 
-          display: 'flex', 
-          justifyContent: 'center', 
-          mt: 2
+      ))
+      ) : (
+        <Typography variant="body2" sx={{ 
+          color: currentTheme.textSecondary, 
+          fontStyle: 'italic',
+          mb: 2
         }}>
-          <Button
-            variant="outlined"
-            startIcon={<AddIcon />}
-            onClick={addTeam}
-            sx={{
-              color: currentTheme.primary,
-              borderColor: currentTheme.border,
-              '&:hover': {
-                bgcolor: currentTheme.primary,
-                color: 'white'
-              }
-            }}
-          >
-            Add Team
-          </Button>
-        </Box>
+          No {label.toLowerCase()} selected
+        </Typography>
       )}
+
 
       {/* Team Selection Dialog */}
       <Dialog

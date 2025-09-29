@@ -52,6 +52,8 @@ import { formatDate } from '../utils/themeUtils';
 import cacheService from '../services/cache';
 import ChangelogEditor from '../components/ChangelogEditor';
 import DomainSelector from '../components/DomainSelector';
+import TeamSelector from '../components/TeamSelector';
+import ReferenceDataSelector from '../components/ReferenceDataSelector';
 import { useAuth } from '../contexts/AuthContext';
 
 const EditDataModelDetailPage = ({ currentTheme }) => {
@@ -75,7 +77,6 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
   const [showSelectionDialog, setShowSelectionDialog] = useState(false);
   const [selectionPath, setSelectionPath] = useState('');
   const [availableOptions, setAvailableOptions] = useState([]);
-  const [referenceData, setReferenceData] = useState([]);
 
   // Simple back function that goes back one level in the URL path
   const goToViewMode = () => {
@@ -144,17 +145,6 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
 
     loadModel();
 
-    // Load reference data for selection
-    const loadSelectionData = async () => {
-      try {
-        const referenceResponse = await fetchData('reference');
-        setReferenceData(referenceResponse.items || []);
-      } catch (error) {
-        console.error('Error loading reference data:', error);
-      }
-    };
-
-    loadSelectionData();
 
     // No need to manipulate browser history - we'll handle navigation differently
   }, [shortName]);
@@ -283,32 +273,6 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
   };
 
   const addArrayItem = (path) => {
-    // For reference data, show selection dialog
-    if (path === 'referenceData') {
-      let options = referenceData.map(item => ({
-        value: item.name || item.shortName || item.id,
-        label: item.name || item.shortName || item.id
-      }));
-      
-      // Filter out already selected items
-      const currentValues = editedModel[path] || [];
-      const filteredOptions = options.filter(option => !currentValues.includes(option.value));
-      
-      if (filteredOptions.length === 0) {
-        setSnackbar({
-          open: true,
-          message: 'All available reference data items are already added',
-          severity: 'info'
-        });
-        return;
-      }
-      
-      setAvailableOptions(filteredOptions);
-      setSelectionPath(path);
-      setShowSelectionDialog(true);
-      return;
-    }
-
     // For other arrays, add empty string as before
     setEditedModel(prev => {
       const newModel = JSON.parse(JSON.stringify(prev));
@@ -559,10 +523,27 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
     // Compare fields and identify changes
     const fieldsToCheck = [
       'name', 'shortName', 'description', 'extendedDescription', 'version',
-      'owner', 'specMaintainer', 'maintainerEmail', 'domain', 'referenceData',
-      'users', 'meta.tier', 'meta.verified', 'resources.code', 'resources.documentation',
-      'resources.rules', 'resources.tools', 'resources.git', 'resources.validation'
+      'domain', 'referenceData', 'users', 'meta.tier', 'meta.verified', 
+      'resources.code', 'resources.documentation', 'resources.rules', 
+      'resources.tools', 'resources.git', 'resources.validation'
     ];
+    
+    // Check owner and specMaintainer separately since they're handled by TeamSelector
+    if (originalModel.owner !== updatedModel.owner) {
+      fieldChanges.push({
+        field: 'owner',
+        originalValue: originalModel.owner || '',
+        updatedValue: updatedModel.owner || ''
+      });
+    }
+    
+    if (originalModel.specMaintainer !== updatedModel.specMaintainer) {
+      fieldChanges.push({
+        field: 'specMaintainer',
+        originalValue: originalModel.specMaintainer || '',
+        updatedValue: updatedModel.specMaintainer || ''
+      });
+    }
     
     fieldsToCheck.forEach(field => {
       const fieldPath = field.split('.');
@@ -861,6 +842,47 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
     }
 
     if (Array.isArray(value)) {
+      // Special handling for users field - use TeamSelector
+      if (path === 'users') {
+        return (
+          <Box key={path} sx={{ mb: 2 }}>
+            <TeamSelector
+              selectedTeams={value || []}
+              onTeamsChange={(newUsers) => {
+                setEditedModel(prev => ({
+                  ...prev,
+                  users: newUsers
+                }));
+              }}
+              currentTheme={currentTheme}
+              label="Users"
+              showLabel={true}
+              placeholder="No users selected"
+            />
+          </Box>
+        );
+      }
+
+      // Special handling for referenceData field - use ReferenceDataSelector
+      if (path === 'referenceData') {
+        return (
+          <Box key={path} sx={{ mb: 2 }}>
+            <ReferenceDataSelector
+              selectedReferenceData={value || []}
+              onReferenceDataChange={(newReferenceData) => {
+                setEditedModel(prev => ({
+                  ...prev,
+                  referenceData: newReferenceData
+                }));
+              }}
+              currentTheme={currentTheme}
+              label="Reference Data"
+              showLabel={true}
+            />
+          </Box>
+        );
+      }
+
       return (
         <Box key={path} sx={{ mb: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
@@ -887,7 +909,6 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
                 size="small"
                 value={item}
                 onChange={(e) => handleArrayFieldChange(path, index, e.target.value)}
-                disabled={path === 'referenceData'}
                 sx={{ 
                   flex: 1,
                   '& .MuiInputLabel-root': { color: currentTheme.textSecondary },
@@ -940,7 +961,7 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
                     }
                   }
                 }}
-                placeholder={path === 'referenceData' ? 'Selected from dropdown' : `Enter ${label.toLowerCase()}`}
+                placeholder={`Enter ${label.toLowerCase()}`}
               />
               <IconButton
                 size="small"
@@ -1238,6 +1259,42 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
             {renderField('name', editedModel.name, 'Name', 'text', null, shortName === 'new')}
             {/* Short Name - Editable */}
             {renderField('shortName', editedModel.shortName, 'Short Name', 'text', null, shortName === 'new')}
+            
+            {/* Owner - Team Selector */}
+            <Box sx={{ mb: 2 }}>
+              <TeamSelector
+                selectedTeams={editedModel.owner ? [editedModel.owner] : []}
+                onTeamsChange={(teams) => {
+                  setEditedModel(prev => ({
+                    ...prev,
+                    owner: teams.length > 0 ? teams[0] : ''
+                  }));
+                }}
+                currentTheme={currentTheme}
+                label="Owner"
+                showLabel={true}
+                maxSelections={1}
+                placeholder="No owner selected"
+              />
+            </Box>
+            
+            {/* Spec Maintainer - Team Selector */}
+            <Box sx={{ mb: 4 }}>
+              <TeamSelector
+                selectedTeams={editedModel.specMaintainer ? [editedModel.specMaintainer] : []}
+                onTeamsChange={(teams) => {
+                  setEditedModel(prev => ({
+                    ...prev,
+                    specMaintainer: teams.length > 0 ? teams[0] : ''
+                  }));
+                }}
+                currentTheme={currentTheme}
+                label="Spec Maintainer"
+                showLabel={true}
+                maxSelections={1}
+                placeholder="No spec maintainer selected"
+              />
+            </Box>
             {/* ShortName Error Display */}
             {shortName === 'new' && (
               <Box sx={{ mb: 2 }}>
@@ -1259,9 +1316,6 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
             {renderField('version', editedModel.version, 'Version')}
             {renderField('description', editedModel.description, 'Description', 'textarea', null, shortName === 'new')}
             {renderField('extendedDescription', editedModel.extendedDescription, 'Extended Description', 'textarea')}
-            {renderField('owner', editedModel.owner, 'Owner')}
-            {renderField('specMaintainer', editedModel.specMaintainer, 'Spec Maintainer')}
-            {renderField('maintainerEmail', editedModel.maintainerEmail, 'Maintainer Email')}
           </Grid>
           
           <Grid item xs={12} md={6}>

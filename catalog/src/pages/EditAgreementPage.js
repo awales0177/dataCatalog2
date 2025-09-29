@@ -1081,6 +1081,30 @@ const EditAgreementPage = () => {
                   '&.Mui-focused fieldset': { borderColor: currentTheme.primary }
                 },
                 '& .MuiInputBase-input': { color: currentTheme.text },
+                '& .MuiSelect-icon': { color: currentTheme.textSecondary }
+              }}
+              MenuProps={{
+                PaperProps: {
+                  sx: {
+                    bgcolor: currentTheme.card,
+                    color: currentTheme.text,
+                    border: `1px solid ${currentTheme.border}`,
+                    '& .MuiMenuItem-root': {
+                      color: currentTheme.text,
+                      '&:hover': {
+                        bgcolor: alpha(currentTheme.primary, 0.1),
+                        color: currentTheme.text,
+                      },
+                      '&.Mui-selected': {
+                        bgcolor: alpha(currentTheme.primary, 0.2),
+                        color: currentTheme.text,
+                        '&:hover': {
+                          bgcolor: alpha(currentTheme.primary, 0.3),
+                        },
+                      },
+                    },
+                  },
+                },
               }}
             >
               {networkOptions.map((option) => (
@@ -1264,6 +1288,30 @@ const EditAgreementPage = () => {
                   '&.Mui-focused fieldset': { borderColor: currentTheme.primary }
                 },
                 '& .MuiInputBase-input': { color: currentTheme.text },
+                '& .MuiSelect-icon': { color: currentTheme.textSecondary }
+              }}
+              MenuProps={{
+                PaperProps: {
+                  sx: {
+                    bgcolor: currentTheme.card,
+                    color: currentTheme.text,
+                    border: `1px solid ${currentTheme.border}`,
+                    '& .MuiMenuItem-root': {
+                      color: currentTheme.text,
+                      '&:hover': {
+                        bgcolor: alpha(currentTheme.primary, 0.1),
+                        color: currentTheme.text,
+                      },
+                      '&.Mui-selected': {
+                        bgcolor: alpha(currentTheme.primary, 0.2),
+                        color: currentTheme.text,
+                        '&:hover': {
+                          bgcolor: alpha(currentTheme.primary, 0.3),
+                        },
+                      },
+                    },
+                  },
+                },
               }}
             >
               {sensitivityOptions.map((option) => (
@@ -1874,13 +1922,23 @@ const EditAgreementPage = () => {
                     sx: {
                       bgcolor: currentTheme.card,
                       color: currentTheme.text,
+                      border: `1px solid ${currentTheme.border}`,
                       '& .MuiMenuItem-root': {
                         color: currentTheme.text,
-                        '&:hover': { bgcolor: currentTheme.primary + '20' },
-                        '&.Mui-selected': { bgcolor: currentTheme.primary + '40' }
-                      }
-                    }
-                  }
+                        '&:hover': {
+                          bgcolor: alpha(currentTheme.primary, 0.1),
+                          color: currentTheme.text,
+                        },
+                        '&.Mui-selected': {
+                          bgcolor: alpha(currentTheme.primary, 0.2),
+                          color: currentTheme.text,
+                          '&:hover': {
+                            bgcolor: alpha(currentTheme.primary, 0.3),
+                          },
+                        },
+                      },
+                    },
+                  },
                 }}
                 renderValue={(selected) => (
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>

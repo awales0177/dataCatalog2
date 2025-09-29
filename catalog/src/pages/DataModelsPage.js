@@ -118,7 +118,6 @@ const DataModelsPage = () => {
       lastUpdated: new Date().toISOString().slice(0, 19).replace('T', ' '),
       owner: '',
       specMaintainer: '',
-      maintainerEmail: '',
       domain: [],
       referenceData: [],
       meta: {
