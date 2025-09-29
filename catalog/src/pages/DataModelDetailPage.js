@@ -219,7 +219,7 @@ const DataModelDetailPage = ({ currentTheme }) => {
               Description
             </Typography>
             <Typography variant="body1" sx={{ color: currentTheme.textSecondary, mb: 3 }}>
-              {model.extendedDescription}
+              {model.extendedDescription || model.description}
             </Typography>
 
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mb: 4 }}>

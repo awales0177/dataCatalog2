@@ -35,6 +35,7 @@ import {
   Warning as WarningIcon,
   Error as ErrorIcon,
   ReadMore as ReadMoreIcon,
+  Groups as GroupsIcon,
 } from '@mui/icons-material';
 import { ThemeContext } from '../contexts/ThemeContext';
 import { fetchData } from '../services/api';
@@ -77,7 +78,7 @@ const DataPoliciesPage = () => {
         policy.description.toLowerCase().includes(searchLower) ||
         policy.type.toLowerCase().includes(searchLower) ||
         policy.category.toLowerCase().includes(searchLower) ||
-        policy.owner.toLowerCase().includes(searchLower) ||
+        (Array.isArray(policy.owner) ? policy.owner.join(' ').toLowerCase() : (policy.owner || '').toLowerCase()).includes(searchLower) ||
         policy.tags.some(tag => tag.toLowerCase().includes(searchLower))
       );
     }
@@ -240,9 +241,9 @@ const DataPoliciesPage = () => {
           </Box>
 
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-            <PersonIcon sx={{ fontSize: 16, color: currentTheme.textSecondary }} />
+            <GroupsIcon sx={{ fontSize: 16, color: currentTheme.textSecondary }} />
             <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
-              {policy.owner}
+              {Array.isArray(policy.owner) ? policy.owner.join(', ') : (policy.owner || 'No team assigned')}
             </Typography>
           </Box>
 

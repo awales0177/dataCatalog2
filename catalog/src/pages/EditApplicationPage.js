@@ -23,6 +23,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ThemeContext } from '../contexts/ThemeContext';
 import { fetchData, createApplication, updateApplication, deleteApplication } from '../services/api';
 import DomainSelector from '../components/DomainSelector';
+import RoleSelector from '../components/RoleSelector';
 
 const EditApplicationPage = () => {
   const { currentTheme } = useContext(ThemeContext);
@@ -30,6 +31,7 @@ const EditApplicationPage = () => {
   const { id } = useParams();
   
   const isNewApplication = !id || id === 'new';
+  
   
   // State management
   const [application, setApplication] = useState(null);
@@ -59,6 +61,8 @@ const EditApplicationPage = () => {
             description: '',
             domains: [],
             link: '',
+            email: '',
+            roles: [],
             lastUpdated: new Date().toISOString().slice(0, 19).replace('T', ' ')
           };
           setApplication(newApp);
@@ -264,6 +268,38 @@ const EditApplicationPage = () => {
                 },
                 '& .MuiInputBase-input': { color: currentTheme.text },
               }}
+            />
+          </Grid>
+
+          <Grid item xs={12}>
+            <TextField
+              fullWidth
+              label="Contact Email"
+              value={editedApplication?.email || ''}
+              onChange={(e) => setEditedApplication(prev => ({ ...prev, email: e.target.value }))}
+              placeholder="team@example.com"
+              type="email"
+              sx={{
+                '& .MuiInputLabel-root': { color: currentTheme.textSecondary },
+                '& .MuiOutlinedInput-root': {
+                  color: currentTheme.text,
+                  '& fieldset': { borderColor: currentTheme.border },
+                  '&:hover fieldset': { borderColor: currentTheme.primary },
+                  '&.Mui-focused fieldset': { borderColor: currentTheme.primary }
+                },
+                '& .MuiInputBase-input': { color: currentTheme.text },
+              }}
+            />
+          </Grid>
+
+          <Grid item xs={12}>
+            <RoleSelector
+              selectedRoles={editedApplication?.roles || []}
+              onRolesChange={(roles) => setEditedApplication(prev => ({ ...prev, roles }))}
+              currentTheme={currentTheme}
+              label="Roles"
+              showLabel={true}
+              placeholder="No roles selected"
             />
           </Grid>
 

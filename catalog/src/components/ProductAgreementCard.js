@@ -6,10 +6,13 @@ import {
   Box,
   Chip,
   alpha,
+  Tooltip,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { formatDate } from '../utils/themeUtils';
 import ShoppingBasketIcon from '@mui/icons-material/ShoppingBasket';
+import FactoryIcon from '@mui/icons-material/Factory';
+import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 
 // ProductAgreementCard component for displaying individual product agreement information
 const ProductAgreementCard = ({ agreement, currentTheme }) => {
@@ -31,6 +34,67 @@ const ProductAgreementCard = ({ agreement, currentTheme }) => {
   };
 
   const statusColor = getStatusColor(agreement.status);
+
+  // Determine owner role based on producers and consumers
+  const getOwnerRole = () => {
+    const owner = agreement.owner;
+    const producers = agreement.dataProducer || [];
+    const consumers = agreement.dataConsumer || [];
+    
+    if (!owner || owner.length === 0) return null;
+    
+    const ownerArray = Array.isArray(owner) ? owner : [owner];
+    const producerArray = Array.isArray(producers) ? producers : [producers];
+    const consumerArray = Array.isArray(consumers) ? consumers : [consumers];
+    
+    const isProducer = ownerArray.some(ownerName => 
+      producerArray.some(producer => producer && producer.toLowerCase() === ownerName.toLowerCase())
+    );
+    
+    const isConsumer = ownerArray.some(ownerName => 
+      consumerArray.some(consumer => consumer && consumer.toLowerCase() === ownerName.toLowerCase())
+    );
+    
+    if (isProducer && isConsumer) return 'both';
+    if (isProducer) return 'producer';
+    if (isConsumer) return 'consumer';
+    return null;
+  };
+
+  const ownerRole = getOwnerRole();
+  
+  // Debug logging
+  console.log('Agreement:', agreement.name, {
+    owner: agreement.owner,
+    producers: agreement.dataProducer,
+    consumers: agreement.dataConsumer,
+    ownerRole
+  });
+
+  const getRoleIcon = () => {
+    switch (ownerRole) {
+      case 'producer':
+        return (
+          <Tooltip title="Owner is a data producer" arrow>
+            <FactoryIcon sx={{ fontSize: 16, color: currentTheme.primary }} />
+          </Tooltip>
+        );
+      case 'consumer':
+        return (
+          <Tooltip title="Owner is a data consumer" arrow>
+            <ShoppingBasketIcon sx={{ fontSize: 16, color: currentTheme.primary }} />
+          </Tooltip>
+        );
+      case 'both':
+        return (
+          <Tooltip title="Owner is both producer and consumer" arrow>
+            <SwapHorizIcon sx={{ fontSize: 16, color: currentTheme.primary }} />
+          </Tooltip>
+        );
+      default:
+        return null;
+    }
+  };
 
   const handleClick = () => {
     navigate(`/agreements/${agreement.id}`);
@@ -60,7 +124,7 @@ const ProductAgreementCard = ({ agreement, currentTheme }) => {
         flexDirection: 'column',
         flex: 1
       }}>
-        <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 2, position: 'relative' }}>
           <Box sx={{ flex: 1 }}>
             <Typography 
               variant="h6" 
@@ -93,6 +157,32 @@ const ProductAgreementCard = ({ agreement, currentTheme }) => {
               {agreement.description || 'No description available'}
             </Typography>
           </Box>
+          
+          {/* Role icon in top right corner */}
+          <Box sx={{ 
+            position: 'absolute', 
+            top: 0, 
+            right: 0,
+            zIndex: 1
+          }}>
+            {getRoleIcon() || (
+              <Tooltip title="Owner role not determined" arrow>
+                <FactoryIcon sx={{ fontSize: 16, color: currentTheme.primary }} />
+              </Tooltip>
+            )}
+          </Box>
+        </Box>
+
+        <Box sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'space-between',
+          gap: 1, 
+          mt: 'auto'
+        }}>
+          <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
+            {formatDate(agreement.lastUpdated)}
+          </Typography>
           <Chip
             label={(agreement.status || 'unknown').split('_').map(word => 
               word.charAt(0).toUpperCase() + word.slice(1)
@@ -103,30 +193,8 @@ const ProductAgreementCard = ({ agreement, currentTheme }) => {
               color: statusColor,
               fontWeight: 600,
               textTransform: 'capitalize',
-              ml: 1
             }}
           />
-        </Box>
-
-        <Box sx={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'space-between',
-          gap: 1, 
-          mt: 'auto'
-        }}>
-          {agreement.contractVersion && (
-            <Typography variant="caption" sx={{ 
-              color: currentTheme.textSecondary,
-              fontSize: '0.7rem',
-              fontWeight: 500,
-            }}>
-              v{agreement.contractVersion}
-            </Typography>
-          )}
-          <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
-            {formatDate(agreement.lastUpdated)}
-          </Typography>
         </Box>
       </CardContent>
     </Card>

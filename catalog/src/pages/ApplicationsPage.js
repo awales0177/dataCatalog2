@@ -9,6 +9,12 @@ import {
   CircularProgress,
   Alert,
   Fab,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Chip,
+  alpha,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -32,11 +38,22 @@ const ApplicationsPage = () => {
     return params.get('search') || '';
   };
   const [searchQuery, setSearchQuery] = useState(getInitialSearch());
+  const [selectedRole, setSelectedRole] = useState('');
   const [applications, setApplications] = useState([]);
   const [filteredApplications, setFilteredApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+
+  // Role options for the picker
+  const roleOptions = [
+    { value: '', label: 'All Roles' },
+    { value: 'data_producer', label: 'Data Producer' },
+    { value: 'data_consumer', label: 'Data Consumer' },
+    { value: 'application', label: 'Application' },
+    { value: 'data_governance', label: 'Data Governance' },
+    { value: 'data_manager', label: 'Data Manager' },
+  ];
 
 
   // Update searchQuery if URL param changes
@@ -66,17 +83,26 @@ const ApplicationsPage = () => {
   useEffect(() => {
     let filtered = applications;
 
+    // Apply search filter
     if (searchQuery) {
       const searchLower = searchQuery.toLowerCase();
       filtered = filtered.filter(app =>
         app.name.toLowerCase().includes(searchLower) ||
-        app.description.toLowerCase().includes(searchLower)
+        app.description.toLowerCase().includes(searchLower) ||
+        (app.roles && Array.isArray(app.roles) && app.roles.some(role => role.toLowerCase().includes(searchLower)))
+      );
+    }
+
+    // Apply role filter
+    if (selectedRole) {
+      filtered = filtered.filter(app => 
+        app.roles && Array.isArray(app.roles) && app.roles.includes(selectedRole)
       );
     }
 
     setFilteredApplications(filtered);
     setCurrentPage(1);
-  }, [searchQuery, applications]);
+  }, [searchQuery, selectedRole, applications]);
 
   const handlePageChange = (event, value) => {
     setCurrentPage(value);
@@ -123,7 +149,7 @@ const ApplicationsPage = () => {
         Discover and manage data applications in your data ecosystem. View application details, status, and their relationships with data models and contracts.
       </Typography>
 
-      <Box sx={{ mb: 4 }}>
+      <Box sx={{ mb: 4, display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
         <TextField
           fullWidth
           variant="outlined"
@@ -138,6 +164,8 @@ const ApplicationsPage = () => {
             ),
           }}
           sx={{
+            flex: 1,
+            minWidth: 300,
             '& .MuiOutlinedInput-root': {
               bgcolor: currentTheme.card,
               '& fieldset': {
@@ -155,6 +183,61 @@ const ApplicationsPage = () => {
             },
           }}
         />
+        
+        <FormControl sx={{ minWidth: 200 }}>
+          <InputLabel sx={{ color: currentTheme.textSecondary }}>Filter by Role</InputLabel>
+          <Select
+            value={selectedRole}
+            onChange={(e) => setSelectedRole(e.target.value)}
+            label="Filter by Role"
+            sx={{
+              bgcolor: currentTheme.card,
+              color: currentTheme.text,
+              '& .MuiOutlinedInput-notchedOutline': {
+                borderColor: currentTheme.border,
+              },
+              '&:hover .MuiOutlinedInput-notchedOutline': {
+                borderColor: currentTheme.primary,
+              },
+              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                borderColor: currentTheme.primary,
+              },
+              '& .MuiSvgIcon-root': {
+                color: currentTheme.textSecondary,
+              },
+            }}
+            MenuProps={{
+              PaperProps: {
+                sx: {
+                  bgcolor: currentTheme.card,
+                  color: currentTheme.text,
+                  border: `1px solid ${currentTheme.border}`,
+                  '& .MuiMenuItem-root': {
+                    color: currentTheme.text,
+                    '&:hover': {
+                      bgcolor: currentTheme.primary,
+                      color: 'white',
+                    },
+                    '&.Mui-selected': {
+                      bgcolor: alpha(currentTheme.primary, 0.1),
+                      color: currentTheme.primary,
+                      '&:hover': {
+                        bgcolor: currentTheme.primary,
+                        color: 'white',
+                      },
+                    },
+                  },
+                },
+              },
+            }}
+          >
+            {roleOptions.map((option) => (
+              <MenuItem key={option.value} value={option.value}>
+                {option.label}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
       </Box>
 
       <Grid container spacing={3}>

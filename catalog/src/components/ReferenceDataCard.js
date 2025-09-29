@@ -18,68 +18,16 @@ import {
 } from '@mui/icons-material';
 import { formatDate } from '../utils/themeUtils';
 import { useNavigate } from 'react-router-dom';
+import { generateUsageData, getUsageColor } from '../data/graphData';
 
 const ReferenceDataCard = ({ item, currentTheme }) => {
   const navigate = useNavigate();
 
-  // Generate diverse mock usage data for heart monitor chart
-  const generateUsageData = (item) => {
-    const data = [];
-    const points = 20;
-    
-    // Create different patterns based on item properties
-    const seed = (item.id?.charCodeAt(0) || 0) + (item.name?.length || 0);
-    const patternType = seed % 7;
-    
-    for (let i = 0; i < points; i++) {
-      const x = i / (points - 1);
-      let value;
-      
-      switch (patternType) {
-        case 0: // High activity with spikes
-          value = 60 + Math.sin(x * Math.PI * 4) * 20 + Math.sin(x * Math.PI * 12) * 8 + (Math.random() - 0.5) * 10;
-          break;
-        case 1: // Steady high usage (GREEN)
-          value = 85 + Math.sin(x * Math.PI * 2) * 8 + Math.sin(x * Math.PI * 8) * 4 + (Math.random() - 0.5) * 4;
-          break;
-        case 2: // Low activity with occasional peaks
-          value = 25 + Math.sin(x * Math.PI * 3) * 15 + Math.sin(x * Math.PI * 15) * 12 + (Math.random() - 0.5) * 8;
-          break;
-        case 3: // Erratic pattern
-          value = 40 + Math.sin(x * Math.PI * 6) * 25 + Math.sin(x * Math.PI * 18) * 15 + (Math.random() - 0.5) * 15;
-          break;
-        case 4: // Gradual increase
-          value = 20 + x * 40 + Math.sin(x * Math.PI * 5) * 10 + (Math.random() - 0.5) * 8;
-          break;
-        case 5: // Gradual decrease
-          value = 80 - x * 30 + Math.sin(x * Math.PI * 4) * 12 + (Math.random() - 0.5) * 6;
-          break;
-        case 6: // High activity with consistent peaks (GREEN)
-          value = 85 + Math.sin(x * Math.PI * 3) * 10 + Math.sin(x * Math.PI * 9) * 5 + (Math.random() - 0.5) * 3;
-          break;
-        default:
-          value = 50 + Math.sin(x * Math.PI * 3) * 20 + (Math.random() - 0.5) * 10;
-      }
-      
-      // Ensure value stays within bounds
-      data.push(Math.max(5, Math.min(95, value)));
-    }
-    
-    return data;
-  };
+  // Generate usage data using imported graph data
+  const usageDataResult = generateUsageData(item);
+  const usageData = usageDataResult.data;
 
-  const usageData = generateUsageData(item);
-
-  // Get usage color based on average usage - red to yellow to orange to green
-  const getUsageColor = (data) => {
-    const avg = data.reduce((a, b) => a + b, 0) / data.length;
-    if (avg >= 80) return '#4caf50'; // Green for high usage
-    if (avg >= 60) return '#ff9800'; // Orange for medium-high usage
-    if (avg >= 40) return '#ffc107'; // Yellow for medium usage
-    if (avg >= 20) return '#ff5722'; // Red-orange for low usage
-    return '#f44336'; // Red for very low usage
-  };
-
+  // Get usage color using imported function
   const usageColor = getUsageColor(usageData);
   const avgUsage = Math.round(usageData.reduce((a, b) => a + b, 0) / usageData.length);
 

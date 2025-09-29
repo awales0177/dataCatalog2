@@ -41,6 +41,7 @@ import { ThemeContext } from '../contexts/ThemeContext';
 import { fetchData, createAgreement, updateAgreement, deleteAgreement } from '../services/api';
 import cacheService from '../services/cache';
 import ChangelogEditor from '../components/ChangelogEditor';
+import TeamSelector from '../components/TeamSelector';
 
 const EditAgreementPage = () => {
   const { currentTheme } = useContext(ThemeContext);
@@ -626,6 +627,15 @@ const EditAgreementPage = () => {
       return;
     }
 
+    if (!editedAgreement.owner || editedAgreement.owner.length === 0 || !editedAgreement.owner[0]) {
+      setSnackbar({
+        open: true,
+        message: 'Agreement Owner is required',
+        severity: 'error'
+      });
+      return;
+    }
+
     setSaving(true);
     try {
       // Update the lastUpdated field to current timestamp
@@ -650,9 +660,9 @@ const EditAgreementPage = () => {
           severity: 'success'
         });
         
-        // Navigate to the new agreement's view page
+        // Navigate to the new agreement's view page using the UUID returned by the API
         setTimeout(() => {
-          navigate(`/agreements/${updatedAgreement.id}`, { replace: true });
+          navigate(`/agreements/${result.id}`, { replace: true });
         }, 1500);
       } else {
         // Update existing agreement
@@ -878,7 +888,7 @@ const EditAgreementPage = () => {
   const renderDataConsumerField = (path, value, label) => {
     console.log('renderDataConsumerField called with:', { path, value, label });
 
-    const handleConsumerChange = (index, newValue) => {
+    const handleConsumersChange = (newConsumers) => {
       setEditedAgreement(prev => {
         const newAgreement = { ...prev };
         const pathArray = path.split('.');
@@ -892,151 +902,22 @@ const EditAgreementPage = () => {
         }
         
         const lastKey = pathArray[pathArray.length - 1];
-        if (!Array.isArray(current[lastKey])) {
-          current[lastKey] = [];
-        }
+        current[lastKey] = newConsumers;
         
-        // Create a new array with the updated item
-        const newArray = [...current[lastKey]];
-        newArray[index] = newValue;
-        current[lastKey] = newArray;
-        
-        return newAgreement;
-      });
-    };
-
-    const handleDeleteConsumer = (indexToDelete) => {
-      setEditedAgreement(prev => {
-        const newAgreement = { ...prev };
-        const pathArray = path.split('.');
-        let current = newAgreement;
-        
-        for (let i = 0; i < pathArray.length - 1; i++) {
-          if (!current[pathArray[i]]) {
-            current[pathArray[i]] = {};
-          }
-          current = current[pathArray[i]];
-        }
-        
-        const lastKey = pathArray[pathArray.length - 1];
-        if (!Array.isArray(current[lastKey])) {
-          current[lastKey] = [];
-        }
-        
-        // Create a new array without the deleted item
-        const newArray = current[lastKey].filter((_, index) => index !== indexToDelete);
-        current[lastKey] = newArray;
-        
-        return newAgreement;
-      });
-    };
-
-    const addConsumer = () => {
-      console.log('Adding consumer, current editedAgreement:', editedAgreement);
-      setEditedAgreement(prev => {
-        const newAgreement = { ...prev };
-        const pathArray = path.split('.');
-        let current = newAgreement;
-        
-        for (let i = 0; i < pathArray.length - 1; i++) {
-          if (!current[pathArray[i]]) {
-            current[pathArray[i]] = {};
-          }
-          current = current[pathArray[i]];
-        }
-        
-        const lastKey = pathArray[pathArray.length - 1];
-        if (!Array.isArray(current[lastKey])) {
-          current[lastKey] = [];
-        }
-        
-        // Create a new array with the additional item
-        current[lastKey] = [...current[lastKey], ''];
-        console.log('Added empty consumer, new array:', current[lastKey]);
-        
-        console.log('New agreement after adding consumer:', newAgreement);
         return newAgreement;
       });
     };
 
     return (
       <Box key={path} sx={{ mb: 2 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-          <Typography variant="subtitle2" sx={{ 
-            color: currentTheme.text, 
-            fontWeight: 600
-          }}>
-            {label}
-          </Typography>
-        </Box>
-
-        {/* Existing consumers */}
-        {(value || []).map((consumer, index) => (
-          <Box key={index} sx={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: 1, 
-            mb: 1.5
-          }}>
-            <TextField
-              size="small"
-              label={`Consumer ${index + 1}`}
-              value={consumer}
-              onChange={(e) => handleConsumerChange(index, e.target.value)}
-              sx={{ 
-                flex: 1,
-                '& .MuiInputLabel-root': { color: currentTheme.textSecondary },
-                '& .MuiInputLabel-root.Mui-focused': { color: currentTheme.primary },
-                '& .MuiOutlinedInput-root': { 
-                  color: currentTheme.text,
-                  '& fieldset': { borderColor: currentTheme.border },
-                  '&:hover fieldset': { borderColor: currentTheme.primary },
-                  '&.Mui-focused fieldset': { borderColor: currentTheme.primary }
-                },
-                '& .MuiInputBase-input': { color: currentTheme.text },
-                '& .MuiInputBase-input::placeholder': { color: currentTheme.textSecondary, opacity: 0.7 }
-              }}
-              placeholder="Enter consumer service name"
-            />
-            <IconButton
-              size="small"
-              onClick={() => handleDeleteConsumer(index)}
-              sx={{ 
-                color: 'error.main',
-                '&:hover': {
-                  bgcolor: 'error.main',
-                  color: 'white'
-                }
-              }}
-              title="Delete consumer"
-            >
-              <DeleteIcon />
-            </IconButton>
-          </Box>
-        ))}
-
-        {/* Add new consumer button */}
-        <Box sx={{ 
-          display: 'flex', 
-          justifyContent: 'center', 
-          mt: 2
-        }}>
-          <Button
-            variant="outlined"
-            startIcon={<AddIcon />}
-            onClick={addConsumer}
-            sx={{
-              color: currentTheme.primary,
-              borderColor: currentTheme.border,
-              '&:hover': {
-                bgcolor: currentTheme.primary,
-                color: 'white'
-              }
-            }}
-          >
-            Add Consumer Service
-          </Button>
-        </Box>
+        <TeamSelector
+          selectedTeams={value || []}
+          onTeamsChange={handleConsumersChange}
+          currentTheme={currentTheme}
+          label={label}
+          showLabel={true}
+          placeholder="No consumers selected"
+        />
       </Box>
     );
   };
@@ -1044,7 +925,7 @@ const EditAgreementPage = () => {
   const renderDataProducerField = (path, value, label) => {
     console.log('renderDataProducerField called with:', { path, value, label });
 
-    const handleProducerChange = (index, newValue) => {
+    const handleProducersChange = (newProducers) => {
       setEditedAgreement(prev => {
         const newAgreement = { ...prev };
         const pathArray = path.split('.');
@@ -1058,151 +939,22 @@ const EditAgreementPage = () => {
         }
         
         const lastKey = pathArray[pathArray.length - 1];
-        if (!Array.isArray(current[lastKey])) {
-          current[lastKey] = [];
-        }
+        current[lastKey] = newProducers;
         
-        // Create a new array with the updated item
-        const newArray = [...current[lastKey]];
-        newArray[index] = newValue;
-        current[lastKey] = newArray;
-        
-        return newAgreement;
-      });
-    };
-
-    const handleDeleteProducer = (indexToDelete) => {
-      setEditedAgreement(prev => {
-        const newAgreement = { ...prev };
-        const pathArray = path.split('.');
-        let current = newAgreement;
-        
-        for (let i = 0; i < pathArray.length - 1; i++) {
-          if (!current[pathArray[i]]) {
-            current[pathArray[i]] = {};
-          }
-          current = current[pathArray[i]];
-        }
-        
-        const lastKey = pathArray[pathArray.length - 1];
-        if (!Array.isArray(current[lastKey])) {
-          current[lastKey] = [];
-        }
-        
-        // Create a new array without the deleted item
-        const newArray = current[lastKey].filter((_, index) => index !== indexToDelete);
-        current[lastKey] = newArray;
-        
-        return newAgreement;
-      });
-    };
-
-    const addProducer = () => {
-      console.log('Adding producer, current editedAgreement:', editedAgreement);
-      setEditedAgreement(prev => {
-        const newAgreement = { ...prev };
-        const pathArray = path.split('.');
-        let current = newAgreement;
-        
-        for (let i = 0; i < pathArray.length - 1; i++) {
-          if (!current[pathArray[i]]) {
-            current[pathArray[i]] = {};
-          }
-          current = current[pathArray[i]];
-        }
-        
-        const lastKey = pathArray[pathArray.length - 1];
-        if (!Array.isArray(current[lastKey])) {
-          current[lastKey] = [];
-        }
-        
-        // Create a new array with the additional item
-        current[lastKey] = [...current[lastKey], ''];
-        console.log('Added empty producer, new array:', current[lastKey]);
-        
-        console.log('New agreement after adding producer:', newAgreement);
         return newAgreement;
       });
     };
 
     return (
       <Box key={path} sx={{ mb: 2 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-          <Typography variant="subtitle2" sx={{ 
-            color: currentTheme.text, 
-            fontWeight: 600
-          }}>
-            {label}
-          </Typography>
-        </Box>
-
-        {/* Existing producers */}
-        {(value || []).map((producer, index) => (
-          <Box key={index} sx={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: 1, 
-            mb: 1.5
-          }}>
-            <TextField
-              size="small"
-              label={`Producer ${index + 1}`}
-              value={producer}
-              onChange={(e) => handleProducerChange(index, e.target.value)}
-              sx={{ 
-                flex: 1,
-                '& .MuiInputLabel-root': { color: currentTheme.textSecondary },
-                '& .MuiInputLabel-root.Mui-focused': { color: currentTheme.primary },
-                '& .MuiOutlinedInput-root': { 
-                  color: currentTheme.text,
-                  '& fieldset': { borderColor: currentTheme.border },
-                  '&:hover fieldset': { borderColor: currentTheme.primary },
-                  '&.Mui-focused fieldset': { borderColor: currentTheme.primary }
-                },
-                '& .MuiInputBase-input': { color: currentTheme.text },
-                '& .MuiInputBase-input::placeholder': { color: currentTheme.textSecondary, opacity: 0.7 }
-              }}
-              placeholder="Enter producer service name"
-            />
-            <IconButton
-              size="small"
-              onClick={() => handleDeleteProducer(index)}
-              sx={{ 
-                color: 'error.main',
-                '&:hover': {
-                  bgcolor: 'error.main',
-                  color: 'white'
-                }
-              }}
-              title="Delete producer"
-            >
-              <DeleteIcon />
-            </IconButton>
-          </Box>
-        ))}
-
-        {/* Add new producer button */}
-        <Box sx={{ 
-          display: 'flex', 
-          justifyContent: 'center', 
-          mt: 2
-        }}>
-          <Button
-            variant="outlined"
-            startIcon={<AddIcon />}
-            onClick={addProducer}
-            sx={{
-              color: currentTheme.primary,
-              borderColor: currentTheme.border,
-              '&:hover': {
-                bgcolor: currentTheme.primary,
-                color: 'white'
-              }
-            }}
-          >
-            Add Producer Service
-          </Button>
-        </Box>
+        <TeamSelector
+          selectedTeams={value || []}
+          onTeamsChange={handleProducersChange}
+          currentTheme={currentTheme}
+          label={label}
+          showLabel={true}
+          placeholder="No producers selected"
+        />
       </Box>
     );
   };
@@ -1572,27 +1324,16 @@ const EditAgreementPage = () => {
   };
 
   const renderField = (path, value, label, type = 'text', options = null, isRequired = false, fieldType = null) => {
-    console.log('renderField called with:', { path, value, label, type, isRequired });
+    
     
     // ALWAYS handle location fields with renderLocationField, regardless of data type
     if (path === 'location' || path.startsWith('location.')) {
-      console.log('Location field detected, forcing renderLocationField usage');
       return renderLocationField('location', editedAgreement.location, label);
     }
     
     if (Array.isArray(value)) {
-      // If the array contains objects, skip the generic primitive renderer
-      const containsObjects = value.some((v) => v && typeof v === 'object');
-      if (containsObjects) {
-        // Either return null or add a JSON editor if you want. For now, avoid the crash.
-        return null;
-      }
-
-      console.log('renderField handling array:', { path, value, label, valueLength: value.length });
-      
-      // Special handling for changelog arrays
+      // Special handling for changelog arrays - check this FIRST
       if (path === 'changelog') {
-        console.log('Changelog array detected, using ChangelogEditor component');
         return (
           <ChangelogEditor
             value={value}
@@ -1605,6 +1346,13 @@ const EditAgreementPage = () => {
             currentTheme={currentTheme}
           />
         );
+      }
+      
+      // If the array contains objects, skip the generic primitive renderer
+      const containsObjects = value.some((v) => v && typeof v === 'object');
+      if (containsObjects) {
+        // Either return null or add a JSON editor if you want. For now, avoid the crash.
+        return null;
       }
       
       // Special handling for dataConsumer arrays
@@ -2033,6 +1781,17 @@ const EditAgreementPage = () => {
         <Grid container spacing={3}>
           <Grid item xs={12} md={6}>
             {renderField('name', editedAgreement.name, 'Name', 'text', null, true)}
+          </Grid>
+          <Grid item xs={12}>
+            <TeamSelector
+              selectedTeams={editedAgreement.owner || []}
+              onTeamsChange={(teams) => handleFieldChange('owner', teams)}
+              currentTheme={currentTheme}
+              label="Agreement Owner *"
+              showLabel={true}
+              maxSelections={1}
+              placeholder="No owner selected"
+            />
           </Grid>
           <Grid item xs={12}>
             {renderField('description', editedAgreement.description, 'Description', 'text', null, true)}

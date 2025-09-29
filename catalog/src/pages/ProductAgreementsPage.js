@@ -67,26 +67,42 @@ const ProductAgreementsPage = () => {
     loadAgreements();
   }, []);
 
-  // Get unique producers from all agreements
-  const getUniqueProducers = () => {
-    const producers = new Set();
+  // Get unique owners from all agreements
+  const getUniqueOwners = () => {
+    const owners = new Set();
     allAgreements.forEach(agreement => {
-      if (agreement && agreement.dataProducer) {
-        if (Array.isArray(agreement.dataProducer)) {
-          agreement.dataProducer.forEach(producer => {
-            if (producer && producer.trim()) {
-              producers.add(producer.trim());
+      if (agreement && agreement.owner) {
+        if (Array.isArray(agreement.owner)) {
+          agreement.owner.forEach(owner => {
+            if (owner && owner.trim()) {
+              owners.add(owner.trim());
             }
           });
-        } else if (agreement.dataProducer.trim()) {
-          producers.add(agreement.dataProducer.trim());
+        } else if (agreement.owner.trim()) {
+          owners.add(agreement.owner.trim());
         }
       }
     });
-    return Array.from(producers).sort();
+    const sortedOwners = Array.from(owners).sort();
+    
+    // Check if there are any agreements without owners
+    const hasAbandonedAgreements = allAgreements.some(agreement => {
+      if (!agreement || !agreement.owner) return true;
+      if (Array.isArray(agreement.owner)) {
+        return agreement.owner.length === 0 || agreement.owner.every(owner => !owner || !owner.trim());
+      }
+      return !agreement.owner.trim();
+    });
+    
+    // Add "Abandoned" tab if there are agreements without owners
+    if (hasAbandonedAgreements) {
+      sortedOwners.push('Abandoned');
+    }
+    
+    return sortedOwners;
   };
 
-  const uniqueProducers = getUniqueProducers();
+  const uniqueOwners = getUniqueOwners();
 
   // Filter agreements based on search and tab selection
   const getFilteredAgreements = () => {
@@ -103,6 +119,15 @@ const ProductAgreementsPage = () => {
         
         if (agreement.name) searchStr += agreement.name + ' ';
         if (agreement.description) searchStr += agreement.description + ' ';
+        if (agreement.owner) {
+          if (Array.isArray(agreement.owner)) {
+            agreement.owner.forEach(owner => {
+              if (owner) searchStr += owner + ' ';
+            });
+          } else {
+            searchStr += agreement.owner + ' ';
+          }
+        }
         if (agreement.dataProducer) {
           if (Array.isArray(agreement.dataProducer)) {
             agreement.dataProducer.forEach(producer => {
@@ -154,20 +179,33 @@ const ProductAgreementsPage = () => {
       });
     }
 
-    // Apply tab filter by producer
-    if (selectedTab < uniqueProducers.length) {
-      const selectedProducer = uniqueProducers[selectedTab];
-      filtered = filtered.filter(agreement => {
-        if (!agreement || !agreement.dataProducer) return false;
-        
-        if (Array.isArray(agreement.dataProducer)) {
-          return agreement.dataProducer.some(producer => 
-            producer && producer.trim() === selectedProducer
-          );
-        } else {
-          return agreement.dataProducer.trim() === selectedProducer;
-        }
-      });
+    // Apply tab filter by owner
+    if (selectedTab < uniqueOwners.length) {
+      const selectedOwner = uniqueOwners[selectedTab];
+      
+      if (selectedOwner === 'Abandoned') {
+        // Filter for agreements without owners
+        filtered = filtered.filter(agreement => {
+          if (!agreement || !agreement.owner) return true;
+          if (Array.isArray(agreement.owner)) {
+            return agreement.owner.length === 0 || agreement.owner.every(owner => !owner || !owner.trim());
+          }
+          return !agreement.owner.trim();
+        });
+      } else {
+        // Filter for agreements with the selected owner
+        filtered = filtered.filter(agreement => {
+          if (!agreement || !agreement.owner) return false;
+          
+          if (Array.isArray(agreement.owner)) {
+            return agreement.owner.some(owner => 
+              owner && owner.trim() === selectedOwner
+            );
+          } else {
+            return agreement.owner.trim() === selectedOwner;
+          }
+        });
+      }
     }
 
     return filtered;
@@ -186,6 +224,7 @@ const ProductAgreementsPage = () => {
       name: '',
       description: '',
       status: 'draft',
+      owner: [],
       specificationMaintainer: '',
       parentSystem: '',
       dataProducer: [''],
@@ -252,12 +291,12 @@ const ProductAgreementsPage = () => {
     setPage(1);
   }, [selectedTab]);
 
-  // Reset tab when producers change (in case of data refresh)
+  // Reset tab when owners change (in case of data refresh)
   useEffect(() => {
-    if (selectedTab >= uniqueProducers.length) {
+    if (selectedTab >= uniqueOwners.length) {
       setSelectedTab(0);
     }
-  }, [uniqueProducers.length, selectedTab]);
+  }, [uniqueOwners.length, selectedTab]);
 
   if (loading) {
     return (
@@ -283,7 +322,7 @@ const ProductAgreementsPage = () => {
         Product Agreements
       </Typography>
       <Typography variant="body1" sx={{ mb: 4, color: currentTheme.textSecondary }}>
-        Manage and monitor product agreements between producers and consumers. Track agreement status and compliance across your data ecosystem.
+        Manage and monitor product agreements grouped by owners. Track agreement status and compliance across your data ecosystem.
       </Typography>
 
       <Box sx={{ mb: 4 }}>
@@ -344,25 +383,50 @@ const ProductAgreementsPage = () => {
                   opacity: 0.3,
                 },
               },
+              '& .MuiBadge-badge': {
+                color: 'white',
+                '&.MuiBadge-colorPrimary': {
+                  backgroundColor: currentTheme.primary,
+                },
+                '&.MuiBadge-colorError': {
+                  backgroundColor: currentTheme.error,
+                },
+              },
             }}
           >
-            {uniqueProducers.map((producer, index) => (
+            {uniqueOwners.map((owner, index) => (
               <Tab
-                key={producer}
+                key={owner}
                 label={
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    {producer}
+                    <Typography 
+                      sx={{ 
+                        color: owner === 'Abandoned' ? currentTheme.error : 'inherit',
+                        fontWeight: owner === 'Abandoned' ? 600 : 'normal'
+                      }}
+                    >
+                      {owner}
+                    </Typography>
                     <Badge 
                       badgeContent={
-                        allAgreements.filter(agreement => {
-                          if (!agreement || !agreement.dataProducer) return false;
-                          if (Array.isArray(agreement.dataProducer)) {
-                            return agreement.dataProducer.some(p => p && p.trim() === producer);
-                          } else {
-                            return agreement.dataProducer.trim() === producer;
-                          }
-                        }).length
+                        owner === 'Abandoned' 
+                          ? allAgreements.filter(agreement => {
+                              if (!agreement || !agreement.owner) return true;
+                              if (Array.isArray(agreement.owner)) {
+                                return agreement.owner.length === 0 || agreement.owner.every(o => !o || !o.trim());
+                              }
+                              return !agreement.owner.trim();
+                            }).length
+                          : allAgreements.filter(agreement => {
+                              if (!agreement || !agreement.owner) return false;
+                              if (Array.isArray(agreement.owner)) {
+                                return agreement.owner.some(o => o && o.trim() === owner);
+                              } else {
+                                return agreement.owner.trim() === owner;
+                              }
+                            }).length
                       } 
+                      color={owner === 'Abandoned' ? 'error' : 'primary'}
                     />
                   </Box>
                 }

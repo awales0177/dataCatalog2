@@ -29,6 +29,7 @@ import {
 import { ThemeContext } from '../contexts/ThemeContext';
 import { fetchData, createDataPolicy, updateDataPolicy, deleteDataPolicy } from '../services/api';
 import DeleteModal from '../components/DeleteModal';
+import TeamSelector from '../components/TeamSelector';
 
 const EditDataPolicyPage = () => {
   const { id } = useParams();
@@ -61,7 +62,7 @@ const EditDataPolicyPage = () => {
             name: '',
             description: '',
             status: 'draft',
-            owner: '',
+            owner: [],
             externalLink: '',
             tags: []
           };
@@ -79,8 +80,13 @@ const EditDataPolicyPage = () => {
           console.log('Found policy:', policy);
           
           if (policy) {
-            setEditedPolicy({ ...policy });
-            setOriginalPolicy({ ...policy });
+            // Convert owner to array if it's a string
+            const policyWithArrayOwner = {
+              ...policy,
+              owner: Array.isArray(policy.owner) ? policy.owner : (policy.owner ? [policy.owner] : [])
+            };
+            setEditedPolicy(policyWithArrayOwner);
+            setOriginalPolicy({ ...policyWithArrayOwner });
           } else {
             console.error('Policy not found. Available policies:', policies);
             setSnackbar({ open: true, message: `Policy with ID ${id} not found`, severity: 'error' });
@@ -275,29 +281,13 @@ const EditDataPolicyPage = () => {
               </Grid>
 
               <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Owner"
-                  value={editedPolicy?.owner || ''}
-                  onChange={(e) => handleFieldChange('owner', e.target.value)}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <PersonIcon sx={{ color: currentTheme.textSecondary, fontSize: 20 }} />
-                      </InputAdornment>
-                    ),
-                  }}
-                  sx={{
-                    '& .MuiInputLabel-root': { color: currentTheme.textSecondary },
-                    '& .MuiInputLabel-root.Mui-focused': { color: currentTheme.primary },
-                    '& .MuiOutlinedInput-root': { 
-                      color: currentTheme.text,
-                      '& fieldset': { borderColor: currentTheme.border },
-                      '&:hover fieldset': { borderColor: currentTheme.primary },
-                      '&.Mui-focused fieldset': { borderColor: currentTheme.primary }
-                    },
-                    '& .MuiInputBase-input': { color: currentTheme.text }
-                  }}
+                <TeamSelector
+                  selectedTeams={editedPolicy?.owner || []}
+                  onTeamsChange={(teams) => handleFieldChange('owner', teams)}
+                  currentTheme={currentTheme}
+                  label="Policy Owner"
+                  maxSelections={1}
+                  placeholder="No team selected"
                 />
               </Grid>
 
