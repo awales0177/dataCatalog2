@@ -32,19 +32,22 @@ export const menuItems = [
     name: 'Toolkit',
     path: '/toolkit',
     icon: <FiTool />,
-    id: 'toolkit'
+    id: 'toolkit',
+    beta: true
   },
   {
     name: 'Reference Data',
     path: '/reference',
     icon: <IoIosApps />,
-    id: 'reference'
+    id: 'reference',
+    beta: true
   },
   {
     name: 'Data Products',
     path: '/data-products',
     icon: <StoreIcon />,
-    id: 'data-products'
+    id: 'data-products',
+    beta: true
   },
   {
     name: 'Data Teams',
@@ -62,12 +65,14 @@ export const menuItems = [
     name: 'Data Policies',
     path: '/policies',
     icon: <PolicyIcon />,
-    id: 'policies'
+    id: 'policies',
+    beta: true
   },
   {
     name: 'Data Domains',
     path: '/domains',
     icon: <MdDomain />,
-    id: 'domains'
+    id: 'domains',
+    beta: true
   },
 ];

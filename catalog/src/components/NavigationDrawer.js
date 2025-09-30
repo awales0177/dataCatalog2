@@ -186,7 +186,7 @@ const NavigationDrawer = ({
                             >
                               {item.name}
                             </Typography>
-                            {(item.id === 'toolkit' || item.id === 'reference' || item.id === 'policies' || item.id === 'domains') && (
+                            {item.beta && (
                               <Chip
                                 label="BETA"
                                 size="small"
