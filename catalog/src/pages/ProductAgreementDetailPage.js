@@ -25,6 +25,7 @@ import {
   ListItemIcon,
   ListItemText,
   Button,
+  Stack,
 } from '@mui/material';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
@@ -73,6 +74,102 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
   const [error, setError] = React.useState(null);
   const [dataPolicies, setDataPolicies] = React.useState([]);
 
+  // Get chips showing consumers or producers based on owner role
+  const getRoleChips = () => {
+    if (!agreement) return null;
+    
+    const producers = agreement.dataProducer || [];
+    const consumers = agreement.dataConsumer || [];
+    const owner = agreement.owner;
+    
+    if (!owner) return null;
+    
+    const ownerArray = Array.isArray(owner) ? owner : [owner];
+    const producerArray = Array.isArray(producers) ? producers : [producers];
+    const consumerArray = Array.isArray(consumers) ? consumers : [consumers];
+    
+    // Filter out empty values
+    const validProducers = producerArray.filter(p => p && p.trim());
+    const validConsumers = consumerArray.filter(c => c && c.trim());
+    
+    // Determine owner role
+    const isProducer = ownerArray.some(ownerName => 
+      validProducers.some(producer => producer && producer.toLowerCase() === ownerName.toLowerCase())
+    );
+    
+    const isConsumer = ownerArray.some(ownerName => 
+      validConsumers.some(consumer => consumer && consumer.toLowerCase() === ownerName.toLowerCase())
+    );
+    
+    if (isProducer && !isConsumer && validConsumers.length > 0) {
+      // Owner is producer, show consumers
+      return validConsumers.slice(0, 5).map((consumer, index) => (
+        <Chip
+          key={`consumer-${index}`}
+          icon={<ShoppingBasketIcon sx={{ fontSize: 16 }} />}
+          label={consumer}
+          size="small"
+          sx={{
+            bgcolor: alpha('#4caf50', 0.1),
+            color: '#4caf50',
+            fontWeight: 500,
+            fontSize: '0.875rem',
+            height: 28,
+            '& .MuiChip-icon': {
+              fontSize: 16,
+            },
+          }}
+        />
+      ));
+    } else if (isConsumer && !isProducer && validProducers.length > 0) {
+      // Owner is consumer, show producers
+      return validProducers.slice(0, 5).map((producer, index) => (
+        <Chip
+          key={`producer-${index}`}
+          icon={<FactoryIcon sx={{ fontSize: 16 }} />}
+          label={producer}
+          size="small"
+          sx={{
+            bgcolor: alpha('#2196f3', 0.1),
+            color: '#2196f3',
+            fontWeight: 500,
+            fontSize: '0.875rem',
+            height: 28,
+            '& .MuiChip-icon': {
+              fontSize: 16,
+            },
+          }}
+        />
+      ));
+    } else if (isProducer && isConsumer) {
+      // Owner is both, show both with different styling
+      const allParties = [...validProducers, ...validConsumers].slice(0, 5);
+      return allParties.map((party, index) => {
+        const isProducerParty = validProducers.includes(party);
+        return (
+          <Chip
+            key={`party-${index}`}
+            icon={isProducerParty ? <FactoryIcon sx={{ fontSize: 16 }} /> : <ShoppingBasketIcon sx={{ fontSize: 16 }} />}
+            label={party}
+            size="small"
+            sx={{
+              bgcolor: isProducerParty ? alpha('#2196f3', 0.1) : alpha('#4caf50', 0.1),
+              color: isProducerParty ? '#2196f3' : '#4caf50',
+              fontWeight: 500,
+              fontSize: '0.875rem',
+              height: 28,
+              '& .MuiChip-icon': {
+                fontSize: 16,
+              },
+            }}
+          />
+        );
+      });
+    }
+    
+    return null;
+  };
+
   // Set document title to "{modelShortName} Agreement" or just "Agreement" if no model
   React.useEffect(() => {
     if (agreement) {
@@ -94,7 +191,7 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
           setDataPolicies(data.policies || []);
         }
       } catch (error) {
-        console.error('Error fetching data policies:', error);
+
       }
     };
 
@@ -439,48 +536,29 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
         const modelData = await fetchModels();
         let model = null;
         
-        console.log('Loading agreement and model:', {
-          agreementModelShortName: agreement.modelShortName,
-          hasModelShortName: !!agreement.modelShortName,
-          modelShortNameType: typeof agreement.modelShortName,
-          modelShortNameLength: agreement.modelShortName ? agreement.modelShortName.length : 'N/A',
-          agreement: agreement
-        });
-        
         // Only try to find model if modelShortName exists and is not empty/whitespace
         if (agreement.modelShortName && agreement.modelShortName.trim()) {
-          console.log('Looking for model with shortName:', agreement.modelShortName);
-          console.log('Available models:', modelData.models.map(m => ({ shortName: m.shortName, id: m.id })));
+
+
           
           model = modelData.models.find(m => 
             m.shortName.toLowerCase() === agreement.modelShortName.toLowerCase()
           );
           
           if (!model) {
-            console.error('Model lookup failed:', {
-              agreementModelShortName: agreement.modelShortName,
-              availableModelShortNames: modelData.models.map(m => m.shortName),
-              agreement: agreement
-            });
-            console.error('Comparison details:', {
-              searchedFor: agreement.modelShortName.toLowerCase(),
-              availableLowercase: modelData.models.map(m => m.shortName.toLowerCase()),
-              exactMatches: modelData.models.filter(m => m.shortName === agreement.modelShortName),
-              caseInsensitiveMatches: modelData.models.filter(m => m.shortName.toLowerCase() === agreement.modelShortName.toLowerCase())
-            });
             setError('Associated model not found');
             return;
           }
-          console.log('Model found:', model);
+
         } else {
-          console.log('No model associated with this agreement - proceeding without model validation');
-          console.log('modelShortName value:', JSON.stringify(agreement.modelShortName));
+
+
         }
 
         setAgreement(agreement);
         setModel(model);
       } catch (error) {
-        console.error('Error loading agreement:', error);
+
         setError('Failed to load agreement details');
       } finally {
         setLoading(false);
@@ -565,9 +643,47 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
                 ).join(' ')}
               </Box>
             </Box>
-            <Typography variant="body1" sx={{ color: currentTheme.textSecondary }}>
+            <Typography variant="body1" sx={{ color: currentTheme.textSecondary, mb: 2 }}>
               {agreement.description}
             </Typography>
+            
+            {/* Consumer/Producer chips */}
+            {getRoleChips() && (
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary, mb: 1 }}>
+                  {(() => {
+                    const producers = agreement.dataProducer || [];
+                    const consumers = agreement.dataConsumer || [];
+                    const owner = agreement.owner;
+                    
+                    if (!owner) return 'Parties';
+                    
+                    const ownerArray = Array.isArray(owner) ? owner : [owner];
+                    const producerArray = Array.isArray(producers) ? producers : [producers];
+                    const consumerArray = Array.isArray(consumers) ? consumers : [consumers];
+                    
+                    const validProducers = producerArray.filter(p => p && p.trim());
+                    const validConsumers = consumerArray.filter(c => c && c.trim());
+                    
+                    const isProducer = ownerArray.some(ownerName => 
+                      validProducers.some(producer => producer && producer.toLowerCase() === ownerName.toLowerCase())
+                    );
+                    
+                    const isConsumer = ownerArray.some(ownerName => 
+                      validConsumers.some(consumer => consumer && consumer.toLowerCase() === ownerName.toLowerCase())
+                    );
+                    
+                    if (isProducer && !isConsumer) return 'Consumers';
+                    if (isConsumer && !isProducer) return 'Producers';
+                    if (isProducer && isConsumer) return 'Parties';
+                    return 'Parties';
+                  })()}
+                </Typography>
+                <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                  {getRoleChips()}
+                </Stack>
+              </Box>
+            )}
           </Box>
         </Box>
         

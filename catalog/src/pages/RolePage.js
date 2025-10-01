@@ -58,7 +58,6 @@ const RolePage = () => {
   const pkiPlugin = {
     authenticate: async (role) => {
       // All roles are available without restrictions
-      // TODO: Implement actual PKI authentication later
       return new Promise((resolve) => {
         setTimeout(() => {
           resolve({

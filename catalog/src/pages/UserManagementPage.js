@@ -34,6 +34,7 @@ import {
 } from '@mui/icons-material';
 import { ThemeContext } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
+import { hashPassword } from '../utils/passwordUtils';
 
 const UserManagementPage = () => {
   const { currentTheme } = useContext(ThemeContext);
@@ -53,6 +54,8 @@ const UserManagementPage = () => {
   const [editingUser, setEditingUser] = useState(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [deletingUser, setDeletingUser] = useState(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [formData, setFormData] = useState({
     username: '',
     password: '',
@@ -122,7 +125,7 @@ const UserManagementPage = () => {
         status: formData.status,
         // Only update password if provided
         password_hash: formData.password ? 
-          btoa(formData.password) : // Simple encoding for demo (in real app, use proper hashing)
+          hashPassword(formData.password) : // Proper password hashing
           editingUser.password_hash
       };
       setUsers(users.map(u => 
@@ -133,7 +136,7 @@ const UserManagementPage = () => {
       // Add new user
       const newUser = {
         username: formData.username,
-        password_hash: btoa(formData.password), // Simple encoding for demo
+        password_hash: hashPassword(formData.password), // Proper password hashing
         role: formData.role,
         email: formData.email,
         full_name: formData.full_name,
@@ -147,9 +150,16 @@ const UserManagementPage = () => {
   };
 
   const handleDeleteUser = (username) => {
-    if (window.confirm('Are you sure you want to delete this user?')) {
-      setUsers(users.filter(u => u.username !== username));
+    setDeletingUser(username);
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDeleteUser = () => {
+    if (deletingUser) {
+      setUsers(users.filter(u => u.username !== deletingUser));
+      setDeletingUser(null);
     }
+    setShowDeleteDialog(false);
   };
 
   const handleCancel = () => {
@@ -477,6 +487,26 @@ const UserManagementPage = () => {
             }}
           >
             {editingUser ? 'Update' : 'Create'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={showDeleteDialog} onClose={() => setShowDeleteDialog(false)}>
+        <DialogTitle>Confirm Delete</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to delete user "{deletingUser}"? This action cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowDeleteDialog(false)}>Cancel</Button>
+          <Button 
+            onClick={confirmDeleteUser} 
+            color="error" 
+            variant="contained"
+          >
+            Delete
           </Button>
         </DialogActions>
       </Dialog>

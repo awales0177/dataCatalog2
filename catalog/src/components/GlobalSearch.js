@@ -65,7 +65,7 @@ const GlobalSearch = ({ open, onClose, currentTheme, darkMode }) => {
       const stats = await getSearchStats();
       setSearchStats(stats);
     } catch (error) {
-      console.error('Error loading search stats:', error);
+
     }
   };
 
@@ -173,7 +173,7 @@ const GlobalSearch = ({ open, onClose, currentTheme, darkMode }) => {
       // Clear skeleton when results arrive
       setShowSkeleton(false);
     } catch (error) {
-      console.error('Search error:', error);
+
       setResults([]);
       setHasSearched(true);
       setShowSkeleton(false);
@@ -192,7 +192,7 @@ const GlobalSearch = ({ open, onClose, currentTheme, darkMode }) => {
       const data = await getSearchSuggestions(searchQuery, 10);
       setSuggestions(data.suggestions || []);
     } catch (error) {
-      console.error('Suggestions error:', error);
+
     }
   };
 

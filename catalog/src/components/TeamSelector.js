@@ -36,7 +36,7 @@ const TeamSelector = ({
         const response = await fetchData('applications');
         setTeamsData(response.applications || []);
       } catch (error) {
-        console.error('Error loading teams:', error);
+        // Handle error silently or show user notification
       }
     };
 

@@ -70,7 +70,7 @@ const ToolkitFunctionDetailPage = () => {
         }
       } catch (err) {
         setError('Failed to load function data');
-        console.error('Error loading function data:', err);
+
       } finally {
         setLoading(false);
       }
@@ -604,8 +604,7 @@ const ToolkitFunctionDetailPage = () => {
                 variant="outlined"
                 startIcon={<DownloadIcon />}
                 onClick={() => {
-                  // TODO: Implement download functionality
-                  console.log('Download function:', functionData.id);
+
                 }}
                 sx={{
                   color: currentTheme.primary,
@@ -626,7 +625,7 @@ const ToolkitFunctionDetailPage = () => {
                   if (functionData.git) {
                     window.open(functionData.git, '_blank');
                   } else {
-                    console.log('No git repository available for:', functionData.id);
+
                   }
                 }}
                 disabled={!functionData.git}

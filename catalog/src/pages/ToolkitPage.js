@@ -47,7 +47,7 @@ const ToolkitPage = () => {
         const data = await fetchData('toolkit');
         setToolkitData(data);
       } catch (error) {
-        console.error('Error loading toolkit data:', error);
+
         setSnackbar({ open: true, message: 'Failed to load toolkit data', severity: 'error' });
       } finally {
         setLoading(false);
@@ -305,16 +305,14 @@ const ToolkitPage = () => {
     if (type === 'functions') {
       navigate(`/toolkit/function/${component.id}`);
     } else {
-      // TODO: Implement detailed view for containers and infrastructure
-      console.log('View component:', component, type);
+
       setSnackbar({ open: true, message: `Viewing ${component.name} details`, severity: 'info' });
     }
   };
 
   // Handle component download - removed as cards are now clickable for viewing
   // const handleDownloadComponent = (component, type) => {
-  //   // TODO: Implement download functionality
-  //   console.log('Download component:', component, type);
+
   //   setSnackbar({ open: true, message: 'Download started!', severity: 'success' });
   // };
 

@@ -70,14 +70,14 @@ const EditDataPolicyPage = () => {
           setOriginalPolicy({ ...newPolicy });
         } else {
           const response = await fetchData('policies');
-          console.log('Fetched response:', response);
+
           const policies = response.policies || response || [];
-          console.log('Policies array:', policies);
-          console.log('Looking for policy with ID:', id);
-          console.log('Available policy IDs:', policies.map(p => p.id));
+
+
+
           
           const policy = policies.find(p => p.id === id);
-          console.log('Found policy:', policy);
+
           
           if (policy) {
             // Convert owner to array if it's a string
@@ -88,13 +88,13 @@ const EditDataPolicyPage = () => {
             setEditedPolicy(policyWithArrayOwner);
             setOriginalPolicy({ ...policyWithArrayOwner });
           } else {
-            console.error('Policy not found. Available policies:', policies);
+
             setSnackbar({ open: true, message: `Policy with ID ${id} not found`, severity: 'error' });
             navigate('/policies');
           }
         }
       } catch (error) {
-        console.error('Error loading policy:', error);
+
         setSnackbar({ open: true, message: 'Error loading policy', severity: 'error' });
       } finally {
         setLoading(false);
@@ -133,7 +133,7 @@ const EditDataPolicyPage = () => {
       }
       navigate('/policies');
     } catch (error) {
-      console.error('Error saving policy:', error);
+
       setSnackbar({ open: true, message: 'Error saving policy', severity: 'error' });
     } finally {
       setSaving(false);
@@ -147,7 +147,7 @@ const EditDataPolicyPage = () => {
       setSnackbar({ open: true, message: 'Policy deleted successfully', severity: 'success' });
       navigate('/policies');
     } catch (error) {
-      console.error('Error deleting policy:', error);
+
       setSnackbar({ open: true, message: 'Error deleting policy', severity: 'error' });
     } finally {
       setDeleting(false);

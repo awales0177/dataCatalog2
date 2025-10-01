@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Box,
   Typography,
@@ -72,7 +72,7 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [shortNameError, setShortNameError] = useState('');
   const [checkingShortName, setCheckingShortName] = useState(false);
-  const [shortNameTimeout, setShortNameTimeout] = useState(null);
+  const shortNameTimeoutRef = useRef(null);
   const [showDeleteModelModal, setShowDeleteModelModal] = useState(false);
   const [showSelectionDialog, setShowSelectionDialog] = useState(false);
   const [selectionPath, setSelectionPath] = useState('');
@@ -92,7 +92,6 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
   useEffect(() => {
     const loadModel = async () => {
       try {
-        console.log('Loading model with URL shortName:', shortName);
         
         // Check if this is a new model creation
         if (shortName === 'new') {
@@ -105,17 +104,13 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
             return;
           } else {
             // If no template found, redirect to models page
-            console.log('No new model template found, redirecting to models page');
             navigate('/models', { replace: true });
             return;
           }
         }
         
         const modelData = await fetchData('models');
-        console.log('Available models:', modelData.models.map(m => ({ id: m.id, shortName: m.shortName, name: m.name })));
-        
         const foundModel = modelData.models.find(m => m.shortName.toLowerCase() === shortName.toLowerCase());
-        console.log('Found model:', foundModel);
         
         if (foundModel) {
           // Ensure versionHistory exists
@@ -136,7 +131,7 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
           setError('Model not found');
         }
       } catch (error) {
-        console.error('Error fetching model:', error);
+        // Handle error silently
         setError('Failed to load model');
       } finally {
         setLoading(false);
@@ -180,11 +175,11 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
   // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
-      if (shortNameTimeout) {
-        clearTimeout(shortNameTimeout);
+      if (shortNameTimeoutRef.current) {
+        clearTimeout(shortNameTimeoutRef.current);
       }
     };
-  }, [shortNameTimeout]);
+  }, []); // Empty dependency array - only run on mount/unmount
 
   const handleFieldChange = (path, value) => {
     setEditedModel(prev => {
@@ -208,16 +203,14 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
     // Check for duplicate shortName if this is the shortName field
     if (path === 'shortName' && value && shortName === 'new') {
       // Clear any existing timeout
-      if (shortNameTimeout) {
-        clearTimeout(shortNameTimeout);
+      if (shortNameTimeoutRef.current) {
+        clearTimeout(shortNameTimeoutRef.current);
       }
       
       // Set a new timeout to check after user stops typing
-      const timeout = setTimeout(() => {
+      shortNameTimeoutRef.current = setTimeout(() => {
         checkShortNameAvailability(value);
       }, 500); // Wait 500ms after user stops typing
-      
-      setShortNameTimeout(timeout);
     }
   };
 
@@ -243,7 +236,7 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
         setShortNameError('');
       }
     } catch (error) {
-      console.error('Error checking shortName availability:', error);
+      // Handle error silently
       setShortNameError('Error checking availability');
     } finally {
       setCheckingShortName(false);
@@ -512,7 +505,7 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
         }
       }
     } catch (error) {
-      console.error('Error refreshing model data:', error);
+      // Handle error silently
     }
   };
 
@@ -652,14 +645,6 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
       // Check if shortName is being changed (for existing models)
       const isShortNameChanging = !isNewModel && editedModel.shortName !== shortName;
       
-      // Debug: Log what we're about to send
-      console.log('Saving model with:', {
-        urlShortName: shortName,
-        modelShortName: editedModel.shortName,
-        updatedModel: updatedModel,
-        isNewModel: isNewModel,
-        isShortNameChanging: isShortNameChanging
-      });
       
       // Update the edited model with new lastUpdated
       setEditedModel(updatedModel);
@@ -707,7 +692,7 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
       }
       
     } catch (error) {
-      console.error('Error saving model:', error);
+      // Handle error silently
       setSnackbar({
         open: true,
         message: `Failed to save model: ${error.message}`,
@@ -753,7 +738,7 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
       }, 1500);
 
     } catch (error) {
-      console.error('Error deleting model:', error);
+      // Handle error silently
       setSnackbar({
         open: true,
         message: `Failed to delete model: ${error.message}`,

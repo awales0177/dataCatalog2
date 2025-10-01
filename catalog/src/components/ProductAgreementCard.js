@@ -7,12 +7,15 @@ import {
   Chip,
   alpha,
   Tooltip,
+  Stack,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { formatDate } from '../utils/themeUtils';
 import ShoppingBasketIcon from '@mui/icons-material/ShoppingBasket';
 import FactoryIcon from '@mui/icons-material/Factory';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
+import PeopleIcon from '@mui/icons-material/People';
+import BusinessIcon from '@mui/icons-material/Business';
 
 // ProductAgreementCard component for displaying individual product agreement information
 const ProductAgreementCard = ({ agreement, currentTheme }) => {
@@ -63,13 +66,90 @@ const ProductAgreementCard = ({ agreement, currentTheme }) => {
 
   const ownerRole = getOwnerRole();
   
-  // Debug logging
-  console.log('Agreement:', agreement.name, {
-    owner: agreement.owner,
-    producers: agreement.dataProducer,
-    consumers: agreement.dataConsumer,
-    ownerRole
-  });
+  // Get chips showing consumers or producers based on owner role
+  const getRoleChips = () => {
+    const producers = agreement.dataProducer || [];
+    const consumers = agreement.dataConsumer || [];
+    const owner = agreement.owner;
+    
+    if (!owner || !Array.isArray(owner)) return null;
+    
+    const ownerArray = Array.isArray(owner) ? owner : [owner];
+    const producerArray = Array.isArray(producers) ? producers : [producers];
+    const consumerArray = Array.isArray(consumers) ? consumers : [consumers];
+    
+    // Filter out empty values
+    const validProducers = producerArray.filter(p => p && p.trim());
+    const validConsumers = consumerArray.filter(c => c && c.trim());
+    
+    if (ownerRole === 'producer' && validConsumers.length > 0) {
+      // Owner is producer, show consumers
+      return validConsumers.slice(0, 3).map((consumer, index) => (
+        <Chip
+          key={`consumer-${index}`}
+          icon={<ShoppingBasketIcon sx={{ fontSize: 14 }} />}
+          label={consumer}
+          size="small"
+          sx={{
+            bgcolor: alpha('#4caf50', 0.1),
+            color: '#4caf50',
+            fontWeight: 500,
+            fontSize: '0.75rem',
+            height: 24,
+            '& .MuiChip-icon': {
+              fontSize: 14,
+            },
+          }}
+        />
+      ));
+    } else if (ownerRole === 'consumer' && validProducers.length > 0) {
+      // Owner is consumer, show producers
+      return validProducers.slice(0, 3).map((producer, index) => (
+        <Chip
+          key={`producer-${index}`}
+          icon={<FactoryIcon sx={{ fontSize: 14 }} />}
+          label={producer}
+          size="small"
+          sx={{
+            bgcolor: alpha('#2196f3', 0.1),
+            color: '#2196f3',
+            fontWeight: 500,
+            fontSize: '0.75rem',
+            height: 24,
+            '& .MuiChip-icon': {
+              fontSize: 14,
+            },
+          }}
+        />
+      ));
+    } else if (ownerRole === 'both') {
+      // Owner is both, show both with different styling
+      const allParties = [...validProducers, ...validConsumers].slice(0, 3);
+      return allParties.map((party, index) => {
+        const isProducer = validProducers.includes(party);
+        return (
+          <Chip
+            key={`party-${index}`}
+            icon={isProducer ? <FactoryIcon sx={{ fontSize: 14 }} /> : <ShoppingBasketIcon sx={{ fontSize: 14 }} />}
+            label={party}
+            size="small"
+            sx={{
+              bgcolor: isProducer ? alpha('#2196f3', 0.1) : alpha('#4caf50', 0.1),
+              color: isProducer ? '#2196f3' : '#4caf50',
+              fontWeight: 500,
+              fontSize: '0.75rem',
+              height: 24,
+              '& .MuiChip-icon': {
+                fontSize: 14,
+              },
+            }}
+          />
+        );
+      });
+    }
+    
+    return null;
+  };
 
   const getRoleIcon = () => {
     switch (ownerRole) {
@@ -172,6 +252,15 @@ const ProductAgreementCard = ({ agreement, currentTheme }) => {
             )}
           </Box>
         </Box>
+
+        {/* Consumer/Producer chips */}
+        {getRoleChips() && (
+          <Box sx={{ mb: 2 }}>
+            <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
+              {getRoleChips()}
+            </Stack>
+          </Box>
+        )}
 
         <Box sx={{ 
           display: 'flex', 

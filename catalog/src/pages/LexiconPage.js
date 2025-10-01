@@ -58,7 +58,7 @@ const LexiconPage = () => {
         setError(null);
       } catch (err) {
         setError('Failed to load lexicon terms');
-        console.error('Error loading lexicon:', err);
+
       } finally {
         setLoading(false);
       }

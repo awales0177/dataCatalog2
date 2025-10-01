@@ -31,7 +31,6 @@ const DataDomainsPage = () => {
         setDomains(data.domains);
       } catch (error) {
         setError('Failed to load data domains');
-        console.error('Error loading domains:', error);
       } finally {
         setLoading(false);
       }

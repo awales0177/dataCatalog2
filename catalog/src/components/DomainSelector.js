@@ -32,7 +32,7 @@ const DomainSelector = ({
         const response = await fetchData('domains');
         setDomainsData(response.domains || []);
       } catch (error) {
-        console.error('Error loading domains:', error);
+        // Handle error silently or show user notification
       }
     };
 

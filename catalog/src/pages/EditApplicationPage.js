@@ -80,7 +80,7 @@ const EditApplicationPage = () => {
           setEditedApplication(deepClone(app));
         }
       } catch (error) {
-        console.error('Error loading application:', error);
+        // Handle error silently
         setSnackbar({ open: true, message: 'Failed to load application', severity: 'error' });
       } finally {
         setLoading(false);
@@ -120,7 +120,7 @@ const EditApplicationPage = () => {
         navigate('/applications');
       }, 1500);
     } catch (error) {
-      console.error('Error saving application:', error);
+      // Handle error silently
       setSnackbar({ open: true, message: 'Failed to save application', severity: 'error' });
     } finally {
       setSaving(false);
@@ -141,7 +141,7 @@ const EditApplicationPage = () => {
         navigate('/applications');
       }, 1500);
     } catch (error) {
-      console.error('Error deleting application:', error);
+      // Handle error silently
       setSnackbar({ open: true, message: 'Failed to delete application', severity: 'error' });
     }
   };

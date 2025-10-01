@@ -22,11 +22,20 @@ export const AuthProvider = ({ children }) => {
     const storedUser = localStorage.getItem('user');
     
     if (storedToken && storedUser) {
-      const userData = JSON.parse(storedUser);
-      setToken(storedToken);
-      setUser(userData);
-      setCurrentRole(userData.currentRole || 'reader');
-    } else {
+      try {
+        const userData = JSON.parse(storedUser);
+        setToken(storedToken);
+        setUser(userData);
+        setCurrentRole(userData.currentRole || 'reader');
+      } catch (error) {
+        // Clear corrupted data
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('user');
+        // Fall through to default user creation
+      }
+    }
+    
+    if (!storedToken || !storedUser) {
       // Auto-role as user by default (all roles)
       const defaultUser = {
         username: 'user',
@@ -74,7 +83,6 @@ export const AuthProvider = ({ children }) => {
       
       return { success: true };
     } catch (error) {
-      console.error('Role change error:', error);
       return { success: false, error: error.message };
     }
   };
@@ -89,7 +97,6 @@ export const AuthProvider = ({ children }) => {
 
   const switchRole = (newRole) => {
     if (!user || !user.roles?.includes(newRole)) {
-      console.error('User does not have the requested role:', newRole);
       return false;
     }
     

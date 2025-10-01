@@ -194,7 +194,7 @@ const EditReferenceDataPage = () => {
         }
       }
     } catch (error) {
-      console.error('Error refreshing reference data:', error);
+      // Handle error silently
     }
   };
 

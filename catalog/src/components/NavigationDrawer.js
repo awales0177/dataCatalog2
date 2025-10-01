@@ -61,22 +61,13 @@ const NavigationDrawer = ({
     navigate('/role', { state: { changeRole: true, from: { pathname: window.location.pathname } } });
   };
   
-  // Monitor menu data changes for debugging
-  React.useEffect(() => {
-    console.log('NavigationDrawer: menuData changed', { 
-      menuData, 
-      hasItems: menuData?.items?.length > 0,
-      itemCount: menuData?.items?.length || 0
-    });
-  }, [menuData]);
 
   const drawer = (
     <>
       <List>
         {(() => {
-          // Debug logging and safety checks
+          // Safety checks
           if (!menuData || !menuData.items) {
-            console.warn('NavigationDrawer: menuData or menuData.items is missing', { menuData });
             return (
               <ListItem>
                 <ListItemText 
@@ -88,7 +79,6 @@ const NavigationDrawer = ({
           }
           
           if (menuData.items.length === 0) {
-            console.warn('NavigationDrawer: menuData.items is empty', { menuData });
             return (
               <ListItem>
                 <ListItemText 
@@ -98,11 +88,6 @@ const NavigationDrawer = ({
               </ListItem>
             );
           }
-          
-          console.log('NavigationDrawer: Rendering menu items', { 
-            itemCount: menuData.items.length, 
-            items: menuData.items 
-          });
           
           return menuData.items.map((item, index) => {
             // Add divider after the specified item (start of second section)

@@ -47,17 +47,13 @@ const ProductAgreementsPage = () => {
   useEffect(() => {
     const loadAgreements = async () => {
       try {
-        console.log('Fetching agreements...');
         const data = await fetchAgreements();
-        console.log('API Response:', data);
         const validAgreements = (data?.agreements || []).filter(agreement => 
           agreement && typeof agreement === 'object'
         );
-        console.log('Valid agreements:', validAgreements);
         setAllAgreements(validAgreements);
         setError(null);
       } catch (err) {
-        console.error('Error loading agreements:', err);
         setError('Failed to load agreements');
       } finally {
         setLoading(false);
