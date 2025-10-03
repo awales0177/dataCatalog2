@@ -42,6 +42,7 @@ import { fetchData, createAgreement, updateAgreement, deleteAgreement } from '..
 import cacheService from '../services/cache';
 import ChangelogEditor from '../components/ChangelogEditor';
 import TeamSelector from '../components/TeamSelector';
+import ModelSelector from '../components/ModelSelector';
 
 const EditAgreementPage = () => {
   const { currentTheme } = useContext(ThemeContext);
@@ -80,6 +81,10 @@ const EditAgreementPage = () => {
   // Data policies state
   const [dataPolicies, setDataPolicies] = useState([]);
   const [selectedPolicies, setSelectedPolicies] = useState([]);
+  
+  // Data models state
+  const [dataModels, setDataModels] = useState([]);
+  const [modelsLoading, setModelsLoading] = useState(true);
   
 
 
@@ -314,6 +319,23 @@ const EditAgreementPage = () => {
     };
 
     fetchDataPolicies();
+  }, []);
+
+  // Fetch data models
+  useEffect(() => {
+    const fetchDataModels = async () => {
+      try {
+        setModelsLoading(true);
+        const data = await fetchData('models');
+        setDataModels(data.models || []);
+      } catch (error) {
+        console.error('Failed to load data models:', error);
+      } finally {
+        setModelsLoading(false);
+      }
+    };
+
+    fetchDataModels();
   }, []);
 
   // Initialize selected policies when agreement data loads
@@ -1845,7 +1867,14 @@ const EditAgreementPage = () => {
             {renderField('dataValidator', editedAgreement.dataValidator, 'Data Validator')}
           </Grid>
           <Grid item xs={12} md={6}>
-            {renderField('modelShortName', editedAgreement.modelShortName, 'Model Short Name')}
+            <ModelSelector
+              selectedModel={editedAgreement.modelShortName}
+              onModelChange={(value) => handleFieldChange('modelShortName', value)}
+              currentTheme={currentTheme}
+              label="Model Short Name"
+              models={dataModels}
+              loading={modelsLoading}
+            />
           </Grid>
           <Grid item xs={12} md={6}>
             {renderField('fileFormat', editedAgreement.fileFormat, 'File Format')}
@@ -1933,40 +1962,52 @@ const EditAgreementPage = () => {
                   </Box>
                 )}
               >
-                {dataPolicies.map((policy) => (
-                  <MenuItem key={policy.id} value={policy.id}>
-                    <Box>
-                      <Typography sx={{ color: currentTheme.text, fontWeight: 500 }}>
-                        {policy.name}
+                {dataPolicies
+                  .filter(policy => !selectedPolicies.includes(policy.id))
+                  .length === 0 ? (
+                    <MenuItem disabled>
+                      <Typography sx={{ color: currentTheme.textSecondary, fontStyle: 'italic' }}>
+                        All available policies have been selected
                       </Typography>
-                      <Typography sx={{ color: currentTheme.textSecondary, fontSize: '0.875rem' }}>
-                        {policy.description}
-                      </Typography>
-                      <Box sx={{ display: 'flex', gap: 1, mt: 0.5 }}>
-                        <Chip
-                          label={policy.status}
-                          size="small"
-                          sx={{
-                            bgcolor: policy.status === 'active' ? alpha('#4caf50', 0.1) : alpha('#ff9800', 0.1),
-                            color: policy.status === 'active' ? '#4caf50' : '#ff9800',
-                            fontSize: '0.7rem',
-                            height: '20px'
-                          }}
-                        />
-                        <Chip
-                          label={policy.type}
-                          size="small"
-                          sx={{
-                            bgcolor: currentTheme.primary + '20',
-                            color: currentTheme.primary,
-                            fontSize: '0.7rem',
-                            height: '20px'
-                          }}
-                        />
+                    </MenuItem>
+                  ) : (
+                    dataPolicies
+                      .filter(policy => !selectedPolicies.includes(policy.id))
+                      .map((policy) => (
+                    <MenuItem key={policy.id} value={policy.id}>
+                      <Box>
+                        <Typography sx={{ color: currentTheme.text, fontWeight: 500 }}>
+                          {policy.name}
+                        </Typography>
+                        <Typography sx={{ color: currentTheme.textSecondary, fontSize: '0.875rem' }}>
+                          {policy.description}
+                        </Typography>
+                        <Box sx={{ display: 'flex', gap: 1, mt: 0.5 }}>
+                          <Chip
+                            label={policy.status}
+                            size="small"
+                            sx={{
+                              bgcolor: policy.status === 'active' ? alpha('#4caf50', 0.1) : alpha('#ff9800', 0.1),
+                              color: policy.status === 'active' ? '#4caf50' : '#ff9800',
+                              fontSize: '0.7rem',
+                              height: '20px'
+                            }}
+                          />
+                          <Chip
+                            label={policy.type}
+                            size="small"
+                            sx={{
+                              bgcolor: currentTheme.primary + '20',
+                              color: currentTheme.primary,
+                              fontSize: '0.7rem',
+                              height: '20px'
+                            }}
+                          />
+                        </Box>
                       </Box>
-                    </Box>
-                  </MenuItem>
-                ))}
+                    </MenuItem>
+                      ))
+                  )}
               </Select>
             </FormControl>
           </Grid>
