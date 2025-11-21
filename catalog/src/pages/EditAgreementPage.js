@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect, useRef } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import {
   Box,
   Container,
@@ -38,13 +38,16 @@ import {
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ThemeContext } from '../contexts/ThemeContext';
+import { useAuth } from '../contexts/AuthContext';
 import { fetchData, createAgreement, updateAgreement, deleteAgreement } from '../services/api';
 import cacheService from '../services/cache';
 import ChangelogEditor from '../components/ChangelogEditor';
 import TeamSelector from '../components/TeamSelector';
+import ModelSelector from '../components/ModelSelector';
 
 const EditAgreementPage = () => {
   const { currentTheme } = useContext(ThemeContext);
+  const { user } = useAuth();
   const navigate = useNavigate();
   const { id } = useParams();
   
@@ -55,12 +58,6 @@ const EditAgreementPage = () => {
   
   const isNewAgreement = !finalAgreementId || finalAgreementId === 'new';
   
-  console.log('EditAgreementPage rendered with:');
-  console.log('  id from useParams:', id);
-  console.log('  urlPath:', urlPath);
-  console.log('  urlId from URL:', urlId);
-  console.log('  finalAgreementId:', finalAgreementId);
-  console.log('  isNewAgreement:', isNewAgreement);
 
   // Helper function for deep cloning
   const deepClone = (obj) => {
@@ -87,39 +84,31 @@ const EditAgreementPage = () => {
   const [dataPolicies, setDataPolicies] = useState([]);
   const [selectedPolicies, setSelectedPolicies] = useState([]);
   
+  // Data models state
+  const [dataModels, setDataModels] = useState([]);
+  const [modelsLoading, setModelsLoading] = useState(true);
+  
 
 
 
   const handleAddChangelogItem = (path) => {
-    console.log('handleAddChangelogItem called with path:', path);
-    console.log('newChangelogVersion:', newChangelogVersion);
-    console.log('newChangelogChanges:', newChangelogChanges);
     
     if (newChangelogVersion.trim() && newChangelogChanges.trim()) {
       // Generate current timestamp in ISO format
       const currentDate = new Date().toISOString();
       
-      console.log('Adding changelog item:');
-      console.log('  Version:', newChangelogVersion.trim());
-      console.log('  Date:', currentDate);
-      console.log('  Changes:', newChangelogChanges.trim());
-      console.log('  Path:', path);
       
       setEditedAgreement(prev => {
-        console.log('Previous editedAgreement:', prev);
         const newAgreement = { ...prev };
         const pathArray = path.split('.');
         let current = newAgreement;
         
-        console.log('Path array:', pathArray);
-        console.log('Initial current:', current);
         
         for (let i = 0; i < pathArray.length; i++) {
           if (!current[pathArray[i]]) {
             current[pathArray[i]] = [];
           }
           current = current[pathArray[i]];
-          console.log(`After step ${i}, current:`, current);
         }
         
         if (Array.isArray(current)) {
@@ -128,43 +117,40 @@ const EditAgreementPage = () => {
             date: currentDate,
             changes: [newChangelogChanges.trim()]
           });
-          console.log('Added item to array, current now:', current);
         } else {
-          console.error('Current is not an array:', current);
         }
         
-        console.log('Final newAgreement:', newAgreement);
         return newAgreement;
       });
       
       setNewChangelogVersion('');
       setNewChangelogChanges('');
     } else {
-      console.log('Validation failed:');
-      console.log('  Version trimmed:', newChangelogVersion.trim());
-      console.log('  Changes trimmed:', newChangelogChanges.trim());
+
+
+
     }
   };
 
   // Load agreement data
   useEffect(() => {
     const loadAgreement = async () => {
-      console.log('Loading agreement with ID:', finalAgreementId, 'isNewAgreement:', isNewAgreement);
+
       
       // Wait for route parameters to be loaded
       if (finalAgreementId === undefined) {
-        console.log('Route parameters not yet loaded, waiting...');
+
         return;
       }
       
       if (isNewAgreement) {
         // Load template for new agreement
         const template = localStorage.getItem('newAgreementTemplate');
-        console.log('Template from localStorage:', template);
+
         
         if (template) {
           const newAgreement = JSON.parse(template);
-          console.log('Parsed new agreement:', newAgreement);
+
           
           // Ensure dataConsumer is always an array
           const migratedNewAgreement = {
@@ -178,7 +164,7 @@ const EditAgreementPage = () => {
           setEditedAgreement(deepClone(migratedNewAgreement));
         } else {
           // Redirect if no template found
-          console.log('No template found, redirecting to /agreements');
+
           navigate('/agreements', { replace: true });
           return;
         }
@@ -186,26 +172,20 @@ const EditAgreementPage = () => {
         } else {
           // Load existing agreement
           try {
-            console.log('Fetching agreements data for ID:', finalAgreementId);
+
             const agreementsData = await fetchData('dataAgreements');
-            console.log('Fetched agreements data:', agreementsData);
+
             
             if (!agreementsData || !agreementsData.agreements) {
-              console.error('Invalid agreements data structure:', agreementsData);
+
               throw new Error('Invalid agreements data structure');
             }
             
-            console.log('Available agreement IDs:', agreementsData.agreements.map(a => a.id));
+
             
             const foundAgreement = agreementsData.agreements.find(
               a => a.id.toLowerCase() === finalAgreementId.toLowerCase()
             );
-            console.log('Found agreement:', foundAgreement);
-            console.log('Search comparison:', {
-              searchFor: finalAgreementId,
-              searchForLower: finalAgreementId?.toLowerCase(),
-              availableIds: agreementsData.agreements.map(a => ({ id: a.id, idLower: a.id.toLowerCase() }))
-            });
             
             if (foundAgreement) {
               // Ensure dataConsumer is always an array for backward compatibility
@@ -221,7 +201,7 @@ const EditAgreementPage = () => {
               setAgreement(migratedAgreement);
               setEditedAgreement(deepClone(migratedAgreement));
             } else {
-              console.log('Agreement not found, showing error');
+
               setSnackbar({
                 open: true,
                 message: 'Agreement not found',
@@ -230,7 +210,7 @@ const EditAgreementPage = () => {
               navigate('/agreements');
             }
           } catch (error) {
-            console.error('Error loading agreement:', error);
+
             setSnackbar({
               open: true,
               message: 'Failed to load agreement',
@@ -256,7 +236,7 @@ const EditAgreementPage = () => {
       !loc.every(item => typeof item === 'object' && item.bucket !== undefined && item.description !== undefined);
 
     if (needsUpdate) {
-      console.log('Normalizing location to array format');
+
       
       let normalized = [];
       
@@ -333,14 +313,31 @@ const EditAgreementPage = () => {
           const data = await response.json();
           setDataPolicies(data.policies || []);
         } else {
-          console.error('Failed to fetch data policies');
+
         }
       } catch (error) {
-        console.error('Error fetching data policies:', error);
+
       }
     };
 
     fetchDataPolicies();
+  }, []);
+
+  // Fetch data models
+  useEffect(() => {
+    const fetchDataModels = async () => {
+      try {
+        setModelsLoading(true);
+        const data = await fetchData('models');
+        setDataModels(data.models || []);
+      } catch (error) {
+        console.error('Failed to load data models:', error);
+      } finally {
+        setModelsLoading(false);
+      }
+    };
+
+    fetchDataModels();
   }, []);
 
   // Initialize selected policies when agreement data loads
@@ -356,21 +353,21 @@ const EditAgreementPage = () => {
       return editedAgreement.name && editedAgreement.description;
     }
     
-    console.log('Checking for changes:');
-    console.log('Original agreement location:', agreement.location);
-    console.log('Edited agreement location:', editedAgreement.location);
-    console.log('Original agreement dataConsumer:', agreement.dataConsumer);
-    console.log('Edited agreement dataConsumer:', editedAgreement.dataConsumer);
+
+
+
+
+
     
     // Simple but effective comparison
     const originalStr = JSON.stringify(agreement);
     const editedStr = JSON.stringify(editedAgreement);
     const hasChanged = originalStr !== editedStr;
     
-    console.log('Change detected:', hasChanged);
+
     if (hasChanged) {
-      console.log('Original length:', originalStr.length);
-      console.log('Edited length:', editedStr.length);
+
+
     }
     
     return hasChanged;
@@ -423,7 +420,7 @@ const EditAgreementPage = () => {
   };
 
   const handleArrayFieldChange = (path, index, field, value) => {
-    console.log('handleArrayFieldChange called with:', { path, index, field, value });
+
     setEditedAgreement(prev => {
       const pathArray = path.split('.');
       
@@ -459,11 +456,11 @@ const EditAgreementPage = () => {
           current[lastKey][index] = { ...current[lastKey][index] };
         }
         current[lastKey][index][field] = value;
-        console.log('Updated object field:', { path, index, field, value, result: current[lastKey][index] });
+
       } else {
         // Simple value update (e.g., dataConsumer[index])
         current[lastKey][index] = value;
-        console.log('Updated simple value:', { path, index, value, result: current[lastKey][index] });
+
       }
       
       return newAgreement;
@@ -471,7 +468,7 @@ const EditAgreementPage = () => {
   };
 
   const handleLocationFieldChange = (index, field, value) => {
-    console.log('handleLocationFieldChange called with:', { index, field, value });
+
     setEditedAgreement(prev => {
       if (!prev.location || !Array.isArray(prev.location)) return prev;
       if (index < 0 || index >= prev.location.length) return prev;
@@ -490,7 +487,7 @@ const EditAgreementPage = () => {
   };
 
   const handleAddLocationItem = () => {
-    console.log('handleAddLocationItem called');
+
     setEditedAgreement(prev => {
       // Clone the location array
       const location = [...(prev.location || [])];
@@ -503,7 +500,7 @@ const EditAgreementPage = () => {
   };
 
   const handleDeleteLocationItem = (index) => {
-    console.log('handleDeleteLocationItem called with index:', index);
+
     setEditedAgreement(prev => {
       if (!prev.location || !Array.isArray(prev.location)) return prev;
       if (index < 0 || index >= prev.location.length) return prev;
@@ -524,9 +521,9 @@ const EditAgreementPage = () => {
   };
 
   const addArrayItem = (path) => {
-    console.log('addArrayItem called with path:', path);
+
     setEditedAgreement(prev => {
-      console.log('Previous editedAgreement:', prev);
+
       const pathArray = path.split('.');
       
       // Clone the path we're about to modify
@@ -566,7 +563,7 @@ const EditAgreementPage = () => {
         current[lastKey].push('');
       }
       
-      console.log('New agreement after adding item:', newAgreement);
+
       return newAgreement;
     });
   };
@@ -617,6 +614,105 @@ const EditAgreementPage = () => {
     setDeleteArrayItem({ path: '', index: -1, label: '' });
   };
 
+  // Helper function to format values for display
+  const formatValueForDisplay = (value) => {
+    if (value === null || value === undefined) {
+      return 'empty';
+    }
+    // Handle empty strings
+    if (typeof value === 'string' && value.trim() === '') {
+      return 'empty';
+    }
+    if (typeof value === 'boolean') {
+      return value.toString();
+    }
+    if (Array.isArray(value)) {
+      if (value.length === 0) {
+        return 'empty array';
+      }
+      return `[${value.join(', ')}]`;
+    }
+    if (typeof value === 'object') {
+      const keys = Object.keys(value);
+      if (keys.length === 0) {
+        return 'empty object';
+      }
+      return `{${keys.join(', ')}}`;
+    }
+    if (typeof value === 'string' && value.length > 50) {
+      return `"${value.substring(0, 47)}..."`;
+    }
+    return value.toString();
+  };
+
+  // Function to generate version history entry
+  const generateVersionHistoryEntry = (originalAgreement, updatedAgreement, changeType = 'update') => {
+    const fieldChanges = [];
+    
+    // Compare fields and identify changes
+    const fieldsToCheck = [
+      'name', 'description', 'status', 'specificationMaintainer', 'parentSystem',
+      'dataProducer', 'dataValidator', 'dataConsumer', 'modelShortName',
+      'contractVersion', 'deliveredVersion', 'deliveryFrequency', 'startDate', 'endDate',
+      'fileFormat', 'restricted', 'network', 'sensitivityLevel', 'location', 'todo'
+    ];
+    
+    // Normalize values for comparison (treat null, undefined, and empty string as equivalent)
+    const normalizeValue = (val) => {
+      if (val === null || val === undefined || val === '') {
+        return null;
+      }
+      return val;
+    };
+    
+    // Check owner separately since it's an array handled by TeamSelector
+    const originalOwner = normalizeValue(originalAgreement.owner?.[0]);
+    const updatedOwner = normalizeValue(updatedAgreement.owner?.[0]);
+    if (originalOwner !== updatedOwner) {
+      fieldChanges.push({
+        field: 'owner',
+        oldValue: formatValueForDisplay(originalAgreement.owner?.[0]),
+        newValue: formatValueForDisplay(updatedAgreement.owner?.[0])
+      });
+    }
+    
+    fieldsToCheck.forEach(field => {
+      const originalValue = originalAgreement[field];
+      const updatedValue = updatedAgreement[field];
+      
+      // Compare values (handle arrays and objects)
+      if (JSON.stringify(originalValue) !== JSON.stringify(updatedValue)) {
+        fieldChanges.push({
+          field: field,
+          oldValue: formatValueForDisplay(originalValue),
+          newValue: formatValueForDisplay(updatedValue)
+        });
+      }
+    });
+    
+    // Generate change description
+    let changeDescription = '';
+    if (changeType === 'create') {
+      changeDescription = 'Agreement created';
+    } else if (fieldChanges.length === 0) {
+      changeDescription = 'No changes detected';
+    } else if (fieldChanges.length === 1) {
+      changeDescription = `Updated ${fieldChanges[0].field}`;
+    } else if (fieldChanges.length <= 3) {
+      changeDescription = `Updated ${fieldChanges.map(f => f.field).join(', ')}`;
+    } else {
+      changeDescription = `Updated ${fieldChanges.length} fields`;
+    }
+    
+    return {
+      version: updatedAgreement.contractVersion || updatedAgreement.deliveredVersion || '1.0.0',
+      timestamp: new Date().toISOString(),
+      updatedBy: user?.username || user?.full_name || 'Unknown User',
+      changeDescription,
+      fieldChanges
+    };
+  };
+
   const handleSave = async () => {
     if (!editedAgreement.name || !editedAgreement.description) {
       setSnackbar({
@@ -641,11 +737,27 @@ const EditAgreementPage = () => {
       // Update the lastUpdated field to current timestamp
       const currentTimestamp = new Date().toISOString().slice(0, 19).replace('T', ' '); // YYYY-MM-DD HH:MM:SS format
       
+      // Generate version history entry for changes
+      let versionHistoryEntry = null;
+      if (!isNewAgreement && agreement) {
+        versionHistoryEntry = generateVersionHistoryEntry(agreement, editedAgreement);
+      } else if (isNewAgreement) {
+        versionHistoryEntry = generateVersionHistoryEntry({}, editedAgreement, 'create');
+      }
+      
       // Create updated agreement with new timestamp
       const updatedAgreement = {
         ...editedAgreement,
         lastUpdated: currentTimestamp
       };
+      
+      // Add version history entry if there are changes
+      if (versionHistoryEntry && versionHistoryEntry.fieldChanges.length > 0) {
+        updatedAgreement.versionHistory = [
+          ...(editedAgreement.versionHistory || []),
+          versionHistoryEntry
+        ];
+      }
       
       if (isNewAgreement) {
         // Create new agreement
@@ -683,7 +795,7 @@ const EditAgreementPage = () => {
         }, 1500);
       }
     } catch (error) {
-      console.error('Error saving agreement:', error);
+
       setSnackbar({
         open: true,
         message: `Failed to save agreement: ${error.message}`,
@@ -703,19 +815,19 @@ const EditAgreementPage = () => {
   };
 
   const handleBackArrow = () => {
-    console.log('Back arrow clicked');
-    console.log('  isNewAgreement:', isNewAgreement);
-    console.log('  finalAgreementId:', finalAgreementId);
-    console.log('  agreement:', agreement);
+
+
+
+
     
     if (isNewAgreement) {
-      console.log('Navigating to agreements list');
+
       navigate('/agreements', { replace: true });
     } else if (finalAgreementId && finalAgreementId !== 'undefined' && finalAgreementId !== 'null') {
-      console.log('Navigating to view page:', `/agreements/${finalAgreementId}`);
+
       navigate(`/agreements/${finalAgreementId}`, { replace: true });
     } else {
-      console.log('No valid ID, navigating to agreements list');
+
       navigate('/agreements', { replace: true });
     }
   };
@@ -736,7 +848,7 @@ const EditAgreementPage = () => {
         navigate('/agreements');
       }, 1500);
     } catch (error) {
-      console.error('Error deleting agreement:', error);
+
       setSnackbar({
         open: true,
         message: `Failed to delete agreement: ${error.message}`,
@@ -746,8 +858,8 @@ const EditAgreementPage = () => {
   };
 
   const renderLocationField = (path, value, label) => {
-    console.log('renderLocationField called with:', { path, value, label, valueType: typeof value, isArray: Array.isArray(value) });
-    console.log('Raw value:', value);
+
+
     
     // Ensure we always have a valid location structure
     let locationArray = value;
@@ -793,9 +905,9 @@ const EditAgreementPage = () => {
       normalizedArray.push({ bucket: '', description: '' });
     }
     
-    console.log('Final normalizedArray:', normalizedArray);
-    console.log('Location array type:', typeof normalizedArray);
-    console.log('Location array isArray:', Array.isArray(normalizedArray));
+
+
+
 
     return (
       <Box key={path} sx={{ mb: 2 }}>
@@ -818,7 +930,7 @@ const EditAgreementPage = () => {
         {normalizedArray.map((item, index) => {
           // Safety check: ensure item is a valid object
           if (!item || typeof item !== 'object') {
-            console.error('Invalid location item:', item);
+
             return null;
           }
           
@@ -886,7 +998,7 @@ const EditAgreementPage = () => {
   
 
   const renderDataConsumerField = (path, value, label) => {
-    console.log('renderDataConsumerField called with:', { path, value, label });
+
 
     const handleConsumersChange = (newConsumers) => {
       setEditedAgreement(prev => {
@@ -923,7 +1035,7 @@ const EditAgreementPage = () => {
   };
 
   const renderDataProducerField = (path, value, label) => {
-    console.log('renderDataProducerField called with:', { path, value, label });
+
 
     const handleProducersChange = (newProducers) => {
       setEditedAgreement(prev => {
@@ -960,7 +1072,7 @@ const EditAgreementPage = () => {
   };
 
   const renderNetworkField = (path, value, label) => {
-    console.log('renderNetworkField called with:', { path, value, label });
+
 
     const networkOptions = [
       { value: 'internet', label: 'Internet', color: '#4caf50' },
@@ -1021,7 +1133,7 @@ const EditAgreementPage = () => {
     };
 
     const addNetwork = () => {
-      console.log('Adding network, current editedAgreement:', editedAgreement);
+
       setEditedAgreement(prev => {
         const newAgreement = { ...prev };
         const pathArray = path.split('.');
@@ -1041,9 +1153,9 @@ const EditAgreementPage = () => {
         
         // Create a new array with the additional item
         current[lastKey] = [...current[lastKey], 'internet'];
-        console.log('Added internet network, new array:', current[lastKey]);
+
         
-        console.log('New agreement after adding network:', newAgreement);
+
         return newAgreement;
       });
     };
@@ -1165,7 +1277,7 @@ const EditAgreementPage = () => {
   };
 
   const renderSensitivityLevelField = (path, value, label) => {
-    console.log('renderSensitivityLevelField called with:', { path, value, label });
+
 
     const sensitivityOptions = [
       { value: 'public', label: 'Public', color: '#4caf50' },
@@ -1228,7 +1340,7 @@ const EditAgreementPage = () => {
     };
 
     const addSensitivity = () => {
-      console.log('Adding sensitivity level, current editedAgreement:', editedAgreement);
+
       setEditedAgreement(prev => {
         const newAgreement = { ...prev };
         const pathArray = path.split('.');
@@ -1248,9 +1360,9 @@ const EditAgreementPage = () => {
         
         // Create a new array with the additional item
         current[lastKey] = [...current[lastKey], 'public'];
-        console.log('Added public sensitivity level, new array:', current[lastKey]);
+
         
-        console.log('New agreement after adding sensitivity level:', newAgreement);
+
         return newAgreement;
       });
     };
@@ -1486,7 +1598,7 @@ const EditAgreementPage = () => {
     }
 
     if (typeof value === 'object' && value !== null) {
-      console.log('renderField handling object:', { path, value, label });
+
       
       // Special handling for changelog field
       if (path === 'changelog') {
@@ -1507,18 +1619,18 @@ const EditAgreementPage = () => {
       // Special styling for todo field
       const isSpecialField = path === 'todo';
       
-      console.log('Fallback object handling for:', path, 'with value:', value);
+
       
       // Skip location fields - they should be handled by renderLocationField
       if (path === 'location' || path.startsWith('location.')) {
-        console.log('Skipping location field in fallback handling:', path);
-        console.log('This should not happen - location fields should be caught earlier!');
+
+
         return null;
       }
       
       // Additional safety check: if this is the location object itself, don't process it
       if (path === 'location') {
-        console.log('Location object detected in object renderer, skipping to prevent recursion');
+
         return null;
       }
       
@@ -1529,14 +1641,14 @@ const EditAgreementPage = () => {
           </Typography>
           <Box sx={{ pl: 2 }}>
             {Object.entries(value).map(([key, val]) => {
-              console.log('Processing object entry:', { key, val, path: `${path}.${key}` });
+
               // Skip the date field for todo - it will be auto-updated
               if (path === 'todo' && key === 'date') {
                 return null;
               }
               // Skip location-related fields completely
               if (path === 'location' || path.startsWith('location.') || key === 'location') {
-                console.log('Skipping location field in object entry processing:', `${path}.${key}`);
+
                 return null;
               }
               return (
@@ -1872,7 +1984,14 @@ const EditAgreementPage = () => {
             {renderField('dataValidator', editedAgreement.dataValidator, 'Data Validator')}
           </Grid>
           <Grid item xs={12} md={6}>
-            {renderField('modelShortName', editedAgreement.modelShortName, 'Model Short Name')}
+            <ModelSelector
+              selectedModel={editedAgreement.modelShortName}
+              onModelChange={(value) => handleFieldChange('modelShortName', value)}
+              currentTheme={currentTheme}
+              label="Model Short Name"
+              models={dataModels}
+              loading={modelsLoading}
+            />
           </Grid>
           <Grid item xs={12} md={6}>
             {renderField('fileFormat', editedAgreement.fileFormat, 'File Format')}
@@ -1960,40 +2079,52 @@ const EditAgreementPage = () => {
                   </Box>
                 )}
               >
-                {dataPolicies.map((policy) => (
-                  <MenuItem key={policy.id} value={policy.id}>
-                    <Box>
-                      <Typography sx={{ color: currentTheme.text, fontWeight: 500 }}>
-                        {policy.name}
+                {dataPolicies
+                  .filter(policy => !selectedPolicies.includes(policy.id))
+                  .length === 0 ? (
+                    <MenuItem disabled>
+                      <Typography sx={{ color: currentTheme.textSecondary, fontStyle: 'italic' }}>
+                        All available policies have been selected
                       </Typography>
-                      <Typography sx={{ color: currentTheme.textSecondary, fontSize: '0.875rem' }}>
-                        {policy.description}
-                      </Typography>
-                      <Box sx={{ display: 'flex', gap: 1, mt: 0.5 }}>
-                        <Chip
-                          label={policy.status}
-                          size="small"
-                          sx={{
-                            bgcolor: policy.status === 'active' ? alpha('#4caf50', 0.1) : alpha('#ff9800', 0.1),
-                            color: policy.status === 'active' ? '#4caf50' : '#ff9800',
-                            fontSize: '0.7rem',
-                            height: '20px'
-                          }}
-                        />
-                        <Chip
-                          label={policy.type}
-                          size="small"
-                          sx={{
-                            bgcolor: currentTheme.primary + '20',
-                            color: currentTheme.primary,
-                            fontSize: '0.7rem',
-                            height: '20px'
-                          }}
-                        />
+                    </MenuItem>
+                  ) : (
+                    dataPolicies
+                      .filter(policy => !selectedPolicies.includes(policy.id))
+                      .map((policy) => (
+                    <MenuItem key={policy.id} value={policy.id}>
+                      <Box>
+                        <Typography sx={{ color: currentTheme.text, fontWeight: 500 }}>
+                          {policy.name}
+                        </Typography>
+                        <Typography sx={{ color: currentTheme.textSecondary, fontSize: '0.875rem' }}>
+                          {policy.description}
+                        </Typography>
+                        <Box sx={{ display: 'flex', gap: 1, mt: 0.5 }}>
+                          <Chip
+                            label={policy.status}
+                            size="small"
+                            sx={{
+                              bgcolor: policy.status === 'active' ? alpha('#4caf50', 0.1) : alpha('#ff9800', 0.1),
+                              color: policy.status === 'active' ? '#4caf50' : '#ff9800',
+                              fontSize: '0.7rem',
+                              height: '20px'
+                            }}
+                          />
+                          <Chip
+                            label={policy.type}
+                            size="small"
+                            sx={{
+                              bgcolor: currentTheme.primary + '20',
+                              color: currentTheme.primary,
+                              fontSize: '0.7rem',
+                              height: '20px'
+                            }}
+                          />
+                        </Box>
                       </Box>
-                    </Box>
-                  </MenuItem>
-                ))}
+                    </MenuItem>
+                      ))
+                  )}
               </Select>
             </FormControl>
           </Grid>
@@ -2005,10 +2136,10 @@ const EditAgreementPage = () => {
           </Grid>
           <Grid item xs={12}>
             {(() => {
-              console.log('Rendering location field in form, value:', editedAgreement.location);
-              console.log('Location value type:', typeof editedAgreement.location);
-              console.log('Location value isArray:', Array.isArray(editedAgreement.location));
-              console.log('Location value keys:', editedAgreement.location ? Object.keys(editedAgreement.location) : 'null');
+
+
+
+
               
               // Direct rendering of location field to avoid complex renderField logic
               return renderLocationField('location', editedAgreement.location, 'Location');

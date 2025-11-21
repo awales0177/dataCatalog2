@@ -60,23 +60,13 @@ const DataModelDetailPage = ({ currentTheme }) => {
   React.useEffect(() => {
     const loadModelAndAgreements = async () => {
       try {
-        console.log('Loading model and agreements for:', shortName);
-        console.log('Fetching model data...');
         const modelData = await fetchData('models', { forceRefresh: true });
-        console.log('Model data received:', modelData);
-        
-        console.log('Fetching agreements data...');
         const agreementsData = await fetchAgreementsByModel(shortName, { forceRefresh: true });
-        console.log('Agreements data received:', agreementsData);
-        
-        console.log('Fetching applications data...');
         const applicationsData = await fetchData('applications', { forceRefresh: true });
-        console.log('Applications data received:', applicationsData);
         setApplications(applicationsData.applications || []);
         
         const foundModel = modelData.models.find(m => m.shortName.toLowerCase() === shortName.toLowerCase());
         if (foundModel) {
-          console.log('Found model:', foundModel);
           setModel(foundModel);
           setAgreements(agreementsData.agreements || []);
           
@@ -90,22 +80,9 @@ const DataModelDetailPage = ({ currentTheme }) => {
             }
           }
         } else {
-          console.error('Model not found:', {
-            shortName,
-            availableModels: modelData.models.map(m => m.shortName)
-          });
           setError('Model not found');
         }
       } catch (error) {
-        console.error('Error fetching model and agreements:', error);
-        console.error('Error details:', {
-          shortName,
-          error: {
-            name: error.name,
-            message: error.message,
-            stack: error.stack
-          }
-        });
         setError('Failed to load model and agreements');
       } finally {
         setLoading(false);
@@ -978,7 +955,7 @@ const DataModelDetailPage = ({ currentTheme }) => {
                                     borderRadius: 0.5,
                                     fontSize: '0.8rem'
                                   }}>
-                                    {change.oldValue || 'empty'}
+                                    {change.oldValue ?? 'empty'}
                                   </Typography>
                                 </Box>
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -994,7 +971,7 @@ const DataModelDetailPage = ({ currentTheme }) => {
                                     borderRadius: 0.5,
                                     fontSize: '0.8rem'
                                   }}>
-                                    {change.newValue || 'empty'}
+                                    {change.newValue ?? 'empty'}
                                   </Typography>
                                 </Box>
                               </Box>

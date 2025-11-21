@@ -298,7 +298,7 @@ const SplashPage = () => {
             }}
           />
           <Typography variant="h4" sx={{ mb: 1, color: currentTheme.text }}>
-            Welcome to Data Catalog
+            Welcome to DH-TEST
           </Typography>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mb: 2 }}>
             <GrassIcon sx={{ color: currentTheme.primary, fontSize: 28 }} />

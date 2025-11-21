@@ -19,6 +19,10 @@ import {
   Tabs,
   Tab,
   Fab,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -40,6 +44,7 @@ const ToolkitPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTab, setSelectedTab] = useState(0);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
+  const [addMenuAnchor, setAddMenuAnchor] = useState(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -47,7 +52,7 @@ const ToolkitPage = () => {
         const data = await fetchData('toolkit');
         setToolkitData(data);
       } catch (error) {
-        console.error('Error loading toolkit data:', error);
+
         setSnackbar({ open: true, message: 'Failed to load toolkit data', severity: 'error' });
       } finally {
         setLoading(false);
@@ -304,17 +309,18 @@ const ToolkitPage = () => {
   const handleViewComponent = (component, type) => {
     if (type === 'functions') {
       navigate(`/toolkit/function/${component.id}`);
+    } else if (type === 'containers') {
+      navigate(`/toolkit/container/${component.id}`);
+    } else if (type === 'infrastructure') {
+      navigate(`/toolkit/infrastructure/${component.id}`);
     } else {
-      // TODO: Implement detailed view for containers and infrastructure
-      console.log('View component:', component, type);
       setSnackbar({ open: true, message: `Viewing ${component.name} details`, severity: 'info' });
     }
   };
 
   // Handle component download - removed as cards are now clickable for viewing
   // const handleDownloadComponent = (component, type) => {
-  //   // TODO: Implement download functionality
-  //   console.log('Download component:', component, type);
+
   //   setSnackbar({ open: true, message: 'Download started!', severity: 'success' });
   // };
 
@@ -448,25 +454,103 @@ const ToolkitPage = () => {
         ))}
       </Grid>
 
-      {/* Floating Action Button for creating new function */}
-      <Fab
-        color="primary"
-        aria-label="add new function"
-        onClick={() => navigate('/toolkit/function/new')}
-        sx={{
-          position: 'fixed',
-          bottom: 24,
-          right: 24,
-          bgcolor: currentTheme.primary,
-          color: currentTheme.background,
-          '&:hover': {
-            bgcolor: currentTheme.primaryDark || currentTheme.primary,
-          },
-          zIndex: 1000,
-        }}
-      >
-        <AddIcon />
-      </Fab>
+      {/* Floating Action Button with menu for creating new items */}
+      <>
+        <Fab
+          color="primary"
+          aria-label="add new item"
+          onClick={(e) => setAddMenuAnchor(e.currentTarget)}
+          sx={{
+            position: 'fixed',
+            bottom: 24,
+            right: 24,
+            bgcolor: currentTheme.primary,
+            color: currentTheme.background,
+            '&:hover': {
+              bgcolor: currentTheme.primaryDark || currentTheme.primary,
+            },
+            zIndex: 1000,
+          }}
+        >
+          <AddIcon />
+        </Fab>
+        
+        <Menu
+          anchorEl={addMenuAnchor}
+          open={Boolean(addMenuAnchor)}
+          onClose={() => setAddMenuAnchor(null)}
+          anchorOrigin={{
+            vertical: 'top',
+            horizontal: 'left',
+          }}
+          transformOrigin={{
+            vertical: 'bottom',
+            horizontal: 'right',
+          }}
+          PaperProps={{
+            sx: {
+              bgcolor: currentTheme.card,
+              border: `1px solid ${currentTheme.border}`,
+              mt: -1,
+              minWidth: 200,
+            }
+          }}
+        >
+          <MenuItem
+            onClick={() => {
+              setAddMenuAnchor(null);
+              navigate('/toolkit/function/new');
+            }}
+            sx={{
+              color: currentTheme.text,
+              '&:hover': {
+                bgcolor: alpha(currentTheme.primary, 0.1),
+              }
+            }}
+          >
+            <ListItemIcon>
+              <CodeIcon sx={{ color: currentTheme.primary }} />
+            </ListItemIcon>
+            <ListItemText primary="Add Function" />
+          </MenuItem>
+          
+          <MenuItem
+            onClick={() => {
+              setAddMenuAnchor(null);
+              navigate('/toolkit/container/new');
+            }}
+            sx={{
+              color: currentTheme.text,
+              '&:hover': {
+                bgcolor: alpha(currentTheme.primary, 0.1),
+              }
+            }}
+          >
+            <ListItemIcon>
+              <StorageIcon sx={{ color: currentTheme.primary }} />
+            </ListItemIcon>
+            <ListItemText primary="Add Container" />
+          </MenuItem>
+          
+          <MenuItem
+            onClick={() => {
+              setAddMenuAnchor(null);
+              navigate('/toolkit/infrastructure/new');
+            }}
+            sx={{
+              color: currentTheme.text,
+              '&:hover': {
+                bgcolor: alpha(currentTheme.primary, 0.1),
+              }
+            }}
+          >
+            <ListItemIcon>
+              <CloudIcon sx={{ color: currentTheme.primary }} />
+            </ListItemIcon>
+            <ListItemText primary="Add Infrastructure" />
+          </MenuItem>
+        </Menu>
+      </>
 
       {/* Snackbar */}
       {snackbar.open && (

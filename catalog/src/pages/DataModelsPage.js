@@ -46,7 +46,7 @@ const DataModelsPage = () => {
       setError(null);
     } catch (err) {
       setError('Failed to load data models');
-      console.error('Error loading data models:', err);
+      // Handle error silently
     } finally {
       setLoading(false);
     }

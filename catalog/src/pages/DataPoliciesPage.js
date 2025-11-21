@@ -59,7 +59,7 @@ const DataPoliciesPage = () => {
         setError(null);
       } catch (err) {
         setError('Failed to load policies');
-        console.error('Error loading policies:', err);
+        // Handle error silently
       } finally {
         setLoading(false);
       }

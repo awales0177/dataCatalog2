@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { fetchTheme, fetchItemCount } from '../services/api';
 import { menuItems } from '../constants/navigation';
@@ -18,14 +18,13 @@ export const useAppState = () => {
   const [menuData, setMenuData] = useState({ items: menuItems });
   
   // Safety function to ensure menu data is never empty
-  const safeSetMenuData = (newData) => {
+  const safeSetMenuData = useCallback((newData) => {
     if (newData && newData.items && newData.items.length > 0) {
       setMenuData(newData);
     } else {
-      console.warn('Attempted to set empty menu data, using fallback');
       setMenuData({ items: menuItems });
     }
-  };
+  }, []);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [countsLoaded, setCountsLoaded] = useState(false);
@@ -34,7 +33,7 @@ export const useAppState = () => {
   // Update page title based on current route
   useEffect(() => {
     const path = location.pathname;
-    let title = 'Data Catalog';
+    let title = 'DH-TEST';
     
     if (path === '/') {
       title = 'Home';
@@ -73,7 +72,6 @@ export const useAppState = () => {
         setThemeData(theme);
         safeSetMenuData({ items: menuItems }); // Use local menuItems directly
       } catch (error) {
-        console.error('Error loading initial data:', error);
         setError('Failed to load initial data');
         // Set default values if API is down
         setThemeData({ 
@@ -101,14 +99,13 @@ export const useAppState = () => {
     };
 
     loadData();
-  }, []);
+  }, [safeSetMenuData]);
 
   // Update the menu count fetching
   useEffect(() => {
     const loadMenuCounts = async () => {
       if (countsLoaded) return;
       try {
-        console.log('Loading menu counts...');
         const itemsWithCounts = await Promise.allSettled(
           menuItems.map(async (item) => {
             if (item.id === 'home') return item;
@@ -119,7 +116,6 @@ export const useAppState = () => {
               const count = await fetchItemCount(endpoint);
               return { ...item, count };
             } catch (error) {
-              console.error(`Error fetching count for ${item.name}:`, error);
               // Return item without count on error, don't break the entire menu
               return { ...item, count: undefined };
             }
@@ -131,18 +127,15 @@ export const useAppState = () => {
           if (result.status === 'fulfilled') {
             return result.value;
           } else {
-            console.error(`Failed to load count for ${menuItems[index].name}:`, result.reason);
             // Return the original item without count on failure
             return { ...menuItems[index], count: undefined };
           }
         });
         
-        console.log('Menu items with counts loaded:', processedItems);
         safeSetMenuData({ items: processedItems });
         setCountsLoaded(true);
         setError(null);
       } catch (err) {
-        console.error('Critical error loading menu counts:', err);
         // Fallback to original menu items without counts
         safeSetMenuData({ items: menuItems });
         setCountsLoaded(true);
@@ -150,13 +143,9 @@ export const useAppState = () => {
       }
     };
     loadMenuCounts();
-  }, [countsLoaded]);
+  }, [countsLoaded, safeSetMenuData]);
 
-  useEffect(() => {
-    fetchDataModels();
-  }, []);
-
-  const fetchDataModels = async () => {
+  const fetchDataModels = useCallback(async () => {
     try {
       const response = await fetch('/api/data/models');
       if (!response.ok) {
@@ -169,23 +158,31 @@ export const useAppState = () => {
       setError(err.message);
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchDataModels();
+  }, [fetchDataModels]);
 
   // Add effect to handle sidebar collapse - only expand on main listing pages
   useEffect(() => {
     const pathSegments = location.pathname.split('/').filter(segment => segment !== '');
-    console.log('Current path segments:', pathSegments);
     
-    // Only expand sidebar on main listing pages (exactly 1 level deep)
-    // Collapse on all other pages (detail views, edit modes, etc.)
-    const isMainListingPage = pathSegments.length === 1;
-    
-    if (isMainListingPage) {
-      console.log('Expanding sidebar - main listing page');
-      setIsDrawerCollapsed(false);
-    } else {
-      console.log('Collapsing sidebar - detail page or sub-page detected');
+    // Collapse if we're exactly 2 levels deep (e.g., /models/CUST)
+    // OR if we're in edit mode (e.g., /models/CUST/edit, /applications/edit/123, /policies/edit/456)
+    // OR if we're in detail view (e.g., /toolkit/function/123, /toolkit/container/123, /toolkit/infrastructure/123, /reference/456)
+    if (pathSegments.length === 2 || 
+        (pathSegments.length === 3 && pathSegments[2] === 'edit') ||
+        (pathSegments.length === 3 && pathSegments[1] === 'edit') ||
+        (pathSegments.length === 3 && pathSegments[1] === 'function') ||
+        (pathSegments.length === 3 && pathSegments[1] === 'container') ||
+        (pathSegments.length === 3 && pathSegments[1] === 'infrastructure') ||
+        (pathSegments.length === 4 && pathSegments[1] === 'container' && pathSegments[3] === 'edit') ||
+        (pathSegments.length === 4 && pathSegments[1] === 'infrastructure' && pathSegments[3] === 'edit') ||
+        (pathSegments.length === 3 && pathSegments[1] === 'reference')) {
       setIsDrawerCollapsed(true);
+    } else {
+      setIsDrawerCollapsed(false);
     }
   }, [location.pathname]);
 

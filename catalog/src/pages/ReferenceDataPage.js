@@ -47,7 +47,6 @@ const ReferenceDataPage = () => {
         setError(null);
       } catch (err) {
         setError('Failed to load reference data');
-        console.error('Error loading reference data:', err);
       } finally {
         setLoading(false);
       }

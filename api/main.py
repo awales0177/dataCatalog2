@@ -218,7 +218,8 @@ JSON_FILES = {
     "reference": "reference.json",
     "toolkit": "toolkit.json",
     "policies": "dataPolicies.json",
-    "dataProducts": "dataProducts.json"
+    "dataProducts": "dataProducts.json",
+    "zones": "zones.json"
 }
 
 # Data type to key mapping for counting items
@@ -232,7 +233,8 @@ DATA_TYPE_KEYS = {
     "reference": "items",
     "toolkit": "toolkit",
     "policies": "policies",
-    "dataProducts": "dataProducts"
+    "dataProducts": "dataProducts",
+    "zones": "zones"
 }
 
 def fetch_from_github(file_name: str) -> Dict:
@@ -402,6 +404,78 @@ def search_suggestions(
     except Exception as e:
         logger.error(f"Error getting search suggestions: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error getting suggestions: {str(e)}")
+
+@app.get("/api/zones")
+def get_zones():
+    """
+    Get all zones with their associated domains.
+    Zones are read from zones.json and domains are grouped by their zone field.
+    """
+    try:
+        start_time = perf_counter()
+        logger.info("Request for zones - reading from zones.json and grouping domains")
+        
+        # Get zones definitions from zones.json
+        zones_data = get_cached_data("zones") if not PASSTHROUGH_MODE else fetch_from_github("zones")
+        zones_definitions = zones_data.get("zones", [])
+        
+        # Get domains data
+        domains_data = get_cached_data("domains") if not PASSTHROUGH_MODE else fetch_from_github("domains")
+        domains = domains_data.get("domains", [])
+        
+        # Create a map of zone name to zone definition
+        zones_map = {zone["name"]: zone.copy() for zone in zones_definitions}
+        
+        # Initialize domains array for each zone
+        for zone_name in zones_map:
+            zones_map[zone_name]["domains"] = []
+        
+        # Group domains by zone
+        unzoned_domains = []
+        
+        for domain in domains:
+            zone_name = domain.get("zone") or domain.get("zoneName")
+            
+            if not zone_name or zone_name == "Unzoned":
+                unzoned_domains.append(domain)
+            elif zone_name in zones_map:
+                zones_map[zone_name]["domains"].append(domain)
+            else:
+                # Zone not found in definitions, add to unzoned
+                logger.warning(f"Domain '{domain.get('name')}' references zone '{zone_name}' which is not defined in zones.json")
+                unzoned_domains.append(domain)
+        
+        # Convert map to list - this includes ALL zones from zones.json, even if they have no domains
+        zones = list(zones_map.values())
+        
+        # Log zone information for debugging
+        logger.info(f"Loaded {len(zones_definitions)} zone definitions from zones.json")
+        logger.info(f"Found {len(zones)} zones with definitions")
+        logger.info(f"Unzoned domains: {len(unzoned_domains)}")
+        
+        # Add unzoned domains as a zone if there are any
+        if unzoned_domains:
+            zones.append({
+                "id": "unzoned",
+                "name": "Unzoned",
+                "description": "Domains not assigned to a zone",
+                "owner": "System",
+                "lastUpdated": datetime.now().strftime("%Y-%m-%d"),
+                "domains": unzoned_domains
+            })
+        
+        # Sort zones by name
+        zones.sort(key=lambda x: x["name"])
+        
+        log_performance("get_zones", start_time)
+        
+        return {
+            "zones": zones,
+            "total": len(zones)
+        }
+    except Exception as e:
+        logger.error(f"Error getting zones: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error getting zones: {str(e)}")
 
 @app.get("/api/{file_name}")
 def get_json_file(file_name: str):

@@ -32,7 +32,7 @@ const ReferenceDataSelector = ({
         const response = await fetchData('reference');
         setReferenceData(response.items || []);
       } catch (error) {
-        console.error('Error loading reference data:', error);
+        // Handle error silently or show user notification
       }
     };
 

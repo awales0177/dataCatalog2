@@ -8,7 +8,9 @@
       "status": "active",
       "priority": "high",
       "category": "data-governance",
-      "owner": "Data Governance Team",
+      "owner": [
+        "Data Governance Team"
+      ],
       "stakeholders": [
         "Legal",
         "Compliance",
@@ -49,7 +51,8 @@
         "compliance",
         "customer-data"
       ],
-      "lastUpdated": "2024-01-15 10:30:00"
+      "lastUpdated": "2025-11-12 19:23:11",
+      "externalLink": "https://www.google.com"
     },
     {
       "id": "quality_policy_001",

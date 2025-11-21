@@ -37,6 +37,20 @@ class SearchService:
                     if isinstance(data, list):
                         return data
                     elif isinstance(data, dict):
+                        # Special handling for toolkit.json which has nested structure
+                        if filename == 'toolkit.json' and 'toolkit' in data:
+                            toolkit_data = data['toolkit']
+                            all_items = []
+                            # Combine functions, containers, and infrastructure
+                            for category in ['functions', 'containers', 'infrastructure']:
+                                if category in toolkit_data and isinstance(toolkit_data[category], list):
+                                    # Add type field to each item for routing
+                                    for item in toolkit_data[category]:
+                                        item_with_type = item.copy()
+                                        item_with_type['_toolkit_type'] = category
+                                        all_items.append(item_with_type)
+                            return all_items
+                        
                         # Look for common array keys
                         for key in ['models', 'dataAgreements', 'domains', 'applications', 'reference', 'toolkit', 'policies', 'lexicon', 'agreements', 'dataProducts']:
                             if key in data and isinstance(data[key], list):

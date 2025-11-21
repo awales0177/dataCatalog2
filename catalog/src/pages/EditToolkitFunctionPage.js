@@ -91,7 +91,7 @@ const EditToolkitFunctionPage = () => {
         }
       } catch (err) {
         setError('Failed to load function data');
-        console.error('Error loading function data:', err);
+        // Handle error silently
       } finally {
         setLoading(false);
       }

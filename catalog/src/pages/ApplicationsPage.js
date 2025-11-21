@@ -71,7 +71,7 @@ const ApplicationsPage = () => {
         setError(null);
       } catch (err) {
         setError('Failed to load data');
-        console.error('Error loading data:', err);
+        // Handle error silently
       } finally {
         setLoading(false);
       }

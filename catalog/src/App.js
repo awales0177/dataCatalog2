@@ -28,7 +28,11 @@ import EditAgreementPage from './pages/EditAgreementPage';
 import ReferenceDataDetailPage from './pages/ReferenceDataDetailPage';
 import ToolkitPage from './pages/ToolkitPage';
 import ToolkitFunctionDetailPage from './pages/ToolkitFunctionDetailPage';
+import ToolkitContainerDetailPage from './pages/ToolkitContainerDetailPage';
+import ToolkitInfrastructureDetailPage from './pages/ToolkitInfrastructureDetailPage';
 import EditToolkitFunctionPage from './pages/EditToolkitFunctionPage';
+import EditToolkitContainerPage from './pages/EditToolkitContainerPage';
+import EditToolkitInfrastructurePage from './pages/EditToolkitInfrastructurePage';
 import DataPoliciesPage from './pages/DataPoliciesPage';
 import EditDataPolicyPage from './pages/EditDataPolicyPage';
 import RolePage from './pages/RolePage';
@@ -264,6 +268,36 @@ function AppContent() {
             <Route path="/toolkit/function/:functionId" element={
               <ProtectedRoute>
                 <ToolkitFunctionDetailPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/toolkit/container/new" element={
+              <ProtectedRoute requiredRole="editor">
+                <EditToolkitContainerPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/toolkit/container/:containerId/edit" element={
+              <ProtectedRoute requiredRole="editor">
+                <EditToolkitContainerPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/toolkit/container/:containerId" element={
+              <ProtectedRoute>
+                <ToolkitContainerDetailPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/toolkit/infrastructure/new" element={
+              <ProtectedRoute requiredRole="editor">
+                <EditToolkitInfrastructurePage />
+              </ProtectedRoute>
+            } />
+            <Route path="/toolkit/infrastructure/:infrastructureId/edit" element={
+              <ProtectedRoute requiredRole="editor">
+                <EditToolkitInfrastructurePage />
+              </ProtectedRoute>
+            } />
+            <Route path="/toolkit/infrastructure/:infrastructureId" element={
+              <ProtectedRoute>
+                <ToolkitInfrastructureDetailPage />
               </ProtectedRoute>
             } />
             <Route path="/policies/create" element={
