@@ -38,6 +38,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ThemeContext } from '../contexts/ThemeContext';
+import { useAuth } from '../contexts/AuthContext';
 import { fetchData, createAgreement, updateAgreement, deleteAgreement } from '../services/api';
 import cacheService from '../services/cache';
 import ChangelogEditor from '../components/ChangelogEditor';
@@ -46,6 +47,7 @@ import ModelSelector from '../components/ModelSelector';
 
 const EditAgreementPage = () => {
   const { currentTheme } = useContext(ThemeContext);
+  const { user } = useAuth();
   const navigate = useNavigate();
   const { id } = useParams();
   
@@ -612,6 +614,105 @@ const EditAgreementPage = () => {
     setDeleteArrayItem({ path: '', index: -1, label: '' });
   };
 
+  // Helper function to format values for display
+  const formatValueForDisplay = (value) => {
+    if (value === null || value === undefined) {
+      return 'empty';
+    }
+    // Handle empty strings
+    if (typeof value === 'string' && value.trim() === '') {
+      return 'empty';
+    }
+    if (typeof value === 'boolean') {
+      return value.toString();
+    }
+    if (Array.isArray(value)) {
+      if (value.length === 0) {
+        return 'empty array';
+      }
+      return `[${value.join(', ')}]`;
+    }
+    if (typeof value === 'object') {
+      const keys = Object.keys(value);
+      if (keys.length === 0) {
+        return 'empty object';
+      }
+      return `{${keys.join(', ')}}`;
+    }
+    if (typeof value === 'string' && value.length > 50) {
+      return `"${value.substring(0, 47)}..."`;
+    }
+    return value.toString();
+  };
+
+  // Function to generate version history entry
+  const generateVersionHistoryEntry = (originalAgreement, updatedAgreement, changeType = 'update') => {
+    const fieldChanges = [];
+    
+    // Compare fields and identify changes
+    const fieldsToCheck = [
+      'name', 'description', 'status', 'specificationMaintainer', 'parentSystem',
+      'dataProducer', 'dataValidator', 'dataConsumer', 'modelShortName',
+      'contractVersion', 'deliveredVersion', 'deliveryFrequency', 'startDate', 'endDate',
+      'fileFormat', 'restricted', 'network', 'sensitivityLevel', 'location', 'todo'
+    ];
+    
+    // Normalize values for comparison (treat null, undefined, and empty string as equivalent)
+    const normalizeValue = (val) => {
+      if (val === null || val === undefined || val === '') {
+        return null;
+      }
+      return val;
+    };
+    
+    // Check owner separately since it's an array handled by TeamSelector
+    const originalOwner = normalizeValue(originalAgreement.owner?.[0]);
+    const updatedOwner = normalizeValue(updatedAgreement.owner?.[0]);
+    if (originalOwner !== updatedOwner) {
+      fieldChanges.push({
+        field: 'owner',
+        oldValue: formatValueForDisplay(originalAgreement.owner?.[0]),
+        newValue: formatValueForDisplay(updatedAgreement.owner?.[0])
+      });
+    }
+    
+    fieldsToCheck.forEach(field => {
+      const originalValue = originalAgreement[field];
+      const updatedValue = updatedAgreement[field];
+      
+      // Compare values (handle arrays and objects)
+      if (JSON.stringify(originalValue) !== JSON.stringify(updatedValue)) {
+        fieldChanges.push({
+          field: field,
+          oldValue: formatValueForDisplay(originalValue),
+          newValue: formatValueForDisplay(updatedValue)
+        });
+      }
+    });
+    
+    // Generate change description
+    let changeDescription = '';
+    if (changeType === 'create') {
+      changeDescription = 'Agreement created';
+    } else if (fieldChanges.length === 0) {
+      changeDescription = 'No changes detected';
+    } else if (fieldChanges.length === 1) {
+      changeDescription = `Updated ${fieldChanges[0].field}`;
+    } else if (fieldChanges.length <= 3) {
+      changeDescription = `Updated ${fieldChanges.map(f => f.field).join(', ')}`;
+    } else {
+      changeDescription = `Updated ${fieldChanges.length} fields`;
+    }
+    
+    return {
+      version: updatedAgreement.contractVersion || updatedAgreement.deliveredVersion || '1.0.0',
+      timestamp: new Date().toISOString(),
+      updatedBy: user?.username || user?.full_name || 'Unknown User',
+      changeDescription,
+      fieldChanges
+    };
+  };
+
   const handleSave = async () => {
     if (!editedAgreement.name || !editedAgreement.description) {
       setSnackbar({
@@ -636,11 +737,27 @@ const EditAgreementPage = () => {
       // Update the lastUpdated field to current timestamp
       const currentTimestamp = new Date().toISOString().slice(0, 19).replace('T', ' '); // YYYY-MM-DD HH:MM:SS format
       
+      // Generate version history entry for changes
+      let versionHistoryEntry = null;
+      if (!isNewAgreement && agreement) {
+        versionHistoryEntry = generateVersionHistoryEntry(agreement, editedAgreement);
+      } else if (isNewAgreement) {
+        versionHistoryEntry = generateVersionHistoryEntry({}, editedAgreement, 'create');
+      }
+      
       // Create updated agreement with new timestamp
       const updatedAgreement = {
         ...editedAgreement,
         lastUpdated: currentTimestamp
       };
+      
+      // Add version history entry if there are changes
+      if (versionHistoryEntry && versionHistoryEntry.fieldChanges.length > 0) {
+        updatedAgreement.versionHistory = [
+          ...(editedAgreement.versionHistory || []),
+          versionHistoryEntry
+        ];
+      }
       
       if (isNewAgreement) {
         // Create new agreement

@@ -176,7 +176,7 @@ const UserManagementPage = () => {
             User Management
           </Typography>
           <Typography variant="body1" sx={{ color: currentTheme.textSecondary }}>
-            Manage user access and permissions across the data catalog
+            Manage user access and permissions across DH-TEST
           </Typography>
         </Box>
         <Button

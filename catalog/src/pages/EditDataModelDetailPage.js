@@ -522,19 +522,31 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
     ];
     
     // Check owner and specMaintainer separately since they're handled by TeamSelector
-    if (originalModel.owner !== updatedModel.owner) {
+    // Normalize values for comparison (treat null, undefined, and empty string as equivalent)
+    const normalizeValue = (val) => {
+      if (val === null || val === undefined || val === '') {
+        return null;
+      }
+      return val;
+    };
+    
+    const originalOwner = normalizeValue(originalModel.owner);
+    const updatedOwner = normalizeValue(updatedModel.owner);
+    if (originalOwner !== updatedOwner) {
       fieldChanges.push({
         field: 'owner',
-        originalValue: originalModel.owner || '',
-        updatedValue: updatedModel.owner || ''
+        oldValue: formatValueForDisplay(originalModel.owner),
+        newValue: formatValueForDisplay(updatedModel.owner)
       });
     }
     
-    if (originalModel.specMaintainer !== updatedModel.specMaintainer) {
+    const originalSpecMaintainer = normalizeValue(originalModel.specMaintainer);
+    const updatedSpecMaintainer = normalizeValue(updatedModel.specMaintainer);
+    if (originalSpecMaintainer !== updatedSpecMaintainer) {
       fieldChanges.push({
         field: 'specMaintainer',
-        originalValue: originalModel.specMaintainer || '',
-        updatedValue: updatedModel.specMaintainer || ''
+        oldValue: formatValueForDisplay(originalModel.specMaintainer),
+        newValue: formatValueForDisplay(updatedModel.specMaintainer)
       });
     }
     
@@ -587,6 +599,10 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
   // Helper function to format values for display
   const formatValueForDisplay = (value) => {
     if (value === null || value === undefined) {
+      return 'empty';
+    }
+    // Handle empty strings
+    if (typeof value === 'string' && value.trim() === '') {
       return 'empty';
     }
     if (typeof value === 'boolean') {

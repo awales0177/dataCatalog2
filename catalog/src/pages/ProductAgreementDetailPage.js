@@ -31,6 +31,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   ArrowBack as ArrowBackIcon,
   History as HistoryIcon,
+  Timeline as TimelineIcon,
   ExpandMore as ExpandMoreIcon,
   ArrowForward as ArrowForwardIcon,
   VerifiedUser as VerifiedUserIcon,
@@ -1156,6 +1157,104 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
             </Box>
           </Paper>
 
+          {/* Changelog Section (Manual) */}
+          {agreement.changelog && agreement.changelog.length > 0 && (
+            <Paper 
+              elevation={0}
+              sx={{ 
+                p: 3,
+                bgcolor: currentTheme.card,
+                border: `1px solid ${currentTheme.border}`,
+                borderRadius: 2,
+                mb: 3,
+              }}
+            >
+              <Accordion 
+                defaultExpanded={false}
+                sx={{ 
+                  bgcolor: 'transparent',
+                  boxShadow: 'none',
+                  '&:before': {
+                    display: 'none',
+                  },
+                  '&.Mui-expanded': {
+                    margin: 0,
+                  }
+                }}
+              >
+                <AccordionSummary
+                  expandIcon={<ExpandMoreIcon sx={{ color: currentTheme.text }} />}
+                  sx={{
+                    px: 0,
+                    '& .MuiAccordionSummary-content': {
+                      margin: 0,
+                    },
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <HistoryIcon sx={{ color: currentTheme.primary }} />
+                    <Typography variant="h6" sx={{ color: currentTheme.text }}>
+                      Changelog
+                    </Typography>
+                  </Box>
+                </AccordionSummary>
+                <AccordionDetails sx={{ px: 0 }}>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    {agreement.changelog.map((entry, index) => (
+                      <Box 
+                        key={entry.version || index}
+                        sx={{ 
+                          p: 2, 
+                          border: `1px solid ${currentTheme.border}`, 
+                          borderRadius: 1,
+                          bgcolor: currentTheme.background
+                        }}
+                      >
+                        <Box sx={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          gap: 2,
+                          mb: 1
+                        }}>
+                          <Typography 
+                            variant="subtitle2" 
+                            sx={{ 
+                              color: currentTheme.primary,
+                              fontWeight: 600,
+                            }}
+                          >
+                            v{entry.version}
+                          </Typography>
+                          <Typography 
+                            variant="caption" 
+                            sx={{ 
+                              color: currentTheme.textSecondary,
+                            }}
+                          >
+                            {formatDate(entry.date)}
+                          </Typography>
+                        </Box>
+                        <Box component="ul" sx={{ m: 0, pl: 2 }}>
+                          {entry.changes.map((change, changeIndex) => (
+                            <Typography 
+                              key={changeIndex}
+                              component="li" 
+                              variant="body2" 
+                              sx={{ color: currentTheme.textSecondary, mb: 0.5 }}
+                            >
+                              {change}
+                            </Typography>
+                          ))}
+                        </Box>
+                      </Box>
+                    ))}
+                  </Box>
+                </AccordionDetails>
+              </Accordion>
+            </Paper>
+          )}
+
+          {/* Version History Section (Automatic) */}
           <Paper 
             elevation={0}
             sx={{ 
@@ -1165,10 +1264,8 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
               borderRadius: 2,
             }}
           >
-            <Typography variant="h6" sx={{ color: currentTheme.text, mb: 2 }}>
-              Version History
-            </Typography>
             <Accordion 
+              defaultExpanded={false}
               sx={{ 
                 bgcolor: 'transparent',
                 boxShadow: 'none',
@@ -1190,44 +1287,119 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
                 }}
               >
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <HistoryIcon sx={{ color: currentTheme.primary }} />
-                  <Typography variant="subtitle1" sx={{ color: currentTheme.text }}>
-                    Changelog
+                  <TimelineIcon sx={{ color: currentTheme.primary }} />
+                  <Typography variant="h6" sx={{ color: currentTheme.text }}>
+                    Version History
                   </Typography>
                 </Box>
               </AccordionSummary>
               <AccordionDetails sx={{ px: 0 }}>
-                {agreement.changelog.map((entry, index) => (
-                  <Box 
-                    key={entry.version}
-                    sx={{ 
-                      mb: index !== agreement.changelog.length - 1 ? 2 : 0,
-                      pb: index !== agreement.changelog.length - 1 ? 2 : 0,
-                      borderBottom: index !== agreement.changelog.length - 1 ? `1px solid ${currentTheme.border}` : 'none',
-                    }}
-                  >
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                      <Typography variant="subtitle2" sx={{ color: currentTheme.primary }}>
-                        v{entry.version}
-                      </Typography>
-                      <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
-                        {formatDate(entry.date)}
-                      </Typography>
-                    </Box>
-                    <Box component="ul" sx={{ m: 0, pl: 2 }}>
-                      {entry.changes.map((change, changeIndex) => (
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  {(agreement.versionHistory || []).map((entry, index) => (
+                    <Box key={index} sx={{ 
+                      p: 2, 
+                      border: `1px solid ${currentTheme.border}`, 
+                      borderRadius: 1,
+                      bgcolor: currentTheme.background
+                    }}>
+                      <Box sx={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        gap: 2,
+                        mb: 1
+                      }}>
                         <Typography 
-                          key={changeIndex}
-                          component="li" 
-                          variant="body2" 
-                          sx={{ color: currentTheme.textSecondary, mb: 0.5 }}
+                          variant="subtitle2" 
+                          sx={{ 
+                            color: currentTheme.primary,
+                            fontWeight: 600,
+                          }}
                         >
-                          {change}
+                          v{entry.version}
                         </Typography>
-                      ))}
+                        <Typography 
+                          variant="caption" 
+                          sx={{ 
+                            color: currentTheme.textSecondary,
+                          }}
+                        >
+                          {formatDate(entry.timestamp)}
+                        </Typography>
+                        <Typography 
+                          variant="caption" 
+                          sx={{ 
+                            color: currentTheme.textSecondary,
+                          }}
+                        >
+                          by {entry.updatedBy}
+                        </Typography>
+                      </Box>
+                      <Typography variant="body2" sx={{ color: currentTheme.text }}>
+                        {entry.changeDescription}
+                      </Typography>
+                      {entry.fieldChanges && entry.fieldChanges.length > 0 && (
+                        <Box sx={{ mt: 2 }}>
+                          <Typography variant="caption" sx={{ color: currentTheme.textSecondary, fontWeight: 600, mb: 1, display: 'block' }}>
+                            Field Changes:
+                          </Typography>
+                          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                            {entry.fieldChanges.map((change, changeIndex) => (
+                              <Box key={changeIndex} sx={{ 
+                                p: 1.5, 
+                                bgcolor: currentTheme.background, 
+                                borderRadius: 1, 
+                                border: `1px solid ${currentTheme.border}` 
+                              }}>
+                                <Typography variant="body2" sx={{ color: currentTheme.primary, fontWeight: 600, mb: 0.5 }}>
+                                  {change.field}
+                                </Typography>
+                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                    <Typography variant="caption" sx={{ color: currentTheme.textSecondary, minWidth: '60px' }}>
+                                      From:
+                                    </Typography>
+                                    <Typography variant="body2" sx={{ 
+                                      color: currentTheme.text, 
+                                      fontFamily: 'monospace',
+                                      bgcolor: alpha('#f44336', 0.1),
+                                      px: 1,
+                                      py: 0.5,
+                                      borderRadius: 0.5,
+                                      fontSize: '0.8rem'
+                                    }}>
+                                      {change.oldValue ?? 'empty'}
+                                    </Typography>
+                                  </Box>
+                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                    <Typography variant="caption" sx={{ color: currentTheme.textSecondary, minWidth: '60px' }}>
+                                      To:
+                                    </Typography>
+                                    <Typography variant="body2" sx={{ 
+                                      color: currentTheme.text, 
+                                      fontFamily: 'monospace',
+                                      bgcolor: alpha('#4caf50', 0.1),
+                                      px: 1,
+                                      py: 0.5,
+                                      borderRadius: 0.5,
+                                      fontSize: '0.8rem'
+                                    }}>
+                                      {change.newValue ?? 'empty'}
+                                    </Typography>
+                                  </Box>
+                                </Box>
+                              </Box>
+                            ))}
+                          </Box>
+                        </Box>
+                      )}
                     </Box>
-                  </Box>
-                ))}
+                  ))}
+                  {(!agreement.versionHistory || agreement.versionHistory.length === 0) && (
+                    <Typography variant="body2" sx={{ color: currentTheme.textSecondary, fontStyle: 'italic', textAlign: 'center', py: 2 }}>
+                      No version history available. Changes will be tracked starting from the next update.
+                    </Typography>
+                  )}
+                </Box>
               </AccordionDetails>
             </Accordion>
           </Paper>

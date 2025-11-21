@@ -5,6 +5,7 @@
       "name": "Customer",
       "description": "Customer-related data and processes",
       "owner": "Customer Data Team",
+      "zone": "Citizen Services",
       "lastUpdated": "2024-03-15",
       "subdomains": [
         {
@@ -29,6 +30,7 @@
       "name": "Tax",
       "description": "Tax-related data and calculations",
       "owner": "Tax Department",
+      "zone": "Citizen Services",
       "lastUpdated": "2024-03-14",
       "subdomains": [
         {
@@ -53,6 +55,7 @@
       "name": "Vehicle",
       "description": "Vehicle registration and management",
       "owner": "Vehicle Management Team",
+      "zone": "Citizen Services",
       "lastUpdated": "2024-03-13",
       "subdomains": [
         {
@@ -77,6 +80,7 @@
       "name": "Property",
       "description": "Property management and assessment",
       "owner": "Property Management Team",
+      "zone": "Citizen Services",
       "lastUpdated": "2024-03-12",
       "subdomains": [
         {
@@ -101,6 +105,7 @@
       "name": "Business",
       "description": "Business registration and licensing",
       "owner": "Business Services Team",
+      "zone": "Citizen Services",
       "lastUpdated": "2024-03-11",
       "subdomains": [
         {
@@ -125,6 +130,7 @@
       "name": "Education",
       "description": "Educational institutions and programs",
       "owner": "Education Department",
+      "zone": "Public Services",
       "lastUpdated": "2024-03-10",
       "subdomains": [
         {
@@ -149,6 +155,7 @@
       "name": "Healthcare",
       "description": "Healthcare facilities and services",
       "owner": "Healthcare Services Team",
+      "zone": "Public Services",
       "lastUpdated": "2024-03-09",
       "subdomains": [
         {
@@ -173,6 +180,7 @@
       "name": "Finance",
       "description": "Financial services and transactions",
       "owner": "Finance Department",
+      "zone": "Governance",
       "lastUpdated": "2024-03-08",
       "subdomains": [
         {
@@ -197,6 +205,7 @@
       "name": "Transportation",
       "description": "Transportation infrastructure and services",
       "owner": "Transportation Department",
+      "zone": "Infrastructure",
       "lastUpdated": "2024-03-07",
       "subdomains": [
         {
@@ -221,6 +230,7 @@
       "name": "Utilities",
       "description": "Utility services and infrastructure",
       "owner": "Utilities Department",
+      "zone": "Infrastructure",
       "lastUpdated": "2024-03-06",
       "subdomains": [
         {
@@ -245,6 +255,7 @@
       "name": "Safety",
       "description": "Public safety and emergency services",
       "owner": "Safety Department",
+      "zone": "Governance",
       "lastUpdated": "2024-03-05",
       "subdomains": [
         {
@@ -269,6 +280,7 @@
       "name": "Environment",
       "description": "Environmental protection and management",
       "owner": "Environment Department",
+      "zone": "Community",
       "lastUpdated": "2024-03-04",
       "subdomains": [
         {
@@ -293,6 +305,7 @@
       "name": "Housing",
       "description": "Housing development and management",
       "owner": "Housing Department",
+      "zone": "Public Services",
       "lastUpdated": "2024-03-03",
       "subdomains": [
         {
@@ -317,6 +330,7 @@
       "name": "Social Services",
       "description": "Social welfare and support services",
       "owner": "Social Services Department",
+      "zone": "Public Services",
       "lastUpdated": "2024-03-02",
       "subdomains": [
         {
@@ -341,6 +355,7 @@
       "name": "Recreation",
       "description": "Recreational facilities and programs",
       "owner": "Recreation Department",
+      "zone": "Community",
       "lastUpdated": "2024-03-01",
       "subdomains": [
         {
@@ -365,6 +380,7 @@
       "name": "Cultural",
       "description": "Cultural institutions and programs",
       "owner": "Cultural Affairs Department",
+      "zone": "Community",
       "lastUpdated": "2024-02-29",
       "subdomains": [
         {
@@ -389,6 +405,7 @@
       "name": "Technology",
       "description": "Technology infrastructure and services",
       "owner": "Technology Department",
+      "zone": "Operations",
       "lastUpdated": "2024-02-28",
       "subdomains": [
         {
@@ -413,6 +430,7 @@
       "name": "Agriculture",
       "description": "Agricultural programs and services",
       "owner": "Agriculture Department",
+      "zone": "Operations",
       "lastUpdated": "2024-02-27",
       "subdomains": [
         {
@@ -437,6 +455,7 @@
       "name": "Tourism",
       "description": "Tourism and visitor services",
       "owner": "Tourism Department",
+      "zone": "Community",
       "lastUpdated": "2024-02-26",
       "subdomains": [
         {
@@ -461,6 +480,7 @@
       "name": "Infrastructure",
       "description": "Public infrastructure and facilities",
       "owner": "Infrastructure Department",
+      "zone": "Infrastructure",
       "lastUpdated": "2024-02-25",
       "subdomains": [
         {
@@ -485,6 +505,7 @@
       "name": "Legal",
       "description": "Legal services and regulations",
       "owner": "Legal Department",
+      "zone": "Governance",
       "lastUpdated": "2024-02-24",
       "subdomains": [
         {
@@ -509,6 +530,7 @@
       "name": "Planning",
       "description": "Urban and regional planning",
       "owner": "Planning Department",
+      "zone": "Infrastructure",
       "lastUpdated": "2024-02-23",
       "subdomains": [
         {
@@ -533,6 +555,7 @@
       "name": "Communications",
       "description": "Public communications and media",
       "owner": "Communications Department",
+      "zone": "Governance",
       "lastUpdated": "2024-02-22",
       "subdomains": [
         {
@@ -557,6 +580,7 @@
       "name": "Property Management",
       "description": "Property management and maintenance",
       "owner": "Property Management Team",
+      "zone": "Operations",
       "lastUpdated": "2024-02-21",
       "subdomains": [
         {

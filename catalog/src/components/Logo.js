@@ -35,7 +35,7 @@ const Logo = ({ currentTheme }) => (
         letterSpacing: '-0.5px',
       }}
     >
-      Data Hub
+      DH-TEST
     </Typography>
   </Box>
 );

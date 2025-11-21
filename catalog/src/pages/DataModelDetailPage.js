@@ -955,7 +955,7 @@ const DataModelDetailPage = ({ currentTheme }) => {
                                     borderRadius: 0.5,
                                     fontSize: '0.8rem'
                                   }}>
-                                    {change.oldValue || 'empty'}
+                                    {change.oldValue ?? 'empty'}
                                   </Typography>
                                 </Box>
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -971,7 +971,7 @@ const DataModelDetailPage = ({ currentTheme }) => {
                                     borderRadius: 0.5,
                                     fontSize: '0.8rem'
                                   }}>
-                                    {change.newValue || 'empty'}
+                                    {change.newValue ?? 'empty'}
                                   </Typography>
                                 </Box>
                               </Box>

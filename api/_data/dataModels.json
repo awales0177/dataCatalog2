@@ -7,7 +7,7 @@
       "version": "2.1.0",
       "description": "Comprehensive model for managing customer information including personal details, contact information, purchase history, preferences, and interaction records. Supports customer segmentation, relationship management, and personalized service delivery across multiple channels.",
       "extendedDescription": "The Customer Data Model serves as the foundation for all customer-related operations. It includes detailed schemas for personal information, contact details, purchase history, preferences, and interaction records. The model supports advanced features like customer segmentation, relationship management, and personalized service delivery. It integrates with multiple channels including web, mobile, and in-store systems. The model also includes data quality checks, validation rules, and compliance measures for handling sensitive customer information.",
-      "lastUpdated": "2025-08-17 01:28:14",
+      "lastUpdated": "2025-11-12 21:15:44",
       "owner": "Data Team",
       "specMaintainer": "Jane Smith",
       "maintainerEmail": "abc@yahoo.com",
@@ -71,6 +71,93 @@
       "users": [
         "Auth Service",
         "User Service"
+      ],
+      "versionHistory": [
+        {
+          "version": "2.1.0",
+          "timestamp": "2025-08-17 01:28:14",
+          "updatedBy": "System",
+          "changeDescription": "Initial model load",
+          "changedFields": []
+        },
+        {
+          "version": "2.1.0",
+          "timestamp": "2025-11-12T22:41:10.611Z",
+          "updatedBy": "user",
+          "changeDescription": "Updated name",
+          "fieldChanges": [
+            {
+              "field": "name",
+              "oldValue": "Customer Data Model",
+              "newValue": "Customer Data Mode"
+            }
+          ]
+        },
+        {
+          "version": "2.1.0",
+          "timestamp": "2025-11-12T22:41:19.190Z",
+          "updatedBy": "user",
+          "changeDescription": "Updated name",
+          "fieldChanges": [
+            {
+              "field": "name",
+              "oldValue": "Customer Data Mode",
+              "newValue": "Customer Data Model"
+            }
+          ]
+        },
+        {
+          "version": "2.1.0",
+          "timestamp": "2025-11-13T02:09:34.624Z",
+          "updatedBy": "user",
+          "changeDescription": "Updated name",
+          "fieldChanges": [
+            {
+              "field": "name",
+              "oldValue": "Customer Data Model",
+              "newValue": "Customer Data Mode"
+            }
+          ]
+        },
+        {
+          "version": "2.1.0",
+          "timestamp": "2025-11-13T02:09:46.603Z",
+          "updatedBy": "user",
+          "changeDescription": "Updated name",
+          "fieldChanges": [
+            {
+              "field": "name",
+              "oldValue": "Customer Data Mode",
+              "newValue": "Customer Data Model"
+            }
+          ]
+        },
+        {
+          "version": "2.1.0",
+          "timestamp": "2025-11-13T02:12:23.479Z",
+          "updatedBy": "user",
+          "changeDescription": "Updated name",
+          "fieldChanges": [
+            {
+              "field": "name",
+              "oldValue": "Customer Data Model",
+              "newValue": "Customer Data Mode"
+            }
+          ]
+        },
+        {
+          "version": "2.1.0",
+          "timestamp": "2025-11-13T02:15:44.973Z",
+          "updatedBy": "user",
+          "changeDescription": "Updated name",
+          "fieldChanges": [
+            {
+              "field": "name",
+              "oldValue": "Customer Data Mode",
+              "newValue": "Customer Data Model"
+            }
+          ]
+        }
       ]
     },
     {
@@ -80,8 +167,8 @@
       "version": "1.3.0",
       "description": "Product information and inventory management",
       "extendedDescription": "The Product Catalog model manages comprehensive product information including SKUs, descriptions, pricing, categories, and inventory levels. It supports multiple product types, variants, and relationships between products. The model includes features for product categorization, attribute management, and inventory tracking. It also handles product lifecycle management, from creation to retirement, and supports bulk operations for product updates and maintenance.",
-      "lastUpdated": "2025-08-16 22:13:37",
-      "owner": "Product Team",
+      "lastUpdated": "2025-11-12 20:57:53",
+      "owner": "Payment Gateway",
       "specMaintainer": "Michael Chen",
       "maintainerEmail": "michael.chen@example.com",
       "domain": [
@@ -145,6 +232,67 @@
         "Product Service",
         "Catalog Service",
         "Inventory Service"
+      ],
+      "versionHistory": [
+        {
+          "version": "1.3.0",
+          "timestamp": "2025-08-16 22:13:37",
+          "updatedBy": "System",
+          "changeDescription": "Initial model load",
+          "changedFields": []
+        },
+        {
+          "version": "1.3.0",
+          "timestamp": "2025-11-12T22:37:53.544Z",
+          "updatedBy": "user",
+          "changeDescription": "Updated owner",
+          "fieldChanges": [
+            {
+              "field": "owner",
+              "originalValue": "Product Team",
+              "updatedValue": "Analytics Dashboard"
+            }
+          ]
+        },
+        {
+          "version": "1.3.0",
+          "timestamp": "2025-11-12T22:40:14.658Z",
+          "updatedBy": "user",
+          "changeDescription": "Updated owner",
+          "fieldChanges": [
+            {
+              "field": "owner",
+              "oldValue": "Analytics Dashboard",
+              "newValue": "Payment Gateway"
+            }
+          ]
+        },
+        {
+          "version": "1.3.0",
+          "timestamp": "2025-11-13T01:57:44.102Z",
+          "updatedBy": "user",
+          "changeDescription": "Updated name",
+          "fieldChanges": [
+            {
+              "field": "name",
+              "oldValue": "Product Catalog",
+              "newValue": "Product Catalo"
+            }
+          ]
+        },
+        {
+          "version": "1.3.0",
+          "timestamp": "2025-11-13T01:57:53.594Z",
+          "updatedBy": "user",
+          "changeDescription": "Updated name",
+          "fieldChanges": [
+            {
+              "field": "name",
+              "oldValue": "Product Catalo",
+              "newValue": "Product Catalog"
+            }
+          ]
+        }
       ]
     },
     {
@@ -225,11 +373,11 @@
     {
       "id": 4,
       "shortName": "LEG",
-      "name": "Legacy Customer Data",
+      "name": "Legacy Customer",
       "version": "1.0.0",
       "description": "Historical customer data from legacy systems",
       "extendedDescription": "The Legacy Customer Data model maintains historical customer information from older systems. It includes data migration schemas, transformation rules, and archival procedures. The model supports data validation, cleaning, and enrichment processes. It also includes features for data retention policies, access controls, and compliance requirements. The model serves as a bridge between legacy systems and modern customer data platforms.",
-      "lastUpdated": "2024-03-15",
+      "lastUpdated": "2025-11-12 20:59:14",
       "owner": "Data Team",
       "specMaintainer": "David Wilson",
       "maintainerEmail": "david.wilson@example.com",
@@ -257,7 +405,29 @@
         },
         "git": "https://git.example.com/legacy-customer-data",
         "validation": "https://validation.example.com/legacy-customer-data"
-      }
+      },
+      "versionHistory": [
+        {
+          "version": "1.0.0",
+          "timestamp": "2024-03-15",
+          "updatedBy": "System",
+          "changeDescription": "Initial model load",
+          "changedFields": []
+        },
+        {
+          "version": "1.0.0",
+          "timestamp": "2025-11-13T01:59:14.506Z",
+          "updatedBy": "user",
+          "changeDescription": "Updated name",
+          "fieldChanges": [
+            {
+              "field": "name",
+              "oldValue": "Legacy Customer Data",
+              "newValue": "Legacy Customer"
+            }
+          ]
+        }
+      ]
     },
     {
       "id": 5,

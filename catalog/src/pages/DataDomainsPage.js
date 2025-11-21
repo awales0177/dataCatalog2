@@ -11,33 +11,89 @@ import {
 import {
   Search as SearchIcon,
 } from '@mui/icons-material';
-import DomainCard from '../components/DomainCard';
-import DomainModal from '../components/DomainModal';
+import ZoneCard from '../components/ZoneCard';
 import { ThemeContext } from '../contexts/ThemeContext';
-import { fetchDomains } from '../services/api';
+import { fetchDomains, fetchZones } from '../services/api';
 
 const DataDomainsPage = () => {
   const { currentTheme } = useContext(ThemeContext);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedDomain, setSelectedDomain] = useState(null);
+  const [zones, setZones] = useState([]);
   const [domains, setDomains] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const loadDomains = async () => {
+    const loadData = async () => {
       try {
-        const data = await fetchDomains();
-        setDomains(data.domains);
+        // Fetch zones from API (zones.json is the source of truth)
+        let zonesData = [];
+        let domainsData = [];
+        
+        try {
+          const zonesResponse = await fetchZones({ forceRefresh: true });
+          zonesData = zonesResponse.zones || [];
+          console.log('Zones loaded from API (zones.json):', zonesData.length, 'zones');
+          
+          if (zonesData.length === 0) {
+            console.warn('No zones found in zones.json - zones must be defined in zones.json');
+          }
+        } catch (zonesError) {
+          console.error('Failed to load zones from API:', zonesError);
+          setError('Failed to load zones. Zones must be defined in zones.json');
+        }
+
+        // Always fetch domains
+        const domainsResponse = await fetchDomains();
+        domainsData = domainsResponse.domains || [];
+
+        // Use zones from API (zones.json) - this is the source of truth
+        // Domains that don't match any zone in zones.json will be in the "Unzoned" zone
+        if (zonesData.length > 0) {
+          setZones(zonesData);
+        } else {
+          // If no zones are defined, show error message
+          setZones([]);
+        }
+
+        setDomains(domainsData);
       } catch (error) {
-        setError('Failed to load data domains');
+        setError('Failed to load data zones and domains');
+        console.error('Error loading data:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    loadDomains();
+    loadData();
   }, []);
+
+  // Filter zones and their domains based on search query
+  const getFilteredZones = () => {
+    if (!searchQuery.trim()) {
+      return zones;
+    }
+
+    const query = searchQuery.toLowerCase();
+    return zones.map(zone => {
+      const matchesZone = zone.name.toLowerCase().includes(query) ||
+                         (zone.description && zone.description.toLowerCase().includes(query));
+      
+      const filteredDomains = zone.domains?.filter(domain => {
+        return domain.name.toLowerCase().includes(query) ||
+               (domain.description && domain.description.toLowerCase().includes(query));
+      }) || [];
+
+      // Include zone if it matches or has matching domains
+      if (matchesZone || filteredDomains.length > 0) {
+        return {
+          ...zone,
+          domains: filteredDomains
+        };
+      }
+      return null;
+    }).filter(zone => zone !== null);
+  };
 
   if (loading) {
     return (
@@ -57,11 +113,7 @@ const DataDomainsPage = () => {
     );
   }
 
-  const filteredDomains = domains.filter(domain => {
-    const matchesSearch = domain.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         domain.description.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesSearch;
-  });
+  const filteredZones = getFilteredZones();
 
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
@@ -69,14 +121,14 @@ const DataDomainsPage = () => {
         Data Domains
       </Typography>
       <Typography variant="body1" sx={{ mb: 4, color: currentTheme.textSecondary }}>
-        Organize and manage your data domains. View domain ownership, relationships, and associated data assets across your organization.
+        Organize and manage your data zones and domains. Data zones are higher-level constructs that group related data domains together. View zone ownership, relationships, and associated data assets across your organization.
       </Typography>
 
       <Box sx={{ mb: 4 }}>
         <TextField
           fullWidth
           variant="outlined"
-          placeholder="Search domains..."
+          placeholder="Search zones and domains..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           InputProps={{
@@ -106,35 +158,29 @@ const DataDomainsPage = () => {
         />
       </Box>
 
-      <Box sx={{ 
-        display: 'grid', 
-        gridTemplateColumns: {
-          xs: '1fr',
-          sm: 'repeat(2, 1fr)',
-          md: 'repeat(3, 1fr)',
-          lg: 'repeat(4, 1fr)',
-          xl: 'repeat(5, 1fr)'
-        },
-        gap: { xs: 0.75, sm: 1, md: 1.25 },
-        px: { xs: 0.5, sm: 0.75 },
-        py: 1.5
-      }}>
-        {filteredDomains.map((domain) => (
-          <DomainCard
-            key={domain.id}
-            domain={domain}
-            onClick={() => setSelectedDomain(domain)}
-            currentTheme={currentTheme}
-          />
-        ))}
-      </Box>
-
-      <DomainModal
-        open={Boolean(selectedDomain)}
-        onClose={() => setSelectedDomain(null)}
-        domain={selectedDomain}
-        currentTheme={currentTheme}
-      />
+      {filteredZones.length > 0 ? (
+        <Box>
+          {filteredZones.map((zone) => (
+            <ZoneCard
+              key={zone.id}
+              zone={zone}
+              currentTheme={currentTheme}
+            />
+          ))}
+        </Box>
+      ) : (
+        <Box
+          sx={{
+            p: 4,
+            textAlign: 'center',
+            color: currentTheme.textSecondary,
+          }}
+        >
+          <Typography variant="body1">
+            No zones or domains found matching your search.
+          </Typography>
+        </Box>
+      )}
     </Container>
   );
 };

@@ -33,7 +33,7 @@ export const useAppState = () => {
   // Update page title based on current route
   useEffect(() => {
     const path = location.pathname;
-    let title = 'Data Catalog';
+    let title = 'DH-TEST';
     
     if (path === '/') {
       title = 'Home';
@@ -169,11 +169,15 @@ export const useAppState = () => {
     
     // Collapse if we're exactly 2 levels deep (e.g., /models/CUST)
     // OR if we're in edit mode (e.g., /models/CUST/edit, /applications/edit/123, /policies/edit/456)
-    // OR if we're in detail view (e.g., /toolkit/function/123, /reference/456)
+    // OR if we're in detail view (e.g., /toolkit/function/123, /toolkit/container/123, /toolkit/infrastructure/123, /reference/456)
     if (pathSegments.length === 2 || 
         (pathSegments.length === 3 && pathSegments[2] === 'edit') ||
         (pathSegments.length === 3 && pathSegments[1] === 'edit') ||
         (pathSegments.length === 3 && pathSegments[1] === 'function') ||
+        (pathSegments.length === 3 && pathSegments[1] === 'container') ||
+        (pathSegments.length === 3 && pathSegments[1] === 'infrastructure') ||
+        (pathSegments.length === 4 && pathSegments[1] === 'container' && pathSegments[3] === 'edit') ||
+        (pathSegments.length === 4 && pathSegments[1] === 'infrastructure' && pathSegments[3] === 'edit') ||
         (pathSegments.length === 3 && pathSegments[1] === 'reference')) {
       setIsDrawerCollapsed(true);
     } else {

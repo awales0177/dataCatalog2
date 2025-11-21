@@ -12,9 +12,15 @@ export const termConfig = {
     icon: "DescriptionIcon",
     shortDescription: "Product agreements"
   },
+  dataZones: {
+    displayName: "Data Zones",
+    description: "Higher-level organizational constructs that group related data domains together",
+    icon: "FolderIcon",
+    shortDescription: "Zone groupings"
+  },
   dataDomains: {
     displayName: "Data Domains",
-    description: "Logical groupings of related data models and business concepts",
+    description: "Logical groupings of related data models and business concepts, organized within data zones",
     icon: "DomainIcon",
     shortDescription: "Business domain groupings"
   },

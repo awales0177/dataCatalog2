@@ -137,10 +137,35 @@ const GlobalSearch = ({ open, onClose, currentTheme, darkMode }) => {
         id = item.id || item.shortName || item.name;
         return `/reference/${id}`;
       case 'toolkit':
-        // For toolkit, check if it's a function and route accordingly
+        // For toolkit, check if it's a function, container, or infrastructure and route accordingly
         id = item.id || item.shortName || item.name;
+        // Check for _toolkit_type field added by search service
+        if (item._toolkit_type === 'containers') {
+          return `/toolkit/container/${id}`;
+        } else if (item._toolkit_type === 'functions') {
+          return `/toolkit/function/${id}`;
+        } else if (item._toolkit_type === 'infrastructure') {
+          return `/toolkit/infrastructure/${id}`;
+        }
+        // Fallback: Check for container-specific fields
+        if (item.dockerfile || item.dockerCompose) {
+          return `/toolkit/container/${id}`;
+        }
+        // Fallback: Check for infrastructure-specific fields
+        if (item.mainTf || item.variablesTf || item.outputsTf || item.provider) {
+          return `/toolkit/infrastructure/${id}`;
+        }
+        // Fallback: Check for function-specific fields (code, parameters, language)
+        if (item.code || item.parameters || item.language) {
+          return `/toolkit/function/${id}`;
+        }
+        // Fallback to type field if present
         if (item.type === 'functions') {
           return `/toolkit/function/${id}`;
+        } else if (item.type === 'containers') {
+          return `/toolkit/container/${id}`;
+        } else if (item.type === 'infrastructure') {
+          return `/toolkit/infrastructure/${id}`;
         }
         return `/toolkit`;
       case 'policies':

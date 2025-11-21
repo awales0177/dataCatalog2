@@ -301,7 +301,7 @@
         "dockerCompose": "version: '3.8'\nservices:\n  postgres:\n    build: .\n    environment:\n      POSTGRES_DB: devdb\n      POSTGRES_USER: devuser",
         "author": "Infrastructure Team",
         "version": "1.2.0",
-        "lastUpdated": "2024-01-18T09:15:00Z",
+        "lastUpdated": "2025-11-12T18:30:15.774185",
         "usage": "Perfect for local development and testing",
         "dependencies": [
           "docker",
@@ -313,7 +313,9 @@
           "ci_cd"
         ],
         "rating": 4.7,
-        "downloads": 203
+        "downloads": 203,
+        "displayName": "PostgreSQL Development Container",
+        "git": ""
       },
       {
         "id": "cont_002",
@@ -343,6 +345,46 @@
         ],
         "rating": 4.6,
         "downloads": 134
+      },
+      {
+        "id": "cont_003",
+        "name": "dfffgfdg",
+        "displayName": "dfffgfdg",
+        "description": "fdgdf",
+        "type": "containers",
+        "category": "web-server",
+        "tags": [],
+        "author": "",
+        "version": "1.0.0",
+        "lastUpdated": "2025-11-12T18:36:50.325905",
+        "usage": "",
+        "dependencies": [],
+        "examples": [],
+        "git": "",
+        "rating": 5,
+        "downloads": 0,
+        "dockerfile": "dfgfdgd",
+        "dockerCompose": "dfgdfgf"
+      },
+      {
+        "id": "cont_004",
+        "name": "fhgfh",
+        "displayName": "fhgfh",
+        "description": "ffghfghgfh",
+        "type": "containers",
+        "category": "message-queue",
+        "tags": [],
+        "author": "",
+        "version": "1.0.0",
+        "lastUpdated": "2025-11-12T18:41:03.855810",
+        "usage": "",
+        "dependencies": [],
+        "examples": [],
+        "git": "",
+        "rating": 5,
+        "downloads": 0,
+        "dockerfile": "fghfgh",
+        "dockerCompose": ""
       }
     ],
     "infrastructure": [
