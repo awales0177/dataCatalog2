@@ -45,7 +45,6 @@ const AppHeader = ({
         bgcolor: currentTheme.card,
         color: currentTheme.text,
         boxShadow: 'none',
-        borderBottom: `1px solid ${currentTheme.border}`,
         top: '20px',
         height: '64px',
       }}

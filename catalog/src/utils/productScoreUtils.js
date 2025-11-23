@@ -7,7 +7,6 @@ export const EXPECTED_PRODUCT_FIELDS = {
   provider: { required: true, weight: 1 },
   
   // Quality & Trust
-  trustworthiness: { required: true, weight: 1 },
   dataQuality: { required: false, weight: 0.8 },
   freshness: { required: false, weight: 0.6 },
   

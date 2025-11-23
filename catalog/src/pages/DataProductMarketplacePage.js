@@ -23,19 +23,17 @@ import {
   Store as StoreIcon,
   TrendingUp as TrendingUpIcon,
   Star as StarIcon,
-  Article as ArticleIcon,
-  Analytics as AnalyticsIcon,
-  Psychology as PsychologyIcon,
-  Api as ApiIcon,
-  Science as ResearchIcon,
-  LocalShipping as LocalShippingIcon,
-  Support as SupportIcon
+  TableChart as StructuredIcon,
+  Description as UnstructuredIcon,
+  Article as ArticlesIcon,
+  Schedule as ScheduleIcon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { ThemeContext } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import { fetchData } from '../services/api';
 import Pagination from '../components/Pagination';
+import DataSourceConnection from '../components/DataSourceConnection';
 import { calculateProductScore, getProductQualityColor, getProductQualityLevel } from '../utils/productScoreUtils';
 
 const ITEMS_PER_PAGE = 12;
@@ -46,10 +44,9 @@ const mockDataProducts = [
     id: 'dp-001',
     name: 'Customer Analytics Dataset',
     description: 'Comprehensive customer behavior analytics with purchase history and engagement metrics',
-    category: 'Analytics',
+    category: 'Structured',
     provider: 'Data Analytics Team',
     users: 1247,
-    trustworthiness: 'high',
     dataQuality: 'excellent',
     freshness: 'daily',
     documentation: 'https://docs.example.com/customer-analytics',
@@ -64,10 +61,9 @@ const mockDataProducts = [
     id: 'dp-002',
     name: 'Financial Risk Models',
     description: 'Advanced machine learning models for credit risk assessment and fraud detection',
-    category: 'Machine Learning',
+    category: 'Structured',
     provider: 'Risk Management Team',
     users: 892,
-    trustworthiness: 'high',
     dataQuality: 'excellent',
     freshness: 'weekly',
     documentation: 'https://docs.example.com/risk-models',
@@ -81,10 +77,9 @@ const mockDataProducts = [
     id: 'dp-003',
     name: 'Product Catalog API',
     description: 'Real-time product information API with inventory levels and pricing',
-    category: 'API',
+    category: 'Structured',
     provider: 'Product Team',
     users: 2156,
-    trustworthiness: 'medium',
     dataQuality: 'good',
     freshness: 'real-time',
     documentation: 'https://api.example.com/docs',
@@ -97,10 +92,9 @@ const mockDataProducts = [
     id: 'dp-004',
     name: 'Market Research Insights',
     description: 'Quarterly market research data with competitor analysis and trends',
-    category: 'Research',
+    category: ['Articles', 'Unstructured'],
     provider: 'Market Research Team',
     users: 456,
-    trustworthiness: 'medium',
     dataQuality: 'fair',
     freshness: 'quarterly',
     documentation: 'https://docs.example.com/market-research',
@@ -113,10 +107,9 @@ const mockDataProducts = [
     id: 'dp-005',
     name: 'Supply Chain Optimization',
     description: 'Supply chain data and optimization algorithms for logistics management',
-    category: 'Operations',
+    category: 'Structured',
     provider: 'Supply Chain Team',
     users: 678,
-    trustworthiness: 'high',
     dataQuality: 'good',
     freshness: 'daily',
     documentation: 'https://docs.example.com/supply-chain',
@@ -130,10 +123,9 @@ const mockDataProducts = [
     id: 'dp-006',
     name: 'Customer Support Analytics',
     description: 'Customer support ticket data with sentiment analysis and metrics',
-    category: 'Analytics',
+    category: 'Structured',
     provider: 'Support Team',
     users: 334,
-    trustworthiness: 'low',
     dataQuality: 'poor',
     freshness: 'weekly',
     tags: ['support', 'tickets', 'sentiment'],
@@ -153,44 +145,98 @@ const DataProductCard = ({ product, currentTheme, onView, onFavorite, isFavorite
   // Get category icon and color
   const getCategoryInfo = (category) => {
     switch (category?.toLowerCase()) {
-      case 'analytics':
-        return { IconComponent: AnalyticsIcon, color: '#2196F3' };
-      case 'machine learning':
-        return { IconComponent: PsychologyIcon, color: '#9C27B0' };
-      case 'api':
-        return { IconComponent: ApiIcon, color: '#FF9800' };
-      case 'research':
-        return { IconComponent: ResearchIcon, color: '#4CAF50' };
-      case 'operations':
-        return { IconComponent: LocalShippingIcon, color: '#607D8B' };
+      case 'structured':
+        return { IconComponent: StructuredIcon, color: '#2196F3' };
+      case 'unstructured':
+        return { IconComponent: UnstructuredIcon, color: '#9C27B0' };
+      case 'articles':
+        return { IconComponent: ArticlesIcon, color: '#4CAF50' };
       default:
         return { IconComponent: StoreIcon, color: '#9E9E9E' };
     }
   };
 
-  const categoryInfo = getCategoryInfo(product.category);
-  const { IconComponent } = categoryInfo;
+  // Handle both single category (string) and multiple categories (array)
+  const productCategories = product.category 
+    ? (Array.isArray(product.category) ? product.category : [product.category])
+    : ['Structured'];
+  const primaryCategory = productCategories[0] || 'Structured';
+  const categoryInfo = getCategoryInfo(primaryCategory);
 
-  const getTrustworthinessColor = (level) => {
-    switch (level?.toLowerCase()) {
-      case 'high': return currentTheme.success;
-      case 'medium': return currentTheme.warning;
-      case 'low': return currentTheme.error;
-      default: return currentTheme.textSecondary;
+  const getDataFreshness = (product) => {
+    // Check if freshness field exists
+    if (product.freshness) {
+      return product.freshness;
     }
+    
+    // Calculate from lastUpdated date
+    if (product.lastUpdated) {
+      const lastUpdated = new Date(product.lastUpdated);
+      const now = new Date();
+      const diffTime = Math.abs(now - lastUpdated);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      
+      if (diffDays === 0) return 'Today';
+      if (diffDays === 1) return 'Yesterday';
+      if (diffDays < 7) return `${diffDays} days ago`;
+      if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+      if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
+      return `${Math.floor(diffDays / 365)} years ago`;
+    }
+    
+    return 'Unknown';
   };
 
-  const getTrustworthinessPercentage = (level) => {
-    switch (level?.toLowerCase()) {
-      case 'high': return 90;
-      case 'medium': return 60;
-      case 'low': return 30;
-      default: return 0;
+  const getFreshnessPercentage = (product) => {
+    const freshness = getDataFreshness(product);
+    if (!freshness) return 0;
+    
+    const freshnessLower = freshness.toLowerCase();
+    
+    // Real-time or today = 100%
+    if (freshnessLower.includes('real-time') || freshnessLower.includes('today')) {
+      return 100;
     }
+    // Daily = 95%
+    if (freshnessLower.includes('daily') || freshnessLower === 'yesterday') {
+      return 95;
+    }
+    // Weekly = 75%
+    if (freshnessLower.includes('weekly') || freshnessLower.includes('week')) {
+      return 75;
+    }
+    // Monthly = 50%
+    if (freshnessLower.includes('month')) {
+      return 50;
+    }
+    // Quarterly = 25%
+    if (freshnessLower.includes('quarter')) {
+      return 25;
+    }
+    // Yearly or older = 10%
+    if (freshnessLower.includes('year')) {
+      return 10;
+    }
+    // Days ago (1-6 days) = 90% - (days * 2)
+    const daysMatch = freshnessLower.match(/(\d+)\s*days?\s*ago/);
+    if (daysMatch) {
+      const days = parseInt(daysMatch[1]);
+      return Math.max(80, 100 - (days * 3));
+    }
+    
+    return 50; // Default
+  };
+
+  const getFreshnessColor = (product) => {
+    const percentage = getFreshnessPercentage(product);
+    if (percentage >= 90) return currentTheme.success;
+    if (percentage >= 60) return currentTheme.warning;
+    return currentTheme.error;
   };
 
   return (
     <Card
+      elevation={0}
       onClick={() => onView(product)}
       sx={{
         height: '320px',
@@ -202,12 +248,12 @@ const DataProductCard = ({ product, currentTheme, onView, onFavorite, isFavorite
         borderRadius: 3,
         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         cursor: 'pointer',
-        boxShadow: `0 2px 8px ${currentTheme.border}20`,
+        boxShadow: 'none',
         position: 'relative',
         overflow: 'hidden',
         '&:hover': {
           transform: 'translateY(-4px)',
-          boxShadow: `0 8px 24px ${currentTheme.border}30, 0 4px 12px ${currentTheme.primary}20`,
+          boxShadow: 'none',
           borderColor: currentTheme.primary,
           '&::before': {
             opacity: 1,
@@ -243,37 +289,102 @@ const DataProductCard = ({ product, currentTheme, onView, onFavorite, isFavorite
           >
             {product.name}
           </Typography>
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 0.5,
-              px: 1,
-              py: 0.25,
-              borderRadius: 1,
-              bgcolor: `${categoryInfo.color}15`,
-              border: `1px solid ${categoryInfo.color}30`,
-              flexShrink: 0,
-            }}
-          >
-<IconComponent sx={{ fontSize: 14, color: categoryInfo.color }} />
-            <Typography
-              variant="caption"
-              sx={{
-                color: categoryInfo.color,
-                fontWeight: 600,
-                fontSize: '0.7rem',
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px',
-              }}
-            >
-              {product.category}
-            </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexWrap: 'wrap', flexShrink: 0, maxWidth: '50%', justifyContent: 'flex-end' }}>
+            {productCategories && productCategories.length > 0 ? (
+              <>
+                {productCategories.slice(0, 2).map((category, idx) => {
+                  if (!category) return null;
+                  const catInfo = getCategoryInfo(category);
+                  const CatIcon = catInfo.IconComponent;
+                  return (
+                    <Box
+                      key={idx}
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 0.5,
+                        px: 0.75,
+                        py: 0.25,
+                        borderRadius: 1,
+                        bgcolor: `${catInfo.color}15`,
+                        border: `1px solid ${catInfo.color}30`,
+                      }}
+                    >
+                      <CatIcon sx={{ fontSize: 12, color: catInfo.color }} />
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: catInfo.color,
+                          fontWeight: 600,
+                          fontSize: '0.65rem',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.5px',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {category}
+                      </Typography>
+                    </Box>
+                  );
+                })}
+                {productCategories.length > 2 && (
+                  <Chip
+                    label={`+${productCategories.length - 2}`}
+                    size="small"
+                    sx={{
+                      height: '20px',
+                      fontSize: '0.65rem',
+                      fontWeight: 600,
+                      bgcolor: `${currentTheme.textSecondary}15`,
+                      color: currentTheme.textSecondary,
+                      border: `1px solid ${currentTheme.border}`,
+                      '& .MuiChip-label': {
+                        px: 0.75,
+                        py: 0,
+                      },
+                    }}
+                  />
+                )}
+              </>
+            ) : (
+              (() => {
+                const CatIcon = categoryInfo.IconComponent;
+                return (
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 0.5,
+                      px: 0.75,
+                      py: 0.25,
+                      borderRadius: 1,
+                      bgcolor: `${categoryInfo.color}15`,
+                      border: `1px solid ${categoryInfo.color}30`,
+                    }}
+                  >
+                    <CatIcon sx={{ fontSize: 12, color: categoryInfo.color }} />
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: categoryInfo.color,
+                        fontWeight: 600,
+                        fontSize: '0.65rem',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {primaryCategory}
+                    </Typography>
+                  </Box>
+                );
+              })()
+            )}
           </Box>
         </Box>
         
-        {/* Dataset ID and Provider */}
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+        {/* Dataset ID */}
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
           <Typography
             variant="caption"
             sx={{
@@ -284,17 +395,6 @@ const DataProductCard = ({ product, currentTheme, onView, onFavorite, isFavorite
             }}
           >
             ID: {product.id}
-          </Typography>
-          <Typography
-            variant="caption"
-            sx={{
-              color: currentTheme.textSecondary,
-              fontSize: '0.7rem',
-              fontWeight: 500,
-              opacity: 0.8,
-            }}
-          >
-            by {product.provider}
           </Typography>
         </Box>
 
@@ -385,18 +485,18 @@ const DataProductCard = ({ product, currentTheme, onView, onFavorite, isFavorite
               </Box>
             </Tooltip>
             <Tooltip 
-              title={`Trustworthiness: ${product.trustworthiness?.charAt(0).toUpperCase() + product.trustworthiness?.slice(1) || 'Unknown'} (${getTrustworthinessPercentage(product.trustworthiness)}%)`}
+              title={`Data Freshness: ${getDataFreshness(product)}`}
               arrow
               placement="top"
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                 <CircularProgress
                   variant="determinate"
-                  value={getTrustworthinessPercentage(product.trustworthiness)}
+                  value={getFreshnessPercentage(product)}
                   size={16}
                   thickness={3}
                   sx={{
-                    color: getTrustworthinessColor(product.trustworthiness),
+                    color: getFreshnessColor(product),
                     '& .MuiCircularProgress-circle': {
                       strokeLinecap: 'round',
                     },
@@ -410,36 +510,12 @@ const DataProductCard = ({ product, currentTheme, onView, onFavorite, isFavorite
                     color: currentTheme.textSecondary,
                   }}
                 >
-                  {getTrustworthinessPercentage(product.trustworthiness)}%
+                  {getFreshnessPercentage(product)}%
                 </Typography>
               </Box>
             </Tooltip>
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            {product.documentation && (
-              <Tooltip title="View Documentation" arrow>
-                <Button
-                  size="small"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    window.open(product.documentation, '_blank');
-                  }}
-                  sx={{
-                    color: currentTheme.textSecondary,
-                    minWidth: 'auto',
-                    px: 0.5,
-                    py: 0.5,
-                    borderRadius: 1,
-                    '&:hover': {
-                      color: currentTheme.primary,
-                      bgcolor: `${currentTheme.primary}10`,
-                    },
-                  }}
-                >
-                  <ArticleIcon fontSize="small" />
-                </Button>
-              </Tooltip>
-            )}
             <Tooltip title={isFavorite ? "Remove from Favorites" : "Add to Favorites"} arrow>
               <Button
                 size="small"
@@ -482,7 +558,7 @@ const DataProductMarketplacePage = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedTab, setSelectedTab] = useState(0);
 
-  const categories = ['all', 'Analytics', 'Machine Learning', 'API', 'Research', 'Operations'];
+  const categories = ['all', 'Structured', 'Unstructured', 'Articles'];
 
   useEffect(() => {
     const loadDataProducts = async () => {
@@ -511,10 +587,14 @@ const DataProductMarketplacePage = () => {
     if (searchQuery) {
       const searchLower = searchQuery.toLowerCase();
       filtered = filtered.filter(product => {
+        // Handle both single category (string) and multiple categories (array)
+        const productCategories = Array.isArray(product.category) ? product.category : [product.category];
+        const categoryText = productCategories.join(' ');
+        
         const searchableText = [
           product.name,
           product.description,
-          product.category,
+          categoryText,
           product.provider,
           product.tags?.join(' ') || '',
         ].join(' ').toLowerCase();
@@ -524,7 +604,11 @@ const DataProductMarketplacePage = () => {
     }
 
     if (selectedCategory !== 'all') {
-      filtered = filtered.filter(product => product.category === selectedCategory);
+      filtered = filtered.filter(product => {
+        // Handle both single category (string) and multiple categories (array)
+        const productCategories = Array.isArray(product.category) ? product.category : [product.category];
+        return productCategories.includes(selectedCategory);
+      });
     }
 
     setFilteredProducts(filtered);
@@ -582,14 +666,28 @@ const DataProductMarketplacePage = () => {
     );
   }
 
+  const handleDataSourceConnect = async (connectionData) => {
+    console.log('Connecting data source:', connectionData);
+    // TODO: Implement actual connection logic
+    // This could call an API endpoint to save/validate the connection
+  };
+
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
-      <Typography variant="h4" sx={{ mb: 1, color: currentTheme.text }}>
-        Data Product Marketplace
-      </Typography>
-      <Typography variant="body1" sx={{ mb: 4, color: currentTheme.textSecondary }}>
-        Discover, explore, and access data products from across the organization
-      </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 4 }}>
+        <Box>
+          <Typography variant="h4" sx={{ mb: 1, color: currentTheme.text }}>
+            Data Product Marketplace
+          </Typography>
+          <Typography variant="body1" sx={{ color: currentTheme.textSecondary }}>
+            Discover, explore, and access data products from across the organization
+          </Typography>
+        </Box>
+        <DataSourceConnection 
+          currentTheme={currentTheme} 
+          onConnect={handleDataSourceConnect}
+        />
+      </Box>
 
       <Box sx={{ mb: 4 }}>
         <TextField
@@ -658,11 +756,9 @@ const DataProductMarketplacePage = () => {
         }}
       >
         <Tab label="All Products" />
-        <Tab label="Analytics" />
-        <Tab label="Machine Learning" />
-        <Tab label="API" />
-        <Tab label="Research" />
-        <Tab label="Operations" />
+        <Tab label="Structured" />
+        <Tab label="Unstructured" />
+        <Tab label="Articles" />
       </Tabs>
 
       {/* Products Grid */}

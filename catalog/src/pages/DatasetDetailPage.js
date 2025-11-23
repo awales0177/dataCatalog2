@@ -23,7 +23,6 @@ import {
   Breadcrumbs,
   Link,
   Avatar,
-  Rating,
   Badge,
   Tooltip,
   Table,
@@ -32,12 +31,14 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  TablePagination
+  TablePagination,
+  TextField,
+  InputAdornment,
+  Collapse
 } from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
   Star as StarIcon,
-  Download as DownloadIcon,
   Visibility as VisibilityIcon,
   Share as ShareIcon,
   Notifications as NotificationsIcon,
@@ -59,13 +60,19 @@ import {
   AccountTree as AccountTreeIcon,
   Update as UpdateIcon,
   LibraryBooks as LibraryBooksIcon,
-  Merge as MergeIcon
+  Merge as MergeIcon,
+  ExpandMore as ExpandMoreIcon,
+  ExpandLess as ExpandLessIcon,
+  Search as SearchIcon,
+  Folder as FolderIcon,
+  Schema as SchemaIcon,
+  Handshake as HandshakeIcon,
+  Link as LinkIcon
 } from '@mui/icons-material';
 import { useParams, useNavigate, Link as RouterLink } from 'react-router-dom';
 import { ThemeContext } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import { fetchData } from '../services/api';
-import LineageDiagram from '../components/LineageDiagram';
 
 const DatasetDetailPage = () => {
   const { currentTheme } = useContext(ThemeContext);
@@ -80,6 +87,7 @@ const DatasetDetailPage = () => {
   const [parentDatasets, setParentDatasets] = useState([]);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     const loadDataset = async () => {
@@ -140,14 +148,6 @@ const DatasetDetailPage = () => {
     setPage(0);
   };
 
-  const getTrustworthinessColor = (level) => {
-    switch (level?.toLowerCase()) {
-      case 'high': return currentTheme.success;
-      case 'medium': return currentTheme.warning;
-      case 'low': return currentTheme.error;
-      default: return currentTheme.textSecondary;
-    }
-  };
 
   if (loading) {
     return (
@@ -207,7 +207,7 @@ const DatasetDetailPage = () => {
 
       <Grid container spacing={3}>
         {/* Main Content */}
-        <Grid item xs={12} lg={8}>
+        <Grid item xs={12}>
 
       {/* Header */}
       <Paper
@@ -234,17 +234,11 @@ const DatasetDetailPage = () => {
             </Typography>
 
             {/* Stats */}
-            <Box sx={{ display: 'flex', gap: 4, mb: 3 }}>
+            <Box sx={{ display: 'flex', gap: 4, mb: 3, flexWrap: 'wrap' }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <StarIcon sx={{ color: currentTheme.favorite, fontSize: '1.2rem' }} />
+                <CategoryIcon sx={{ color: currentTheme.primary, fontSize: '1.2rem' }} />
                 <Typography variant="body2" sx={{ color: currentTheme.textSecondary }}>
-                  {dataset.rating}
-                </Typography>
-              </Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <DownloadIcon sx={{ color: currentTheme.textSecondary, fontSize: '1.2rem' }} />
-                <Typography variant="body2" sx={{ color: currentTheme.textSecondary }}>
-                  {dataset.downloads?.toLocaleString() || 'N/A'} downloads
+                  <strong>Dataset Type:</strong> {dataset.feedType || 'One Time'}
                 </Typography>
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -333,124 +327,256 @@ const DatasetDetailPage = () => {
         <Tab label="Products" />
         <Tab label="Parent Datasets" />
         <Tab label="Triage" />
-        <Tab label="Data Lineage" />
       </Tabs>
 
       {/* Tab Content */}
       {selectedTab === 0 && (
         <Box>
-          <Typography variant="h6" sx={{ color: currentTheme.text, mb: 2 }}>
-            Data Products ({dataset.products?.length || 0})
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+            <Box>
+              <Typography variant="h6" sx={{ color: currentTheme.text, mb: 0.5 }}>
+                Data Models and Views ({dataset.products?.length || 0})
           </Typography>
-          <Typography variant="body1" sx={{ color: currentTheme.textSecondary, mb: 3 }}>
+              <Typography variant="body2" sx={{ color: currentTheme.textSecondary }}>
             Individual data products created from this dataset
           </Typography>
+            </Box>
+          </Box>
 
-          <Grid container spacing={3}>
-            {dataset.products?.map((relatedProduct) => (
-              <Grid item xs={12} sm={6} md={4} key={relatedProduct.id}>
-                <Card
-                  variant="outlined"
+          {/* Search Bar */}
+          <TextField
+            fullWidth
+            placeholder="Search products by name, format, or description..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
                   sx={{
-                    height: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
+              mb: 3,
+              '& .MuiOutlinedInput-root': {
                     bgcolor: currentTheme.card,
+                '& fieldset': {
                     borderColor: currentTheme.border,
-                    transition: 'all 0.2s ease-in-out',
-                    '&:hover': {
+                },
+                '&:hover fieldset': {
                       borderColor: currentTheme.primary,
-                      boxShadow: `0 4px 12px ${currentTheme.border}40`,
-                      transform: 'translateY(-2px)',
+                },
+                '&.Mui-focused fieldset': {
+                  borderColor: currentTheme.primary,
+                },
+              },
+              '& .MuiInputBase-input': {
+                color: currentTheme.text,
+              },
+            }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon sx={{ color: currentTheme.textSecondary }} />
+                </InputAdornment>
+              ),
+            }}
+          />
+
+          {/* Products Cards */}
+          <Grid container spacing={3}>
+                {dataset.products
+                  ?.filter((product) => {
+                    if (!searchQuery) return true;
+                    const query = searchQuery.toLowerCase();
+                    const location = product.tables?.[0]?.s3Location || product.location || '';
+                    return (
+                      product.name?.toLowerCase().includes(query) ||
+                      product.format?.toLowerCase().includes(query) ||
+                      product.description?.toLowerCase().includes(query) ||
+                      location.toLowerCase().includes(query)
+                    );
+                  })
+                  .map((relatedProduct) => {
+                    // Handle both string and array formats for backward compatibility
+                    let model = null;
+                    if (relatedProduct.relatedEntities?.dataModels) {
+                      model = Array.isArray(relatedProduct.relatedEntities.dataModels) 
+                        ? relatedProduct.relatedEntities.dataModels[0] 
+                        : relatedProduct.relatedEntities.dataModels;
+                    } else if (dataset.relatedEntities?.dataModels) {
+                      model = Array.isArray(dataset.relatedEntities.dataModels)
+                        ? dataset.relatedEntities.dataModels[0]
+                        : dataset.relatedEntities.dataModels;
                     }
-                  }}
-                  onClick={() => navigate(`/data-products/${dataset.id}/products/${relatedProduct.id}`)}
-                >
-                  <CardContent sx={{ flexGrow: 1, p: 3, position: 'relative' }}>
-                    {/* Product Type Indicator - Top Right Corner */}
-                    <Tooltip 
-                      title={relatedProduct.parentDataset ? "Child Product - Derived from parent dataset" : "Aggregated Product - Master dataset"}
-                      arrow
-                      placement="top"
-                    >
-                      <Box sx={{ 
-                        position: 'absolute', 
-                        top: 16, 
-                        right: 16, 
-                        zIndex: 1 
-                      }}>
-                        {relatedProduct.parentDataset ? (
-                          <AccountTreeIcon 
-                            sx={{ 
-                              color: currentTheme.warning, 
-                              fontSize: '1.2rem' 
-                            }} 
-                          />
-                        ) : (
-                          <MergeIcon 
-                            sx={{ 
-                              color: currentTheme.success, 
-                              fontSize: '1.2rem' 
-                            }} 
-                          />
-                        )}
-                      </Box>
-                    </Tooltip>
-
-                    {/* Header */}
-                    <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2, pr: 4 }}>
-                      <Typography variant="h6" sx={{ color: currentTheme.text, fontWeight: 600 }}>
-                        {relatedProduct.name}
-                      </Typography>
-                    </Box>
-
-                    {/* Format */}
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                      <CodeIcon sx={{ color: currentTheme.textSecondary, fontSize: '1rem' }} />
-                      <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
-                        {relatedProduct.format}
-                      </Typography>
-                    </Box>
-
-                    {/* Stats */}
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <StorageIcon sx={{ color: currentTheme.textSecondary, fontSize: '1rem' }} />
-                        <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
-                          {relatedProduct.size}
-                        </Typography>
-                      </Box>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <ScheduleIcon sx={{ color: currentTheme.textSecondary, fontSize: '1rem' }} />
-                        <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
-                          {relatedProduct.lastUpdated ? new Date(relatedProduct.lastUpdated).toLocaleDateString() : 'N/A'}
-                        </Typography>
-                      </Box>
-                    </Box>
-
-                  </CardContent>
-
-                  <CardActions sx={{ p: 3, pt: 0 }}>
-                    <Button
-                      size="small"
-                      onClick={(e) => { 
-                        e.stopPropagation(); 
-                        navigate(`/data-products/${dataset.id}/products/${relatedProduct.id}`); 
-                      }}
+                    return (
+              <Grid item xs={12} sm={6} md={4} key={relatedProduct.id}>
+                    <Card
+                      variant="outlined"
                       sx={{
-                        color: currentTheme.primary,
-                        fontSize: '0.875rem',
-                        textTransform: 'none',
-                        fontWeight: 500,
-                        flexGrow: 1,
+                        height: '100%',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        bgcolor: currentTheme.card,
+                        borderColor: currentTheme.border,
+                        borderRadius: 3,
+                        borderWidth: 1,
+                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                        cursor: 'pointer',
+                        position: 'relative',
+                        overflow: 'hidden',
+                        '&::before': {
+                          content: '""',
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          height: 3,
+                          bgcolor: relatedProduct.parentDataset ? currentTheme.warning : currentTheme.success,
+                          opacity: 0.6,
+                        },
+                        '&:hover': {
+                          boxShadow: `0 8px 24px ${currentTheme.primary}15`,
+                          transform: 'translateY(-4px)',
+                          '&::before': {
+                            opacity: 1,
+                          }
+                        }
                       }}
+                      onClick={() => navigate(`/data-products/${dataset.id}/products/${relatedProduct.id}`)}
                     >
-                      View Details
-                    </Button>
-                  </CardActions>
-                </Card>
+                      <CardContent sx={{ flexGrow: 1, p: 3.5, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: 160 }}>
+                        <Box>
+                          {/* Title - Data Model */}
+                          <Typography 
+                            variant="h5" 
+                            sx={{ 
+                              color: currentTheme.text, 
+                              fontWeight: 700, 
+                              mb: 2.5,
+                              fontSize: '1.5rem',
+                              letterSpacing: '-0.02em',
+                              lineHeight: 1.2
+                            }}
+                          >
+                            {model || relatedProduct.name}
+                          </Typography>
+
+                          {/* Aggregated/Child Indicator */}
+                          <Box>
+                            <Tooltip 
+                              title={relatedProduct.parentDataset ? "Child Product - Derived from parent dataset" : "Aggregated Product - Master dataset"}
+                              arrow
+                              placement="top"
+                            >
+                              <Chip
+                                icon={relatedProduct.parentDataset ? (
+                                  <AccountTreeIcon sx={{ fontSize: '0.9rem !important' }} />
+                                ) : (
+                                  <MergeIcon sx={{ fontSize: '0.9rem !important' }} />
+                                )}
+                                label={relatedProduct.parentDataset ? 'Child' : 'Aggregated'}
+                                size="medium"
+                                sx={{
+                                  bgcolor: relatedProduct.parentDataset 
+                                    ? `${currentTheme.warning}12` 
+                                    : `${currentTheme.success}12`,
+                                  color: relatedProduct.parentDataset 
+                                    ? currentTheme.warning 
+                                    : currentTheme.success,
+                                  fontWeight: 600,
+                                  fontSize: '0.8rem',
+                                  height: 28,
+                                  border: `1.5px solid ${relatedProduct.parentDataset ? currentTheme.warning : currentTheme.success}40`,
+                                  '& .MuiChip-icon': {
+                                    color: relatedProduct.parentDataset ? currentTheme.warning : currentTheme.success,
+                                  }
+                                }}
+                              />
+                            </Tooltip>
+                          </Box>
+                        </Box>
+
+                        {/* Data Product Producer */}
+                        <Box 
+                          sx={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: 1.5, 
+                            pt: 2.5, 
+                            borderTop: `1px solid ${currentTheme.border}40`,
+                            mt: 'auto'
+                          }}
+                        >
+                          <Box
+                            sx={{
+                              width: 40,
+                              height: 40,
+                              borderRadius: '50%',
+                              bgcolor: `${currentTheme.primary}15`,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              flexShrink: 0
+                            }}
+                          >
+                            <PersonIcon sx={{ color: currentTheme.primary, fontSize: '1.25rem' }} />
+                          </Box>
+                          <Box sx={{ flex: 1, minWidth: 0 }}>
+                            <Typography 
+                              variant="caption" 
+                              sx={{ 
+                                color: currentTheme.textSecondary, 
+                                display: 'block', 
+                                lineHeight: 1.3,
+                                fontSize: '0.7rem',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.05em',
+                                fontWeight: 600,
+                                mb: 0.5
+                              }}
+                            >
+                              Producer
+                            </Typography>
+                            <Typography 
+                              variant="body2" 
+                              sx={{ 
+                                color: currentTheme.text, 
+                                fontWeight: 600,
+                                fontSize: '0.9rem',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap'
+                              }}
+                            >
+                              {relatedProduct.provider || dataset.provider || 'Not specified'}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </CardContent>
+                    </Card>
               </Grid>
-            ))}
+                    );
+                  })}
+            {(!dataset.products || dataset.products.length === 0) && (
+              <Grid item xs={12}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1, py: 6 }}>
+                  <DescriptionIcon sx={{ fontSize: 48, color: currentTheme.textSecondary, opacity: 0.5 }} />
+                  <Typography variant="body1" sx={{ color: currentTheme.textSecondary }}>No data products available</Typography>
+                </Box>
+          </Grid>
+            )}
+            {dataset.products && dataset.products.filter((product) => {
+              if (!searchQuery) return true;
+              const query = searchQuery.toLowerCase();
+              const location = product.tables?.[0]?.s3Location || product.location || '';
+              return (
+                product.name?.toLowerCase().includes(query) ||
+                product.format?.toLowerCase().includes(query) ||
+                product.description?.toLowerCase().includes(query) ||
+                location.toLowerCase().includes(query)
+              );
+            }).length === 0 && searchQuery && (
+              <Grid item xs={12}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1, py: 6 }}>
+                  <SearchIcon sx={{ fontSize: 48, color: currentTheme.textSecondary, opacity: 0.5 }} />
+                  <Typography variant="body1" sx={{ color: currentTheme.textSecondary }}>No products found matching "{searchQuery}"</Typography>
+                </Box>
+              </Grid>
+            )}
           </Grid>
         </Box>
       )}
@@ -465,7 +591,19 @@ const DatasetDetailPage = () => {
           </Typography>
 
           {parentDatasets.length > 0 ? (
-            <Card variant="outlined" sx={{ bgcolor: currentTheme.card, borderColor: currentTheme.border }}>
+            <Card 
+              variant="outlined"
+              elevation={0}
+              sx={{ 
+                bgcolor: currentTheme.card, 
+                borderColor: currentTheme.border,
+                boxShadow: 'none',
+                '&:hover': {
+                  transform: 'none',
+                  boxShadow: 'none',
+                }
+              }}
+            >
               <TableContainer>
                 <Table>
                   <TableHead>
@@ -474,19 +612,13 @@ const DatasetDetailPage = () => {
                         Dataset Name
                       </TableCell>
                       <TableCell sx={{ color: currentTheme.text, fontWeight: 600, borderColor: currentTheme.border }}>
-                        Provider
+                        ID
                       </TableCell>
                       <TableCell sx={{ color: currentTheme.text, fontWeight: 600, borderColor: currentTheme.border }}>
                         Category
                       </TableCell>
                       <TableCell sx={{ color: currentTheme.text, fontWeight: 600, borderColor: currentTheme.border }}>
-                        Trustworthiness
-                      </TableCell>
-                      <TableCell sx={{ color: currentTheme.text, fontWeight: 600, borderColor: currentTheme.border }}>
                         Last Updated
-                      </TableCell>
-                      <TableCell sx={{ color: currentTheme.text, fontWeight: 600, borderColor: currentTheme.border }}>
-                        Size
                       </TableCell>
                       <TableCell sx={{ color: currentTheme.text, fontWeight: 600, borderColor: currentTheme.border }}>
                         Actions
@@ -508,19 +640,14 @@ const DatasetDetailPage = () => {
                           <TableCell sx={{ borderColor: currentTheme.border }}>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                               <AccountTreeIcon sx={{ color: currentTheme.primary, fontSize: '1.2rem' }} />
-                              <Box>
-                                <Typography variant="body1" sx={{ color: currentTheme.text, fontWeight: 500 }}>
-                                  {parentDataset.name}
-                                </Typography>
-                                <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
-                                  {parentDataset.id}
-                                </Typography>
-                              </Box>
+                              <Typography variant="body1" sx={{ color: currentTheme.text, fontWeight: 500 }}>
+                                {parentDataset.name}
+                              </Typography>
                             </Box>
                           </TableCell>
                           <TableCell sx={{ borderColor: currentTheme.border }}>
                             <Typography variant="body2" sx={{ color: currentTheme.textSecondary }}>
-                              {parentDataset.provider}
+                              {parentDataset.id}
                             </Typography>
                           </TableCell>
                           <TableCell sx={{ borderColor: currentTheme.border }}>
@@ -536,26 +663,6 @@ const DatasetDetailPage = () => {
                           </TableCell>
                           <TableCell sx={{ borderColor: currentTheme.border }}>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                              <SecurityIcon 
-                                sx={{ 
-                                  color: getTrustworthinessColor(parentDataset.trustworthiness), 
-                                  fontSize: '1rem' 
-                                }} 
-                              />
-                              <Typography 
-                                variant="body2" 
-                                sx={{ 
-                                  color: getTrustworthinessColor(parentDataset.trustworthiness),
-                                  textTransform: 'capitalize',
-                                  fontWeight: 500
-                                }}
-                              >
-                                {parentDataset.trustworthiness}
-                              </Typography>
-                            </Box>
-                          </TableCell>
-                          <TableCell sx={{ borderColor: currentTheme.border }}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                               <UpdateIcon sx={{ color: currentTheme.textSecondary, fontSize: '1rem' }} />
                               <Typography variant="body2" sx={{ color: currentTheme.textSecondary }}>
                                 {parentDataset.lastUpdated ? new Date(parentDataset.lastUpdated).toLocaleDateString() : 'N/A'}
@@ -563,31 +670,51 @@ const DatasetDetailPage = () => {
                             </Box>
                           </TableCell>
                           <TableCell sx={{ borderColor: currentTheme.border }}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                              <StorageIcon sx={{ color: currentTheme.textSecondary, fontSize: '1rem' }} />
-                              <Typography variant="body2" sx={{ color: currentTheme.textSecondary }}>
-                                {parentDataset.size}
-                              </Typography>
+                            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                              <Button
+                                variant="outlined"
+                                size="small"
+                                startIcon={<OpenInNewIcon />}
+                                onClick={() => navigate(`/data-products/${parentDataset.id}`)}
+                                sx={{
+                                  color: currentTheme.primary,
+                                  borderColor: currentTheme.border,
+                                  fontSize: '0.75rem',
+                                  '&:hover': {
+                                    borderColor: currentTheme.primary,
+                                    bgcolor: `${currentTheme.primary}10`,
+                                  },
+                                }}
+                              >
+                                View
+                              </Button>
+                              <Button
+                                variant="outlined"
+                                size="small"
+                                startIcon={<LinkIcon />}
+                                component="a"
+                                href={parentDataset.catalogLink || `#/data-products/${parentDataset.id}`}
+                                target={parentDataset.catalogLink ? "_blank" : undefined}
+                                rel={parentDataset.catalogLink ? "noopener noreferrer" : undefined}
+                                onClick={(e) => {
+                                  if (!parentDataset.catalogLink) {
+                                    e.preventDefault();
+                                    navigate(`/data-products/${parentDataset.id}`);
+                                  }
+                                }}
+                                sx={{
+                                  color: currentTheme.primary,
+                                  borderColor: currentTheme.border,
+                                  fontSize: '0.75rem',
+                                  '&:hover': {
+                                    borderColor: currentTheme.primary,
+                                    bgcolor: `${currentTheme.primary}10`,
+                                  },
+                                }}
+                              >
+                                Catalog
+                              </Button>
                             </Box>
-                          </TableCell>
-                          <TableCell sx={{ borderColor: currentTheme.border }}>
-                            <Button
-                              variant="outlined"
-                              size="small"
-                              startIcon={<OpenInNewIcon />}
-                              onClick={() => navigate(`/data-products/${parentDataset.id}`)}
-                              sx={{
-                                color: currentTheme.primary,
-                                borderColor: currentTheme.border,
-                                fontSize: '0.75rem',
-                                '&:hover': {
-                                  borderColor: currentTheme.primary,
-                                  bgcolor: `${currentTheme.primary}10`,
-                                },
-                              }}
-                            >
-                              View
-                            </Button>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -652,7 +779,7 @@ const DatasetDetailPage = () => {
             Triage & Assessment
           </Typography>
           <Typography variant="body1" sx={{ color: currentTheme.textSecondary, mb: 3 }}>
-            Comprehensive data quality assessments, issue tracking, and trustworthiness evaluations for this dataset
+            Comprehensive data quality assessments and issue tracking for this dataset
           </Typography>
 
           {/* Triage Reports */}
@@ -835,195 +962,9 @@ const DatasetDetailPage = () => {
         </Box>
       )}
 
-      {selectedTab === 3 && (
-        <Box>
-          <Typography variant="h6" sx={{ color: currentTheme.text, mb: 2 }}>
-            Data Lineage
-          </Typography>
-          <Typography variant="body1" sx={{ color: currentTheme.textSecondary, mb: 3 }}>
-            Visual representation of upstream sources and downstream consumers of this dataset
-          </Typography>
-
-          {/* Mermaid Lineage Diagram */}
-          <Card variant="outlined" sx={{ mb: 3, bgcolor: currentTheme.card, borderColor: currentTheme.border }}>
-            <CardContent sx={{ p: 3 }}>
-              <LineageDiagram
-                upstream={dataset.technicalMetadata?.datasetLineage?.upstream || []}
-                downstream={dataset.technicalMetadata?.datasetLineage?.downstream || []}
-                currentItem={{
-                  name: dataset.name,
-                  type: dataset.format || 'Dataset'
-                }}
-                currentTheme={currentTheme}
-                height="400px"
-              />
-            </CardContent>
-          </Card>
-
-          {/* Detailed Lineage Information */}
-          <Grid container spacing={3}>
-            {/* Upstream Sources Details */}
-            <Grid item xs={12} md={6}>
-              <Typography variant="h6" sx={{ color: currentTheme.text, mb: 2 }}>
-                Upstream Sources
-              </Typography>
-              {dataset.technicalMetadata?.datasetLineage?.upstream?.length > 0 ? (
-                dataset.technicalMetadata.datasetLineage.upstream.map((source, index) => (
-                  <Card key={index} variant="outlined" sx={{ mb: 2, bgcolor: currentTheme.card, borderColor: currentTheme.border }}>
-            <CardContent>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <Box>
-                          <Typography variant="h6" sx={{ color: currentTheme.text }}>
-                            {source.name}
-              </Typography>
-                          <Typography variant="body2" sx={{ color: currentTheme.textSecondary }}>
-                            {source.type}
-                          </Typography>
-                        </Box>
-                        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                          <Chip
-                            label={source.status}
-                            size="small"
-                            sx={{
-                              bgcolor: source.status === 'Active' ? `${currentTheme.success}15` : `${currentTheme.error}15`,
-                              color: source.status === 'Active' ? currentTheme.success : currentTheme.error,
-                            }}
-                          />
-                        </Box>
-                      </Box>
-                      <Typography variant="caption" sx={{ color: currentTheme.textSecondary, mt: 1, display: 'block' }}>
-                        Last Updated: {source.lastUpdated ? new Date(source.lastUpdated).toLocaleDateString() : 'N/A'}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                ))
-              ) : (
-                <Typography variant="body2" sx={{ color: currentTheme.textSecondary, fontStyle: 'italic' }}>
-                  No upstream sources defined
-                </Typography>
-              )}
-            </Grid>
-
-            {/* Downstream Consumers Details */}
-            <Grid item xs={12} md={6}>
-              <Typography variant="h6" sx={{ color: currentTheme.text, mb: 2 }}>
-                Downstream Consumers
-              </Typography>
-              {dataset.technicalMetadata?.datasetLineage?.downstream?.length > 0 ? (
-                dataset.technicalMetadata.datasetLineage.downstream.map((consumer, index) => (
-                  <Card key={index} variant="outlined" sx={{ mb: 2, bgcolor: currentTheme.card, borderColor: currentTheme.border }}>
-                    <CardContent>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <Box>
-                          <Typography variant="h6" sx={{ color: currentTheme.text }}>
-                            {consumer.name}
-                          </Typography>
-                          <Typography variant="body2" sx={{ color: currentTheme.textSecondary }}>
-                            {consumer.type}
-                          </Typography>
-                        </Box>
-                        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                          <Chip
-                            label={consumer.status}
-                            size="small"
-                            sx={{
-                              bgcolor: consumer.status === 'Active' ? `${currentTheme.success}15` : `${currentTheme.error}15`,
-                              color: consumer.status === 'Active' ? currentTheme.success : currentTheme.error,
-                            }}
-                          />
-                        </Box>
-                      </Box>
-                      <Typography variant="caption" sx={{ color: currentTheme.textSecondary, mt: 1, display: 'block' }}>
-                        Last Updated: {consumer.lastUpdated ? new Date(consumer.lastUpdated).toLocaleDateString() : 'N/A'}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                ))
-              ) : (
-                <Typography variant="body2" sx={{ color: currentTheme.textSecondary, fontStyle: 'italic' }}>
-                  No downstream consumers defined
-                </Typography>
-              )}
-            </Grid>
-          </Grid>
-        </Box>
-      )}
 
 
 
-        </Grid>
-
-        {/* Sidebar */}
-        <Grid item xs={12} lg={4}>
-          <Box sx={{ position: 'sticky', top: 20 }}>
-            {/* Dataset Info */}
-            <Card variant="outlined" sx={{ mb: 3, bgcolor: currentTheme.card, borderColor: currentTheme.border }}>
-              <CardContent>
-                <Typography variant="h6" sx={{ color: currentTheme.text, mb: 2 }}>
-                  Dataset Information
-                </Typography>
-                <List dense>
-                <ListItem sx={{ px: 0 }}>
-                  <ListItemIcon>
-                      <PersonIcon sx={{ color: currentTheme.primary }} />
-                  </ListItemIcon>
-                  <ListItemText
-                      primary="Provider"
-                      secondary={dataset.provider || 'Unknown'}
-                    primaryTypographyProps={{ color: currentTheme.text }}
-                    secondaryTypographyProps={{ color: currentTheme.textSecondary }}
-                  />
-                </ListItem>
-                <ListItem sx={{ px: 0 }}>
-                  <ListItemIcon>
-                      <CategoryIcon sx={{ color: currentTheme.primary }} />
-                  </ListItemIcon>
-                  <ListItemText
-                      primary="Category"
-                      secondary={dataset.category || 'Dataset'}
-                    primaryTypographyProps={{ color: currentTheme.text }}
-                    secondaryTypographyProps={{ color: currentTheme.textSecondary }}
-                  />
-                </ListItem>
-                <ListItem sx={{ px: 0 }}>
-                  <ListItemIcon>
-                      <UpdateIcon sx={{ color: currentTheme.primary }} />
-                  </ListItemIcon>
-                  <ListItemText
-                      primary="Feed Type"
-                      secondary={dataset.feedType || 'One Time'}
-                      primaryTypographyProps={{ color: currentTheme.text }}
-                      secondaryTypographyProps={{ color: currentTheme.textSecondary }}
-                    />
-                  </ListItem>
-                  <ListItem sx={{ px: 0 }}>
-                    <ListItemIcon>
-                      <ScheduleIcon sx={{ color: currentTheme.primary }} />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary="Last Updated"
-                      secondary={dataset.lastUpdated ? new Date(dataset.lastUpdated).toLocaleDateString() : 'N/A'}
-                      primaryTypographyProps={{ color: currentTheme.text }}
-                      secondaryTypographyProps={{ color: currentTheme.textSecondary }}
-                    />
-                  </ListItem>
-                  <ListItem sx={{ px: 0 }}>
-                    <ListItemIcon>
-                      <SecurityIcon sx={{ color: getTrustworthinessColor(dataset.trustworthiness) }} />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary="Trustworthiness"
-                      secondary={dataset.trustworthiness?.charAt(0).toUpperCase() + dataset.trustworthiness?.slice(1) || 'Unknown'}
-                    primaryTypographyProps={{ color: currentTheme.text }}
-                    secondaryTypographyProps={{ color: currentTheme.textSecondary }}
-                  />
-                </ListItem>
-              </List>
-            </CardContent>
-          </Card>
-
-
-          </Box>
         </Grid>
       </Grid>
     </Container>

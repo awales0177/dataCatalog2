@@ -200,14 +200,6 @@ const DataProductDetailPage = () => {
   };
 
 
-  const getTrustworthinessColor = (level) => {
-    switch (level?.toLowerCase()) {
-      case 'high': return currentTheme.success;
-      case 'medium': return currentTheme.warning;
-      case 'low': return currentTheme.error;
-      default: return currentTheme.textSecondary;
-    }
-  };
 
   if (loading) {
     return (
@@ -397,170 +389,281 @@ const DataProductDetailPage = () => {
           {/* Tab Content */}
           {selectedTab === 0 && (
             <Box>
-              <Typography variant="h6" sx={{ color: currentTheme.text, mb: 2 }}>
-                Schema
-              </Typography>
-              <Typography variant="body1" sx={{ color: currentTheme.textSecondary, mb: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                  <TableChartIcon sx={{ color: currentTheme.primary, fontSize: '1.75rem' }} />
+                  <Typography variant="h5" sx={{ color: currentTheme.text, fontWeight: 600 }}>
+                    Tables & Schemas
+                  </Typography>
+                  <Chip
+                    label={`${product.technicalMetadata?.tableCounts?.totalTables || product.tables?.length || 0} tables`}
+                    size="small"
+                    sx={{
+                      bgcolor: `${currentTheme.primary}15`,
+                      color: currentTheme.primary,
+                      fontWeight: 600,
+                      fontSize: '0.75rem',
+                      height: 24,
+                    }}
+                  />
+                </Box>
+              </Box>
+              
+              <Typography variant="body1" sx={{ color: currentTheme.textSecondary, mb: 4 }}>
                 {product.description}
               </Typography>
 
-              <Grid container spacing={3}>
-                <Grid item xs={12}>
-                  <Card variant="outlined" sx={{ p: 3, bgcolor: currentTheme.card, borderColor: currentTheme.border }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                      <TableChartIcon sx={{ color: currentTheme.primary, mr: 1, fontSize: '1.5rem' }} />
-                      <Typography variant="h6" sx={{ color: currentTheme.text }}>
-                        Tables & Schemas
-                      </Typography>
-                      <Box sx={{ ml: 'auto', display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Typography variant="h4" sx={{ color: currentTheme.primary }}>
-                          {product.technicalMetadata?.tableCounts?.totalTables || product.tables?.length || 0}
-                        </Typography>
-                        <Typography variant="body2" sx={{ color: currentTheme.textSecondary }}>
-                          Total Tables
-                        </Typography>
-                      </Box>
-                    </Box>
-                    
-                    {product.tables && product.tables.length > 0 ? (
+              {product.tables && product.tables.length > 0 ? (
                       <Box>
                         {product.tables.map((table, index) => {
                           const tableName = typeof table === 'string' ? table : table.name;
                           const tableSchema = typeof table === 'object' ? table.schema : null;
                           const s3Location = typeof table === 'object' && table.s3Location ? table.s3Location : `s3://data-catalog/${product.id}/${tableName}`;
                           const isExpanded = expandedTables[index];
+                          const isLast = index === product.tables.length - 1;
                           
                           return (
-                            <Accordion
-                              key={index}
-                              expanded={isExpanded}
-                              onChange={() => handleTableToggle(index)}
-                              sx={{
-                                mb: 2,
-                                bgcolor: currentTheme.background,
-                                border: `1px solid ${currentTheme.border}`,
-                                '&:before': { display: 'none' },
-                                '&.Mui-expanded': {
-                                  margin: '0 0 16px 0',
-                                },
-                              }}
-                            >
-                              <AccordionSummary
-                                expandIcon={isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                            <Box key={index} sx={{ mb: isLast ? 0 : 3 }}>
+                              <Accordion
+                                expanded={isExpanded}
+                                onChange={() => handleTableToggle(index)}
                                 sx={{
                                   bgcolor: currentTheme.card,
-                                  borderBottom: isExpanded ? `1px solid ${currentTheme.border}` : 'none',
-                                  '&:hover': {
-                                    bgcolor: `${currentTheme.primary}05`,
+                                  border: `2px solid ${currentTheme.border}`,
+                                  borderRadius: 2,
+                                  boxShadow: 'none',
+                                  '&:before': { display: 'none' },
+                                  '&.Mui-expanded': {
+                                    margin: 0,
+                                    borderColor: currentTheme.primary,
                                   },
+                                  transition: 'all 0.2s ease',
+                                  '&:hover': {
+                                    borderColor: currentTheme.primary,
+                                  }
                                 }}
                               >
-                                <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-                                  <StorageIcon sx={{ color: currentTheme.primary, mr: 2, fontSize: '1.2rem' }} />
-                                  <Box sx={{ flex: 1 }}>
-                                    <Typography variant="subtitle1" sx={{ color: currentTheme.text, fontWeight: 600 }}>
-                                      {tableName}
-                                    </Typography>
-                                    <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
-                                      S3: {s3Location}
-                                    </Typography>
-                                  </Box>
-                                  {tableSchema && (
-                                    <Chip
-                                      label={`${tableSchema.length} columns`}
-                                      size="small"
+                                <AccordionSummary
+                                  expandIcon={
+                                    <Box
                                       sx={{
-                                        bgcolor: `${currentTheme.primary}15`,
-                                        color: currentTheme.primary,
-                                        fontWeight: 500,
+                                        width: 32,
+                                        height: 32,
+                                        borderRadius: '50%',
+                                        bgcolor: isExpanded ? `${currentTheme.primary}15` : 'transparent',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        transition: 'all 0.2s ease',
+                                        '&:hover': {
+                                          bgcolor: `${currentTheme.primary}20`,
+                                        }
                                       }}
-                                    />
-                                  )}
-                                </Box>
-                              </AccordionSummary>
+                                    >
+                                      {isExpanded ? (
+                                        <ExpandLessIcon sx={{ color: currentTheme.primary, fontSize: '1.2rem' }} />
+                                      ) : (
+                                        <ExpandMoreIcon sx={{ color: currentTheme.textSecondary, fontSize: '1.2rem' }} />
+                                      )}
+                                    </Box>
+                                  }
+                                  sx={{
+                                    bgcolor: 'transparent',
+                                    px: 3,
+                                    py: 2.5,
+                                    minHeight: 'auto',
+                                    '&.Mui-expanded': {
+                                      minHeight: 'auto',
+                                      borderBottom: `1px solid ${currentTheme.border}`,
+                                    },
+                                    '&:hover': {
+                                      bgcolor: 'transparent',
+                                    },
+                                    '& .MuiAccordionSummary-content': {
+                                      margin: 0,
+                                      '&.Mui-expanded': {
+                                        margin: 0,
+                                      }
+                                    }
+                                  }}
+                                >
+                                  <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', gap: 2 }}>
+                                    <Box
+                                      sx={{
+                                        width: 40,
+                                        height: 40,
+                                        borderRadius: 1,
+                                        bgcolor: `${currentTheme.primary}12`,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        flexShrink: 0
+                                      }}
+                                    >
+                                      <TableChartIcon sx={{ color: currentTheme.primary, fontSize: '1.3rem' }} />
+                                    </Box>
+                                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                                      <Typography variant="subtitle1" sx={{ color: currentTheme.text, fontWeight: 600, mb: 0.5 }}>
+                                        {tableName}
+                                      </Typography>
+                                      <Typography 
+                                        variant="caption" 
+                                        sx={{ 
+                                          color: currentTheme.textSecondary,
+                                          fontFamily: 'monospace',
+                                          fontSize: '0.75rem',
+                                          display: 'block',
+                                          overflow: 'hidden',
+                                          textOverflow: 'ellipsis',
+                                          whiteSpace: 'nowrap'
+                                        }}
+                                      >
+                                        {s3Location}
+                                      </Typography>
+                                    </Box>
+                                    <Box sx={{ display: 'flex', gap: 1, flexShrink: 0 }}>
+                                      {tableSchema && (
+                                        <Chip
+                                          label={`${tableSchema.length} columns`}
+                                          size="small"
+                                          sx={{
+                                            bgcolor: `${currentTheme.primary}15`,
+                                            color: currentTheme.primary,
+                                            fontWeight: 600,
+                                            fontSize: '0.75rem',
+                                            height: 24,
+                                          }}
+                                        />
+                                      )}
+                                      {typeof table === 'object' && (table.rowCount || table.rows || table.row_count) && (
+                                        <Chip
+                                          label={`${(table.rowCount || table.rows || table.row_count)?.toLocaleString() || 'N/A'} rows`}
+                                          size="small"
+                                          sx={{
+                                            bgcolor: `${currentTheme.success}15`,
+                                            color: currentTheme.success,
+                                            fontWeight: 600,
+                                            fontSize: '0.75rem',
+                                            height: 24,
+                                          }}
+                                        />
+                                      )}
+                                    </Box>
+                                  </Box>
+                                </AccordionSummary>
                               
-                              <AccordionDetails sx={{ p: 0 }}>
-                                {tableSchema && tableSchema.length > 0 ? (
-                                  <Box sx={{ p: 2 }}>
-                                    <Typography variant="subtitle2" sx={{ color: currentTheme.text, mb: 2 }}>
-                                      Schema
-                                    </Typography>
-                                    <Table size="small">
-                                      <TableHead>
-                                        <TableRow>
-                                      <TableCell sx={{ color: currentTheme.text, fontWeight: 600, borderColor: currentTheme.border }}>
-                                        Column Name
-                                      </TableCell>
-                                      <TableCell sx={{ color: currentTheme.text, fontWeight: 600, borderColor: currentTheme.border }}>
-                                        Source
-                                      </TableCell>
-                                      <TableCell sx={{ color: currentTheme.text, fontWeight: 600, borderColor: currentTheme.border }}>
-                                        Data Type
-                                      </TableCell>
-                                      <TableCell sx={{ color: currentTheme.text, fontWeight: 600, borderColor: currentTheme.border }}>
-                                        Description
-                                      </TableCell>
-                                        </TableRow>
-                                      </TableHead>
-                                      <TableBody>
-                                        {tableSchema.map((column, colIndex) => (
-                                          <TableRow key={colIndex}>
-                                            <TableCell sx={{ color: currentTheme.text, borderColor: currentTheme.border }}>
-                                              {column.name}
-                                            </TableCell>
-                                            <TableCell sx={{ color: currentTheme.textSecondary, borderColor: currentTheme.border }}>
-                                              <Chip
-                                                label={column.source || 'Unknown'}
-                                                size="small"
+                                <AccordionDetails sx={{ p: 0 }}>
+                                  {tableSchema && tableSchema.length > 0 ? (
+                                    <Box sx={{ p: 3, bgcolor: `${currentTheme.border}08` }}>
+                                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                                        <Typography variant="subtitle2" sx={{ color: currentTheme.text, fontWeight: 600 }}>
+                                          Schema Columns
+                                        </Typography>
+                                        {typeof table === 'object' && (table.rowCount || table.rows || table.row_count) && (
+                                          <Typography variant="body2" sx={{ color: currentTheme.textSecondary }}>
+                                            {`${(table.rowCount || table.rows || table.row_count)?.toLocaleString() || 'N/A'} rows`}
+                                          </Typography>
+                                        )}
+                                      </Box>
+                                      <Box
+                                        sx={{
+                                          border: `1px solid ${currentTheme.border}`,
+                                          borderRadius: 1,
+                                          overflow: 'hidden',
+                                          bgcolor: currentTheme.card
+                                        }}
+                                      >
+                                        <Table size="small">
+                                          <TableHead>
+                                            <TableRow sx={{ bgcolor: `${currentTheme.primary}08` }}>
+                                              <TableCell sx={{ color: currentTheme.text, fontWeight: 700, borderColor: currentTheme.border, fontSize: '0.875rem', py: 1.5 }}>
+                                                Column Name
+                                              </TableCell>
+                                              <TableCell sx={{ color: currentTheme.text, fontWeight: 700, borderColor: currentTheme.border, fontSize: '0.875rem', py: 1.5 }}>
+                                                Source
+                                              </TableCell>
+                                              <TableCell sx={{ color: currentTheme.text, fontWeight: 700, borderColor: currentTheme.border, fontSize: '0.875rem', py: 1.5 }}>
+                                                Data Type
+                                              </TableCell>
+                                              <TableCell sx={{ color: currentTheme.text, fontWeight: 700, borderColor: currentTheme.border, fontSize: '0.875rem', py: 1.5 }}>
+                                                Description
+                                              </TableCell>
+                                            </TableRow>
+                                          </TableHead>
+                                          <TableBody>
+                                            {tableSchema.map((column, colIndex) => (
+                                              <TableRow 
+                                                key={colIndex}
                                                 sx={{
-                                                  bgcolor: column.source === 'source' ? `${currentTheme.success}15` : `${currentTheme.primary}15`,
-                                                  color: column.source === 'source' ? currentTheme.success : currentTheme.primary,
-                                                  fontSize: '0.75rem',
+                                                  borderColor: currentTheme.border,
+                                                  '&:not(:last-child)': {
+                                                    borderBottom: `1px solid ${currentTheme.border}`
+                                                  },
+                                                  '&:hover': {
+                                                    bgcolor: `${currentTheme.primary}05`,
+                                                  }
                                                 }}
-                                              />
-                                            </TableCell>
-                                            <TableCell sx={{ color: currentTheme.textSecondary, borderColor: currentTheme.border }}>
-                                              <Chip
-                                                label={column.type}
-                                                size="small"
-                                                sx={{
-                                                  bgcolor: `${currentTheme.primary}10`,
-                                                  color: currentTheme.primary,
-                                                  fontSize: '0.75rem',
-                                                }}
-                                              />
-                                            </TableCell>
-                                            <TableCell sx={{ color: currentTheme.textSecondary, borderColor: currentTheme.border }}>
-                                              {column.description || 'No description'}
-                                            </TableCell>
-                                          </TableRow>
-                                        ))}
-                                      </TableBody>
-                                    </Table>
-                                  </Box>
-                                ) : (
-                                  <Box sx={{ p: 2, textAlign: 'center' }}>
-                                    <Typography variant="body2" sx={{ color: currentTheme.textSecondary, fontStyle: 'italic' }}>
-                                      No schema information available
-                                    </Typography>
-                                  </Box>
-                                )}
-                              </AccordionDetails>
-                            </Accordion>
+                                              >
+                                                <TableCell sx={{ color: currentTheme.text, borderColor: currentTheme.border, fontWeight: 500, py: 1.5 }}>
+                                                  {column.name}
+                                                </TableCell>
+                                                <TableCell sx={{ color: currentTheme.textSecondary, borderColor: currentTheme.border, py: 1.5 }}>
+                                                  <Chip
+                                                    label={column.source || 'Unknown'}
+                                                    size="small"
+                                                    sx={{
+                                                      bgcolor: column.source === 'source' ? `${currentTheme.success}15` : `${currentTheme.primary}15`,
+                                                      color: column.source === 'source' ? currentTheme.success : currentTheme.primary,
+                                                      fontSize: '0.7rem',
+                                                      fontWeight: 500,
+                                                      height: 22,
+                                                    }}
+                                                  />
+                                                </TableCell>
+                                                <TableCell sx={{ color: currentTheme.textSecondary, borderColor: currentTheme.border, py: 1.5 }}>
+                                                  <Chip
+                                                    label={column.type}
+                                                    size="small"
+                                                    sx={{
+                                                      bgcolor: `${currentTheme.primary}10`,
+                                                      color: currentTheme.primary,
+                                                      fontSize: '0.7rem',
+                                                      fontWeight: 500,
+                                                      height: 22,
+                                                      fontFamily: 'monospace',
+                                                    }}
+                                                  />
+                                                </TableCell>
+                                                <TableCell sx={{ color: currentTheme.textSecondary, borderColor: currentTheme.border, py: 1.5, fontSize: '0.875rem' }}>
+                                                  {column.description || 'No description'}
+                                                </TableCell>
+                                              </TableRow>
+                                            ))}
+                                          </TableBody>
+                                        </Table>
+                                      </Box>
+                                    </Box>
+                                  ) : (
+                                    <Box sx={{ p: 3, textAlign: 'center', bgcolor: `${currentTheme.border}08` }}>
+                                      <Typography variant="body2" sx={{ color: currentTheme.textSecondary, fontStyle: 'italic' }}>
+                                        No schema information available
+                                      </Typography>
+                                    </Box>
+                                  )}
+                                </AccordionDetails>
+                              </Accordion>
+                            </Box>
                           );
                         })}
                       </Box>
                     ) : (
-                      <Box sx={{ textAlign: 'center', py: 4 }}>
-                        <StorageIcon sx={{ color: currentTheme.textSecondary, fontSize: '3rem', mb: 2 }} />
+                      <Box sx={{ textAlign: 'center', py: 6 }}>
+                        <StorageIcon sx={{ color: currentTheme.textSecondary, fontSize: '3rem', mb: 2, opacity: 0.5 }} />
                         <Typography variant="body1" sx={{ color: currentTheme.textSecondary }}>
                           No tables available
                         </Typography>
                       </Box>
                     )}
-                  </Card>
-                </Grid>
-              </Grid>
             </Box>
           )}
 
@@ -578,7 +681,15 @@ const DataProductDetailPage = () => {
                 Processing Engines
               </Typography>
               {product.technicalMetadata?.engines?.map((engine, index) => (
-                <Card key={index} variant="outlined" sx={{ mb: 2, bgcolor: currentTheme.card, borderColor: currentTheme.border }}>
+                <Card key={index} variant="outlined" sx={{ 
+                  mb: 2, 
+                  bgcolor: currentTheme.card, 
+                  borderColor: currentTheme.border,
+                  '&:hover': {
+                    transform: 'none',
+                    boxShadow: 'none'
+                  }
+                }}>
                   <CardContent>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
                       <Typography variant="h6" sx={{ color: currentTheme.text }}>
@@ -627,7 +738,15 @@ const DataProductDetailPage = () => {
                     </Typography>
 
               {product.technicalMetadata?.codeVersions?.map((version, index) => (
-                <Card key={index} variant="outlined" sx={{ mb: 2, bgcolor: currentTheme.card, borderColor: currentTheme.border }}>
+                <Card key={index} variant="outlined" sx={{ 
+                  mb: 2, 
+                  bgcolor: currentTheme.card, 
+                  borderColor: currentTheme.border,
+                  '&:hover': {
+                    transform: 'none',
+                    boxShadow: 'none'
+                  }
+                }}>
                   <CardContent>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
                       <Typography variant="h6" sx={{ color: currentTheme.text }}>
@@ -714,7 +833,15 @@ const DataProductDetailPage = () => {
               </Typography>
 
               {/* Mermaid Lineage Diagram */}
-              <Card variant="outlined" sx={{ mb: 3, bgcolor: currentTheme.card, borderColor: currentTheme.border }}>
+              <Card variant="outlined" sx={{ 
+                mb: 3, 
+                bgcolor: currentTheme.card, 
+                borderColor: currentTheme.border,
+                '&:hover': {
+                  transform: 'none',
+                  boxShadow: 'none'
+                }
+              }}>
                 <CardContent sx={{ p: 3 }}>
                   <LineageDiagram
                     upstream={product.technicalMetadata?.datasetLineage?.upstream || []}
@@ -728,53 +855,6 @@ const DataProductDetailPage = () => {
                   />
                 </CardContent>
               </Card>
-
-              {/* All Lineage Sources */}
-              <Typography variant="h6" sx={{ color: currentTheme.text, mb: 2 }}>
-                Lineage Sources
-              </Typography>
-              {(() => {
-                const allSources = [
-                  ...(product.technicalMetadata?.datasetLineage?.upstream || []),
-                  ...(product.technicalMetadata?.datasetLineage?.downstream || [])
-                ];
-                
-                return allSources.length > 0 ? (
-                  allSources.map((source, index) => (
-                    <Card key={index} variant="outlined" sx={{ mb: 2, bgcolor: currentTheme.card, borderColor: currentTheme.border }}>
-                      <CardContent>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                          <Box>
-                            <Typography variant="h6" sx={{ color: currentTheme.text }}>
-                              {source.name}
-                            </Typography>
-                            <Typography variant="body2" sx={{ color: currentTheme.textSecondary }}>
-                              {source.type}
-                            </Typography>
-                          </Box>
-                          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                            <Chip
-                              label={source.status}
-                              size="small"
-                              sx={{
-                                bgcolor: source.status === 'Active' ? `${currentTheme.success}15` : `${currentTheme.error}15`,
-                                color: source.status === 'Active' ? currentTheme.success : currentTheme.error,
-                              }}
-                            />
-                          </Box>
-                        </Box>
-                        <Typography variant="caption" sx={{ color: currentTheme.textSecondary, mt: 1, display: 'block' }}>
-                          Last Updated: {source.lastUpdated ? new Date(source.lastUpdated).toLocaleDateString() : 'N/A'}
-                        </Typography>
-                      </CardContent>
-                    </Card>
-                  ))
-                ) : (
-                  <Typography variant="body2" sx={{ color: currentTheme.textSecondary, fontStyle: 'italic' }}>
-                    No lineage sources defined
-                  </Typography>
-                );
-              })()}
             </Box>
           )}
 
@@ -788,7 +868,15 @@ const DataProductDetailPage = () => {
               </Typography>
 
               {product.technicalMetadata?.codeVersions?.map((version, index) => (
-                <Card key={index} variant="outlined" sx={{ mb: 2, bgcolor: currentTheme.card, borderColor: currentTheme.border }}>
+                <Card key={index} variant="outlined" sx={{ 
+                  mb: 2, 
+                  bgcolor: currentTheme.card, 
+                  borderColor: currentTheme.border,
+                  '&:hover': {
+                    transform: 'none',
+                    boxShadow: 'none'
+                  }
+                }}>
                   <CardContent>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
                       <Typography variant="h6" sx={{ color: currentTheme.text }}>
@@ -859,7 +947,15 @@ const DataProductDetailPage = () => {
         <Grid item xs={12} lg={4}>
           <Box sx={{ position: 'sticky', top: 20 }}>
             {/* Product Info */}
-            <Card variant="outlined" sx={{ mb: 3, bgcolor: currentTheme.card, borderColor: currentTheme.border }}>
+            <Card variant="outlined" sx={{ 
+              mb: 3, 
+              bgcolor: currentTheme.card, 
+              borderColor: currentTheme.border,
+              '&:hover': {
+                transform: 'none',
+                boxShadow: 'none'
+              }
+            }}>
               <CardContent>
                 <Typography variant="h6" sx={{ color: currentTheme.text, mb: 2 }}>
                   Product Information
@@ -931,23 +1027,20 @@ const DataProductDetailPage = () => {
                       secondaryTypographyProps={{ color: currentTheme.textSecondary }}
                     />
                   </ListItem>
-                  <ListItem sx={{ px: 0 }}>
-                    <ListItemIcon>
-                      <SecurityIcon sx={{ color: getTrustworthinessColor(product.trustworthiness) }} />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary="Trustworthiness"
-                      secondary={product.trustworthiness?.charAt(0).toUpperCase() + product.trustworthiness?.slice(1) || 'Unknown'}
-                      primaryTypographyProps={{ color: currentTheme.text }}
-                      secondaryTypographyProps={{ color: currentTheme.textSecondary }}
-                    />
-                  </ListItem>
                 </List>
               </CardContent>
             </Card>
 
             {/* Related Entities */}
-            <Card variant="outlined" sx={{ mb: 3, bgcolor: currentTheme.card, borderColor: currentTheme.border }}>
+            <Card variant="outlined" sx={{ 
+              mb: 3, 
+              bgcolor: currentTheme.card, 
+              borderColor: currentTheme.border,
+              '&:hover': {
+                transform: 'none',
+                boxShadow: 'none'
+              }
+            }}>
               <CardContent>
                 <Typography variant="h6" sx={{ color: currentTheme.text, mb: 2 }}>
                   Related Entities

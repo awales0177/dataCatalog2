@@ -171,6 +171,10 @@ export const useAppState = () => {
     // Collapse if we're exactly 2 levels deep (e.g., /models/CUST)
     // OR if we're in edit mode (e.g., /models/CUST/edit, /applications/edit/123, /policies/edit/456)
     // OR if we're in detail view (e.g., /toolkit/function/123, /toolkit/container/123, /toolkit/infrastructure/123, /reference/456)
+    // OR if we're on a data product detail page (e.g., /data-products/:id or /data-products/:datasetId/products/:productId)
+    const isDataProductDetail = pathSegments[0] === 'data-products' && 
+                                 pathSegments.length > 1;
+    
     if (pathSegments.length === 2 || 
         (pathSegments.length === 3 && pathSegments[2] === 'edit') ||
         (pathSegments.length === 3 && pathSegments[1] === 'edit') ||
@@ -179,7 +183,8 @@ export const useAppState = () => {
         (pathSegments.length === 3 && pathSegments[1] === 'infrastructure') ||
         (pathSegments.length === 4 && pathSegments[1] === 'container' && pathSegments[3] === 'edit') ||
         (pathSegments.length === 4 && pathSegments[1] === 'infrastructure' && pathSegments[3] === 'edit') ||
-        (pathSegments.length === 3 && pathSegments[1] === 'reference')) {
+        (pathSegments.length === 3 && pathSegments[1] === 'reference') ||
+        isDataProductDetail) {
       setIsDrawerCollapsed(true);
     } else {
       setIsDrawerCollapsed(false);

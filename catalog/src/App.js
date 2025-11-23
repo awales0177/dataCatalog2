@@ -111,7 +111,7 @@ function AppContent() {
         display: 'flex', 
         flexDirection: 'column', 
         minHeight: '100vh',
-        bgcolor: currentTheme.background,
+        bgcolor: currentTheme.card,
         position: 'fixed',
         top: 0,
         left: 0,
@@ -167,15 +167,56 @@ function AppContent() {
           component="main"
           sx={{
             flexGrow: 1,
-            p: 3,
             width: { sm: `calc(100% - ${isDrawerCollapsed ? collapsedDrawerWidth : drawerWidth}px)` },
-            bgcolor: currentTheme.background,
             mt: '84px',
             ml: { sm: `${isDrawerCollapsed ? collapsedDrawerWidth : drawerWidth}px` },
             transition: 'margin-left 0.2s ease-in-out, width 0.2s ease-in-out',
+            position: 'relative',
+            height: 'calc(100vh - 84px)',
+            overflow: 'hidden',
+            bgcolor: currentTheme.card,
           }}
         >
-          <Routes>
+          {/* Curved Content Container */}
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              bgcolor: currentTheme.background,
+              borderRadius: '24px',
+              border: `1px solid ${currentTheme.border}`,
+              overflow: 'hidden',
+              boxShadow: currentTheme.darkMode 
+                ? '0 4px 20px rgba(0, 0, 0, 0.3)' 
+                : '0 4px 20px rgba(0, 0, 0, 0.08)',
+            }}
+          >
+            {/* Scrollable Content Area */}
+            <Box
+              sx={{
+                height: '100%',
+                overflowY: 'auto',
+                overflowX: 'hidden',
+                p: 3,
+                '&::-webkit-scrollbar': {
+                  width: '8px',
+                },
+                '&::-webkit-scrollbar-track': {
+                  bgcolor: 'transparent',
+                },
+                '&::-webkit-scrollbar-thumb': {
+                  bgcolor: currentTheme.darkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)',
+                  borderRadius: '4px',
+                  '&:hover': {
+                    bgcolor: currentTheme.darkMode ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)',
+                  },
+                },
+              }}
+            >
+              <Routes>
             <Route path="/" element={<SplashPage />} />
             <Route path="/role" element={<RolePage />} />
             <Route path="/unauthorized" element={<UnauthorizedPage />} />
@@ -375,7 +416,9 @@ function AppContent() {
                 </ProtectedRoute>
               } 
             />
-          </Routes>
+              </Routes>
+            </Box>
+          </Box>
         </Box>
 
         <Menu
