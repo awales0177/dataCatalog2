@@ -66,6 +66,7 @@ import {
   Search as SearchIcon,
   Folder as FolderIcon,
   Schema as SchemaIcon,
+  Factory as FactoryIcon,
   Handshake as HandshakeIcon,
   Link as LinkIcon
 } from '@mui/icons-material';
@@ -213,89 +214,159 @@ const DatasetDetailPage = () => {
       <Paper
         elevation={0}
         sx={{
-          p: 4,
+          p: 3,
           mb: 3,
           bgcolor: currentTheme.card,
           border: `1px solid ${currentTheme.border}`,
           borderRadius: 2,
         }}
       >
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3 }}>
+        {/* Header Row: Title and Action Buttons */}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
           <Box sx={{ flex: 1 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-              <Typography variant="h4" sx={{ color: currentTheme.text, fontWeight: 600 }}>
-                {dataset.name}
-              </Typography>
-            </Box>
-
-
-            <Typography variant="body1" sx={{ color: currentTheme.textSecondary, mb: 3, lineHeight: 1.6 }}>
+            <Typography variant="h4" sx={{ color: currentTheme.text, fontWeight: 600, mb: 1 }}>
+              {dataset.name}
+            </Typography>
+            <Typography variant="body2" sx={{ color: currentTheme.textSecondary, lineHeight: 1.5 }}>
               {dataset.description}
             </Typography>
+          </Box>
+          
+          {/* Action Buttons */}
+          <Box sx={{ display: 'flex', gap: 1, ml: 2, flexShrink: 0 }}>
+            <IconButton
+              onClick={handleFavoriteToggle}
+              sx={{
+                color: favorite ? currentTheme.favorite : currentTheme.favoriteInactive,
+                border: `1px solid ${currentTheme.border}`,
+                '&:hover': {
+                  bgcolor: `${currentTheme.primary}10`,
+                },
+              }}
+            >
+              <StarIcon />
+            </IconButton>
+            <IconButton
+              onClick={handleSubscribe}
+              sx={{
+                color: currentTheme.textSecondary,
+                border: `1px solid ${currentTheme.border}`,
+                '&:hover': {
+                  bgcolor: `${currentTheme.primary}10`,
+                },
+              }}
+            >
+              <NotificationsIcon />
+            </IconButton>
+            <IconButton
+              sx={{
+                color: currentTheme.textSecondary,
+                border: `1px solid ${currentTheme.border}`,
+                '&:hover': {
+                  bgcolor: `${currentTheme.primary}10`,
+                },
+              }}
+            >
+              <ShareIcon />
+            </IconButton>
+          </Box>
+        </Box>
 
-            {/* Stats */}
-            <Box sx={{ display: 'flex', gap: 4, mb: 3, flexWrap: 'wrap' }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <CategoryIcon sx={{ color: currentTheme.primary, fontSize: '1.2rem' }} />
-                <Typography variant="body2" sx={{ color: currentTheme.textSecondary }}>
-                  <strong>Dataset Type:</strong> {dataset.feedType || 'One Time'}
-                </Typography>
-              </Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <StorageIcon sx={{ color: currentTheme.textSecondary, fontSize: '1.2rem' }} />
-                <Typography variant="body2" sx={{ color: currentTheme.textSecondary }}>
-                  {dataset.size}
-                </Typography>
-              </Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <ScheduleIcon sx={{ color: currentTheme.textSecondary, fontSize: '1.2rem' }} />
-                <Typography variant="body2" sx={{ color: currentTheme.textSecondary }}>
-                  Updated {dataset.lastUpdated ? new Date(dataset.lastUpdated).toLocaleDateString() : 'N/A'}
-                </Typography>
-              </Box>
+        {/* Stats and Metrics Row */}
+        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3, pt: 2, borderTop: `1px solid ${currentTheme.border}` }}>
+          {/* Basic Stats */}
+          <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap', flex: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <CategoryIcon sx={{ color: currentTheme.primary, fontSize: '1.1rem' }} />
+              <Typography variant="body2" sx={{ color: currentTheme.textSecondary }}>
+                <strong>Type:</strong> {dataset.feedType || 'One Time'}
+              </Typography>
             </Box>
-
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <StorageIcon sx={{ color: currentTheme.textSecondary, fontSize: '1.1rem' }} />
+              <Typography variant="body2" sx={{ color: currentTheme.textSecondary }}>
+                <strong>Size:</strong> {dataset.size}
+              </Typography>
+            </Box>
           </Box>
 
-          {/* Action Buttons */}
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, ml: 3 }}>
-            <Box sx={{ display: 'flex', gap: 1 }}>
-              <IconButton
-                onClick={handleFavoriteToggle}
-                sx={{
-                  color: favorite ? currentTheme.favorite : currentTheme.favoriteInactive,
-                  border: `1px solid ${currentTheme.border}`,
-                  '&:hover': {
-                    bgcolor: `${currentTheme.primary}10`,
-                  },
-                }}
-              >
-                <StarIcon />
-              </IconButton>
-              <IconButton
-                onClick={handleSubscribe}
-                sx={{
-                  color: currentTheme.textSecondary,
-                  border: `1px solid ${currentTheme.border}`,
-                  '&:hover': {
-                    bgcolor: `${currentTheme.primary}10`,
-                  },
-                }}
-              >
-                <NotificationsIcon />
-              </IconButton>
-              <IconButton
-                sx={{
-                  color: currentTheme.textSecondary,
-                  border: `1px solid ${currentTheme.border}`,
-                  '&:hover': {
-                    bgcolor: `${currentTheme.primary}10`,
-                  },
-                }}
-              >
-                <ShareIcon />
-              </IconButton>
-            </Box>
+          {/* Data Quality Metrics */}
+          <Box sx={{ flex: 1, minWidth: { xs: '100%', md: '400px' } }}>
+            <Typography variant="caption" sx={{ color: currentTheme.textSecondary, mb: 1, display: 'block', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', fontSize: '0.7rem' }}>
+              Quality Metrics
+            </Typography>
+            <Grid container spacing={1.5}>
+              {[
+                { key: 'accuracy', label: 'Accuracy', value: dataset.technicalMetadata?.qualityMetrics?.accuracy || '99.0%' },
+                { key: 'completeness', label: 'Completeness', value: dataset.technicalMetadata?.qualityMetrics?.completeness || '98.0%' },
+                { key: 'consistency', label: 'Consistency', value: dataset.technicalMetadata?.qualityMetrics?.consistency || '98.0%' },
+                { key: 'timeliness', label: 'Timeliness', value: dataset.technicalMetadata?.qualityMetrics?.timeliness || '97.0%' }
+              ].map((metric) => {
+                // Parse percentage value
+                const percentage = parseFloat(metric.value.toString().replace('%', '')) || 0;
+                
+                // Determine color based on percentage
+                const getColor = (val) => {
+                  if (val >= 90) return currentTheme.success;
+                  if (val >= 70) return currentTheme.warning;
+                  return currentTheme.error;
+                };
+                
+                const metricColor = getColor(percentage);
+                
+                return (
+                  <Grid item xs={3} key={metric.key}>
+                    <Box sx={{ 
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                    }}>
+                      <Box sx={{ position: 'relative', display: 'inline-flex', mb: 0.5 }}>
+                        <CircularProgress
+                          variant="determinate"
+                          value={percentage}
+                          size={60}
+                          thickness={5}
+                          sx={{
+                            color: metricColor,
+                            '& .MuiCircularProgress-circle': {
+                              strokeLinecap: 'round',
+                            },
+                          }}
+                        />
+                        <Box
+                          sx={{
+                            top: 0,
+                            left: 0,
+                            bottom: 0,
+                            right: 0,
+                            position: 'absolute',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          <Typography
+                            variant="caption"
+                            component="div"
+                            sx={{
+                              color: metricColor,
+                              fontWeight: 600,
+                              fontSize: '0.65rem',
+                            }}
+                          >
+                            {percentage.toFixed(0)}%
+                          </Typography>
+                        </Box>
+                      </Box>
+                      <Typography variant="caption" sx={{ color: currentTheme.textSecondary, fontSize: '0.65rem', textAlign: 'center' }}>
+                        {metric.label}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                );
+              })}
+            </Grid>
           </Box>
         </Box>
       </Paper>
@@ -513,7 +584,7 @@ const DatasetDetailPage = () => {
                               flexShrink: 0
                             }}
                           >
-                            <PersonIcon sx={{ color: currentTheme.primary, fontSize: '1.25rem' }} />
+                            <FactoryIcon sx={{ color: currentTheme.primary, fontSize: '1.25rem' }} />
                           </Box>
                           <Box sx={{ flex: 1, minWidth: 0 }}>
                             <Typography 
@@ -786,7 +857,8 @@ const DatasetDetailPage = () => {
           <Typography variant="h6" sx={{ color: currentTheme.text, mb: 2, mt: 3 }}>
             Triage Reports
           </Typography>
-          {dataset.technicalMetadata?.triageReports?.map((report, index) => (
+          {dataset.technicalMetadata?.triageReports && dataset.technicalMetadata.triageReports.length > 0 ? (
+            dataset.technicalMetadata.triageReports.map((report, index) => (
             <Card 
               key={index}
               variant="outlined" 
@@ -865,100 +937,32 @@ const DatasetDetailPage = () => {
                 </Typography>
               </CardContent>
             </Card>
-          ))}
-
-          {/* Data Quality Metrics */}
-          <Typography variant="h6" sx={{ color: currentTheme.text, mb: 2, mt: 4 }}>
-            Data Quality Metrics
-          </Typography>
-          <Grid container spacing={2}>
-            <Grid item xs={12} sm={6} md={3}>
-              <Card variant="outlined" sx={{ p: 2, bgcolor: currentTheme.card, borderColor: currentTheme.border }}>
-                <Typography variant="h4" sx={{ color: currentTheme.primary, mb: 1 }}>
-                  {dataset.technicalMetadata?.qualityMetrics?.accuracy || '99.0%'}
-                </Typography>
-                <Typography variant="body2" sx={{ color: currentTheme.textSecondary }}>
-                  Accuracy
-                </Typography>
-              </Card>
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <Card variant="outlined" sx={{ p: 2, bgcolor: currentTheme.card, borderColor: currentTheme.border }}>
-                <Typography variant="h4" sx={{ color: currentTheme.primary, mb: 1 }}>
-                  {dataset.technicalMetadata?.qualityMetrics?.completeness || '98.0%'}
-                </Typography>
-                <Typography variant="body2" sx={{ color: currentTheme.textSecondary }}>
-                  Completeness
-                </Typography>
-              </Card>
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <Card variant="outlined" sx={{ p: 2, bgcolor: currentTheme.card, borderColor: currentTheme.border }}>
-                <Typography variant="h4" sx={{ color: currentTheme.primary, mb: 1 }}>
-                  {dataset.technicalMetadata?.qualityMetrics?.consistency || '98.0%'}
-                </Typography>
-                <Typography variant="body2" sx={{ color: currentTheme.textSecondary }}>
-                  Consistency
-                </Typography>
-              </Card>
-            </Grid>
-            <Grid item xs={12} sm={6} md={3}>
-              <Card variant="outlined" sx={{ p: 2, bgcolor: currentTheme.card, borderColor: currentTheme.border }}>
-                <Typography variant="h4" sx={{ color: currentTheme.primary, mb: 1 }}>
-                  {dataset.technicalMetadata?.qualityMetrics?.timeliness || '97.0%'}
-                </Typography>
-                <Typography variant="body2" sx={{ color: currentTheme.textSecondary }}>
-                  Timeliness
-                </Typography>
-              </Card>
-            </Grid>
-          </Grid>
-
-          {/* Data Issues */}
-          <Typography variant="h6" sx={{ color: currentTheme.text, mb: 2, mt: 4 }}>
-            Known Issues
-          </Typography>
-          <Card variant="outlined" sx={{ bgcolor: currentTheme.card, borderColor: currentTheme.border }}>
-            <CardContent>
-              <List>
-                {dataset.technicalMetadata?.knownIssues?.map((issue, index) => (
-                  <ListItem key={index} sx={{ px: 0 }}>
-                    <ListItemIcon>
-                      <WarningIcon sx={{ color: currentTheme.warning }} />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={issue.title}
-                      secondary={issue.description}
-                      primaryTypographyProps={{ color: currentTheme.text }}
-                      secondaryTypographyProps={{ color: currentTheme.textSecondary }}
-                    />
-                    <Chip
-                      label={issue.priority}
-                      size="small"
-                      sx={{
-                        bgcolor: issue.priority === 'High' ? `${currentTheme.error}15` : 
-                                 issue.priority === 'Medium' ? `${currentTheme.warning}15` : `${currentTheme.success}15`,
-                        color: issue.priority === 'High' ? currentTheme.error : 
-                               issue.priority === 'Medium' ? currentTheme.warning : currentTheme.success,
-                      }}
-                    />
-                  </ListItem>
-                )) || (
-                  <ListItem sx={{ px: 0 }}>
-                    <ListItemIcon>
-                      <CheckCircleIcon sx={{ color: currentTheme.success }} />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary="No Known Issues"
-                      secondary="This dataset has no outstanding issues"
-                      primaryTypographyProps={{ color: currentTheme.text }}
-                      secondaryTypographyProps={{ color: currentTheme.textSecondary }}
-                    />
-                  </ListItem>
-                )}
-              </List>
-            </CardContent>
-          </Card>
+            ))
+          ) : (
+            <Card variant="outlined" sx={{ 
+              mb: 2,
+              bgcolor: currentTheme.card,
+              borderColor: currentTheme.border,
+              '&:hover': {
+                transform: 'none',
+                boxShadow: 'none'
+              }
+            }}>
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 2 }}>
+                  <DescriptionIcon sx={{ color: currentTheme.textSecondary, fontSize: '2rem', opacity: 0.5 }} />
+                  <Box>
+                    <Typography variant="body1" sx={{ color: currentTheme.textSecondary }}>
+                      No triage information available
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: currentTheme.textSecondary, fontStyle: 'italic', mt: 0.5 }}>
+                      Triage reports and assessments will appear here when available
+                    </Typography>
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
+          )}
         </Box>
       )}
 

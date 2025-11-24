@@ -1,22 +1,23 @@
-{
+ {
   "dataProducts": [
     {
       "id": "ds-customer-analytics",
       "name": "Customer Analytics Dataset",
       "description": "Comprehensive customer behavior analytics with purchase history and engagement metrics",
-      "category": "Analytics",
+      "category": ["Structured"],
       "provider": "Data Analytics Team",
+      "platform": "AWS",
       "rating": 4.8,
       "downloads": 1247,
       "price": "Free",
-      "lastUpdated": "2024-03-15",
+      "lastUpdated": "2024-12-20",
+      "freshness": "daily",
       "format": "Dataset",
       "size": "2.3 GB",
       "tags": ["customer", "analytics", "behavior", "purchase"],
       "verified": true,
       "documentation": "https://docs.example.com/customer-analytics",
       "type": "dataset",
-      "trustworthiness": "high",
       "relatedEntities": {
         "dataModels": ["CUST", "USER"],
         "agreements": ["contract-001", "contract-002"],
@@ -30,7 +31,8 @@
           "description": "Individual customer profile data with demographics and preferences",
           "format": "Parquet",
           "size": "800 MB",
-          "lastUpdated": "2024-03-15",
+          "lastUpdated": "2024-12-20",
+          "freshness": "daily",
           "tables": [
             {
               "name": "customer_profiles",
@@ -158,9 +160,8 @@
             }
           ],
           "accessLevel": "Internal",
-          "trustworthiness": "high",
           "relatedEntities": {
-            "dataModels": ["CUST"],
+            "dataModels": "CUST",
             "agreements": ["contract-001"],
             "referenceData": ["ref-001"],
             "dataPolicies": ["policy-001"]
@@ -237,11 +238,91 @@
               ]
             },
             "qualityMetrics": {
-              "accuracy": "99.2%",
-              "completeness": "97.8%",
-              "consistency": "98.5%",
-              "timeliness": "95.3%"
+              "accuracy": "95.2%",
+              "completeness": "65.8%",
+              "consistency": "82.5%",
+              "timeliness": "45.3%"
             },
+            "mappings": [
+              {
+                "name": "Customer Profile Mapping",
+                "description": "Maps raw customer data to standardized customer profiles",
+                "status": "Active",
+                "sourceFields": [
+                  {
+                    "name": "cust_id",
+                    "type": "VARCHAR"
+                  },
+                  {
+                    "name": "first_name",
+                    "type": "VARCHAR"
+                  },
+                  {
+                    "name": "last_name",
+                    "type": "VARCHAR"
+                  },
+                  {
+                    "name": "email_addr",
+                    "type": "VARCHAR"
+                  }
+                ],
+                "targetFields": [
+                  {
+                    "name": "customer_id",
+                    "type": "VARCHAR"
+                  },
+                  {
+                    "name": "first_name",
+                    "type": "VARCHAR"
+                  },
+                  {
+                    "name": "last_name",
+                    "type": "VARCHAR"
+                  },
+                  {
+                    "name": "email",
+                    "type": "VARCHAR"
+                  }
+                ],
+                "transformationRules": [
+                  "cust_id -> customer_id (direct mapping)",
+                  "email_addr -> email (rename)",
+                  "Uppercase first letter of first_name and last_name",
+                  "Validate email format before mapping"
+                ]
+              },
+              {
+                "name": "Preference Data Mapping",
+                "description": "Maps preference categories and values to standardized format",
+                "status": "Active",
+                "sourceFields": [
+                  {
+                    "name": "pref_cat",
+                    "type": "VARCHAR"
+                  },
+                  {
+                    "name": "pref_val",
+                    "type": "VARCHAR"
+                  }
+                ],
+                "targetFields": [
+                  {
+                    "name": "preference_category",
+                    "type": "VARCHAR"
+                  },
+                  {
+                    "name": "preference_value",
+                    "type": "VARCHAR"
+                  }
+                ],
+                "transformationRules": [
+                  "pref_cat -> preference_category (rename)",
+                  "pref_val -> preference_value (rename)",
+                  "Normalize category names to lowercase",
+                  "Trim whitespace from preference values"
+                ]
+              }
+            ],
             "knownIssues": [
               {
                 "title": "Missing Email Addresses",
@@ -263,7 +344,8 @@
           "description": "Complete transaction history and purchase patterns",
           "format": "Parquet", 
           "size": "1.2 GB",
-          "lastUpdated": "2024-03-15",
+          "lastUpdated": "2024-12-20",
+          "freshness": "daily",
           "tables": [
             {
               "name": "purchase_history",
@@ -426,7 +508,12 @@
             }
           ],
           "accessLevel": "Confidential",
-          "trustworthiness": "high",
+          "relatedEntities": {
+            "dataModels": "TRANS",
+            "agreements": ["contract-002"],
+            "referenceData": ["ref-002"],
+            "dataPolicies": ["policy-002"]
+          },
           "technicalMetadata": {
             "triageReports": [
               {
@@ -508,10 +595,10 @@
               ]
             },
             "qualityMetrics": {
-              "accuracy": "98.7%",
-              "completeness": "99.1%",
-              "consistency": "97.9%",
-              "timeliness": "96.8%"
+              "accuracy": "92.7%",
+              "completeness": "75.1%",
+              "consistency": "88.9%",
+              "timeliness": "55.8%"
             },
             "knownIssues": [
               {
@@ -528,7 +615,8 @@
           "description": "Customer engagement scores and interaction data",
           "format": "Parquet",
           "size": "300 MB", 
-          "lastUpdated": "2024-03-15",
+          "lastUpdated": "2024-12-20",
+          "freshness": "daily",
           "tables": [
             {
               "name": "engagement_metrics",
@@ -691,7 +779,12 @@
             }
           ],
           "accessLevel": "Internal",
-          "trustworthiness": "medium",
+          "relatedEntities": {
+            "dataModels": "ENGAGE",
+            "agreements": ["contract-001"],
+            "referenceData": ["ref-001"],
+            "dataPolicies": ["policy-001"]
+          },
           "technicalMetadata": {
             "triageReports": [
               {
@@ -764,10 +857,10 @@
               ]
             },
             "qualityMetrics": {
-              "accuracy": "96.4%",
-              "completeness": "94.2%",
-              "consistency": "95.8%",
-              "timeliness": "98.1%"
+              "accuracy": "78.4%",
+              "completeness": "91.2%",
+              "consistency": "68.8%",
+              "timeliness": "72.1%"
             },
             "knownIssues": []
           }
@@ -910,6 +1003,12 @@
               "lastUpdated": "2024-03-15T08:00:00Z"
             }
           ]
+        },
+        "qualityMetrics": {
+          "accuracy": "88.8%",
+          "completeness": "77.4%",
+          "consistency": "80.1%",
+          "timeliness": "57.7%"
         }
       }
     },
@@ -917,18 +1016,19 @@
       "id": "dp-002",
       "name": "Financial Risk Models",
       "description": "Advanced machine learning models for credit risk assessment and fraud detection",
-      "category": "Machine Learning",
+      "category": ["Structured", "Articles"],
       "provider": "Risk Management Team",
+      "platform": "Azure",
       "rating": 4.9,
       "downloads": 892,
       "price": "Premium",
-      "lastUpdated": "2024-03-12",
+      "lastUpdated": "2024-12-18",
+      "freshness": "weekly",
       "format": "Python Package",
       "size": "156 MB",
       "tags": ["finance", "risk", "ml", "fraud", "credit"],
       "verified": true,
       "documentation": "https://docs.example.com/risk-models",
-      "trustworthiness": "high",
       "technicalMetadata": {
         "triageReports": [
           {
@@ -1015,154 +1115,155 @@
       "id": "dp-003",
       "name": "Product Catalog API",
       "description": "Real-time product information API with inventory levels and pricing",
-      "category": "API",
+      "category": ["Structured", "Articles"],
       "provider": "Product Team",
+      "platform": "GCP",
       "rating": 4.6,
       "downloads": 2156,
       "price": "Free",
-      "lastUpdated": "2024-03-18",
+      "lastUpdated": "2024-12-21",
+      "freshness": "real-time",
       "format": "REST API",
       "size": "N/A",
       "tags": ["api", "products", "inventory", "pricing"],
       "verified": true,
-      "documentation": "https://api.example.com/products",
-      "trustworthiness": "medium"
+      "documentation": "https://api.example.com/products"
     },
     {
       "id": "dp-004",
       "name": "Market Research Insights",
       "description": "Quarterly market research data with competitor analysis and trends",
-      "category": "Research",
+      "category": ["Articles", "Unstructured"],
       "provider": "Market Research Team",
       "rating": 4.3,
       "downloads": 456,
       "price": "Premium",
-      "lastUpdated": "2024-03-10",
+      "lastUpdated": "2024-11-15",
+      "freshness": "quarterly",
       "format": "Excel",
       "size": "45 MB",
       "tags": ["market", "research", "competitors", "trends"],
       "verified": false,
-      "documentation": "https://docs.example.com/market-research",
-      "trustworthiness": "low"
+      "documentation": "https://docs.example.com/market-research"
     },
     {
       "id": "dp-005",
       "name": "Supply Chain Optimization",
       "description": "Supply chain data and optimization algorithms for logistics management",
-      "category": "Operations",
+      "category": ["Structured"],
       "provider": "Supply Chain Team",
       "rating": 4.7,
       "downloads": 678,
       "price": "Free",
-      "lastUpdated": "2024-03-14",
+      "lastUpdated": "2024-12-19",
+      "freshness": "daily",
       "format": "CSV",
       "size": "890 MB",
       "tags": ["supply-chain", "logistics", "optimization", "inventory"],
       "verified": true,
-      "documentation": "https://docs.example.com/supply-chain",
-      "trustworthiness": "high"
+      "documentation": "https://docs.example.com/supply-chain"
     },
     {
       "id": "dp-006",
       "name": "Customer Support Analytics",
       "description": "Customer support ticket data with sentiment analysis and metrics",
-      "category": "Analytics",
+      "category": ["Structured", "Unstructured"],
       "provider": "Support Team",
       "rating": 4.4,
       "downloads": 334,
       "price": "Free",
-      "lastUpdated": "2024-03-16",
+      "lastUpdated": "2024-12-17",
+      "freshness": "weekly",
       "format": "JSON",
       "size": "123 MB",
       "tags": ["support", "analytics", "sentiment", "tickets"],
       "verified": false,
-      "documentation": "https://docs.example.com/support-analytics",
-      "trustworthiness": "medium"
+      "documentation": "https://docs.example.com/support-analytics"
     },
     {
       "id": "dp-007",
       "name": "Sales Performance Dashboard",
       "description": "Real-time sales metrics and performance tracking dashboard",
-      "category": "Analytics",
+      "category": ["Structured", "Articles"],
       "provider": "Sales Operations Team",
       "rating": 4.5,
       "downloads": 789,
       "price": "Free",
-      "lastUpdated": "2024-03-20",
+      "lastUpdated": "2024-12-21",
+      "freshness": "real-time",
       "format": "Tableau Workbook",
       "size": "67 MB",
       "tags": ["sales", "dashboard", "performance", "metrics"],
       "verified": true,
-      "documentation": "https://docs.example.com/sales-dashboard",
-      "trustworthiness": "high"
+      "documentation": "https://docs.example.com/sales-dashboard"
     },
     {
       "id": "dp-008",
       "name": "HR Employee Database",
       "description": "Comprehensive employee information and organizational structure data",
-      "category": "Human Resources",
+      "category": ["Structured"],
       "provider": "HR Information Systems",
       "rating": 4.2,
       "downloads": 234,
       "price": "Internal",
-      "lastUpdated": "2024-03-19",
+      "lastUpdated": "2024-12-10",
+      "freshness": "weekly",
       "format": "SQL Database",
       "size": "1.2 GB",
       "tags": ["hr", "employees", "organization", "structure"],
       "verified": true,
-      "documentation": "https://docs.example.com/hr-database",
-      "trustworthiness": "high"
+      "documentation": "https://docs.example.com/hr-database"
     },
     {
       "id": "dp-009",
       "name": "Marketing Campaign Analytics",
       "description": "Campaign performance data with ROI metrics and customer acquisition costs",
-      "category": "Marketing",
+      "category": ["Structured", "Articles"],
       "provider": "Marketing Analytics Team",
       "rating": 4.6,
       "downloads": 567,
       "price": "Free",
-      "lastUpdated": "2024-03-17",
+      "lastUpdated": "2024-12-15",
+      "freshness": "daily",
       "format": "Google Analytics Export",
       "size": "89 MB",
       "tags": ["marketing", "campaigns", "roi", "acquisition"],
       "verified": true,
-      "documentation": "https://docs.example.com/marketing-analytics",
-      "trustworthiness": "medium"
+      "documentation": "https://docs.example.com/marketing-analytics"
     },
     {
       "id": "dp-010",
       "name": "IoT Sensor Data",
       "description": "Real-time sensor data from manufacturing equipment and environmental monitoring",
-      "category": "IoT",
+      "category": ["Unstructured"],
       "provider": "Manufacturing Technology Team",
       "rating": 4.1,
       "downloads": 123,
       "price": "Internal",
-      "lastUpdated": "2024-03-21",
+      "lastUpdated": "2024-12-21",
+      "freshness": "real-time",
       "format": "Time Series Database",
       "size": "5.7 GB",
       "tags": ["iot", "sensors", "manufacturing", "environmental"],
       "verified": false,
-      "documentation": "https://docs.example.com/iot-sensors",
-      "trustworthiness": "low"
+      "documentation": "https://docs.example.com/iot-sensors"
     },
     {
       "id": "ds-financial-risk",
       "name": "Financial Risk Dataset",
       "description": "Comprehensive financial risk assessment data with market analysis and credit scoring",
-      "category": "Finance",
+      "category": ["Structured", "Articles"],
       "provider": "Risk Management Team",
       "rating": 4.6,
       "downloads": 892,
-      "lastUpdated": "2024-03-18",
+      "lastUpdated": "2024-12-18",
+      "freshness": "weekly",
       "format": "Dataset",
       "size": "1.8 GB",
       "tags": ["finance", "risk", "credit", "market"],
       "verified": true,
       "documentation": "https://docs.example.com/financial-risk",
       "type": "dataset",
-      "trustworthiness": "high",
       "parentDataset": "ds-master-financial",
       "products": [
         {
@@ -1171,7 +1272,8 @@
           "description": "Individual credit risk assessments and scoring models",
           "format": "Parquet",
           "size": "600 MB",
-          "lastUpdated": "2024-03-18",
+          "lastUpdated": "2024-12-18",
+          "freshness": "weekly",
           "tables": [
             {
               "name": "credit_scores",
@@ -1334,7 +1436,6 @@
             }
           ],
           "accessLevel": "Confidential",
-          "trustworthiness": "high",
           "technicalMetadata": {
             "triageReports": [
               {
@@ -1407,10 +1508,10 @@
               ]
             },
             "qualityMetrics": {
-              "accuracy": "98.5%",
-              "completeness": "99.1%",
-              "consistency": "97.8%",
-              "timeliness": "96.2%"
+              "accuracy": "85.5%",
+              "completeness": "58.1%",
+              "consistency": "73.8%",
+              "timeliness": "91.2%"
             },
             "knownIssues": []
           }
@@ -1421,7 +1522,8 @@
           "description": "Market trends and volatility analysis data",
           "format": "Parquet",
           "size": "800 MB",
-          "lastUpdated": "2024-03-18",
+          "lastUpdated": "2024-12-18",
+          "freshness": "daily",
           "tables": [
             {
               "name": "market_trends",
@@ -1584,7 +1686,6 @@
             }
           ],
           "accessLevel": "Internal",
-          "trustworthiness": "high",
           "technicalMetadata": {
             "triageReports": [
               {
@@ -1657,10 +1758,10 @@
               ]
             },
             "qualityMetrics": {
-              "accuracy": "97.2%",
-              "completeness": "98.8%",
-              "consistency": "96.5%",
-              "timeliness": "99.1%"
+              "accuracy": "93.2%",
+              "completeness": "88.8%",
+              "consistency": "76.5%",
+              "timeliness": "64.1%"
             },
             "knownIssues": []
           }
@@ -1697,10 +1798,10 @@
           "tables": []
         },
         "qualityMetrics": {
-          "accuracy": "98.5%",
-          "completeness": "99.0%",
-          "consistency": "97.5%",
-          "timeliness": "97.8%"
+          "accuracy": "42.5%",
+          "completeness": "71.0%",
+          "consistency": "88.5%",
+          "timeliness": "93.8%"
         },
         "knownIssues": []
       }
@@ -1709,18 +1810,19 @@
       "id": "ds-master-customer",
       "name": "Master Customer Dataset",
       "description": "Master dataset containing all customer-related data and demographics",
-      "category": "Customer",
+      "category": ["Structured"],
       "provider": "Customer Data Team",
+      "platform": "AWS",
       "rating": 4.7,
       "downloads": 1834,
-      "lastUpdated": "2024-03-19",
+      "lastUpdated": "2024-12-19",
+      "freshness": "daily",
       "format": "Dataset",
       "size": "8.5 GB",
       "tags": ["customer", "master", "demographics", "profiles"],
       "verified": true,
       "documentation": "https://docs.example.com/master-customer",
       "type": "dataset",
-      "trustworthiness": "high",
       "parentDataset": null,
       "products": [],
       "technicalMetadata": {
@@ -1754,10 +1856,10 @@
           "tables": []
         },
         "qualityMetrics": {
-          "accuracy": "98.8%",
-          "completeness": "99.2%",
-          "consistency": "98.5%",
-          "timeliness": "97.9%"
+          "accuracy": "56.8%",
+          "completeness": "74.2%",
+          "consistency": "81.5%",
+          "timeliness": "92.9%"
         },
         "knownIssues": []
       }
@@ -1766,18 +1868,19 @@
       "id": "ds-master-transactions",
       "name": "Master Transaction Dataset",
       "description": "Master dataset containing all transaction and payment data",
-      "category": "Transactions",
+      "category": ["Structured"],
       "provider": "Transaction Data Team",
+      "platform": "Azure",
       "rating": 4.9,
       "downloads": 2156,
-      "lastUpdated": "2024-03-21",
+      "lastUpdated": "2024-12-21",
+      "freshness": "real-time",
       "format": "Dataset",
       "size": "12.3 GB",
       "tags": ["transactions", "master", "payments", "financial"],
       "verified": true,
       "documentation": "https://docs.example.com/master-transactions",
       "type": "dataset",
-      "trustworthiness": "high",
       "parentDataset": null,
       "products": [],
       "technicalMetadata": {
@@ -1811,10 +1914,10 @@
           "tables": []
         },
         "qualityMetrics": {
-          "accuracy": "99.3%",
-          "completeness": "99.1%",
-          "consistency": "99.0%",
-          "timeliness": "98.5%"
+          "accuracy": "91.3%",
+          "completeness": "67.1%",
+          "consistency": "79.0%",
+          "timeliness": "84.5%"
         },
         "knownIssues": []
       }
@@ -1823,18 +1926,19 @@
       "id": "ds-master-financial",
       "name": "Master Financial Dataset",
       "description": "Master dataset containing all financial data and market information",
-      "category": "Finance",
+      "category": ["Structured"],
       "provider": "Financial Data Team",
+      "platform": "AWS",
       "rating": 4.9,
       "downloads": 2156,
-      "lastUpdated": "2024-03-20",
+      "lastUpdated": "2024-12-20",
+      "freshness": "daily",
       "format": "Dataset",
       "size": "15.2 GB",
       "tags": ["finance", "master", "comprehensive", "market"],
       "verified": true,
       "documentation": "https://docs.example.com/master-financial",
       "type": "dataset",
-      "trustworthiness": "high",
       "parentDataset": null,
       "products": [],
       "technicalMetadata": {
@@ -1875,10 +1979,10 @@
           "tables": []
         },
         "qualityMetrics": {
-          "accuracy": "99.1%",
-          "completeness": "99.5%",
-          "consistency": "98.8%",
-          "timeliness": "98.2%"
+          "accuracy": "77.1%",
+          "completeness": "52.5%",
+          "consistency": "63.8%",
+          "timeliness": "88.2%"
         },
         "knownIssues": []
       }

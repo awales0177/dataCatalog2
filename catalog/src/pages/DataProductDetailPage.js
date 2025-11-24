@@ -33,7 +33,11 @@ import {
   TableBody,
   TableCell,
   TableHead,
-  TableRow
+  TableRow,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel
 } from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
@@ -58,7 +62,12 @@ import {
   TrendingUp as TrendingUpIcon,
   CheckCircle as CheckCircleIcon,
   Warning as WarningIcon,
-  LibraryBooks as LibraryBooksIcon
+  LibraryBooks as LibraryBooksIcon,
+  Work as WorkIcon,
+  Verified as VerifiedIcon,
+  Cloud as CloudIcon,
+  AccountTree as AccountTreeIcon,
+  Factory as FactoryIcon
 } from '@mui/icons-material';
 import { useParams, useNavigate, Link as RouterLink } from 'react-router-dom';
 import { ThemeContext } from '../contexts/ThemeContext';
@@ -79,6 +88,7 @@ const DataProductDetailPage = () => {
   const [favorite, setFavorite] = useState(false);
   const [selectedTab, setSelectedTab] = useState(0);
   const [expandedTables, setExpandedTables] = useState({});
+  const [selectedVersion, setSelectedVersion] = useState('');
   const [relatedEntities, setRelatedEntities] = useState({
     dataModels: [],
     agreements: [],
@@ -145,6 +155,17 @@ const DataProductDetailPage = () => {
       loadProduct();
     }
   }, [datasetId, productId, legacyId]);
+
+  useEffect(() => {
+    if (product) {
+      const version = product.version || 
+                      product.technicalMetadata?.codeVersions?.[0]?.version || 
+                      product.technicalMetadata?.currentVersion || 
+                      '1';
+      const versionNum = typeof version === 'string' ? version.split('.')[0] : String(version);
+      setSelectedVersion(versionNum);
+    }
+  }, [product]);
 
   // Load related entities when product changes
   useEffect(() => {
@@ -357,6 +378,92 @@ const DataProductDetailPage = () => {
             </Box>
           </Paper>
 
+          {/* Version Selector and Tabs */}
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <FormControl 
+              size="small" 
+              sx={{ 
+                minWidth: 150,
+                '& .MuiOutlinedInput-root': {
+                  bgcolor: currentTheme.card,
+                  '& fieldset': {
+                    borderColor: currentTheme.border,
+                  },
+                  '&:hover fieldset': {
+                    borderColor: currentTheme.primary,
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: currentTheme.primary,
+                  },
+                },
+                '& .MuiInputBase-input': {
+                  color: currentTheme.text,
+                },
+                '& .MuiInputLabel-root': {
+                  color: currentTheme.textSecondary,
+                  '&.Mui-focused': {
+                    color: currentTheme.primary,
+                  },
+                },
+                '& .MuiSvgIcon-root': {
+                  color: currentTheme.textSecondary,
+                },
+              }}
+            >
+              <InputLabel>Version</InputLabel>
+              <Select
+                value={selectedVersion || (() => {
+                  const version = product?.version || product?.technicalMetadata?.codeVersions?.[0]?.version || product?.technicalMetadata?.currentVersion || '1';
+                  return typeof version === 'string' ? version.split('.')[0] : String(version);
+                })()}
+                label="Version"
+                onChange={(e) => setSelectedVersion(e.target.value)}
+                MenuProps={{
+                  PaperProps: {
+                    sx: {
+                      bgcolor: currentTheme.card,
+                      border: `1px solid ${currentTheme.border}`,
+                      '& .MuiMenuItem-root': {
+                        color: currentTheme.text,
+                        '&:hover': {
+                          bgcolor: currentTheme.darkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)',
+                        },
+                        '&.Mui-selected': {
+                          bgcolor: `${currentTheme.primary}20`,
+                          '&:hover': {
+                            bgcolor: `${currentTheme.primary}30`,
+                          },
+                        },
+                      },
+                    },
+                  },
+                }}
+                sx={{
+                  color: currentTheme.text,
+                }}
+              >
+                {product?.technicalMetadata?.codeVersions?.map((version, index) => {
+                  const versionNum = typeof version.version === 'string' ? version.version.split('.')[0] : String(version.version || '1');
+                  return (
+                    <MenuItem key={index} value={versionNum}>
+                      {versionNum}
+                    </MenuItem>
+                  );
+                }) || (
+                  <MenuItem value={(() => {
+                    const version = product?.version || product?.technicalMetadata?.currentVersion || '1';
+                    return typeof version === 'string' ? version.split('.')[0] : String(version);
+                  })()}>
+                    {(() => {
+                      const version = product?.version || product?.technicalMetadata?.currentVersion || '1';
+                      return typeof version === 'string' ? version.split('.')[0] : String(version);
+                    })()}
+                  </MenuItem>
+                )}
+              </Select>
+            </FormControl>
+          </Box>
+
           {/* Tabs */}
           <Tabs
             value={selectedTab}
@@ -384,6 +491,9 @@ const DataProductDetailPage = () => {
             <Tab label="Schema" />
             <Tab label="Engines & Code" />
             <Tab label="Product Lineage" />
+            <Tab label="Job Status" />
+            <Tab label="Validation" />
+            <Tab label="Mapping" />
           </Tabs>
 
           {/* Tab Content */}
@@ -429,18 +539,14 @@ const DataProductDetailPage = () => {
                                 onChange={() => handleTableToggle(index)}
                                 sx={{
                                   bgcolor: currentTheme.card,
-                                  border: `2px solid ${currentTheme.border}`,
+                                  border: `1px solid ${currentTheme.border}`,
                                   borderRadius: 2,
                                   boxShadow: 'none',
                                   '&:before': { display: 'none' },
                                   '&.Mui-expanded': {
                                     margin: 0,
-                                    borderColor: currentTheme.primary,
                                   },
                                   transition: 'all 0.2s ease',
-                                  '&:hover': {
-                                    borderColor: currentTheme.primary,
-                                  }
                                 }}
                               >
                                 <AccordionSummary
@@ -521,17 +627,23 @@ const DataProductDetailPage = () => {
                                         {s3Location}
                                       </Typography>
                                     </Box>
-                                    <Box sx={{ display: 'flex', gap: 1, flexShrink: 0 }}>
-                                      {tableSchema && (
-                                        <Chip
-                                          label={`${tableSchema.length} columns`}
-                                          size="small"
-                                          sx={{
-                                            bgcolor: `${currentTheme.primary}15`,
-                                            color: currentTheme.primary,
-                                            fontWeight: 600,
-                                            fontSize: '0.75rem',
-                                            height: 24,
+                                    <Box sx={{ display: 'flex', gap: 1, flexShrink: 0, mr: 2 }}>
+                                    {tableSchema && (
+                                      <Chip
+                                        label={`${tableSchema.length} columns`}
+                                        size="small"
+                                        sx={{
+                                          bgcolor: `${currentTheme.primary}15`,
+                                          color: currentTheme.primary,
+                                          fontWeight: 600,
+                                          fontSize: '0.75rem',
+                                          height: 24,
+                                          transition: 'none',
+                                          transform: 'none',
+                                          '&:hover': {
+                                            transform: 'none',
+                                            scale: 1,
+                                          }
                                           }}
                                         />
                                       )}
@@ -545,9 +657,9 @@ const DataProductDetailPage = () => {
                                             fontWeight: 600,
                                             fontSize: '0.75rem',
                                             height: 24,
-                                          }}
-                                        />
-                                      )}
+                                        }}
+                                      />
+                                    )}
                                     </Box>
                                   </Box>
                                 </AccordionSummary>
@@ -557,8 +669,8 @@ const DataProductDetailPage = () => {
                                     <Box sx={{ p: 3, bgcolor: `${currentTheme.border}08` }}>
                                       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                                         <Typography variant="subtitle2" sx={{ color: currentTheme.text, fontWeight: 600 }}>
-                                          Schema Columns
-                                        </Typography>
+                                        Schema Columns
+                                      </Typography>
                                         {typeof table === 'object' && (table.rowCount || table.rows || table.row_count) && (
                                           <Typography variant="body2" sx={{ color: currentTheme.textSecondary }}>
                                             {`${(table.rowCount || table.rows || table.row_count)?.toLocaleString() || 'N/A'} rows`}
@@ -860,15 +972,23 @@ const DataProductDetailPage = () => {
 
           {selectedTab === 3 && (
             <Box>
-              <Typography variant="h6" sx={{ color: currentTheme.text, mb: 2 }}>
-                Code & Versions
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
+                <WorkIcon sx={{ color: currentTheme.primary, fontSize: '1.75rem' }} />
+                <Typography variant="h5" sx={{ color: currentTheme.text, fontWeight: 600 }}>
+                  Job Status
               </Typography>
+              </Box>
               <Typography variant="body1" sx={{ color: currentTheme.textSecondary, mb: 3 }}>
-                Version history and code changes for this data product
+                Monitor the status and execution history of data processing jobs for this product
               </Typography>
 
-              {product.technicalMetadata?.codeVersions?.map((version, index) => (
-                <Card key={index} variant="outlined" sx={{ 
+              {product.technicalMetadata?.jobStatuses && product.technicalMetadata.jobStatuses.length > 0 ? (
+                <Box>
+                  {product.technicalMetadata.jobStatuses.map((job, index) => (
+                    <Card 
+                      key={index}
+                      variant="outlined" 
+                      sx={{ 
                   mb: 2, 
                   bgcolor: currentTheme.card, 
                   borderColor: currentTheme.border,
@@ -876,76 +996,441 @@ const DataProductDetailPage = () => {
                     transform: 'none',
                     boxShadow: 'none'
                   }
-                }}>
+                      }}
+                    >
                   <CardContent>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                      <Typography variant="h6" sx={{ color: currentTheme.text }}>
-                        Version {version.version}
+                          <Box sx={{ flex: 1 }}>
+                            <Typography variant="h6" sx={{ color: currentTheme.text, mb: 1 }}>
+                              {job.name || `Job ${index + 1}`}
                       </Typography>
-                      <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                            <Typography variant="body2" sx={{ color: currentTheme.textSecondary, mb: 1 }}>
+                              {job.description || 'No description available'}
+                            </Typography>
+                          </Box>
                         <Chip
-                          label={version.status}
+                            label={job.status || 'Unknown'}
                           size="small"
                           sx={{
-                            bgcolor: version.status === 'Production' ? `${currentTheme.success}15` : `${currentTheme.warning}15`,
-                            color: version.status === 'Production' ? currentTheme.success : currentTheme.warning,
+                              bgcolor: job.status === 'Completed' || job.status === 'Success' 
+                                ? `${currentTheme.success}15` 
+                                : job.status === 'Running' || job.status === 'In Progress'
+                                ? `${currentTheme.warning}15`
+                                : job.status === 'Failed' || job.status === 'Error'
+                                ? `${currentTheme.error}15`
+                                : `${currentTheme.primary}15`,
+                              color: job.status === 'Completed' || job.status === 'Success'
+                                ? currentTheme.success
+                                : job.status === 'Running' || job.status === 'In Progress'
+                                ? currentTheme.warning
+                                : job.status === 'Failed' || job.status === 'Error'
+                                ? currentTheme.error
+                                : currentTheme.primary,
+                              fontWeight: 600,
                           }}
                         />
                       </Box>
+                        
+                        <Grid container spacing={2} sx={{ mt: 1 }}>
+                          {job.jobId && (
+                            <Grid item xs={12} sm={6}>
+                              <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
+                                <strong>Job ID:</strong> {job.jobId}
+                              </Typography>
+                            </Grid>
+                          )}
+                          {job.startTime && (
+                            <Grid item xs={12} sm={6}>
+                              <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
+                                <strong>Start Time:</strong> {new Date(job.startTime).toLocaleString()}
+                              </Typography>
+                            </Grid>
+                          )}
+                          {job.endTime && (
+                            <Grid item xs={12} sm={6}>
+                              <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
+                                <strong>End Time:</strong> {new Date(job.endTime).toLocaleString()}
+                              </Typography>
+                            </Grid>
+                          )}
+                          {job.duration && (
+                            <Grid item xs={12} sm={6}>
+                              <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
+                                <strong>Duration:</strong> {job.duration}
+                              </Typography>
+                            </Grid>
+                          )}
+                        </Grid>
+
+                        {job.error && (
+                          <Alert severity="error" sx={{ mt: 2 }}>
+                            {job.error}
+                          </Alert>
+                        )}
+
+                        {job.logs && job.logs.length > 0 && (
+                          <Box sx={{ mt: 2 }}>
+                            <Typography variant="subtitle2" sx={{ color: currentTheme.text, mb: 1 }}>
+                              Logs:
+                            </Typography>
+                            <Box sx={{ 
+                              bgcolor: currentTheme.background, 
+                              p: 2, 
+                              borderRadius: 1,
+                              maxHeight: 200,
+                              overflow: 'auto',
+                              fontFamily: 'monospace',
+                              fontSize: '0.75rem'
+                            }}>
+                              {job.logs.map((log, logIndex) => (
+                                <Typography key={logIndex} variant="body2" sx={{ color: currentTheme.textSecondary, mb: 0.5 }}>
+                                  {log}
+                                </Typography>
+                              ))}
                     </Box>
-                    
-                    <Typography variant="body2" sx={{ color: currentTheme.textSecondary, mb: 2 }}>
-                      Released: {version.releaseDate ? new Date(version.releaseDate).toLocaleDateString() : 'N/A'}
+                          </Box>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </Box>
+              ) : (
+                <Card variant="outlined" sx={{ 
+                  bgcolor: currentTheme.card, 
+                  borderColor: currentTheme.border,
+                  '&:hover': {
+                    transform: 'none',
+                    boxShadow: 'none'
+                  }
+                }}>
+                  <CardContent sx={{ textAlign: 'center', py: 4 }}>
+                    <WorkIcon sx={{ fontSize: '3rem', color: currentTheme.textSecondary, mb: 2, opacity: 0.5 }} />
+                    <Typography variant="body2" sx={{ color: currentTheme.textSecondary, fontStyle: 'italic' }}>
+                      No job statuses available
+                    </Typography>
+                  </CardContent>
+                </Card>
+              )}
+            </Box>
+          )}
+
+          {selectedTab === 4 && (
+            <Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
+                <VerifiedIcon sx={{ color: currentTheme.primary, fontSize: '1.75rem' }} />
+                <Typography variant="h5" sx={{ color: currentTheme.text, fontWeight: 600 }}>
+                  Validation
+                </Typography>
+              </Box>
+              <Typography variant="body1" sx={{ color: currentTheme.textSecondary, mb: 3 }}>
+                Data quality validation results and compliance checks for this product
                     </Typography>
                     
+              {product.technicalMetadata?.validations && product.technicalMetadata.validations.length > 0 ? (
+                <Box>
+                  {product.technicalMetadata.validations.map((validation, index) => (
+                    <Card 
+                      key={index}
+                      variant="outlined" 
+                      sx={{ 
+                        mb: 2, 
+                        bgcolor: currentTheme.card, 
+                        borderColor: currentTheme.border,
+                        '&:hover': {
+                          transform: 'none',
+                          boxShadow: 'none'
+                        }
+                      }}
+                    >
+                      <CardContent>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                          <Box sx={{ flex: 1 }}>
+                            <Typography variant="h6" sx={{ color: currentTheme.text, mb: 1 }}>
+                              {validation.name || `Validation ${index + 1}`}
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: currentTheme.textSecondary, mb: 1 }}>
+                              {validation.description || 'No description available'}
+                            </Typography>
+                          </Box>
+                          <Chip
+                            icon={validation.passed ? <CheckCircleIcon /> : <WarningIcon />}
+                            label={validation.passed ? 'Passed' : 'Failed'}
+                            size="small"
+                            sx={{
+                              bgcolor: validation.passed 
+                                ? `${currentTheme.success}15` 
+                                : `${currentTheme.error}15`,
+                              color: validation.passed 
+                                ? currentTheme.success 
+                                : currentTheme.error,
+                              fontWeight: 600,
+                            }}
+                          />
+                        </Box>
+                        
+                        <Grid container spacing={2} sx={{ mt: 1 }}>
+                          {validation.type && (
+                            <Grid item xs={12} sm={6}>
+                              <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
+                                <strong>Type:</strong> {validation.type}
+                              </Typography>
+                            </Grid>
+                          )}
+                          {validation.timestamp && (
+                            <Grid item xs={12} sm={6}>
+                              <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
+                                <strong>Timestamp:</strong> {new Date(validation.timestamp).toLocaleString()}
+                              </Typography>
+                            </Grid>
+                          )}
+                          {validation.validator && (
+                            <Grid item xs={12} sm={6}>
+                              <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
+                                <strong>Validator:</strong> {validation.validator}
+                              </Typography>
+                            </Grid>
+                          )}
+                        </Grid>
+
+                        {validation.results && validation.results.length > 0 && (
+                          <Box sx={{ mt: 2 }}>
                     <Typography variant="subtitle2" sx={{ color: currentTheme.text, mb: 1 }}>
-                      Changes:
+                              Results:
                     </Typography>
                     <List dense>
-                      {version.changes?.map((change, idx) => (
-                        <ListItem key={idx} sx={{ py: 0.5, px: 0 }}>
+                              {validation.results.map((result, resultIndex) => (
+                                <ListItem key={resultIndex} sx={{ py: 0.5, px: 0 }}>
                           <ListItemIcon sx={{ minWidth: '24px' }}>
                             <Box
                               sx={{
                                 width: 6,
                                 height: 6,
                                 borderRadius: '50%',
-                                bgcolor: currentTheme.primary,
+                                        bgcolor: result.passed ? currentTheme.success : currentTheme.error,
                               }}
                             />
                           </ListItemIcon>
                           <ListItemText 
-                            primary={change}
+                                    primary={result.check || 'Validation check'}
+                                    secondary={result.message || ''}
                             primaryTypographyProps={{ 
-                              color: currentTheme.textSecondary,
+                                      color: currentTheme.text, 
                               fontSize: '0.875rem'
                             }}
+                                    secondaryTypographyProps={{ 
+                                      color: currentTheme.textSecondary, 
+                                      fontSize: '0.75rem' 
+                                    }}
                           />
                         </ListItem>
                       ))}
                     </List>
-                    
-                    <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
-                      <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
-                        Commit: {version.commitHash}
+                          </Box>
+                        )}
+
+                        {validation.issues && validation.issues.length > 0 && (
+                          <Alert severity="warning" sx={{ mt: 2 }}>
+                            <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                              Issues Found:
                       </Typography>
-                      <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
-                        Author: {version.author}
-                      </Typography>
-                    </Box>
+                            <List dense>
+                              {validation.issues.map((issue, issueIndex) => (
+                                <ListItem key={issueIndex} sx={{ py: 0.5, px: 0 }}>
+                                  <ListItemText
+                                    primary={issue}
+                                    primaryTypographyProps={{ 
+                                      color: currentTheme.text, 
+                                      fontSize: '0.875rem' 
+                                    }}
+                                  />
+                                </ListItem>
+                              ))}
+                            </List>
+                          </Alert>
+                        )}
                   </CardContent>
                 </Card>
               ))}
+                </Box>
+              ) : (
+                <Card variant="outlined" sx={{ 
+                  bgcolor: currentTheme.card, 
+                  borderColor: currentTheme.border,
+                  '&:hover': {
+                    transform: 'none',
+                    boxShadow: 'none'
+                  }
+                }}>
+                  <CardContent sx={{ textAlign: 'center', py: 4 }}>
+                    <VerifiedIcon sx={{ fontSize: '3rem', color: currentTheme.textSecondary, mb: 2, opacity: 0.5 }} />
+                    <Typography variant="body2" sx={{ color: currentTheme.textSecondary, fontStyle: 'italic' }}>
+                      No validation results available
+                    </Typography>
+                  </CardContent>
+                </Card>
+              )}
             </Box>
           )}
 
+          {selectedTab === 5 && (
+            <Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
+                <AccountTreeIcon sx={{ color: currentTheme.primary, fontSize: '1.75rem' }} />
+                <Typography variant="h5" sx={{ color: currentTheme.text, fontWeight: 600 }}>
+                  Mapping
+                </Typography>
+              </Box>
+              <Typography variant="body1" sx={{ color: currentTheme.textSecondary, mb: 3 }}>
+                Data mapping and transformation rules for this product
+              </Typography>
+              
+              {product.technicalMetadata?.mappings && product.technicalMetadata.mappings.length > 0 ? (
+                <Box>
+                  {product.technicalMetadata.mappings.map((mapping, index) => (
+                    <Card 
+                      key={index}
+                      variant="outlined" 
+                      sx={{ 
+                        mb: 2, 
+                        bgcolor: currentTheme.card, 
+                        borderColor: currentTheme.border,
+                        '&:hover': {
+                          transform: 'none',
+                          boxShadow: 'none'
+                        }
+                      }}
+                    >
+                      <CardContent>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                          <Box sx={{ flex: 1 }}>
+                            <Typography variant="h6" sx={{ color: currentTheme.text, mb: 1 }}>
+                              {mapping.name || `Mapping ${index + 1}`}
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: currentTheme.textSecondary, mb: 1 }}>
+                              {mapping.description || 'No description available'}
+                            </Typography>
+                          </Box>
+                          {mapping.status && (
+                            <Chip
+                              label={mapping.status}
+                              size="small"
+                              sx={{
+                                bgcolor: mapping.status === 'Active' 
+                                  ? `${currentTheme.success}15` 
+                                  : `${currentTheme.textSecondary}15`,
+                                color: mapping.status === 'Active' 
+                                  ? currentTheme.success 
+                                  : currentTheme.textSecondary,
+                                fontWeight: 600,
+                              }}
+                            />
+                          )}
+                        </Box>
 
+                        {mapping.sourceFields && mapping.sourceFields.length > 0 && (
+                          <Box sx={{ mb: 2 }}>
+                            <Typography variant="subtitle2" sx={{ color: currentTheme.text, mb: 1, fontWeight: 600 }}>
+                              Source Fields
+                            </Typography>
+                            <List dense>
+                              {mapping.sourceFields.map((field, fieldIndex) => (
+                                <ListItem key={fieldIndex} sx={{ py: 0.5, px: 0 }}>
+                                  <ListItemText 
+                                    primary={field.name || field}
+                                    secondary={field.type || ''}
+                                    primaryTypographyProps={{ 
+                                      color: currentTheme.text, 
+                                      fontSize: '0.875rem'
+                                    }}
+                                    secondaryTypographyProps={{ 
+                                      color: currentTheme.textSecondary, 
+                                      fontSize: '0.75rem' 
+                                    }}
+                                  />
+                                </ListItem>
+                              ))}
+                            </List>
+                          </Box>
+                        )}
+
+                        {mapping.targetFields && mapping.targetFields.length > 0 && (
+                          <Box sx={{ mb: 2 }}>
+                            <Typography variant="subtitle2" sx={{ color: currentTheme.text, mb: 1, fontWeight: 600 }}>
+                              Target Fields
+                            </Typography>
+                            <List dense>
+                              {mapping.targetFields.map((field, fieldIndex) => (
+                                <ListItem key={fieldIndex} sx={{ py: 0.5, px: 0 }}>
+                                  <ListItemText 
+                                    primary={field.name || field}
+                                    secondary={field.type || ''}
+                                    primaryTypographyProps={{ 
+                                      color: currentTheme.text, 
+                                      fontSize: '0.875rem'
+                                    }}
+                                    secondaryTypographyProps={{ 
+                                      color: currentTheme.textSecondary, 
+                                      fontSize: '0.75rem' 
+                                    }}
+                                  />
+                                </ListItem>
+                              ))}
+                            </List>
+                          </Box>
+                        )}
+
+                        {mapping.transformationRules && mapping.transformationRules.length > 0 && (
+                          <Box>
+                            <Typography variant="subtitle2" sx={{ color: currentTheme.text, mb: 1, fontWeight: 600 }}>
+                              Transformation Rules
+                            </Typography>
+                            <List dense>
+                              {mapping.transformationRules.map((rule, ruleIndex) => (
+                                <ListItem key={ruleIndex} sx={{ py: 0.5, px: 0 }}>
+                                  <ListItemIcon>
+                                    <CheckCircleIcon sx={{ color: currentTheme.primary, fontSize: '1rem' }} />
+                                  </ListItemIcon>
+                                  <ListItemText 
+                                    primary={typeof rule === 'string' ? rule : rule.description || rule.rule}
+                                    primaryTypographyProps={{ 
+                                      color: currentTheme.text, 
+                                      fontSize: '0.875rem'
+                                    }}
+                                  />
+                                </ListItem>
+                              ))}
+                            </List>
+                          </Box>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </Box>
+              ) : (
+                <Card variant="outlined" sx={{ 
+                  bgcolor: currentTheme.card, 
+                  borderColor: currentTheme.border,
+                  '&:hover': {
+                    transform: 'none',
+                    boxShadow: 'none'
+                  }
+                }}>
+                  <CardContent sx={{ textAlign: 'center', py: 4 }}>
+                    <AccountTreeIcon sx={{ fontSize: '3rem', color: currentTheme.textSecondary, mb: 2, opacity: 0.5 }} />
+                    <Typography variant="body2" sx={{ color: currentTheme.textSecondary, fontStyle: 'italic' }}>
+                      No mapping information available
+                    </Typography>
+                  </CardContent>
+                </Card>
+              )}
+            </Box>
+          )}
 
         </Grid>
 
         {/* Sidebar */}
         <Grid item xs={12} lg={4}>
-          <Box sx={{ position: 'sticky', top: 20 }}>
+          <Box>
             {/* Product Info */}
             <Card variant="outlined" sx={{ 
               mb: 3, 
@@ -963,10 +1448,10 @@ const DataProductDetailPage = () => {
                 <List dense>
                   <ListItem sx={{ px: 0 }}>
                     <ListItemIcon>
-                      <PersonIcon sx={{ color: currentTheme.primary }} />
+                      <FactoryIcon sx={{ color: currentTheme.primary }} />
                     </ListItemIcon>
                     <ListItemText
-                      primary="Provider"
+                      primary="Producer"
                       secondary={parentDataset?.provider || 'Unknown'}
                       primaryTypographyProps={{ color: currentTheme.text }}
                       secondaryTypographyProps={{ color: currentTheme.textSecondary }}
@@ -996,22 +1481,22 @@ const DataProductDetailPage = () => {
                   </ListItem>
                   <ListItem sx={{ px: 0 }}>
                     <ListItemIcon>
-                      <TagIcon sx={{ color: currentTheme.primary }} />
+                      <StorageIcon sx={{ color: currentTheme.primary }} />
                     </ListItemIcon>
                     <ListItemText
-                      primary="Version"
-                      secondary={product.version || product.technicalMetadata?.currentVersion || '1.0.0'}
+                      primary="Format"
+                      secondary={product.technicalMetadata?.format || product.format || 'Parquet'}
                       primaryTypographyProps={{ color: currentTheme.text }}
                       secondaryTypographyProps={{ color: currentTheme.textSecondary }}
                     />
                   </ListItem>
                   <ListItem sx={{ px: 0 }}>
                     <ListItemIcon>
-                      <StorageIcon sx={{ color: currentTheme.primary }} />
+                      <CloudIcon sx={{ color: currentTheme.primary }} />
                     </ListItemIcon>
                     <ListItemText
-                      primary="Format"
-                      secondary={product.technicalMetadata?.format || product.format || 'Parquet'}
+                      primary="Platform"
+                      secondary={parentDataset?.platform || product.platform || 'Not specified'}
                       primaryTypographyProps={{ color: currentTheme.text }}
                       secondaryTypographyProps={{ color: currentTheme.textSecondary }}
                     />

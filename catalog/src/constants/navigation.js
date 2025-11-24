@@ -9,7 +9,7 @@ import { PiGraph } from "react-icons/pi";
 import { Policy as PolicyIcon, Store as StoreIcon } from '@mui/icons-material';
 
 export const drawerWidth = 280;
-export const collapsedDrawerWidth = 56;
+export const collapsedDrawerWidth = 72;
 
 // Define where the dividers should appear in the navigation
 export const DIVIDER_AFTER_ITEM_ID = 'applications';
