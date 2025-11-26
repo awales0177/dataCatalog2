@@ -1,32 +1,26 @@
-# Build stage
-FROM node:20-alpine AS build
+# Development mode
+FROM node:20-alpine
 
 # Set working directory
 WORKDIR /app
 
 # Copy package files
-COPY package*.json ./
+COPY catalog/package*.json ./catalog/
 
 # Install dependencies
-RUN npm ci
+WORKDIR /app/catalog
+RUN npm install
 
 # Copy source code
+WORKDIR /app
 COPY . .
 
-# Build the application
-RUN npm run build
+# Expose port 3000 (React dev server default)
+EXPOSE 3000
 
-# Production stage
-FROM nginx:alpine
+# Set environment variable to allow external connections
+ENV HOST=0.0.0.0
 
-# Copy built assets from build stage
-COPY --from=build /app/build /usr/share/nginx/html
-
-# Copy nginx configuration
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-
-# Expose port 80
-EXPOSE 80
-
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"] 
+# Start development server
+WORKDIR /app/catalog
+CMD ["npm", "start"] 

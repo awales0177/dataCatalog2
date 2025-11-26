@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import {
   Box,
   CssBaseline,
@@ -53,6 +53,7 @@ import { ThemeContext } from './contexts/ThemeContext';
 import { AuthProvider } from './contexts/AuthContext';
 
 function AppContent() {
+  const location = useLocation();
   const {
     mobileOpen,
     isDrawerCollapsed,
@@ -76,7 +77,7 @@ function AppContent() {
   const [avatarColor] = React.useState(getRandomColor());
 
   // Check if we're on the splash page
-  const isSplashPage = window.location.pathname === '/';
+  const isSplashPage = location.pathname === '/';
 
   // Keyboard shortcut for search (Ctrl+K or Cmd+K)
   React.useEffect(() => {

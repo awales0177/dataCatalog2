@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useContext, useEffect, useMemo, useRef, useCallback } from 'react';
 import {
   Box,
   Grid,
@@ -154,9 +154,9 @@ const mockDataProducts = [
   }
 ];
 
-const DataProductCard = ({ product, currentTheme, onView, onFavorite, isFavorite }) => {
+const DataProductCard = React.memo(({ product, currentTheme, onView, onFavorite, isFavorite }) => {
   // Calculate data quality score as average of the 4 quality metrics
-  const calculateQualityScore = (product) => {
+  const qualityScore = useMemo(() => {
     const metrics = product.technicalMetadata?.qualityMetrics;
     if (metrics && typeof metrics === 'object') {
       const values = [];
@@ -191,14 +191,13 @@ const DataProductCard = ({ product, currentTheme, onView, onFavorite, isFavorite
     // Fallback to original calculation if no quality metrics
   const qualityResult = calculateProductScore(product);
     return qualityResult.score;
-  };
+  }, [product]);
   
-  const qualityScore = calculateQualityScore(product);
-  const qualityColor = getProductQualityColor(qualityScore, currentTheme.darkMode);
-  const qualityLevel = getProductQualityLevel(qualityScore);
+  const qualityColor = useMemo(() => getProductQualityColor(qualityScore, currentTheme.darkMode), [qualityScore, currentTheme.darkMode]);
+  const qualityLevel = useMemo(() => getProductQualityLevel(qualityScore), [qualityScore]);
 
 
-  const getDataFreshness = (product) => {
+  const dataFreshness = useMemo(() => {
     // Check if freshness field exists
     if (product.freshness) {
       return product.freshness;
@@ -220,13 +219,12 @@ const DataProductCard = ({ product, currentTheme, onView, onFavorite, isFavorite
     }
     
     return 'Unknown';
-  };
+  }, [product.freshness, product.lastUpdated]);
 
-  const getFreshnessPercentage = (product) => {
-    const freshness = getDataFreshness(product);
-    if (!freshness) return 0;
+  const freshnessPercentage = useMemo(() => {
+    if (!dataFreshness) return 0;
     
-    const freshnessLower = freshness.toLowerCase();
+    const freshnessLower = dataFreshness.toLowerCase();
     
     // Real-time or today = 100%
     if (freshnessLower.includes('real-time') || freshnessLower.includes('today')) {
@@ -260,14 +258,13 @@ const DataProductCard = ({ product, currentTheme, onView, onFavorite, isFavorite
     }
     
     return 50; // Default
-  };
+  }, [dataFreshness]);
 
-  const getFreshnessColor = (product) => {
-    const percentage = getFreshnessPercentage(product);
-    if (percentage >= 90) return currentTheme.success;
-    if (percentage >= 60) return currentTheme.warning;
+  const freshnessColor = useMemo(() => {
+    if (freshnessPercentage >= 90) return currentTheme.success;
+    if (freshnessPercentage >= 60) return currentTheme.warning;
     return currentTheme.error;
-  };
+  }, [freshnessPercentage, currentTheme]);
 
   return (
     <Card
@@ -428,18 +425,18 @@ const DataProductCard = ({ product, currentTheme, onView, onFavorite, isFavorite
               </Box>
             </Tooltip>
             <Tooltip 
-              title={`Timeliness: ${getDataFreshness(product)}`}
+              title={`Timeliness: ${dataFreshness}`}
               arrow
               placement="top"
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                 <CircularProgress
                   variant="determinate"
-                  value={getFreshnessPercentage(product)}
+                  value={freshnessPercentage}
                   size={16}
                   thickness={3}
                   sx={{
-                    color: getFreshnessColor(product),
+                    color: freshnessColor,
                     '& .MuiCircularProgress-circle': {
                       strokeLinecap: 'round',
                     },
@@ -453,7 +450,7 @@ const DataProductCard = ({ product, currentTheme, onView, onFavorite, isFavorite
                     color: currentTheme.textSecondary,
                   }}
                 >
-                  {getFreshnessPercentage(product)}%
+                  {freshnessPercentage}%
                 </Typography>
               </Box>
             </Tooltip>
@@ -486,13 +483,19 @@ const DataProductCard = ({ product, currentTheme, onView, onFavorite, isFavorite
 
     </Card>
   );
-};
+}, (prevProps, nextProps) => {
+  // Custom comparison function for React.memo
+  return (
+    prevProps.product.id === nextProps.product.id &&
+    prevProps.isFavorite === nextProps.isFavorite &&
+    prevProps.currentTheme === nextProps.currentTheme
+  );
+});
 
 const DataProductMarketplacePage = () => {
   const { currentTheme } = useContext(ThemeContext);
   const navigate = useNavigate();
   const [allProducts, setAllProducts] = useState([]);
-  const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -506,7 +509,11 @@ const DataProductMarketplacePage = () => {
   const [availableModels, setAvailableModels] = useState([]);
   const [availableProducers, setAvailableProducers] = useState([]);
   const [availablePlatforms, setAvailablePlatforms] = useState([]);
-  const [triageView, setTriageView] = useState(false);
+  const [triageView, setTriageView] = useState(() => {
+    // Load from sessionStorage on initial render
+    const saved = sessionStorage.getItem('dataProductTriageView');
+    return saved ? JSON.parse(saved) : false;
+  });
   const [sortBy, setSortBy] = useState(null);
   const [sortOrder, setSortOrder] = useState('asc');
   const [expandedCell, setExpandedCell] = useState({ anchorEl: null, content: '', title: '' });
@@ -527,7 +534,6 @@ const DataProductMarketplacePage = () => {
         const data = await fetchData('dataProducts');
         const products = data.dataProducts || [];
         setAllProducts(products);
-        setFilteredProducts(products);
         
         // Extract unique values for filters
         const modelsSet = new Set();
@@ -566,7 +572,6 @@ const DataProductMarketplacePage = () => {
         console.error('Error loading data products:', err);
         // Fallback to mock data if API fails
         setAllProducts(mockDataProducts);
-        setFilteredProducts(mockDataProducts);
       } finally {
         setLoading(false);
       }
@@ -575,7 +580,8 @@ const DataProductMarketplacePage = () => {
     loadDataProducts();
   }, []);
 
-  useEffect(() => {
+  // Memoize filtered products to avoid recalculating on every render
+  const filteredProducts = useMemo(() => {
     let filtered = [...allProducts];
 
     if (searchQuery) {
@@ -628,9 +634,13 @@ const DataProductMarketplacePage = () => {
       });
     }
 
-    setFilteredProducts(filtered);
-    setPage(1);
+    return filtered;
   }, [searchQuery, selectedModels, selectedProducers, selectedPlatforms, selectedFeedType, allProducts]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [searchQuery, selectedModels, selectedProducers, selectedPlatforms, selectedFeedType]);
 
   const handleFavoriteToggle = (productId) => {
     setFavorites(prev => 
@@ -640,7 +650,7 @@ const DataProductMarketplacePage = () => {
     );
   };
 
-  const handleViewProduct = (product) => {
+  const handleViewProduct = useCallback((product) => {
     // Navigate to product detail page
     if (product.type === 'dataset') {
       // Navigate to dataset view
@@ -650,7 +660,7 @@ const DataProductMarketplacePage = () => {
       // For now, navigate to the product directly - this will be handled by the detail page
       navigate(`/data-products/${product.id}`);
     }
-  };
+  }, [navigate]);
 
 
   const handleClearFilters = () => {
@@ -809,6 +819,189 @@ const DataProductMarketplacePage = () => {
     page * ITEMS_PER_PAGE
   );
 
+  // Memoize table rows to avoid recalculating on every render
+  const tableRows = useMemo(() => {
+    return paginatedProducts.map((product) => {
+      // Count number of schemas (from tables)
+      const numSchemas = product.tables?.length || 
+                        product.technicalMetadata?.tableCounts?.totalTables || 
+                        (product.technicalMetadata?.tableCounts?.tables?.length) || 0;
+      
+      // Extract languages from codeVersions or engines
+      const languages = new Set();
+      if (product.technicalMetadata?.codeVersions) {
+        product.technicalMetadata.codeVersions.forEach(version => {
+          if (version.language) languages.add(version.language);
+        });
+      }
+      if (product.technicalMetadata?.engines) {
+        product.technicalMetadata.engines.forEach(engine => {
+          if (engine.language) languages.add(engine.language);
+          // Also check engine name for common languages
+          const engineName = engine.name?.toLowerCase() || '';
+          if (engineName.includes('python')) languages.add('Python');
+          if (engineName.includes('java')) languages.add('Java');
+          if (engineName.includes('scala')) languages.add('Scala');
+          if (engineName.includes('sql')) languages.add('SQL');
+        });
+      }
+      const languagesList = Array.from(languages).join(', ') || 'N/A';
+      
+      // Count number of files (tables or files)
+      const numFiles = product.tables?.length || 
+                      product.technicalMetadata?.tableCounts?.totalTables || 
+                      (product.technicalMetadata?.tableCounts?.tables?.length) || 0;
+      
+      // Extract file extensions from format or file paths
+      const extensions = new Set();
+      if (product.format) {
+        const format = product.format.toLowerCase();
+        if (format.includes('parquet')) extensions.add('.parquet');
+        if (format.includes('csv')) extensions.add('.csv');
+        if (format.includes('json')) extensions.add('.json');
+        if (format.includes('avro')) extensions.add('.avro');
+        if (format.includes('orc')) extensions.add('.orc');
+        if (format.includes('delta')) extensions.add('.delta');
+      }
+      // Check table locations for file extensions
+      if (product.tables) {
+        product.tables.forEach(table => {
+          if (table.s3Location) {
+            const match = table.s3Location.match(/\.(\w+)(\?|$)/);
+            if (match) extensions.add('.' + match[1]);
+          }
+        });
+      }
+      if (product.technicalMetadata?.tableCounts?.tables) {
+        product.technicalMetadata.tableCounts.tables.forEach(table => {
+          if (table.s3Location) {
+            const match = table.s3Location.match(/\.(\w+)(\?|$)/);
+            if (match) extensions.add('.' + match[1]);
+          }
+        });
+      }
+      const extensionsList = Array.from(extensions).join(', ') || 'N/A';
+      
+      // Get size of data
+      const dataSize = product.size || 
+                     product.technicalMetadata?.tableCounts?.tables?.reduce((sum, table) => {
+                       // Try to parse size if it's a string like "800 MB"
+                       return sum;
+                     }, 0) || 'N/A';
+      
+      // Calculate row ratios [count x rows, count x rows, ...]
+      const rowRatios = [];
+      const rowCountMap = new Map();
+      
+      // Collect row counts from tables
+      const allTables = product.tables || product.technicalMetadata?.tableCounts?.tables || [];
+      allTables.forEach(table => {
+        const rowCount = table.rowCount || table.row_count || table.rows || 0;
+        if (rowCount > 0) {
+          rowCountMap.set(rowCount, (rowCountMap.get(rowCount) || 0) + 1);
+        }
+      });
+      
+      // Format as [count x rows, count x rows, ...]
+      rowCountMap.forEach((count, rows) => {
+        rowRatios.push(`${count}x${rows.toLocaleString()}`);
+      });
+      
+      const rowRatiosString = rowRatios.length > 0 
+        ? `[${rowRatios.join(', ')}]` 
+        : 'N/A';
+      
+      // Calculate ETL LOE Score based on complexity factors
+      let etlLoeScore = 0;
+      
+      // Factor 1: Number of tables (more tables = more complexity)
+      etlLoeScore += Math.min(numFiles * 2, 20);
+      
+      // Factor 2: Number of schemas/columns (more columns = more complexity)
+      const totalColumns = allTables.reduce((sum, table) => {
+        return sum + (table.schema?.length || 0);
+      }, 0);
+      etlLoeScore += Math.min(totalColumns * 0.1, 15);
+      
+      // Factor 3: Data transformations (mappings indicate transformations)
+      if (product.technicalMetadata?.mappings?.length > 0) {
+        etlLoeScore += product.technicalMetadata.mappings.length * 3;
+      }
+      
+      // Factor 4: Multiple languages (indicates complex ETL)
+      if (languages.size > 1) {
+        etlLoeScore += languages.size * 2;
+      }
+      
+      // Factor 5: Data size complexity (larger data = more effort)
+      if (typeof dataSize === 'string') {
+        const sizeMatch = dataSize.match(/(\d+\.?\d*)\s*(GB|TB|MB)/i);
+        if (sizeMatch) {
+          const size = parseFloat(sizeMatch[1]);
+          const unit = sizeMatch[2].toUpperCase();
+          if (unit === 'TB') etlLoeScore += Math.min(size * 5, 25);
+          else if (unit === 'GB') etlLoeScore += Math.min(size * 0.5, 15);
+          else if (unit === 'MB') etlLoeScore += Math.min(size * 0.01, 5);
+        }
+      }
+      
+      // Cap the score at 100 and convert to S/M/L/XL scale
+      etlLoeScore = Math.min(Math.round(etlLoeScore), 100);
+      let etlLoeLabel = 'S';
+      if (etlLoeScore >= 75) {
+        etlLoeLabel = 'XL';
+      } else if (etlLoeScore >= 50) {
+        etlLoeLabel = 'L';
+      } else if (etlLoeScore >= 25) {
+        etlLoeLabel = 'M';
+      } else {
+        etlLoeLabel = 'S';
+      }
+      
+      // Determine type (One Time or Feed)
+      const feedType = product.feedType || (product.freshness && product.freshness !== 'one-time' ? 'Feed' : 'One Time');
+      const productType = feedType === 'One Time' || feedType === 'one-time' || !product.freshness || product.freshness === 'one-time' 
+        ? 'One Time' 
+        : 'Feed';
+      
+      // Get job status from technicalMetadata.jobStatuses
+      let jobStatus = 'N/A';
+      if (product.technicalMetadata?.jobStatuses && product.technicalMetadata.jobStatuses.length > 0) {
+        // Get the latest job status (last in array or most recent)
+        const latestJob = product.technicalMetadata.jobStatuses[product.technicalMetadata.jobStatuses.length - 1];
+        const status = latestJob.status?.toLowerCase() || '';
+        
+        // Map to running, failed, or success
+        if (status.includes('running') || status.includes('in progress') || status.includes('pending')) {
+          jobStatus = 'running';
+        } else if (status.includes('failed') || status.includes('error') || status.includes('failure')) {
+          jobStatus = 'failed';
+        } else if (status.includes('success') || status.includes('completed') || status.includes('done')) {
+          jobStatus = 'success';
+        } else {
+          jobStatus = 'N/A';
+        }
+      }
+      
+      // Get producer/provider
+      const producer = product.provider || product.producer || 'N/A';
+      
+      return {
+        product,
+        numSchemas,
+        languagesList,
+        numFiles,
+        extensionsList,
+        dataSize,
+        rowRatiosString,
+        etlLoeLabel,
+        productType,
+        jobStatus,
+        producer
+      };
+    });
+  }, [paginatedProducts]);
+
   const handleSort = (column) => {
     if (sortBy === column) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
@@ -818,7 +1011,7 @@ const DataProductMarketplacePage = () => {
     }
   };
 
-  const handleCellHover = (event, content, title) => {
+  const handleCellHover = useCallback((event, content, title) => {
     event.stopPropagation(); // Prevent row click
     
     // Clear any existing timeout
@@ -829,16 +1022,19 @@ const DataProductMarketplacePage = () => {
     
     // Only update if different to prevent unnecessary re-renders
     const newAnchorEl = event.currentTarget;
-    if (expandedCell.anchorEl !== newAnchorEl || expandedCell.content !== content) {
-      setExpandedCell({
+    setExpandedCell(prev => {
+      if (prev.anchorEl !== newAnchorEl || prev.content !== content) {
+        return {
         anchorEl: newAnchorEl,
         content: content,
         title: title
-      });
-    }
   };
+      }
+      return prev;
+    });
+  }, []);
 
-  const handleCellLeave = (event) => {
+  const handleCellLeave = useCallback((event) => {
     // Check if we're moving to the popover
     const relatedTarget = event.relatedTarget;
     
@@ -880,9 +1076,9 @@ const DataProductMarketplacePage = () => {
         hoverTimeoutRef.current = null;
       }
     }
-  };
+  }, []);
 
-  const handlePopoverEnter = (event) => {
+  const handlePopoverEnter = useCallback((event) => {
     // Clear timeout when entering popover to keep it open
     if (hoverTimeoutRef.current) {
       clearTimeout(hoverTimeoutRef.current);
@@ -890,9 +1086,9 @@ const DataProductMarketplacePage = () => {
     }
     // Prevent the popover from closing
     event.stopPropagation();
-  };
+  }, []);
 
-  const handlePopoverLeave = () => {
+  const handlePopoverLeave = useCallback(() => {
     // Clear timeout and close popover
     if (hoverTimeoutRef.current) {
       clearTimeout(hoverTimeoutRef.current);
@@ -903,7 +1099,7 @@ const DataProductMarketplacePage = () => {
       setExpandedCell({ anchorEl: null, content: '', title: '' });
       hoverTimeoutRef.current = null;
     }, 100);
-  };
+  }, []);
 
   if (loading) {
     return (
@@ -1002,7 +1198,12 @@ const DataProductMarketplacePage = () => {
             control={
               <Switch
                 checked={triageView}
-                onChange={(e) => setTriageView(e.target.checked)}
+                onChange={(e) => {
+                  const newValue = e.target.checked;
+                  setTriageView(newValue);
+                  // Save to sessionStorage
+                  sessionStorage.setItem('dataProductTriageView', JSON.stringify(newValue));
+                }}
                 sx={{
                   '& .MuiSwitch-switchBase.Mui-checked': {
                     color: currentTheme.primary,
@@ -1510,170 +1711,8 @@ const DataProductMarketplacePage = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {paginatedProducts.map((product) => {
-                    // Count number of schemas (from tables)
-                    const numSchemas = product.tables?.length || 
-                                      product.technicalMetadata?.tableCounts?.totalTables || 
-                                      (product.technicalMetadata?.tableCounts?.tables?.length) || 0;
-                    
-                    // Extract languages from codeVersions or engines
-                    const languages = new Set();
-                    if (product.technicalMetadata?.codeVersions) {
-                      product.technicalMetadata.codeVersions.forEach(version => {
-                        if (version.language) languages.add(version.language);
-                      });
-                    }
-                    if (product.technicalMetadata?.engines) {
-                      product.technicalMetadata.engines.forEach(engine => {
-                        if (engine.language) languages.add(engine.language);
-                        // Also check engine name for common languages
-                        const engineName = engine.name?.toLowerCase() || '';
-                        if (engineName.includes('python')) languages.add('Python');
-                        if (engineName.includes('java')) languages.add('Java');
-                        if (engineName.includes('scala')) languages.add('Scala');
-                        if (engineName.includes('sql')) languages.add('SQL');
-                      });
-                    }
-                    const languagesList = Array.from(languages).join(', ') || 'N/A';
-                    
-                    // Count number of files (tables or files)
-                    const numFiles = product.tables?.length || 
-                                    product.technicalMetadata?.tableCounts?.totalTables || 
-                                    (product.technicalMetadata?.tableCounts?.tables?.length) || 0;
-                    
-                    // Extract file extensions from format or file paths
-                    const extensions = new Set();
-                    if (product.format) {
-                      const format = product.format.toLowerCase();
-                      if (format.includes('parquet')) extensions.add('.parquet');
-                      if (format.includes('csv')) extensions.add('.csv');
-                      if (format.includes('json')) extensions.add('.json');
-                      if (format.includes('avro')) extensions.add('.avro');
-                      if (format.includes('orc')) extensions.add('.orc');
-                      if (format.includes('delta')) extensions.add('.delta');
-                    }
-                    // Check table locations for file extensions
-                    if (product.tables) {
-                      product.tables.forEach(table => {
-                        if (table.s3Location) {
-                          const match = table.s3Location.match(/\.(\w+)(\?|$)/);
-                          if (match) extensions.add('.' + match[1]);
-                        }
-                      });
-                    }
-                    if (product.technicalMetadata?.tableCounts?.tables) {
-                      product.technicalMetadata.tableCounts.tables.forEach(table => {
-                        if (table.s3Location) {
-                          const match = table.s3Location.match(/\.(\w+)(\?|$)/);
-                          if (match) extensions.add('.' + match[1]);
-                        }
-                      });
-                    }
-                    const extensionsList = Array.from(extensions).join(', ') || 'N/A';
-                    
-                    // Get size of data
-                    const dataSize = product.size || 
-                                   product.technicalMetadata?.tableCounts?.tables?.reduce((sum, table) => {
-                                     // Try to parse size if it's a string like "800 MB"
-                                     return sum;
-                                   }, 0) || 'N/A';
-                    
-                    // Calculate row ratios [count x rows, count x rows, ...]
-                    const rowRatios = [];
-                    const rowCountMap = new Map();
-                    
-                    // Collect row counts from tables
-                    const allTables = product.tables || product.technicalMetadata?.tableCounts?.tables || [];
-                    allTables.forEach(table => {
-                      const rowCount = table.rowCount || table.row_count || table.rows || 0;
-                      if (rowCount > 0) {
-                        rowCountMap.set(rowCount, (rowCountMap.get(rowCount) || 0) + 1);
-                      }
-                    });
-                    
-                    // Format as [count x rows, count x rows, ...]
-                    rowCountMap.forEach((count, rows) => {
-                      rowRatios.push(`${count}x${rows.toLocaleString()}`);
-                    });
-                    
-                    const rowRatiosString = rowRatios.length > 0 
-                      ? `[${rowRatios.join(', ')}]` 
-                      : 'N/A';
-                    
-                    // Calculate ETL LOE Score based on complexity factors
-                    let etlLoeScore = 0;
-                    
-                    // Factor 1: Number of tables (more tables = more complexity)
-                    etlLoeScore += Math.min(numFiles * 2, 20);
-                    
-                    // Factor 2: Number of schemas/columns (more columns = more complexity)
-                    const totalColumns = allTables.reduce((sum, table) => {
-                      return sum + (table.schema?.length || 0);
-                    }, 0);
-                    etlLoeScore += Math.min(totalColumns * 0.1, 15);
-                    
-                    // Factor 3: Data transformations (mappings indicate transformations)
-                    if (product.technicalMetadata?.mappings?.length > 0) {
-                      etlLoeScore += product.technicalMetadata.mappings.length * 3;
-                    }
-                    
-                    // Factor 4: Multiple languages (indicates complex ETL)
-                    if (languages.size > 1) {
-                      etlLoeScore += languages.size * 2;
-                    }
-                    
-                    // Factor 5: Data size complexity (larger data = more effort)
-                    if (typeof dataSize === 'string') {
-                      const sizeMatch = dataSize.match(/(\d+\.?\d*)\s*(GB|TB|MB)/i);
-                      if (sizeMatch) {
-                        const size = parseFloat(sizeMatch[1]);
-                        const unit = sizeMatch[2].toUpperCase();
-                        if (unit === 'TB') etlLoeScore += Math.min(size * 5, 25);
-                        else if (unit === 'GB') etlLoeScore += Math.min(size * 0.5, 15);
-                        else if (unit === 'MB') etlLoeScore += Math.min(size * 0.01, 5);
-                      }
-                    }
-                    
-                    // Cap the score at 100 and convert to S/M/L/XL scale
-                    etlLoeScore = Math.min(Math.round(etlLoeScore), 100);
-                    let etlLoeLabel = 'S';
-                    if (etlLoeScore >= 75) {
-                      etlLoeLabel = 'XL';
-                    } else if (etlLoeScore >= 50) {
-                      etlLoeLabel = 'L';
-                    } else if (etlLoeScore >= 25) {
-                      etlLoeLabel = 'M';
-                    } else {
-                      etlLoeLabel = 'S';
-                    }
-                    
-                    // Determine type (One Time or Feed)
-                    const feedType = product.feedType || (product.freshness && product.freshness !== 'one-time' ? 'Feed' : 'One Time');
-                    const productType = feedType === 'One Time' || feedType === 'one-time' || !product.freshness || product.freshness === 'one-time' 
-                      ? 'One Time' 
-                      : 'Feed';
-                    
-                    // Get job status from technicalMetadata.jobStatuses
-                    let jobStatus = 'N/A';
-                    if (product.technicalMetadata?.jobStatuses && product.technicalMetadata.jobStatuses.length > 0) {
-                      // Get the latest job status (last in array or most recent)
-                      const latestJob = product.technicalMetadata.jobStatuses[product.technicalMetadata.jobStatuses.length - 1];
-                      const status = latestJob.status?.toLowerCase() || '';
-                      
-                      // Map to running, failed, or success
-                      if (status.includes('running') || status.includes('in progress') || status.includes('pending')) {
-                        jobStatus = 'running';
-                      } else if (status.includes('failed') || status.includes('error') || status.includes('failure')) {
-                        jobStatus = 'failed';
-                      } else if (status.includes('success') || status.includes('completed') || status.includes('done')) {
-                        jobStatus = 'success';
-                      } else {
-                        jobStatus = 'N/A';
-                      }
-                    }
-                    
-                    // Get producer/provider
-                    const producer = product.provider || product.producer || 'N/A';
+                  {tableRows.map((rowData) => {
+                    const { product, numSchemas, languagesList, numFiles, extensionsList, dataSize, rowRatiosString, etlLoeLabel, productType, jobStatus, producer } = rowData;
                     
                     return (
                       <TableRow
