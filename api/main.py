@@ -218,7 +218,8 @@ JSON_FILES = {
     "reference": "reference.json",
     "toolkit": "toolkit.json",
     "policies": "dataPolicies.json",
-    "zones": "zones.json"
+    "zones": "zones.json",
+    "glossary": "glossary.json"
 }
 
 # Data type to key mapping for counting items
@@ -232,7 +233,8 @@ DATA_TYPE_KEYS = {
     "reference": "items",
     "toolkit": "toolkit",
     "policies": "policies",
-    "zones": "zones"
+    "zones": "zones",
+    "glossary": "terms"
 }
 
 def fetch_from_github(file_name: str) -> Dict:
@@ -1277,6 +1279,179 @@ async def delete_reference_item(item_id: str, current_user: dict = Depends(requi
     except Exception as e:
         logger.error(f"Error deleting reference item: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error deleting reference item: {str(e)}")
+
+# Glossary Management Endpoints
+@app.post("/api/glossary")
+async def create_glossary_term(request: Dict[str, Any], current_user: dict = Depends(require_editor_or_admin)):
+    """
+    Create a new glossary term.
+    
+    Args:
+        request (dict): The new glossary term data
+        
+    Returns:
+        dict: Success message and created glossary term info
+        
+    Raises:
+        HTTPException: If creation fails
+    """
+    try:
+        logger.info(f"Create request for new glossary term")
+        glossary_data = read_json_file(JSON_FILES['glossary'])
+        
+        # Generate automatic ID if not provided
+        if not request.get('id'):
+            max_number = 0
+            for term in glossary_data.get('terms', []):
+                if term.get('id', '').startswith('glossary-'):
+                    try:
+                        number = int(term['id'].split('-')[1])
+                        max_number = max(max_number, number)
+                    except (ValueError, IndexError):
+                        continue
+            new_id = f"glossary-{max_number + 1:03d}"
+        else:
+            new_id = request['id']
+        
+        # Check if ID already exists
+        existing_term = next((t for t in glossary_data.get('terms', []) if t.get('id') == new_id), None)
+        if existing_term:
+            raise HTTPException(status_code=400, detail=f"Glossary term with ID '{new_id}' already exists")
+        
+        # Add lastUpdated timestamp and assign the generated ID
+        new_term = request.copy()
+        new_term['id'] = new_id
+        if not new_term.get('lastUpdated'):
+            new_term['lastUpdated'] = datetime.now().strftime('%Y-%m-%d')
+        
+        if 'terms' not in glossary_data:
+            glossary_data['terms'] = []
+        glossary_data['terms'].append(new_term)
+        
+        local_file_path = JSON_FILES['glossary']
+        write_json_file(local_file_path, glossary_data)
+        
+        logger.info(f"Created new glossary term in local file {local_file_path}")
+        logger.info(f"Glossary term {new_id} created successfully")
+        
+        return {
+            "message": "Glossary term created successfully",
+            "id": new_id,
+            "created": True
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error creating glossary term: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error creating glossary term: {str(e)}")
+
+@app.put("/api/glossary/{term_id}")
+async def update_glossary_term(term_id: str, request: Dict[str, Any], current_user: dict = Depends(require_editor_or_admin)):
+    """
+    Update an existing glossary term.
+    
+    Args:
+        term_id (str): The ID of the glossary term to update
+        request (dict): The updated glossary term data
+        
+    Returns:
+        dict: Success message and updated glossary term info
+        
+    Raises:
+        HTTPException: If the glossary term is not found or update fails
+    """
+    try:
+        logger.info(f"Update request for glossary term: {term_id}")
+        glossary_data = read_json_file(JSON_FILES['glossary'])
+        
+        # Find the glossary term to update
+        term_to_update = None
+        for term in glossary_data.get('terms', []):
+            if term.get('id', '').lower() == term_id.lower():
+                term_to_update = term
+                break
+        
+        if not term_to_update:
+            raise HTTPException(status_code=404, detail=f"Glossary term with ID '{term_id}' not found")
+        
+        # Update the glossary term
+        updated_term = term_to_update.copy()
+        updated_term.update(request)
+        updated_term['id'] = term_id  # Ensure ID doesn't change
+        updated_term['lastUpdated'] = datetime.now().strftime('%Y-%m-%d')
+        
+        # Replace the old term with the updated one
+        glossary_data['terms'] = [
+            t for t in glossary_data.get('terms', []) 
+            if t.get('id', '').lower() != term_id.lower()
+        ]
+        glossary_data['terms'].append(updated_term)
+        
+        local_file_path = JSON_FILES['glossary']
+        write_json_file(local_file_path, glossary_data)
+        
+        logger.info(f"Glossary term updated in local file {local_file_path}")
+        logger.info(f"Glossary term {term_id} updated successfully")
+        
+        return {
+            "message": "Glossary term updated successfully",
+            "id": term_id,
+            "updated": True
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating glossary term: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error updating glossary term: {str(e)}")
+
+@app.delete("/api/glossary/{term_id}")
+async def delete_glossary_term(term_id: str, current_user: dict = Depends(require_editor_or_admin)):
+    """
+    Delete a glossary term by its ID.
+    
+    Args:
+        term_id (str): The ID of the glossary term to delete
+        
+    Returns:
+        dict: Success message and deleted glossary term info
+        
+    Raises:
+        HTTPException: If the glossary term is not found or deletion fails
+    """
+    try:
+        logger.info(f"Delete request for glossary term: {term_id}")
+        glossary_data = read_json_file(JSON_FILES['glossary'])
+        
+        term_to_delete = None
+        for term in glossary_data.get('terms', []):
+            if term.get('id', '').lower() == term_id.lower():
+                term_to_delete = term
+                break
+        
+        if not term_to_delete:
+            raise HTTPException(status_code=404, detail=f"Glossary term with ID '{term_id}' not found")
+        
+        glossary_data['terms'] = [
+            t for t in glossary_data.get('terms', []) 
+            if t.get('id', '').lower() != term_id.lower()
+        ]
+        
+        local_file_path = JSON_FILES['glossary']
+        write_json_file(local_file_path, glossary_data)
+        
+        logger.info(f"Glossary term deleted from local file {local_file_path}")
+        logger.info(f"Glossary term {term_id} deleted successfully")
+        
+        return {
+            "message": "Glossary term deleted successfully",
+            "id": term_id,
+            "deleted": True
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting glossary term: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error deleting glossary term: {str(e)}")
 
 # Applications CRUD endpoints
 @app.post("/api/applications")

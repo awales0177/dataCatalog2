@@ -19,6 +19,8 @@ import EditApplicationPage from './pages/EditApplicationPage';
 import ReferenceDataPage from './pages/ReferenceDataPage';
 import EditReferenceDataPage from './pages/EditReferenceDataPage';
 import DataModelDetailPage from './pages/DataModelDetailPage';
+import GlossaryPage from './pages/GlossaryPage';
+import EditGlossaryPage from './pages/EditGlossaryPage';
 import EditDataModelDetailPage from './pages/EditDataModelDetailPage';
 import ProductAgreementDetailPage from './pages/ProductAgreementDetailPage';
 import EditAgreementPage from './pages/EditAgreementPage';
@@ -108,7 +110,7 @@ function AppContent() {
         display: 'flex', 
         flexDirection: 'column', 
         minHeight: '100vh',
-        bgcolor: currentTheme.background,
+        bgcolor: currentTheme.card,
         position: 'fixed',
         top: 0,
         left: 0,
@@ -164,15 +166,54 @@ function AppContent() {
           component="main"
           sx={{
             flexGrow: 1,
-            p: 3,
             width: { sm: `calc(100% - ${isDrawerCollapsed ? collapsedDrawerWidth : drawerWidth}px)` },
-            bgcolor: currentTheme.background,
             mt: '84px',
             ml: { sm: `${isDrawerCollapsed ? collapsedDrawerWidth : drawerWidth}px` },
             transition: 'margin-left 0.2s ease-in-out, width 0.2s ease-in-out',
+            position: 'relative',
+            height: 'calc(100vh - 84px)',
+            overflow: 'hidden',
+            bgcolor: currentTheme.card,
           }}
         >
-          <Routes>
+          {/* Curved Content Container */}
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              bgcolor: currentTheme.background,
+              borderRadius: '24px',
+              border: `1px solid ${currentTheme.border}`,
+              overflow: 'hidden',
+              boxShadow: 'none',
+            }}
+          >
+            {/* Scrollable Content Area */}
+            <Box
+              sx={{
+                height: '100%',
+                overflowY: 'auto',
+                overflowX: 'hidden',
+                p: 3,
+                '&::-webkit-scrollbar': {
+                  width: '8px',
+                },
+                '&::-webkit-scrollbar-track': {
+                  bgcolor: 'transparent',
+                },
+                '&::-webkit-scrollbar-thumb': {
+                  bgcolor: currentTheme.darkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)',
+                  borderRadius: '4px',
+                  '&:hover': {
+                    bgcolor: currentTheme.darkMode ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)',
+                  },
+                },
+              }}
+            >
+              <Routes>
             <Route path="/" element={<SplashPage />} />
             <Route path="/role" element={<RolePage />} />
             <Route path="/unauthorized" element={<UnauthorizedPage />} />
@@ -211,6 +252,11 @@ function AppContent() {
             <Route path="/reference" element={
               <ProtectedRoute>
                 <ReferenceDataPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/glossary" element={
+              <ProtectedRoute>
+                <GlossaryPage />
               </ProtectedRoute>
             } />
             
@@ -297,6 +343,16 @@ function AppContent() {
                 <EditReferenceDataPage currentTheme={currentTheme} />
               </ProtectedRoute>
             } />
+            <Route path="/glossary/create" element={
+              <ProtectedRoute requiredRole="editor">
+                <EditGlossaryPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/glossary/:id/edit" element={
+              <ProtectedRoute requiredRole="editor">
+                <EditGlossaryPage />
+              </ProtectedRoute>
+            } />
             <Route path="/reference/:id" element={
               <ProtectedRoute>
                 <ReferenceDataDetailPage currentTheme={currentTheme} />
@@ -352,7 +408,9 @@ function AppContent() {
                 </ProtectedRoute>
               } 
             />
-          </Routes>
+              </Routes>
+            </Box>
+          </Box>
         </Box>
 
         <Menu

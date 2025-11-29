@@ -1,0 +1,31 @@
+{
+  "terms": [
+    {
+      "id": "glossary-001",
+      "term": "Data Catalog",
+      "definition": "A centralized inventory of data assets that provides metadata, documentation, and search capabilities to help users discover and understand available data resources.",
+      "category": "Data Management",
+      "taggedModels": ["CUST"],
+      "documentation": "https://docs.example.com/data-catalog",
+      "link": "https://example.com/data-catalog",
+      "lastUpdated": "2024-01-15"
+    },
+    {
+      "id": "glossary-002",
+      "term": "Data Product",
+      "definition": "A reusable data asset that is packaged, documented, and made available for consumption by data consumers. Data products typically include datasets, APIs, or analytical models.",
+      "category": "Data Management",
+      "documentation": "https://docs.example.com/data-products",
+      "lastUpdated": "2024-01-10"
+    },
+    {
+      "id": "glossary-003",
+      "term": "Data Lineage",
+      "definition": "The tracking of data from its source through various transformations and processes to its final destination. Data lineage helps understand data flow and dependencies.",
+      "category": "Data Governance",
+      "documentation": "https://docs.example.com/data-lineage",
+      "lastUpdated": "2024-01-12"
+    }
+  ]
+}
+
