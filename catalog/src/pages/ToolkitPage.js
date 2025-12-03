@@ -157,8 +157,9 @@ const ToolkitPage = () => {
       const searchLower = searchTerm.toLowerCase();
       Object.keys(filtered).forEach(key => {
         filtered[key] = filtered[key].filter(component =>
-          component.name.toLowerCase().includes(searchLower) ||
+          // Prioritize displayName over name for search
           (component.displayName && component.displayName.toLowerCase().includes(searchLower)) ||
+          (component.name && component.name.toLowerCase().includes(searchLower)) ||
           component.description.toLowerCase().includes(searchLower) ||
           component.tags.some(tag => tag.toLowerCase().includes(searchLower)) ||
           component.author.toLowerCase().includes(searchLower)
@@ -309,16 +310,6 @@ const ToolkitPage = () => {
             <Box>
               <Typography variant="h6" sx={{ fontWeight: 600, color: currentTheme.text }}>
                 {component.displayName || component.name}
-              </Typography>
-              <Typography 
-                variant="caption" 
-                sx={{ 
-                  color: currentTheme.textSecondary,
-                  fontWeight: 500,
-                  letterSpacing: '0.5px',
-                }}
-              >
-                {component.name}
               </Typography>
               {type === 'functions' && component.language === 'python' && getPackageName(component) && (
                 <Chip

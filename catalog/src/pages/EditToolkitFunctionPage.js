@@ -218,12 +218,6 @@ const EditToolkitFunctionPage = () => {
     });
   };
 
-  const validateFunctionName = (name) => {
-    // Function name should be lowercase, no spaces, alphanumeric + underscores only
-    const functionNameRegex = /^[a-z][a-z0-9_]*$/;
-    return functionNameRegex.test(name);
-  };
-
   const formatFunctionName = (name) => {
     // Convert to lowercase, replace spaces and special chars with underscores
     return name.toLowerCase()
@@ -246,16 +240,7 @@ const EditToolkitFunctionPage = () => {
     if (!editedFunction.name?.trim()) {
       setSnackbar({
         open: true,
-        message: 'Function name (ID) is required',
-        severity: 'error'
-      });
-      return;
-    }
-
-    if (!validateFunctionName(editedFunction.name)) {
-      setSnackbar({
-        open: true,
-        message: 'Function name must be lowercase, start with a letter, and contain only letters, numbers, and underscores',
+        message: 'Function name is required',
         severity: 'error'
       });
       return;
@@ -264,10 +249,10 @@ const EditToolkitFunctionPage = () => {
     setSaving(true);
     try {
       if (isNewFunction) {
+        // ID will be generated as UUID by the API
         await createToolkitComponent({
           ...editedFunction,
-          type: 'functions',
-          id: editedFunction.name // Use function name as ID
+          type: 'functions'
         });
         setSnackbar({
           open: true,
@@ -422,10 +407,10 @@ const EditToolkitFunctionPage = () => {
     try {
       for (const func of importedFunctions) {
         try {
+          // ID will be auto-generated as UUID by the API
           await createToolkitComponent({
             ...func,
-            type: 'functions',
-            id: func.name // Use function name as ID
+            type: 'functions'
           });
           successCount++;
         } catch (error) {
@@ -605,10 +590,10 @@ const EditToolkitFunctionPage = () => {
                 <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
                   <TextField
                     fullWidth
-                    label="Function Name (ID) *"
+                    label="Function Name *"
                     value={editedFunction?.name || ''}
                     onChange={(e) => handleFieldChange('name', e.target.value)}
-                    placeholder="Technical identifier (no spaces, lowercase)"
+                    placeholder="Technical function name"
                     sx={{
                       '& .MuiInputLabel-root': { color: currentTheme.textSecondary },
                       '& .MuiInputLabel-root.Mui-focused': { color: currentTheme.primary },
