@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
-import { fetchTheme, fetchItemCount } from '../services/api';
+import { fetchTheme, fetchItemCount, trackPageView, trackSiteVisit } from '../services/api';
 import { menuItems } from '../constants/navigation';
 
 export const useAppState = () => {
@@ -29,6 +29,22 @@ export const useAppState = () => {
   const [error, setError] = useState(null);
   const [countsLoaded, setCountsLoaded] = useState(false);
   const [dataModels, setDataModels] = useState([]);
+
+  // Map route to page name for tracking
+  const getPageName = (path) => {
+    if (path === '/') return 'home';
+    if (path === '/models' || path.startsWith('/models/')) return 'models';
+    if (path === '/agreements' || path.startsWith('/agreements/')) return 'agreements';
+    if (path === '/domains') return 'domains';
+    if (path === '/applications' || path.startsWith('/applications/')) return 'applications';
+    if (path === '/toolkit' || path.startsWith('/toolkit/')) return 'toolkit';
+    if (path === '/policies' || path.startsWith('/policies/')) return 'policies';
+    if (path === '/reference' || path.startsWith('/reference/')) return 'reference';
+    if (path === '/glossary' || path.startsWith('/glossary/')) return 'glossary';
+    if (path === '/statistics') return 'statistics';
+    if (path === '/users') return 'users';
+    return 'other';
+  };
 
   // Update page title based on current route
   useEffect(() => {
@@ -63,6 +79,53 @@ export const useAppState = () => {
     }
 
     document.title = title;
+  }, [location.pathname]);
+
+  // Track site visit (once per session)
+  useEffect(() => {
+    // Check if site visit has already been tracked in this session
+    const siteVisitKey = 'site_visit_tracked';
+    const alreadyTracked = sessionStorage.getItem(siteVisitKey);
+    
+    // Skip tracking for role page and unauthorized page
+    if (location.pathname !== '/role' && location.pathname !== '/unauthorized' && !alreadyTracked) {
+      // Mark as tracked IMMEDIATELY to prevent double-tracking (even in StrictMode)
+      sessionStorage.setItem(siteVisitKey, 'true');
+      
+      // Track site visit (non-blocking, once per session)
+      trackSiteVisit()
+        .catch(err => {
+          // If tracking fails, remove the flag so it can be retried
+          sessionStorage.removeItem(siteVisitKey);
+          // Silently fail - don't break the app
+          console.warn('Failed to track site visit:', err);
+        });
+    }
+  }, []); // Only run once on mount
+
+  // Track page views (session-specific)
+  useEffect(() => {
+    const pageName = getPageName(location.pathname);
+    // Skip tracking for role page and unauthorized page
+    if (location.pathname !== '/role' && location.pathname !== '/unauthorized') {
+      // Check if this page has already been viewed in this session
+      const sessionKey = `page_viewed_${pageName}`;
+      const alreadyViewed = sessionStorage.getItem(sessionKey);
+      
+      // Only track the page view if it hasn't been viewed in this session
+      if (!alreadyViewed) {
+        // Track page view (non-blocking)
+        trackPageView(pageName)
+          .then(() => {
+            // Mark as viewed in this session after successful tracking
+            sessionStorage.setItem(sessionKey, 'true');
+          })
+          .catch(err => {
+            // Silently fail - don't break the app
+            console.warn('Failed to track page view:', err);
+          });
+      }
+    }
   }, [location.pathname]);
 
   useEffect(() => {

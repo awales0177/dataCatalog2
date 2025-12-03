@@ -35,7 +35,7 @@ import {
   Info as InfoIcon,
   ExpandMore as ExpandMoreIcon,
   Star as StarIcon,
-  GetApp as GetAppIcon,
+  Visibility as VisibilityIcon,
   Book as BookIcon,
   Build as BuildIcon,
   CheckCircle as CheckCircleIcon,
@@ -195,8 +195,8 @@ const ToolkitInfrastructureDetailPage = () => {
                   }}
                 />
                 <Chip
-                  icon={<GetAppIcon />}
-                  label={`${infrastructureData.downloads} downloads`}
+                  icon={<VisibilityIcon />}
+                  label={`${infrastructureData.clickCount || 0} views`}
                   size="small"
                   sx={{
                     bgcolor: alpha(currentTheme.primary, 0.1),

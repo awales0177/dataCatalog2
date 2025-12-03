@@ -37,6 +37,7 @@ import EditDataPolicyPage from './pages/EditDataPolicyPage';
 import RolePage from './pages/RolePage';
 import UnauthorizedPage from './pages/UnauthorizedPage';
 import UserManagementPage from './pages/UserManagementPage';
+import StatisticsPage from './pages/StatisticsPage';
 import InfoSidebar from './components/InfoSidebar';
 import AppHeader from './components/AppHeader';
 import NavigationDrawer from './components/NavigationDrawer';
@@ -264,6 +265,11 @@ function AppContent() {
             <Route path="/users" element={
               <ProtectedRoute requiredRole="admin">
                 <UserManagementPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/statistics" element={
+              <ProtectedRoute requiredRole="admin">
+                <StatisticsPage />
               </ProtectedRoute>
             } />
             

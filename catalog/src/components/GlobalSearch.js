@@ -78,7 +78,9 @@ const GlobalSearch = ({ open, onClose, currentTheme, darkMode }) => {
       'reference': <ReferenceIcon />,
       'toolkit': <ToolkitIcon />,
       'policies': <PolicyIcon />,
-      'lexicon': <LexiconIcon />
+      'lexicon': <LexiconIcon />,
+      'glossary': <LexiconIcon />,
+      'zones': <DomainIcon />
     };
     return iconMap[type] || <SearchIcon />;
   };
@@ -92,7 +94,9 @@ const GlobalSearch = ({ open, onClose, currentTheme, darkMode }) => {
       'reference': 'Reference Data',
       'toolkit': 'Toolkit',
       'policies': 'Policy',
-      'lexicon': 'Lexicon'
+      'lexicon': 'Lexicon',
+      'glossary': 'Glossary',
+      'zones': 'Zone'
     };
     return labelMap[type] || type;
   };
@@ -112,11 +116,11 @@ const GlobalSearch = ({ open, onClose, currentTheme, darkMode }) => {
   };
 
   const getItemTitle = (item) => {
-    return String(item.name || item.shortName || item.title || item.id || 'Untitled');
+    return String(item.name || item.shortName || item.title || item.term || item.id || 'Untitled');
   };
 
   const getItemDescription = (item) => {
-    return String(item.description || item.extendedDescription || item.status || '');
+    return String(item.description || item.extendedDescription || item.definition || item.status || '');
   };
 
   const getItemPath = (item, type) => {
@@ -136,6 +140,12 @@ const GlobalSearch = ({ open, onClose, currentTheme, darkMode }) => {
       case 'reference':
         id = item.id || item.shortName || item.name;
         return `/reference/${id}`;
+      case 'glossary':
+        // Glossary items link to glossary page (could be enhanced to link to specific term)
+        return `/glossary`;
+      case 'zones':
+        // Zones link to domains page (zones are displayed there)
+        return `/domains`;
       case 'toolkit':
         // For toolkit, check if it's a function, container, or infrastructure and route accordingly
         id = item.id || item.shortName || item.name;

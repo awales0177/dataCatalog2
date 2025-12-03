@@ -23,6 +23,10 @@ import {
   MenuItem,
   ListItemIcon,
   ListItemText,
+  FormControl,
+  InputLabel,
+  Select,
+  IconButton,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -30,10 +34,12 @@ import {
   Storage as StorageIcon,
   Cloud as CloudIcon,
   Add as AddIcon,
-  Download as DownloadIcon,
+  Visibility as VisibilityIcon,
+  FilterList as FilterListIcon,
+  Clear as ClearIcon,
 } from '@mui/icons-material';
 import { ThemeContext } from '../contexts/ThemeContext';
-import { fetchData } from '../services/api';
+import { fetchData, trackToolkitComponentClick } from '../services/api';
 import { useNavigate } from 'react-router-dom';
 
 const ToolkitPage = () => {
@@ -45,12 +51,25 @@ const ToolkitPage = () => {
   const [selectedTab, setSelectedTab] = useState(0);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
   const [addMenuAnchor, setAddMenuAnchor] = useState(null);
+  const [componentClickCounts, setComponentClickCounts] = useState({});
+  const [selectedPackage, setSelectedPackage] = useState('all');
 
   useEffect(() => {
     const loadData = async () => {
       try {
         const data = await fetchData('toolkit');
         setToolkitData(data);
+        
+        // Initialize click counts from loaded data
+        const counts = {};
+        ['functions', 'containers', 'infrastructure'].forEach(type => {
+          const components = data.toolkit[type] || [];
+          components.forEach(component => {
+            const key = `${type}_${component.id}`;
+            counts[key] = component.clickCount || 0;
+          });
+        });
+        setComponentClickCounts(counts);
       } catch (error) {
 
         setSnackbar({ open: true, message: 'Failed to load toolkit data', severity: 'error' });
@@ -62,7 +81,59 @@ const ToolkitPage = () => {
     loadData();
   }, []);
 
-  // Filter components based on search
+  // Extract package name from a function
+  const getPackageName = (component) => {
+    if (component.language !== 'python') return null;
+    
+    // Check for source_module first (from bulk import)
+    if (component.source_module) {
+      // Extract root package from source_module (e.g., 'pandas.io' -> 'pandas')
+      const parts = component.source_module.split('.');
+      return parts[0];
+    }
+    
+    // Check dependencies array
+    if (component.dependencies && component.dependencies.length > 0) {
+      // Get the first dependency that looks like a package name
+      const packageDep = component.dependencies.find(dep => 
+        typeof dep === 'string' && !dep.includes('/') && !dep.includes('http')
+      );
+      if (packageDep) {
+        // Extract root package (e.g., 'pandas>=1.0' -> 'pandas')
+        return packageDep.split(/[>=<!=]/)[0].trim();
+      }
+    }
+    
+    // Check tags for package names
+    if (component.tags && component.tags.length > 0) {
+      const packageTag = component.tags.find(tag => 
+        typeof tag === 'string' && 
+        !tag.includes('auto-generated') && 
+        !tag.includes('library-function') &&
+        tag.length > 2
+      );
+      if (packageTag) return packageTag;
+    }
+    
+    return null;
+  };
+
+  // Get all available packages from Python functions
+  const getAvailablePackages = () => {
+    if (!toolkitData || !toolkitData.toolkit.functions) return [];
+    
+    const packages = new Set();
+    toolkitData.toolkit.functions.forEach(func => {
+      if (func.language === 'python') {
+        const pkg = getPackageName(func);
+        if (pkg) packages.add(pkg);
+      }
+    });
+    
+    return Array.from(packages).sort();
+  };
+
+  // Filter components based on search and package
   const getFilteredComponents = () => {
     if (!toolkitData) return { functions: [], containers: [], infrastructure: [] };
 
@@ -72,6 +143,16 @@ const ToolkitPage = () => {
       infrastructure: toolkitData.toolkit.infrastructure || []
     };
 
+    // Filter by package (only for Python functions)
+    if (selectedTab === 0 && selectedPackage !== 'all') {
+      filtered.functions = filtered.functions.filter(component => {
+        if (component.language !== 'python') return true; // Keep non-Python functions
+        const pkg = getPackageName(component);
+        return pkg === selectedPackage;
+      });
+    }
+
+    // Filter by search term
     if (searchTerm.trim()) {
       const searchLower = searchTerm.toLowerCase();
       Object.keys(filtered).forEach(key => {
@@ -88,10 +169,16 @@ const ToolkitPage = () => {
     return filtered;
   };
 
+
   const filteredComponents = getFilteredComponents();
 
   // Component card renderer
   const renderComponentCard = (component, type) => {
+    // Get click count from state or component data
+    const componentKey = `${type}_${component.id}`;
+    const clickCount = componentClickCounts[componentKey] !== undefined 
+      ? componentClickCounts[componentKey] 
+      : (component.clickCount || 0);
     const getLanguageIcon = (language) => {
       if (!language) return <CodeIcon />;
       
@@ -169,11 +256,41 @@ const ToolkitPage = () => {
     // Convert rating to percentage for progress bar
     const ratingPercentage = (component.rating / 5) * 100;
 
+    const handleCardClick = async () => {
+      if (!component.id) return;
+      
+      // Check if this component has already been clicked in this session
+      const sessionKey = `toolkit_clicked_${type}_${component.id.toLowerCase()}`;
+      const alreadyClicked = sessionStorage.getItem(sessionKey);
+      
+      // Only track the click if it hasn't been clicked in this session
+      if (!alreadyClicked) {
+        try {
+          const result = await trackToolkitComponentClick(type, component.id);
+          if (result && result.clickCount !== undefined) {
+            // Update the click count in state
+            setComponentClickCounts(prev => ({
+              ...prev,
+              [componentKey]: result.clickCount
+            }));
+            // Mark as clicked in this session
+            sessionStorage.setItem(sessionKey, 'true');
+          }
+        } catch (error) {
+          // Silently fail - don't block navigation
+          console.error('Failed to track click:', error);
+        }
+      }
+      
+      // Navigate to the detail page
+      handleViewComponent(component, type);
+    };
+
     return (
       <Card 
         key={component.id} 
         elevation={0}
-        onClick={() => handleViewComponent(component, type)}
+        onClick={handleCardClick}
         sx={{ 
           height: '100%',
           borderRadius: 2,
@@ -203,6 +320,19 @@ const ToolkitPage = () => {
               >
                 {component.name}
               </Typography>
+              {type === 'functions' && component.language === 'python' && getPackageName(component) && (
+                <Chip
+                  label={getPackageName(component)}
+                  size="small"
+                  sx={{
+                    mt: 0.5,
+                    height: 20,
+                    fontSize: '0.65rem',
+                    bgcolor: alpha(currentTheme.primary, 0.1),
+                    color: currentTheme.primary,
+                  }}
+                />
+              )}
             </Box>
             <Box
               sx={{
@@ -274,12 +404,12 @@ const ToolkitPage = () => {
 
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Tooltip title={`${component.downloads} downloads`}>
+              <Tooltip title={`${clickCount} views`}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                   <Typography variant="body2" sx={{ color: currentTheme.textSecondary }}>
-                    {component.downloads}
+                    {clickCount}
                   </Typography>
-                  <DownloadIcon sx={{ fontSize: 16, color: '#FF9800' }} />
+                  <VisibilityIcon sx={{ fontSize: 16, color: currentTheme.primary }} />
                 </Box>
               </Tooltip>
             </Box>
@@ -345,8 +475,8 @@ const ToolkitPage = () => {
         Discover, share, and use modular components for faster development
       </Typography>
 
-      {/* Search */}
-      <Box sx={{ mb: 4 }}>
+      {/* Search and Filters */}
+      <Box sx={{ mb: 4, display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
         <TextField
           fullWidth
           variant="outlined"
@@ -359,8 +489,21 @@ const ToolkitPage = () => {
                 <SearchIcon sx={{ color: currentTheme.textSecondary }} />
               </InputAdornment>
             ),
+            endAdornment: searchTerm && (
+              <InputAdornment position="end">
+                <IconButton
+                  size="small"
+                  onClick={() => setSearchTerm('')}
+                  sx={{ color: currentTheme.textSecondary }}
+                >
+                  <ClearIcon fontSize="small" />
+                </IconButton>
+              </InputAdornment>
+            ),
           }}
           sx={{
+            flex: 1,
+            minWidth: 300,
             '& .MuiOutlinedInput-root': {
               backgroundColor: currentTheme.card,
               '& fieldset': {
@@ -378,13 +521,68 @@ const ToolkitPage = () => {
             },
           }}
         />
+        
+        {selectedTab === 0 && (
+          <FormControl sx={{ minWidth: 200 }}>
+            <InputLabel sx={{ color: currentTheme.textSecondary }}>
+              Filter by Package
+            </InputLabel>
+            <Select
+              value={selectedPackage}
+              onChange={(e) => setSelectedPackage(e.target.value)}
+              label="Filter by Package"
+              sx={{
+                color: currentTheme.text,
+                backgroundColor: currentTheme.card,
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: currentTheme.border,
+                },
+                '&:hover .MuiOutlinedInput-notchedOutline': {
+                  borderColor: currentTheme.primary,
+                },
+                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                  borderColor: currentTheme.primary,
+                },
+                '& .MuiSelect-icon': {
+                  color: currentTheme.textSecondary,
+                },
+              }}
+              MenuProps={{
+                PaperProps: {
+                  sx: {
+                    bgcolor: currentTheme.card,
+                    border: `1px solid ${currentTheme.border}`,
+                    '& .MuiMenuItem-root': {
+                      color: currentTheme.text,
+                      '&:hover': {
+                        bgcolor: alpha(currentTheme.primary, 0.1),
+                      },
+                      '&.Mui-selected': {
+                        bgcolor: alpha(currentTheme.primary, 0.2),
+                      },
+                    },
+                  },
+                },
+              }}
+            >
+              <MenuItem value="all">All Packages</MenuItem>
+              {getAvailablePackages().map(pkg => (
+                <MenuItem key={pkg} value={pkg}>{pkg}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        )}
       </Box>
 
       {/* Tabs */}
       <Box sx={{ mb: 3 }}>
         <Tabs
           value={selectedTab}
-          onChange={(e, newValue) => setSelectedTab(newValue)}
+          onChange={(e, newValue) => {
+            setSelectedTab(newValue);
+            // Reset package filter when switching tabs
+            setSelectedPackage('all');
+          }}
           sx={{
             '& .MuiTab-root': {
               color: currentTheme.textSecondary,

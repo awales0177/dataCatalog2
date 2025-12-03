@@ -52,7 +52,7 @@ class SearchService:
                             return all_items
                         
                         # Look for common array keys
-                        for key in ['models', 'dataAgreements', 'domains', 'applications', 'reference', 'toolkit', 'policies', 'lexicon', 'agreements']:
+                        for key in ['models', 'dataAgreements', 'domains', 'applications', 'reference', 'toolkit', 'policies', 'lexicon', 'agreements', 'terms', 'zones']:
                             if key in data and isinstance(data[key], list):
                                 return data[key]
                         # If no array found, return the dict as a single item
@@ -69,7 +69,7 @@ class SearchService:
         text_parts = []
         
         # Common fields to search
-        search_fields = ['name', 'title', 'description', 'extendedDescription', 'shortName', 'id']
+        search_fields = ['name', 'title', 'description', 'extendedDescription', 'shortName', 'id', 'term', 'definition', 'category', 'owner']
         
         for field in search_fields:
             if field in item and item[field]:
@@ -81,6 +81,14 @@ class SearchService:
         
         if 'changes' in item and isinstance(item['changes'], list):
             text_parts.extend([str(c) for c in item['changes']])
+        
+        # Glossary-specific fields
+        if 'taggedModels' in item and isinstance(item['taggedModels'], list):
+            text_parts.extend([str(m) for m in item['taggedModels']])
+        
+        # Zones-specific: search in domains array if present
+        if 'domains' in item and isinstance(item['domains'], list):
+            text_parts.extend([str(d.get('name', d) if isinstance(d, dict) else d) for d in item['domains']])
         
         return ' '.join(text_parts).lower()
     
@@ -105,7 +113,9 @@ class SearchService:
                 'reference': 'reference.json',
                 'toolkit': 'toolkit.json',
                 'policies': 'dataPolicies.json',
-                'lexicon': 'lexicon.json'
+                'lexicon': 'lexicon.json',
+                'glossary': 'glossary.json',
+                'zones': 'zones.json'
             }
             
             total_documents = 0
@@ -122,7 +132,8 @@ class SearchService:
                 
                 for item in data:
                     # Create a unique ID for the document
-                    doc_id = str(item.get('id', item.get('shortName', item.get('name', ''))))
+                    # Handle different ID fields for different types
+                    doc_id = str(item.get('id', item.get('shortName', item.get('name', item.get('term', '')))))
                     if not doc_id:
                         continue
                     

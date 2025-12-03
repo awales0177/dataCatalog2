@@ -20,6 +20,14 @@ import {
   alpha,
   Switch,
   FormControlLabel,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemText,
 } from '@mui/material';
 import DeleteModal from '../components/DeleteModal';
 import TeamSelector from '../components/TeamSelector';
@@ -31,9 +39,11 @@ import {
   Add as AddIcon,
   Delete as DeleteIcon,
   Code as CodeIcon,
+  AutoAwesome as AutoAwesomeIcon,
+  Download as DownloadIcon,
 } from '@mui/icons-material';
 import { ThemeContext } from '../contexts/ThemeContext';
-import { fetchData, createToolkitComponent, updateToolkitComponent, deleteToolkitComponent } from '../services/api';
+import { fetchData, createToolkitComponent, updateToolkitComponent, deleteToolkitComponent, importFunctionsFromLibrary } from '../services/api';
 
 const EditToolkitFunctionPage = () => {
   const { currentTheme } = useContext(ThemeContext);
@@ -46,6 +56,16 @@ const EditToolkitFunctionPage = () => {
   const [error, setError] = useState(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showImportDialog, setShowImportDialog] = useState(false);
+  const [importPackageName, setImportPackageName] = useState('');
+  const [importModulePath, setImportModulePath] = useState('');
+  const [importPypiUrl, setImportPypiUrl] = useState('');
+  const [importBulkMode, setImportBulkMode] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importedFunctions, setImportedFunctions] = useState([]);
+  const [importError, setImportError] = useState(null);
+  const [importSuggestions, setImportSuggestions] = useState([]);
+  const [selectedFunctions, setSelectedFunctions] = useState(new Set());
 
   const isNewFunction = !functionId || functionId === 'new';
 
@@ -301,6 +321,139 @@ const EditToolkitFunctionPage = () => {
     }
   };
 
+  const handleImportFromLibrary = async () => {
+    if (!importPackageName.trim()) {
+      setImportError('Package name is required');
+      return;
+    }
+
+    setImporting(true);
+    setImportError(null);
+    setImportedFunctions([]);
+    setImportSuggestions([]);
+
+    try {
+      const result = await importFunctionsFromLibrary(
+        importPackageName.trim(),
+        importModulePath.trim() || null,
+        importPypiUrl.trim() || null,
+        importBulkMode
+      );
+
+      if (result.success && result.functions && result.functions.length > 0) {
+        setImportedFunctions(result.functions);
+        // Show suggestions even if functions were found (in case user wants more)
+        if (result.suggestions && result.suggestions.length > 0) {
+          setImportSuggestions(result.suggestions);
+          // Show info message with suggestions
+          setImportError(null);
+        } else {
+          setImportError(null);
+          setImportSuggestions([]);
+        }
+      } else {
+        // Show the message and suggestions if available
+        setImportError(result.message || 'No functions found in the library');
+        if (result.suggestions && result.suggestions.length > 0) {
+          setImportSuggestions(result.suggestions);
+        } else {
+          setImportSuggestions([]);
+        }
+      }
+    } catch (error) {
+      setImportError(error.message || 'Failed to import from library');
+      setImportSuggestions([]);
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  const handleSelectImportedFunction = (func) => {
+    // Populate the form with the imported function data
+    setEditedFunction({
+      ...editedFunction,
+      name: func.name,
+      displayName: func.displayName,
+      description: func.description,
+      language: func.language || 'python',
+      code: func.code,
+      parameters: func.parameters || [],
+      usage: func.usage,
+      dependencies: func.dependencies || [],
+      category: func.category || '',
+      tags: func.tags || [],
+      author: func.author || '',
+      version: func.version || '1.0.0',
+    });
+
+    // Close the dialog
+    setShowImportDialog(false);
+    setImportedFunctions([]);
+    setImportPackageName('');
+    setImportModulePath('');
+    setImportError(null);
+
+    setSnackbar({
+      open: true,
+      message: `Function "${func.displayName}" loaded from library`,
+      severity: 'success'
+    });
+  };
+
+  const handleCloseImportDialog = () => {
+    setShowImportDialog(false);
+    setImportedFunctions([]);
+    setImportPackageName('');
+    setImportModulePath('');
+    setImportPypiUrl('');
+    setImportBulkMode(false);
+    setImportError(null);
+    setImportSuggestions([]);
+    setSelectedFunctions(new Set());
+  };
+
+  const handleAddAllFunctions = async () => {
+    if (importedFunctions.length === 0) return;
+    
+    setSaving(true);
+    let successCount = 0;
+    let errorCount = 0;
+    
+    try {
+      for (const func of importedFunctions) {
+        try {
+          await createToolkitComponent({
+            ...func,
+            type: 'functions',
+            id: func.name // Use function name as ID
+          });
+          successCount++;
+        } catch (error) {
+          console.error(`Error creating function ${func.name}:`, error);
+          errorCount++;
+        }
+      }
+      
+      setSnackbar({
+        open: true,
+        message: `Successfully added ${successCount} function${successCount !== 1 ? 's' : ''}${errorCount > 0 ? ` (${errorCount} failed)` : ''}`,
+        severity: errorCount > 0 ? 'warning' : 'success'
+      });
+      
+      // Close dialog and navigate
+      handleCloseImportDialog();
+      setTimeout(() => navigate('/toolkit'), 1500);
+    } catch (error) {
+      setSnackbar({
+        open: true,
+        message: `Error adding functions: ${error.message}`,
+        severity: 'error'
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
@@ -388,6 +541,24 @@ const EditToolkitFunctionPage = () => {
               {isNewFunction ? 'Add a new reusable function to the toolkit' : 'Modify function details and parameters'}
             </Typography>
           </Box>
+
+          {isNewFunction && (
+            <Button
+              variant="outlined"
+              startIcon={<AutoAwesomeIcon />}
+              onClick={() => setShowImportDialog(true)}
+              sx={{
+                color: currentTheme.primary,
+                borderColor: currentTheme.primary,
+                '&:hover': {
+                  borderColor: currentTheme.primary,
+                  bgcolor: alpha(currentTheme.primary, 0.1)
+                }
+              }}
+            >
+              Import from Library
+            </Button>
+          )}
         </Box>
       </Box>
 
@@ -1139,6 +1310,289 @@ const EditToolkitFunctionPage = () => {
           <Typography component="li">Require manual cleanup of external references</Typography>
         </Box>
       </DeleteModal>
+
+      {/* Import from Library Dialog */}
+      <Dialog
+        open={showImportDialog}
+        onClose={handleCloseImportDialog}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: {
+            bgcolor: currentTheme.card,
+            color: currentTheme.text,
+            border: `1px solid ${currentTheme.border}`
+          }
+        }}
+      >
+        <DialogTitle sx={{ color: currentTheme.text, borderBottom: `1px solid ${currentTheme.border}` }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <AutoAwesomeIcon sx={{ color: currentTheme.primary }} />
+            <Typography variant="h6">Import Function from Python Library</Typography>
+          </Box>
+        </DialogTitle>
+        <DialogContent sx={{ mt: 2 }}>
+          <Typography variant="body2" sx={{ color: currentTheme.textSecondary, mb: 3 }}>
+            Enter a Python package name to install and automatically extract function documentation from docstrings.
+          </Typography>
+
+          <Grid container spacing={2}>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Package Name *"
+                value={importPackageName}
+                onChange={(e) => setImportPackageName(e.target.value)}
+                placeholder="e.g., pandas, numpy, requests"
+                disabled={importing}
+                sx={{
+                  '& .MuiInputLabel-root': { color: currentTheme.textSecondary },
+                  '& .MuiInputLabel-root.Mui-focused': { color: currentTheme.primary },
+                  '& .MuiOutlinedInput-root': { 
+                    color: currentTheme.text,
+                    '& fieldset': { borderColor: currentTheme.border },
+                    '&:hover fieldset': { borderColor: currentTheme.primary },
+                    '&.Mui-focused fieldset': { borderColor: currentTheme.primary }
+                  },
+                  '& .MuiInputBase-input': { color: currentTheme.text }
+                }}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Module Path (Optional)"
+                value={importModulePath}
+                onChange={(e) => setImportModulePath(e.target.value)}
+                placeholder="e.g., pandas.io, numpy.linalg"
+                disabled={importing}
+                helperText="Specify a specific module within the package to import"
+                sx={{
+                  '& .MuiInputLabel-root': { color: currentTheme.textSecondary },
+                  '& .MuiInputLabel-root.Mui-focused': { color: currentTheme.primary },
+                  '& .MuiOutlinedInput-root': { 
+                    color: currentTheme.text,
+                    '& fieldset': { borderColor: currentTheme.border },
+                    '&:hover fieldset': { borderColor: currentTheme.primary },
+                    '&.Mui-focused fieldset': { borderColor: currentTheme.primary }
+                  },
+                  '& .MuiInputBase-input': { color: currentTheme.text },
+                  '& .MuiFormHelperText-root': { color: currentTheme.textSecondary }
+                }}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Custom PyPI URL (Optional)"
+                value={importPypiUrl}
+                onChange={(e) => setImportPypiUrl(e.target.value)}
+                placeholder="e.g., https://pypi.org/simple, https://custom-pypi.example.com/simple"
+                disabled={importing}
+                helperText="Use a custom PyPI index URL for private repositories or mirrors"
+                sx={{
+                  '& .MuiInputLabel-root': { color: currentTheme.textSecondary },
+                  '& .MuiInputLabel-root.Mui-focused': { color: currentTheme.primary },
+                  '& .MuiOutlinedInput-root': { 
+                    color: currentTheme.text,
+                    '& fieldset': { borderColor: currentTheme.border },
+                    '&:hover fieldset': { borderColor: currentTheme.primary },
+                    '&.Mui-focused fieldset': { borderColor: currentTheme.primary }
+                  },
+                  '& .MuiInputBase-input': { color: currentTheme.text },
+                  '& .MuiFormHelperText-root': { color: currentTheme.textSecondary }
+                }}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={importBulkMode}
+                    onChange={(e) => setImportBulkMode(e.target.checked)}
+                    disabled={importing}
+                    sx={{
+                      '& .MuiSwitch-switchBase.Mui-checked': {
+                        color: currentTheme.primary,
+                      },
+                      '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                        backgroundColor: currentTheme.primary,
+                      },
+                    }}
+                  />
+                }
+                label={
+                  <Box>
+                    <Typography variant="body2" sx={{ color: currentTheme.text }}>
+                      Bulk Import Mode
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
+                      Import functions from all submodules recursively
+                    </Typography>
+                  </Box>
+                }
+              />
+            </Grid>
+          </Grid>
+
+          {importError && (
+            <Alert severity={importedFunctions.length === 0 ? "warning" : "error"} sx={{ mt: 2 }}>
+              {importError}
+              {importSuggestions.length > 0 && (
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
+                    Try importing from these submodules:
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                    {importSuggestions.map((suggestion, idx) => (
+                      <Chip
+                        key={idx}
+                        label={suggestion}
+                        onClick={() => {
+                          setImportModulePath(suggestion);
+                        }}
+                        sx={{
+                          cursor: 'pointer',
+                          bgcolor: alpha(currentTheme.primary, 0.1),
+                          color: currentTheme.primary,
+                          '&:hover': {
+                            bgcolor: alpha(currentTheme.primary, 0.2)
+                          }
+                        }}
+                      />
+                    ))}
+                  </Box>
+                </Box>
+              )}
+            </Alert>
+          )}
+
+          {importSuggestions.length > 0 && importedFunctions.length > 0 && !importError && (
+            <Alert severity="info" sx={{ mt: 2 }}>
+              <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
+                Found {importedFunctions.length} functions. For more functions, try these submodules:
+              </Typography>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                {importSuggestions.map((suggestion, idx) => (
+                  <Chip
+                    key={idx}
+                    label={suggestion}
+                    onClick={() => {
+                      setImportModulePath(suggestion);
+                    }}
+                    sx={{
+                      cursor: 'pointer',
+                      bgcolor: alpha(currentTheme.primary, 0.1),
+                      color: currentTheme.primary,
+                      '&:hover': {
+                        bgcolor: alpha(currentTheme.primary, 0.2)
+                      }
+                    }}
+                  />
+                ))}
+              </Box>
+            </Alert>
+          )}
+
+          {importing && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 3 }}>
+              <CircularProgress size={20} />
+              <Typography variant="body2" sx={{ color: currentTheme.textSecondary }}>
+                {importBulkMode 
+                  ? 'Installing package and extracting functions from all submodules...' 
+                  : 'Installing package and extracting functions...'}
+              </Typography>
+            </Box>
+          )}
+
+          {importedFunctions.length > 0 && (
+            <Box sx={{ mt: 3 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Typography variant="subtitle1" sx={{ color: currentTheme.text }}>
+                  Found {importedFunctions.length} function{importedFunctions.length !== 1 ? 's' : ''}:
+                </Typography>
+                <Button
+                  variant="contained"
+                  size="small"
+                  onClick={handleAddAllFunctions}
+                  disabled={saving || importedFunctions.length === 0}
+                  startIcon={saving ? <CircularProgress size={16} /> : <AddIcon />}
+                  sx={{
+                    bgcolor: currentTheme.primary,
+                    '&:hover': { bgcolor: currentTheme.primary },
+                    '&:disabled': { bgcolor: currentTheme.border }
+                  }}
+                >
+                  Add All
+                </Button>
+              </Box>
+              <List sx={{ maxHeight: 400, overflow: 'auto', border: `1px solid ${currentTheme.border}`, borderRadius: 1 }}>
+                {importedFunctions.map((func, index) => (
+                  <ListItem key={index} disablePadding>
+                    <ListItemButton
+                      onClick={() => handleSelectImportedFunction(func)}
+                      sx={{
+                        borderBottom: index < importedFunctions.length - 1 ? `1px solid ${currentTheme.border}` : 'none',
+                        '&:hover': {
+                          bgcolor: alpha(currentTheme.primary, 0.1)
+                        }
+                      }}
+                    >
+                      <ListItemText
+                        primary={
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Typography variant="body1" sx={{ color: currentTheme.text, fontWeight: 500 }}>
+                              {func.displayName || func.name}
+                            </Typography>
+                            {func.source_module && (
+                              <Chip
+                                label={func.source_module}
+                                size="small"
+                                sx={{
+                                  height: 20,
+                                  fontSize: '0.65rem',
+                                  bgcolor: alpha(currentTheme.primary, 0.1),
+                                  color: currentTheme.primary,
+                                }}
+                              />
+                            )}
+                          </Box>
+                        }
+                        secondary={
+                          <Typography variant="body2" sx={{ color: currentTheme.textSecondary, mt: 0.5 }}>
+                            {func.description || 'No description available'}
+                          </Typography>
+                        }
+                      />
+                    </ListItemButton>
+                  </ListItem>
+                ))}
+              </List>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ borderTop: `1px solid ${currentTheme.border}`, p: 2 }}>
+          <Button
+            onClick={handleCloseImportDialog}
+            sx={{ color: currentTheme.textSecondary }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleImportFromLibrary}
+            variant="contained"
+            disabled={importing || !importPackageName.trim()}
+            startIcon={importing ? <CircularProgress size={16} /> : <DownloadIcon />}
+            sx={{
+              bgcolor: currentTheme.primary,
+              '&:hover': { bgcolor: currentTheme.primary },
+              '&:disabled': { bgcolor: currentTheme.border }
+            }}
+          >
+            {importing ? 'Importing...' : 'Import'}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Snackbar */}
       <Snackbar

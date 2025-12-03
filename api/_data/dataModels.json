@@ -24,7 +24,8 @@
       ],
       "meta": {
         "tier": "gold",
-        "verified": false
+        "verified": false,
+        "clickCount": 4
       },
       "changelog": [
         {
@@ -186,7 +187,8 @@
       ],
       "meta": {
         "tier": "silver",
-        "verified": false
+        "verified": false,
+        "clickCount": 11
       },
       "changelog": [
         {
@@ -320,7 +322,8 @@
       ],
       "meta": {
         "tier": "bronze",
-        "verified": true
+        "verified": true,
+        "clickCount": 1
       },
       "changelog": [
         {
@@ -393,7 +396,8 @@
       ],
       "meta": {
         "tier": "bronze",
-        "verified": false
+        "verified": false,
+        "clickCount": 1
       },
       "resources": {
         "code": "https://github.com/org/legacy-customer-data",
@@ -484,7 +488,8 @@
       ],
       "meta": {
         "tier": "silver",
-        "verified": false
+        "verified": false,
+        "clickCount": 1
       },
       "resources": {
         "code": "https://github.com/org/supplier-information",
@@ -616,7 +621,8 @@
       ],
       "meta": {
         "tier": "silver",
-        "verified": false
+        "verified": false,
+        "clickCount": 1
       },
       "resources": {
         "code": "https://github.com/org/utility-consumption",

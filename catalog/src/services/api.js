@@ -234,6 +234,33 @@ export const updateModel = async (shortName, modelData, options = {}) => {
   }
 };
 
+export const trackModelClick = async (shortName) => {
+  try {
+    const response = await fetch(`${API_URL}/models/${shortName}/click`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    
+    // Invalidate cache for models to get updated click count
+    cacheService.invalidateByPrefix('models');
+    
+    return result;
+  } catch (error) {
+    // Don't throw error - click tracking shouldn't break navigation
+    console.error('Error tracking click:', error);
+    return { clickCount: 0 };
+  }
+};
+
 // Agreement Management Functions
 export const createAgreement = async (agreementData) => {
   try {
@@ -549,6 +576,33 @@ export const deleteToolkitComponent = async (componentType, componentId) => {
   }
 };
 
+export const trackToolkitComponentClick = async (componentType, componentId) => {
+  try {
+    const response = await fetch(`${API_URL}/toolkit/${componentType}/${componentId}/click`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    
+    // Invalidate cache for toolkit to get updated click count
+    cacheService.invalidateByPrefix('toolkit');
+    
+    return result;
+  } catch (error) {
+    // Don't throw error - click tracking shouldn't break navigation
+    console.error('Error tracking toolkit click:', error);
+    return { clickCount: 0 };
+  }
+};
+
 // Data Policy Management Functions
 export const createDataPolicy = async (policyData) => {
   try {
@@ -684,6 +738,107 @@ export const rebuildSearchIndex = async () => {
       throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
     }
     
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Statistics Functions
+export const trackPageView = async (page) => {
+  try {
+    const response = await fetch(`${API_URL}/statistics/page-view?page=${encodeURIComponent(page)}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      // Don't throw error - page tracking shouldn't break the app
+      console.warn('Failed to track page view');
+      return null;
+    }
+
+    const result = await response.json();
+    return result;
+  } catch (error) {
+    // Silently fail - don't break the app
+    console.warn('Error tracking page view:', error);
+    return null;
+  }
+};
+
+export const trackSiteVisit = async () => {
+  try {
+    const response = await fetch(`${API_URL}/statistics/site-visit`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      // Don't throw error - site visit tracking shouldn't break the app
+      console.warn('Failed to track site visit');
+      return null;
+    }
+
+    const result = await response.json();
+    return result;
+  } catch (error) {
+    // Silently fail - don't break the app
+    console.warn('Error tracking site visit:', error);
+    return null;
+  }
+};
+
+export const fetchStatistics = async () => {
+  try {
+    const response = await fetch(`${API_URL}/statistics`, {
+      headers: getAuthHeaders()
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Import functions from Python library
+export const importFunctionsFromLibrary = async (packageName, modulePath = null, pypiUrl = null, bulkMode = false) => {
+  try {
+    let url = `${API_URL}/toolkit/import-from-library?package_name=${encodeURIComponent(packageName)}`;
+    if (modulePath) {
+      url += `&module_path=${encodeURIComponent(modulePath)}`;
+    }
+    if (pypiUrl) {
+      url += `&pypi_url=${encodeURIComponent(pypiUrl)}`;
+    }
+    if (bulkMode) {
+      url += `&bulk_mode=true`;
+    }
+    
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+    }
+
     const data = await response.json();
     return data;
   } catch (error) {

@@ -38,7 +38,6 @@ const EditGlossaryPage = () => {
   const [originalTerm, setOriginalTerm] = useState(null);
   const [dataModels, setDataModels] = useState([]);
   const [modelsLoading, setModelsLoading] = useState(true);
-  const [availableCategories, setAvailableCategories] = useState([]);
 
   const isNewTerm = !id || id === 'create';
 
@@ -50,13 +49,8 @@ const EditGlossaryPage = () => {
         setDataModels(modelsData.models || []);
         setModelsLoading(false);
 
-        // Load existing terms to get categories
+        // Load glossary data
         const glossaryData = await fetchData('glossary');
-        const categories = new Set();
-        (glossaryData.terms || []).forEach(term => {
-          if (term.category) categories.add(term.category);
-        });
-        setAvailableCategories(Array.from(categories).sort());
 
         if (isNewTerm) {
           const newTerm = {
@@ -251,37 +245,21 @@ const EditGlossaryPage = () => {
           </Grid>
 
           <Grid item xs={12} md={6}>
-            <Autocomplete
-              freeSolo
-              options={availableCategories}
+            <TextField
+              fullWidth
+              label="Category"
               value={editedTerm?.category || ''}
-              onChange={(event, newValue) => handleFieldChange('category', newValue || '')}
-              onInputChange={(event, newInputValue) => handleFieldChange('category', newInputValue)}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Category"
-                  sx={{
-                    '& .MuiInputLabel-root': { color: currentTheme.textSecondary },
-                    '& .MuiOutlinedInput-root': {
-                      color: currentTheme.text,
-                      '& fieldset': { borderColor: currentTheme.border },
-                      '&:hover fieldset': { borderColor: currentTheme.primary },
-                      '&.Mui-focused fieldset': { borderColor: currentTheme.primary }
-                    },
-                  }}
-                />
-              )}
-              renderOption={(props, option) => (
-                <Box component="li" {...props} sx={{ color: currentTheme.text }}>
-                  {option}
-                </Box>
-              )}
-              PaperComponent={({ children, ...other }) => (
-                <Paper {...other} sx={{ bgcolor: currentTheme.card, border: `1px solid ${currentTheme.border}` }}>
-                  {children}
-                </Paper>
-              )}
+              onChange={(e) => handleFieldChange('category', e.target.value)}
+              placeholder="Enter category"
+              sx={{
+                '& .MuiInputLabel-root': { color: currentTheme.textSecondary },
+                '& .MuiOutlinedInput-root': {
+                  color: currentTheme.text,
+                  '& fieldset': { borderColor: currentTheme.border },
+                  '&:hover fieldset': { borderColor: currentTheme.primary },
+                  '&.Mui-focused fieldset': { borderColor: currentTheme.primary }
+                },
+              }}
             />
           </Grid>
 

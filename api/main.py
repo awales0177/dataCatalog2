@@ -17,6 +17,7 @@ from time import perf_counter
 from auth import get_current_user_optional, require_editor_or_admin, require_admin, UserRole
 from endpoints.auth import router as auth_router
 from services.search_service import search_service
+from services.python_introspection_service import python_introspection_service
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -219,7 +220,8 @@ JSON_FILES = {
     "toolkit": "toolkit.json",
     "policies": "dataPolicies.json",
     "zones": "zones.json",
-    "glossary": "glossary.json"
+    "glossary": "glossary.json",
+    "statistics": "statistics.json"
 }
 
 # Data type to key mapping for counting items
@@ -609,6 +611,11 @@ async def create_model(request: CreateModelRequest, current_user: dict = Depends
         # Generate a new ID (max existing ID + 1)
         new_id = max([m['id'] for m in models_data['models']], default=0) + 1
         
+        # Ensure meta has clickCount initialized to 0
+        meta = request.meta.copy() if request.meta else {}
+        if 'clickCount' not in meta:
+            meta['clickCount'] = 0
+        
         # Create the new model from the request
         new_model = {
             'id': new_id,
@@ -622,7 +629,7 @@ async def create_model(request: CreateModelRequest, current_user: dict = Depends
             'maintainerEmail': request.maintainerEmail,
             'domain': request.domain,
             'referenceData': request.referenceData,
-            'meta': request.meta,
+            'meta': meta,
             'changelog': request.changelog,
             'resources': request.resources,
             'users': request.users,
@@ -715,6 +722,73 @@ async def delete_model(short_name: str, current_user: dict = Depends(require_edi
             detail=f"Error deleting model: {str(e)}"
         )
 
+@app.post("/api/models/{short_name}/click")
+async def track_model_click(short_name: str):
+    """
+    Track a click on a data model card and increment the click counter.
+    
+    Args:
+        short_name (str): The short name of the model to track
+        
+    Returns:
+        dict: Success message and updated click count
+        
+    Raises:
+        HTTPException: If the model is not found
+    """
+    try:
+        logger.info(f"Click tracking request for model: {short_name}")
+        
+        # Read current models data
+        models_data = read_json_file(JSON_FILES['models'])
+        
+        # Find the model to update
+        model_index = None
+        for i, model in enumerate(models_data['models']):
+            if model['shortName'].lower() == short_name.lower():
+                model_index = i
+                break
+        
+        if model_index is None:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Model with short name '{short_name}' not found"
+            )
+        
+        # Get the current model
+        model = models_data['models'][model_index]
+        
+        # Initialize clickCount in meta if it doesn't exist
+        if 'meta' not in model:
+            model['meta'] = {}
+        
+        # Increment click count (initialize to 1 if not present)
+        current_count = model['meta'].get('clickCount', 0)
+        model['meta']['clickCount'] = current_count + 1
+        
+        # Update the model in the array
+        models_data['models'][model_index] = model
+        
+        # Save the updated data to local file
+        local_file_path = JSON_FILES['models']
+        write_json_file(local_file_path, models_data)
+        logger.info(f"Updated click count for model {short_name} to {model['meta']['clickCount']}")
+        
+        return {
+            "message": "Click tracked successfully",
+            "shortName": short_name,
+            "clickCount": model['meta']['clickCount']
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error tracking click for model {short_name}: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error tracking click: {str(e)}"
+        )
+
 @app.put("/api/models/{short_name}")
 async def update_model(short_name: str, request: UpdateModelRequest, current_user: dict = Depends(require_editor_or_admin)):
     """
@@ -752,6 +826,14 @@ async def update_model(short_name: str, request: UpdateModelRequest, current_use
         # Update the model
         old_model = models_data['models'][model_index]
         updated_model = {**old_model, **request.modelData}
+        
+        # Preserve clickCount in meta if it exists in the old model
+        if 'meta' in request.modelData and 'meta' in old_model:
+            old_click_count = old_model['meta'].get('clickCount', 0)
+            if 'clickCount' not in updated_model.get('meta', {}):
+                if 'meta' not in updated_model:
+                    updated_model['meta'] = {}
+                updated_model['meta']['clickCount'] = old_click_count
         
         # Check if shortName is being changed
         old_short_name = old_model.get('shortName')
@@ -1674,7 +1756,8 @@ async def create_toolkit_component(component: Dict[str, Any], current_user: dict
             "examples": component.get('examples', []),
             "git": component.get('git', ''),
             "rating": component.get('rating', 5.0),
-            "downloads": 0
+            "downloads": 0,
+            "clickCount": 0
         }
         
         # Add type-specific fields
@@ -1743,8 +1826,9 @@ async def update_toolkit_component(component_type: str, component_id: str, compo
             raise HTTPException(status_code=404, detail=f"Component with ID {component_id} not found")
         
         # Update the component
+        existing_component = toolkit_data['toolkit'][component_type][comp_to_update]
         updated_component = {
-            **toolkit_data['toolkit'][component_type][comp_to_update],
+            **existing_component,
             "name": component.get('name', ''),
             "displayName": component.get('displayName', component.get('name', '')),
             "description": component.get('description', ''),
@@ -1759,6 +1843,9 @@ async def update_toolkit_component(component_type: str, component_id: str, compo
             "git": component.get('git', ''),
             "rating": component.get('rating', 5.0)
         }
+        # Preserve clickCount if it exists
+        if 'clickCount' in existing_component:
+            updated_component['clickCount'] = existing_component['clickCount']
         
         # Update type-specific fields
         if component_type == 'functions':
@@ -1790,6 +1877,124 @@ async def update_toolkit_component(component_type: str, component_id: str, compo
     except Exception as e:
         logger.error(f"Error updating toolkit component: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error updating toolkit component: {str(e)}")
+
+@app.post("/api/toolkit/import-from-library")
+async def import_functions_from_library(
+    package_name: str = Query(..., description="Python package name to install and introspect"),
+    module_path: Optional[str] = Query(None, description="Optional specific module path within the package"),
+    pypi_url: Optional[str] = Query(None, description="Optional custom PyPI URL or index URL (e.g., 'https://pypi.org/simple' or 'https://custom-pypi.example.com/simple')"),
+    bulk_mode: bool = Query(False, description="If true, import functions from all submodules"),
+    current_user: dict = Depends(require_editor_or_admin)
+):
+    """
+    Install a Python library and extract function documentation from docstrings.
+    
+    Args:
+        package_name: Name of the Python package (e.g., 'pandas', 'numpy')
+        module_path: Optional specific module to import (e.g., 'pandas.io')
+        pypi_url: Optional custom PyPI URL or index URL for private repositories
+        bulk_mode: If true, import functions from all submodules recursively
+        
+    Returns:
+        dict: List of discovered functions with extracted metadata
+    """
+    try:
+        logger.info(f"Import request for library: {package_name}, module: {module_path}, pypi_url: {pypi_url}, bulk_mode: {bulk_mode}")
+        
+        if bulk_mode:
+            result = python_introspection_service.get_all_functions_from_package(package_name, module_path, pypi_url, include_submodules=True)
+        else:
+            result = python_introspection_service.get_functions_from_package(package_name, module_path, pypi_url)
+        
+        if not result["success"]:
+            raise HTTPException(
+                status_code=400,
+                detail=result["message"]
+            )
+        
+        return result
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error importing from library: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error importing from library: {str(e)}"
+        )
+
+@app.post("/api/toolkit/{component_type}/{component_id}/click")
+async def track_toolkit_component_click(component_type: str, component_id: str):
+    """
+    Track a click on a toolkit component card and increment the click counter.
+    
+    Args:
+        component_type (str): The type of component (functions, containers, terraform)
+        component_id (str): The ID of the component to track
+        
+    Returns:
+        dict: Success message and updated click count
+        
+    Raises:
+        HTTPException: If the component is not found
+    """
+    try:
+        logger.info(f"Click tracking request for toolkit component: {component_type}/{component_id}")
+        
+        if component_type not in ['functions', 'containers', 'terraform']:
+            raise HTTPException(status_code=400, detail="Invalid component type")
+        
+        # Read current toolkit data
+        toolkit_data = read_json_file(JSON_FILES['toolkit'])
+        
+        # Find the component to update
+        component_index = None
+        components = toolkit_data['toolkit'].get(component_type, [])
+        
+        for i, component in enumerate(components):
+            if component['id'] == component_id:
+                component_index = i
+                break
+        
+        if component_index is None:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Component with ID '{component_id}' not found in {component_type}"
+            )
+        
+        # Get the current component
+        component = components[component_index]
+        
+        # Initialize clickCount if it doesn't exist
+        if 'clickCount' not in component:
+            component['clickCount'] = 0
+        
+        # Increment click count
+        component['clickCount'] = component.get('clickCount', 0) + 1
+        
+        # Update the component in the array
+        toolkit_data['toolkit'][component_type][component_index] = component
+        
+        # Save the updated data to local file
+        local_file_path = JSON_FILES['toolkit']
+        write_json_file(local_file_path, toolkit_data)
+        logger.info(f"Updated click count for {component_type}/{component_id} to {component['clickCount']}")
+        
+        return {
+            "message": "Click tracked successfully",
+            "componentType": component_type,
+            "componentId": component_id,
+            "clickCount": component['clickCount']
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error tracking toolkit component click: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error tracking click: {str(e)}"
+        )
 
 @app.delete("/api/toolkit/{component_type}/{component_id}")
 async def delete_toolkit_component(component_type: str, component_id: str, current_user: dict = Depends(require_editor_or_admin)):
@@ -2010,6 +2215,163 @@ def get_model_relationships():
     except Exception as e:
         logger.error(f"Error in model relationships debug: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+# Statistics endpoints
+@app.post("/api/statistics/page-view")
+async def track_page_view(page: str = Query(..., description="Page path/name to track")):
+    """
+    Track a page view.
+    
+    Args:
+        page (str): The page path/name (e.g., 'models', 'agreements', 'home')
+        
+    Returns:
+        dict: Success message
+    """
+    try:
+        # Get current date in YYYY-MM-DD format
+        today = datetime.now().strftime('%Y-%m-%d')
+        
+        # Read or initialize statistics file
+        try:
+            stats_data = read_json_file(JSON_FILES['statistics'])
+        except HTTPException:
+            # File doesn't exist, create new structure
+            stats_data = {
+                "pageViews": {},
+                "siteVisits": {
+                    "daily": {},
+                    "total": 0
+                },
+                "lastUpdated": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            }
+        
+        # Initialize page if it doesn't exist
+        if page not in stats_data['pageViews']:
+            stats_data['pageViews'][page] = {
+                "daily": {},
+                "total": 0
+            }
+        
+        # Increment daily count
+        if today not in stats_data['pageViews'][page]['daily']:
+            stats_data['pageViews'][page]['daily'][today] = 0
+        
+        stats_data['pageViews'][page]['daily'][today] += 1
+        stats_data['pageViews'][page]['total'] += 1
+        # Don't increment totalViews here - it's tracked separately as site visits
+        stats_data['lastUpdated'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        
+        # Save updated statistics
+        write_json_file(JSON_FILES['statistics'], stats_data)
+        
+        logger.info(f"Tracked page view for {page} on {today}")
+        
+        return {
+            "message": "Page view tracked successfully",
+            "page": page,
+            "date": today,
+            "dailyCount": stats_data['pageViews'][page]['daily'][today],
+            "totalCount": stats_data['pageViews'][page]['total']
+        }
+        
+    except Exception as e:
+        logger.error(f"Error tracking page view: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error tracking page view: {str(e)}")
+
+@app.post("/api/statistics/site-visit")
+async def track_site_visit():
+    """
+    Track a site visit (unique session).
+    This should only be called once per session.
+    
+    Returns:
+        dict: Success message and updated site visit count
+    """
+    try:
+        # Get current date in YYYY-MM-DD format
+        today = datetime.now().strftime('%Y-%m-%d')
+        
+        # Read or initialize statistics file
+        try:
+            stats_data = read_json_file(JSON_FILES['statistics'])
+        except HTTPException:
+            # File doesn't exist, create new structure
+            stats_data = {
+                "pageViews": {},
+                "siteVisits": {
+                    "daily": {},
+                    "total": 0
+                },
+                "lastUpdated": datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            }
+        
+        # Initialize siteVisits if it doesn't exist (for backward compatibility)
+        if 'siteVisits' not in stats_data:
+            stats_data['siteVisits'] = {
+                "daily": {},
+                "total": 0
+            }
+        
+        # Increment daily site visit count
+        if today not in stats_data['siteVisits']['daily']:
+            stats_data['siteVisits']['daily'][today] = 0
+        
+        stats_data['siteVisits']['daily'][today] += 1
+        stats_data['siteVisits']['total'] += 1
+        stats_data['lastUpdated'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        
+        # Save updated statistics
+        write_json_file(JSON_FILES['statistics'], stats_data)
+        
+        logger.info(f"Tracked site visit on {today}")
+        
+        return {
+            "message": "Site visit tracked successfully",
+            "date": today,
+            "dailyCount": stats_data['siteVisits']['daily'][today],
+            "totalCount": stats_data['siteVisits']['total']
+        }
+        
+    except Exception as e:
+        logger.error(f"Error tracking site visit: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error tracking site visit: {str(e)}")
+
+@app.get("/api/statistics")
+def get_statistics(current_user: dict = Depends(require_admin)):
+    """
+    Get page view statistics (admin only).
+    
+    Returns:
+        dict: Statistics data with daily views per page and site visits
+    """
+    try:
+        # Read statistics file
+        try:
+            stats_data = read_json_file(JSON_FILES['statistics'])
+        except HTTPException:
+            # File doesn't exist, return empty structure
+            return {
+                "pageViews": {},
+                "siteVisits": {
+                    "daily": {},
+                    "total": 0
+                },
+                "lastUpdated": None
+            }
+        
+        # Ensure siteVisits exists (for backward compatibility)
+        if 'siteVisits' not in stats_data:
+            stats_data['siteVisits'] = {
+                "daily": {},
+                "total": 0
+            }
+        
+        return stats_data
+        
+    except Exception as e:
+        logger.error(f"Error getting statistics: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error getting statistics: {str(e)}")
 
 
 if __name__ == "__main__":

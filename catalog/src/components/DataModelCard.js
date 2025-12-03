@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Card,
   CardContent,
@@ -12,13 +12,16 @@ import {
 import { useNavigate } from 'react-router-dom';
 import {
   Whatshot as WhatshotIcon,
+  Visibility as VisibilityIcon,
 } from '@mui/icons-material';
 import { calculateModelScore, getModelQualityColor } from '../utils/modelScoreUtils';
 import { GoVerified } from "react-icons/go";
+import { trackModelClick } from '../services/api';
 
 // DataModelCard component for displaying individual data model information
 const DataModelCard = ({ model, currentTheme }) => {
   const navigate = useNavigate();
+  const [clickCount, setClickCount] = useState(model.meta?.clickCount || 0);
 
   // Safety check - if no model, don't render
   if (!model) {
@@ -46,10 +49,36 @@ const DataModelCard = ({ model, currentTheme }) => {
 
   const tierColor = getTierColor(model.meta?.tier);
 
+  const handleCardClick = async () => {
+    if (!model.shortName) return;
+    
+    // Check if this model has already been clicked in this session
+    const sessionKey = `model_clicked_${model.shortName.toLowerCase()}`;
+    const alreadyClicked = sessionStorage.getItem(sessionKey);
+    
+    // Only track the click if it hasn't been clicked in this session
+    if (!alreadyClicked) {
+      try {
+        const result = await trackModelClick(model.shortName);
+        if (result && result.clickCount !== undefined) {
+          setClickCount(result.clickCount);
+          // Mark as clicked in this session
+          sessionStorage.setItem(sessionKey, 'true');
+        }
+      } catch (error) {
+        // Silently fail - don't block navigation
+        console.error('Failed to track click:', error);
+      }
+    }
+    
+    // Navigate to the detail page
+    navigate(`/models/${model.shortName.toLowerCase()}`);
+  };
+
   return (
     <Card 
       elevation={0}
-      onClick={() => model.shortName ? navigate(`/models/${model.shortName.toLowerCase()}`) : null}
+      onClick={handleCardClick}
       sx={{ 
         height: '100%',
         borderRadius: 2,
@@ -140,13 +169,21 @@ const DataModelCard = ({ model, currentTheme }) => {
         </Box>
 
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Tooltip title={`${model.users?.length || 0} users`}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                 <Typography variant="body2" sx={{ color: currentTheme.textSecondary }}>
                   {model.users?.length || 0}
                 </Typography>
                 <WhatshotIcon sx={{ fontSize: 16, color: '#FF9800' }} />
+              </Box>
+            </Tooltip>
+            <Tooltip title={`${clickCount} views`}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Typography variant="body2" sx={{ color: currentTheme.textSecondary }}>
+                  {clickCount}
+                </Typography>
+                <VisibilityIcon sx={{ fontSize: 16, color: currentTheme.primary }} />
               </Box>
             </Tooltip>
           </Box>
