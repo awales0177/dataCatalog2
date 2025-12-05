@@ -52,7 +52,7 @@ class SearchService:
                             return all_items
                         
                         # Look for common array keys
-                        for key in ['models', 'dataAgreements', 'domains', 'applications', 'reference', 'toolkit', 'policies', 'lexicon', 'agreements', 'terms', 'zones']:
+                        for key in ['models', 'dataAgreements', 'domains', 'applications', 'reference', 'toolkit', 'policies', 'lexicon', 'agreements', 'terms']:
                             if key in data and isinstance(data[key], list):
                                 return data[key]
                         # If no array found, return the dict as a single item
@@ -68,8 +68,23 @@ class SearchService:
         """Extract searchable text from an item."""
         text_parts = []
         
-        # Common fields to search
-        search_fields = ['name', 'title', 'description', 'extendedDescription', 'shortName', 'id', 'term', 'definition', 'category', 'owner']
+        # For toolkit items (which have displayName), prioritize displayName over name
+        # This ensures we index the display name (e.g., "Data Validation Utility") 
+        # instead of the underscored name (e.g., "data_validation_utility")
+        is_toolkit_item = 'displayName' in item or '_toolkit_type' in item
+        
+        if is_toolkit_item:
+            # For toolkit items, use displayName instead of name
+            if 'displayName' in item and item['displayName']:
+                text_parts.append(str(item['displayName']))
+            # Don't include the underscored 'name' field for toolkit items
+        else:
+            # For other items, use the standard 'name' field
+            if 'name' in item and item['name']:
+                text_parts.append(str(item['name']))
+        
+        # Common fields to search (excluding 'name' which we handled above)
+        search_fields = ['title', 'description', 'extendedDescription', 'shortName', 'id', 'term', 'definition', 'category', 'owner']
         
         for field in search_fields:
             if field in item and item[field]:
@@ -85,10 +100,6 @@ class SearchService:
         # Glossary-specific fields
         if 'taggedModels' in item and isinstance(item['taggedModels'], list):
             text_parts.extend([str(m) for m in item['taggedModels']])
-        
-        # Zones-specific: search in domains array if present
-        if 'domains' in item and isinstance(item['domains'], list):
-            text_parts.extend([str(d.get('name', d) if isinstance(d, dict) else d) for d in item['domains']])
         
         return ' '.join(text_parts).lower()
     
@@ -114,8 +125,7 @@ class SearchService:
                 'toolkit': 'toolkit.json',
                 'policies': 'dataPolicies.json',
                 'lexicon': 'lexicon.json',
-                'glossary': 'glossary.json',
-                'zones': 'zones.json'
+                'glossary': 'glossary.json'
             }
             
             total_documents = 0

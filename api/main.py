@@ -12,6 +12,7 @@ import logging
 import threading
 import time
 from time import perf_counter
+import uuid
 
 # Import authentication modules
 from auth import get_current_user_optional, require_editor_or_admin, require_admin, UserRole
@@ -1708,18 +1709,19 @@ async def create_toolkit_component(component: Dict[str, Any], current_user: dict
         if component_type not in ['functions', 'containers', 'terraform']:
             raise HTTPException(status_code=400, detail="Invalid component type")
         
-        # For functions, use the function name as the ID
+        # For functions, generate a UUID as the ID
         if component_type == 'functions':
             function_name = component.get('name', '')
             if not function_name:
                 raise HTTPException(status_code=400, detail="Function name is required")
             
-            # Check if function name already exists
+            # Check if function name already exists (for display purposes, not ID)
             existing_names = [item['name'] for item in toolkit_data['toolkit'][component_type]]
             if function_name in existing_names:
                 raise HTTPException(status_code=400, detail=f"Function with name '{function_name}' already exists")
             
-            new_id = function_name
+            # Generate UUID for function ID
+            new_id = str(uuid.uuid4())
         else:
             # Generate new ID based on type for other component types
             existing_ids = [item['id'] for item in toolkit_data['toolkit'][component_type]]

@@ -7,58 +7,32 @@ import {
   Container,
   CircularProgress,
   Alert,
+  Grid,
 } from '@mui/material';
 import {
   Search as SearchIcon,
 } from '@mui/icons-material';
-import ZoneCard from '../components/ZoneCard';
+import DomainCard from '../components/DomainCard';
+import DomainModal from '../components/DomainModal';
 import { ThemeContext } from '../contexts/ThemeContext';
-import { fetchDomains, fetchZones } from '../services/api';
+import { fetchDomains } from '../services/api';
 
 const DataDomainsPage = () => {
   const { currentTheme } = useContext(ThemeContext);
   const [searchQuery, setSearchQuery] = useState('');
-  const [zones, setZones] = useState([]);
   const [domains, setDomains] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedDomain, setSelectedDomain] = useState(null);
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        // Fetch zones from API (zones.json is the source of truth)
-        let zonesData = [];
-        let domainsData = [];
-        
-        try {
-          const zonesResponse = await fetchZones({ forceRefresh: true });
-          zonesData = zonesResponse.zones || [];
-          console.log('Zones loaded from API (zones.json):', zonesData.length, 'zones');
-          
-          if (zonesData.length === 0) {
-            console.warn('No zones found in zones.json - zones must be defined in zones.json');
-          }
-        } catch (zonesError) {
-          console.error('Failed to load zones from API:', zonesError);
-          setError('Failed to load zones. Zones must be defined in zones.json');
-        }
-
-        // Always fetch domains
         const domainsResponse = await fetchDomains();
-        domainsData = domainsResponse.domains || [];
-
-        // Use zones from API (zones.json) - this is the source of truth
-        // Domains that don't match any zone in zones.json will be in the "Unzoned" zone
-        if (zonesData.length > 0) {
-          setZones(zonesData);
-        } else {
-          // If no zones are defined, show error message
-          setZones([]);
-        }
-
+        const domainsData = domainsResponse.domains || [];
         setDomains(domainsData);
       } catch (error) {
-        setError('Failed to load data zones and domains');
+        setError('Failed to load data domains');
         console.error('Error loading data:', error);
       } finally {
         setLoading(false);
@@ -68,31 +42,22 @@ const DataDomainsPage = () => {
     loadData();
   }, []);
 
-  // Filter zones and their domains based on search query
-  const getFilteredZones = () => {
+  // Filter domains based on search query
+  const getFilteredDomains = () => {
     if (!searchQuery.trim()) {
-      return zones;
+      return domains;
     }
 
     const query = searchQuery.toLowerCase();
-    return zones.map(zone => {
-      const matchesZone = zone.name.toLowerCase().includes(query) ||
-                         (zone.description && zone.description.toLowerCase().includes(query));
-      
-      const filteredDomains = zone.domains?.filter(domain => {
-        return domain.name.toLowerCase().includes(query) ||
-               (domain.description && domain.description.toLowerCase().includes(query));
-      }) || [];
+    return domains.filter(domain => {
+      return domain.name.toLowerCase().includes(query) ||
+             (domain.description && domain.description.toLowerCase().includes(query)) ||
+             (domain.owner && domain.owner.toLowerCase().includes(query));
+    });
+  };
 
-      // Include zone if it matches or has matching domains
-      if (matchesZone || filteredDomains.length > 0) {
-        return {
-          ...zone,
-          domains: filteredDomains
-        };
-      }
-      return null;
-    }).filter(zone => zone !== null);
+  const handleDomainClick = (domain) => {
+    setSelectedDomain(domain);
   };
 
   if (loading) {
@@ -113,7 +78,7 @@ const DataDomainsPage = () => {
     );
   }
 
-  const filteredZones = getFilteredZones();
+  const filteredDomains = getFilteredDomains();
 
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
@@ -121,14 +86,14 @@ const DataDomainsPage = () => {
         Data Domains
       </Typography>
       <Typography variant="body1" sx={{ mb: 4, color: currentTheme.textSecondary }}>
-        Organize and manage your data zones and domains. Data zones are higher-level constructs that group related data domains together. View zone ownership, relationships, and associated data assets across your organization.
+        Organize and manage your data domains. View domain ownership, relationships, and associated data assets across your organization.
       </Typography>
 
       <Box sx={{ mb: 4 }}>
         <TextField
           fullWidth
           variant="outlined"
-          placeholder="Search zones and domains..."
+          placeholder="Search domains..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           InputProps={{
@@ -158,16 +123,18 @@ const DataDomainsPage = () => {
         />
       </Box>
 
-      {filteredZones.length > 0 ? (
-        <Box>
-          {filteredZones.map((zone) => (
-            <ZoneCard
-              key={zone.id}
-              zone={zone}
-              currentTheme={currentTheme}
-            />
+      {filteredDomains.length > 0 ? (
+        <Grid container spacing={2}>
+          {filteredDomains.map((domain) => (
+            <Grid item xs={12} sm={6} md={4} lg={3} xl={2.4} key={domain.id || domain.name}>
+              <DomainCard
+                domain={domain}
+                onClick={() => handleDomainClick(domain)}
+                currentTheme={currentTheme}
+              />
+            </Grid>
           ))}
-        </Box>
+        </Grid>
       ) : (
         <Box
           sx={{
@@ -177,12 +144,19 @@ const DataDomainsPage = () => {
           }}
         >
           <Typography variant="body1">
-            No zones or domains found matching your search.
+            No domains found matching your search.
           </Typography>
         </Box>
       )}
+
+      <DomainModal
+        open={Boolean(selectedDomain)}
+        onClose={() => setSelectedDomain(null)}
+        domain={selectedDomain}
+        currentTheme={currentTheme}
+      />
     </Container>
   );
 };
 
-export default DataDomainsPage; 
+export default DataDomainsPage;

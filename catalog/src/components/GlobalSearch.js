@@ -79,8 +79,7 @@ const GlobalSearch = ({ open, onClose, currentTheme, darkMode }) => {
       'toolkit': <ToolkitIcon />,
       'policies': <PolicyIcon />,
       'lexicon': <LexiconIcon />,
-      'glossary': <LexiconIcon />,
-      'zones': <DomainIcon />
+      'glossary': <LexiconIcon />
     };
     return iconMap[type] || <SearchIcon />;
   };
@@ -95,8 +94,7 @@ const GlobalSearch = ({ open, onClose, currentTheme, darkMode }) => {
       'toolkit': 'Toolkit',
       'policies': 'Policy',
       'lexicon': 'Lexicon',
-      'glossary': 'Glossary',
-      'zones': 'Zone'
+      'glossary': 'Glossary'
     };
     return labelMap[type] || type;
   };
@@ -143,9 +141,6 @@ const GlobalSearch = ({ open, onClose, currentTheme, darkMode }) => {
       case 'glossary':
         // Glossary items link to glossary page (could be enhanced to link to specific term)
         return `/glossary`;
-      case 'zones':
-        // Zones link to domains page (zones are displayed there)
-        return `/domains`;
       case 'toolkit':
         // For toolkit, check if it's a function, container, or infrastructure and route accordingly
         id = item.id || item.shortName || item.name;
