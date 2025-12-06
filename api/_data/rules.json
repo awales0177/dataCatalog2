@@ -55,6 +55,25 @@
       "id": "rule-003",
       "lastUpdated": "2025-12-06 05:13:40",
       "createdBy": "bypass_user"
+    },
+    {
+      "name": "UUID test",
+      "description": "Always use UUIDs",
+      "modelShortName": "CUST",
+      "taggedObjects": [
+        "all"
+      ],
+      "taggedColumns": [
+        "all"
+      ],
+      "taggedFunctions": [],
+      "ruleType": "validation",
+      "enabled": true,
+      "id": "a881f97a-6cf1-46b4-a5a7-41eb0cd31cfb",
+      "lastUpdated": "2025-12-06 16:16:53",
+      "createdBy": "bypass_user",
+      "documentation": "https://www.google.com/",
+      "updatedBy": "bypass_user"
     }
   ]
 }

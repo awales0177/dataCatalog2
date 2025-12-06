@@ -11,15 +11,14 @@ import {
   IconButton,
   Button,
   Fab,
-  Grid,
   Autocomplete,
   List,
   ListItem,
   ListItemText,
+  ListItemSecondaryAction,
   Divider,
   Snackbar,
   Tooltip,
-  LinearProgress,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -27,7 +26,6 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   MenuBook as MenuBookIcon,
-  BarChart as BarChartIcon,
   Description as DescriptionIcon,
   Cancel as CancelIcon,
   DataObject as DataObjectIcon,
@@ -150,23 +148,6 @@ const GlossaryPage = () => {
 
   const hasActiveFilters = searchQuery || selectedCategoryFilter || selectedModelFilter;
 
-  // Calculate statistics
-  const stats = useMemo(() => {
-    const totalTerms = originalData.length;
-    const categories = new Set(originalData.map(t => t.category).filter(Boolean));
-    const taggedModels = new Set();
-    originalData.forEach(term => {
-      if (term.taggedModels) {
-        term.taggedModels.forEach(m => taggedModels.add(m));
-      }
-    });
-
-    return {
-      totalTerms,
-      totalCategories: categories.size,
-      totalTaggedModels: taggedModels.size
-    };
-  }, [originalData]);
 
   if (loading) {
     return (
@@ -198,89 +179,12 @@ const GlossaryPage = () => {
           </Typography>
         </Box>
 
-      {/* Statistics Visualization */}
-      <Paper elevation={0} sx={{ p: 3, mb: 3, bgcolor: currentTheme.card, border: `1px solid ${currentTheme.border}` }}>
-        <Typography variant="h6" sx={{ mb: 2, color: currentTheme.text, display: 'flex', alignItems: 'center' }}>
-          <BarChartIcon sx={{ mr: 1 }} />
-          Glossary Statistics
-        </Typography>
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={4}>
-        <Box>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                <Typography variant="body2" sx={{ color: currentTheme.textSecondary }}>
-                  Total Terms
-                </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 'bold', color: currentTheme.text }}>
-                  {stats.totalTerms}
-                </Typography>
-              </Box>
-              <LinearProgress 
-                variant="determinate" 
-                value={100}
-                sx={{ height: 8, borderRadius: 1 }}
-              />
-            </Box>
-          </Grid>
-          <Grid item xs={12} md={4}>
-            <Box>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                <Typography variant="body2" sx={{ color: currentTheme.textSecondary }}>
-                  Categories
-                </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 'bold', color: currentTheme.text }}>
-                  {stats.totalCategories}
-                </Typography>
-              </Box>
-              <LinearProgress 
-                variant="determinate" 
-                value={100}
-                sx={{ height: 8, borderRadius: 1 }}
-              />
-            </Box>
-          </Grid>
-          <Grid item xs={12} md={4}>
-            <Box>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                <Typography variant="body2" sx={{ color: currentTheme.textSecondary }}>
-                  Tagged Models
-                </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 'bold', color: currentTheme.text }}>
-                  {stats.totalTaggedModels}
-                </Typography>
-              </Box>
-              <LinearProgress 
-                variant="determinate" 
-                value={100}
-                sx={{ height: 8, borderRadius: 1 }}
-              />
-            </Box>
-          </Grid>
-        </Grid>
-      </Paper>
-
-      {/* Glossary Terms List */}
-      <Paper elevation={0} sx={{ bgcolor: currentTheme.card, border: `1px solid ${currentTheme.border}` }}>
-        <Box sx={{ p: 2, borderBottom: `1px solid ${currentTheme.border}` }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-            <Typography variant="h6" sx={{ color: currentTheme.text }}>
-              Terms ({filteredData.length}{hasActiveFilters ? ` of ${originalData.length}` : ''})
-            </Typography>
-            {hasActiveFilters && (
-          <Button
-                size="small"
-                onClick={clearAllFilters}
-                sx={{ color: currentTheme.textSecondary }}
-              >
-                Clear Filters
-          </Button>
-            )}
-      </Box>
-
-          {/* Search Bar */}
+      {/* Search and Filters */}
+      <Box sx={{ mb: 4 }}>
         <TextField
           fullWidth
-            placeholder="Search terms, definitions, or categories..."
+          variant="outlined"
+          placeholder="Search terms, definitions, or categories..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           InputProps={{
@@ -289,383 +193,334 @@ const GlossaryPage = () => {
                 <SearchIcon sx={{ color: currentTheme.textSecondary }} />
               </InputAdornment>
             ),
-              endAdornment: searchQuery && (
-                <InputAdornment position="end">
-                  <IconButton
-                    size="small"
-                    onClick={() => setSearchQuery('')}
-                    sx={{ color: currentTheme.textSecondary }}
-                  >
-                    <CancelIcon fontSize="small" />
-                  </IconButton>
-                </InputAdornment>
-              )
+            endAdornment: searchQuery && (
+              <InputAdornment position="end">
+                <IconButton
+                  size="small"
+                  onClick={() => setSearchQuery('')}
+                  sx={{ color: currentTheme.textSecondary }}
+                >
+                  ×
+                </IconButton>
+              </InputAdornment>
+            )
           }}
           sx={{
-              mb: 2,
+            mb: 2,
             '& .MuiOutlinedInput-root': {
-                color: currentTheme.text,
-                bgcolor: currentTheme.background,
+              bgcolor: currentTheme.card,
               '& fieldset': {
-                  borderColor: currentTheme.border
+                borderColor: currentTheme.border
               },
               '&:hover fieldset': {
-                  borderColor: currentTheme.primary
+                borderColor: currentTheme.primary
               },
               '&.Mui-focused fieldset': {
-                  borderColor: currentTheme.primary
-                }
-              },
-              '& .MuiInputBase-input::placeholder': {
-                color: currentTheme.textSecondary,
-                opacity: 1
+                borderColor: currentTheme.primary
               }
-            }}
+            },
+            '& .MuiInputBase-input': {
+              color: currentTheme.text
+            },
+            '& .MuiInputBase-input::placeholder': {
+              color: currentTheme.textSecondary,
+              opacity: 1
+            }
+          }}
+        />
+
+        {/* Filter Controls */}
+        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+          <Autocomplete
+            options={getFilterOptions().categories}
+            value={selectedCategoryFilter}
+            onChange={(event, newValue) => setSelectedCategoryFilter(newValue)}
+            sx={{ minWidth: 200, flex: 1 }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                placeholder="Filter by Category"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    bgcolor: currentTheme.card,
+                    '& fieldset': {
+                      borderColor: currentTheme.border
+                    },
+                    '&:hover fieldset': {
+                      borderColor: currentTheme.primary
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: currentTheme.primary
+                    }
+                  },
+                  '& .MuiInputBase-input': {
+                    color: currentTheme.text
+                  },
+                  '& .MuiInputBase-input::placeholder': {
+                    color: currentTheme.textSecondary,
+                    opacity: 1
+                  }
+                }}
+              />
+            )}
+            renderOption={(props, option) => (
+              <Box component="li" {...props} sx={{ color: currentTheme.text }}>
+                <MenuBookIcon sx={{ mr: 1, fontSize: 18, color: currentTheme.textSecondary }} />
+                {option}
+              </Box>
+            )}
+            PaperComponent={({ children, ...other }) => (
+              <Paper {...other} elevation={0} sx={{ bgcolor: currentTheme.card, border: `1px solid ${currentTheme.border}` }}>
+                {children}
+              </Paper>
+            )}
           />
-
-          {/* Filter Controls */}
-          <Grid container spacing={2}>
-            <Grid item xs={12} sm={6}>
-              <Autocomplete
-                options={getFilterOptions().categories}
-                value={selectedCategoryFilter}
-                onChange={(event, newValue) => setSelectedCategoryFilter(newValue)}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Filter by Category"
-                    placeholder="Select category..."
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-            color: currentTheme.text,
-                        bgcolor: currentTheme.background,
-                        '& fieldset': {
-                          borderColor: currentTheme.border
-                        },
-                        '&:hover fieldset': {
-                          borderColor: currentTheme.primary
-                        },
-                        '&.Mui-focused fieldset': {
-                          borderColor: currentTheme.primary
-                        }
-                      },
-                      '& .MuiInputLabel-root': {
-                        color: currentTheme.textSecondary
-                      },
-                      '& .MuiInputBase-input::placeholder': {
-                        color: currentTheme.textSecondary,
-                        opacity: 1
-                      }
-                    }}
-                  />
-                )}
-                renderOption={(props, option) => (
-                  <Box component="li" {...props} sx={{ color: currentTheme.text }}>
-                    <MenuBookIcon sx={{ mr: 1, fontSize: 18, color: currentTheme.textSecondary }} />
-                    {option}
-          </Box>
-                )}
-                        sx={{
-                  '& .MuiAutocomplete-popupIndicator': {
-                    color: currentTheme.textSecondary
+          <Autocomplete
+            options={getFilterOptions().models}
+            getOptionLabel={(option) => option.name}
+            value={selectedModelFilter ? getFilterOptions().models.find(m => m.shortName === selectedModelFilter) : null}
+            onChange={(event, newValue) => setSelectedModelFilter(newValue ? newValue.shortName : null)}
+            sx={{ minWidth: 200, flex: 1 }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                placeholder="Filter by Model"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    bgcolor: currentTheme.card,
+                    '& fieldset': {
+                      borderColor: currentTheme.border
+                    },
+                    '&:hover fieldset': {
+                      borderColor: currentTheme.primary
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: currentTheme.primary
+                    }
                   },
-                  '& .MuiAutocomplete-clearIndicator': {
+                  '& .MuiInputBase-input': {
+                    color: currentTheme.text
+                  },
+                  '& .MuiInputBase-input::placeholder': {
+                    color: currentTheme.textSecondary,
+                    opacity: 1
+                  }
+                }}
+              />
+            )}
+            renderOption={(props, option) => (
+              <Box component="li" {...props} sx={{ color: currentTheme.text }}>
+                <DataObjectIcon sx={{ mr: 1, fontSize: 18, color: currentTheme.textSecondary }} />
+                {option.name} ({option.shortName})
+              </Box>
+            )}
+            PaperComponent={({ children, ...other }) => (
+              <Paper {...other} elevation={0} sx={{ bgcolor: currentTheme.card, border: `1px solid ${currentTheme.border}` }}>
+                {children}
+              </Paper>
+            )}
+          />
+        </Box>
+
+        {/* Active Filter Chips */}
+        {hasActiveFilters && (
+          <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 1, alignItems: 'center', width: '100%' }}>
+            {selectedCategoryFilter && (
+              <Chip
+                icon={<MenuBookIcon />}
+                label={`Category: ${selectedCategoryFilter}`}
+                onDelete={() => setSelectedCategoryFilter(null)}
+                sx={{
+                  bgcolor: darkMode ? 'rgba(156, 39, 176, 0.2)' : 'rgba(156, 39, 176, 0.1)',
+                  color: currentTheme.text,
+                  '& .MuiChip-deleteIcon': {
                     color: currentTheme.textSecondary
                   }
                 }}
-                PaperComponent={({ children, ...other }) => (
-                  <Paper {...other} elevation={0} sx={{ bgcolor: currentTheme.card, border: `1px solid ${currentTheme.border}` }}>
-                    {children}
-                  </Paper>
-                )}
               />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <Autocomplete
-                options={getFilterOptions().models}
-                getOptionLabel={(option) => option.name}
-                value={selectedModelFilter ? getFilterOptions().models.find(m => m.shortName === selectedModelFilter) : null}
-                onChange={(event, newValue) => setSelectedModelFilter(newValue ? newValue.shortName : null)}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Filter by Model"
-                    placeholder="Select model..."
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        color: currentTheme.text,
-                        bgcolor: currentTheme.background,
-                        '& fieldset': {
-                          borderColor: currentTheme.border
-                        },
-                        '&:hover fieldset': {
-                          borderColor: currentTheme.primary
-                        },
-                        '&.Mui-focused fieldset': {
-                          borderColor: currentTheme.primary
-                        }
-                      },
-                      '& .MuiInputLabel-root': {
-                        color: currentTheme.textSecondary
-                      },
-                      '& .MuiInputBase-input::placeholder': {
-                        color: currentTheme.textSecondary,
-                        opacity: 1
-                      }
-                    }}
-                  />
-                )}
-                renderOption={(props, option) => (
-                  <Box component="li" {...props} sx={{ color: currentTheme.text }}>
-                    <DataObjectIcon sx={{ mr: 1, fontSize: 18, color: currentTheme.textSecondary }} />
-                    {option.name} ({option.shortName})
-            </Box>
-                )}
-                        sx={{
-                  '& .MuiAutocomplete-popupIndicator': {
-                    color: currentTheme.textSecondary
-                  },
-                  '& .MuiAutocomplete-clearIndicator': {
+            )}
+            {selectedModelFilter && (
+              <Chip
+                icon={<DataObjectIcon />}
+                label={`Model: ${getFilterOptions().models.find(m => m.shortName === selectedModelFilter)?.name || selectedModelFilter}`}
+                onDelete={() => setSelectedModelFilter(null)}
+                sx={{
+                  bgcolor: darkMode ? 'rgba(33, 150, 243, 0.2)' : 'rgba(33, 150, 243, 0.1)',
+                  color: currentTheme.text,
+                  '& .MuiChip-deleteIcon': {
                     color: currentTheme.textSecondary
                   }
                 }}
-                PaperComponent={({ children, ...other }) => (
-                  <Paper {...other} elevation={0} sx={{ bgcolor: currentTheme.card, border: `1px solid ${currentTheme.border}` }}>
-                    {children}
-                  </Paper>
-                )}
               />
-            </Grid>
-          </Grid>
-
-          {/* Active Filter Chips */}
-          {hasActiveFilters && (
-            <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-              {selectedCategoryFilter && (
-                <Chip
-                  icon={<MenuBookIcon />}
-                  label={`Category: ${selectedCategoryFilter}`}
-                  onDelete={() => setSelectedCategoryFilter(null)}
-                          sx={{ 
-                    bgcolor: darkMode ? 'rgba(156, 39, 176, 0.2)' : 'rgba(156, 39, 176, 0.1)',
-                            color: currentTheme.text, 
-                    '& .MuiChip-deleteIcon': {
-                      color: currentTheme.textSecondary
-                    }
-                  }}
-                />
-              )}
-              {selectedModelFilter && (
-                <Chip
-                  icon={<DataObjectIcon />}
-                  label={`Model: ${getFilterOptions().models.find(m => m.shortName === selectedModelFilter)?.name || selectedModelFilter}`}
-                  onDelete={() => setSelectedModelFilter(null)}
-                          sx={{ 
-                    bgcolor: darkMode ? 'rgba(33, 150, 243, 0.2)' : 'rgba(33, 150, 243, 0.1)',
-                      color: currentTheme.text, 
-                    '& .MuiChip-deleteIcon': {
-                      color: currentTheme.textSecondary
-                    }
-                  }}
-                />
-              )}
-            </Box>
-          )}
+            )}
+            <Button
+              size="small"
+              onClick={clearAllFilters}
+              sx={{ color: currentTheme.textSecondary }}
+            >
+              Clear All
+            </Button>
           </Box>
+        )}
+      </Box>
 
-        {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
-            <CircularProgress sx={{ color: currentTheme.primary }} />
+      {/* Terms List */}
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="h6" sx={{ mb: 2, color: currentTheme.text }}>
+          Terms ({filteredData.length}{hasActiveFilters ? ` of ${originalData.length}` : ''})
+        </Typography>
+
+        {loading && filteredData.length === 0 ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+            <CircularProgress />
           </Box>
         ) : filteredData.length === 0 ? (
-          <Box sx={{ p: 4, textAlign: 'center' }}>
-            {hasActiveFilters ? (
-              <>
-                <Typography variant="body1" sx={{ color: currentTheme.textSecondary, mb: 2 }}>
-                  No terms found matching your filters
-                </Typography>
-          <Button
-            variant="outlined"
-                  onClick={clearAllFilters}
-            sx={{
-              borderColor: currentTheme.border,
-                    color: currentTheme.text,
-              '&:hover': {
-                borderColor: currentTheme.primary,
-                      bgcolor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)'
-                    }
-            }}
-          >
-            Clear All Filters
-          </Button>
-              </>
-      ) : (
-        <>
-                <Typography variant="body1" sx={{ color: currentTheme.textSecondary, mb: 2 }}>
-                  No glossary terms available yet.
-                </Typography>
-                {canCreate && (
-                  <Button
-                    variant="outlined"
-                    startIcon={<AddIcon />}
-                    onClick={() => navigate('/glossary/create')}
-            sx={{
-                      borderColor: currentTheme.border,
-                      color: currentTheme.text, 
-                        '&:hover': {
-                        borderColor: currentTheme.primary,
-                        bgcolor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)'
-                      }
-                    }}
-                  >
-                    Create First Term
-                  </Button>
-                )}
-              </>
-            )}
-                    </Box>
+          <Typography variant="body2" sx={{ color: currentTheme.textSecondary, textAlign: 'center', p: 3 }}>
+            {hasActiveFilters ? 'No terms found matching your filters' : 'No glossary terms available yet. Create your first term!'}
+          </Typography>
         ) : (
-          <List sx={{ bgcolor: currentTheme.card }}>
+          <List>
             {filteredData.map((term, index) => (
               <React.Fragment key={term.id || term.term}>
                 <ListItem
-                      sx={{
+                  sx={{
                     bgcolor: currentTheme.card,
-                        '&:hover': {
+                    borderRadius: 1,
+                    mb: 1,
+                    border: `1px solid ${currentTheme.border}`,
+                    '&:hover': {
                       bgcolor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)'
-                        },
-                        transition: 'background-color 0.2s',
-                    py: 2,
-                    position: 'relative'
+                    }
                   }}
                 >
-                  <Box sx={{ flex: 1, width: '100%', pr: 8 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, flexWrap: 'wrap', gap: 1 }}>
-                      <Typography variant="subtitle1" sx={{ color: currentTheme.text, fontWeight: 'bold', flex: 1 }}>
-                        {term.term || 'Unnamed Term'}
-                      </Typography>
-                    </Box>
-                    {term.definition && (
-                      <Typography variant="body2" sx={{ color: currentTheme.textSecondary, mb: 1 }}>
-                        {term.definition}
+                  <ListItemText
+                    sx={{
+                      pr: canCreate ? (term.documentation ? 16 : 8) : 0
+                    }}
+                    primary={
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                        <Typography variant="h6" sx={{ color: currentTheme.text }}>
+                          {term.term || 'Unnamed Term'}
                         </Typography>
-                      )}
-                    <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'flex-start' }}>
-                      {term.taggedModels && term.taggedModels.length > 0 && (
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexWrap: 'wrap' }}>
-                          <DataObjectIcon sx={{ fontSize: 16, color: currentTheme.textSecondary }} />
-                          <Typography variant="caption" sx={{ color: currentTheme.textSecondary, fontWeight: 'bold', mr: 0.5 }}>
-                            Models:
-                          </Typography>
-                          {term.taggedModels.map((modelShortName, idx) => {
-                            const model = dataModels.find(m => m.shortName === modelShortName);
-                            return (
-                              <Chip
-                                key={idx}
-                                label={model ? `${model.shortName} - ${model.name}` : modelShortName}
-                                size="small"
-                                onClick={() => model && navigate(`/models/${model.shortName}`)}
-                                sx={{
-                                  height: 22,
-                                  fontSize: '0.7rem',
-                                  bgcolor: currentTheme.background,
-                                  color: currentTheme.text,
-                                  border: `1px solid ${currentTheme.border}`,
-                                  cursor: model ? 'pointer' : 'default',
-                                  '&:hover': model ? {
-                                    borderColor: currentTheme.primary
-                                  } : {}
-                                }}
-                              />
-                            );
-                          })}
-                        </Box>
-                      )}
-                      {term.category && (
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexWrap: 'wrap' }}>
-                          <MenuBookIcon sx={{ fontSize: 16, color: currentTheme.textSecondary }} />
-                          <Typography variant="caption" sx={{ color: currentTheme.textSecondary, fontWeight: 'bold', mr: 0.5 }}>
-                            Category:
-                          </Typography>
+                        {term.category && (
                           <Chip
                             label={term.category}
                             size="small"
                             sx={{
-                              height: 22,
-                              fontSize: '0.7rem',
                               bgcolor: darkMode ? 'rgba(156, 39, 176, 0.2)' : 'rgba(156, 39, 176, 0.1)',
                               color: darkMode ? '#ba68c8' : '#9c27b0',
                               border: `1px solid ${darkMode ? 'rgba(156, 39, 176, 0.5)' : '#9c27b0'}`,
-                              fontWeight: 'bold'
+                              textTransform: 'capitalize'
                             }}
                           />
-                        </Box>
-                      )}
-                    </Box>
-                  </Box>
-                  
-                  {/* Right side actions and info */}
-                  <Box sx={{ 
-                    position: 'absolute', 
-                    right: 16, 
-                    top: 16,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'flex-end',
-                    gap: 1
-                  }}>
-                    {canCreate && (
-                      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
-                        <IconButton
-                          size="small"
-                          onClick={() => navigate(`/glossary/${term.id || term.term}/edit`)}
-                            sx={{
-                              color: currentTheme.textSecondary,
-                              '&:hover': {
-                                color: currentTheme.primary,
-                              bgcolor: darkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)'
-                            }
+                        )}
+                      </Box>
+                    }
+                    secondary={
+                      <Box>
+                        {term.definition && (
+                          <Typography 
+                            variant="body2" 
+                            sx={{ 
+                              color: currentTheme.textSecondary, 
+                              mb: 1,
+                              wordBreak: 'break-word',
+                              overflowWrap: 'break-word'
                             }}
                           >
-                          <EditIcon fontSize="small" />
-                          </IconButton>
+                            {term.definition}
+                          </Typography>
+                        )}
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 1 }}>
+                          {term.taggedModels?.slice(0, 5).map((modelShortName, idx) => {
+                            const model = dataModels.find(m => m.shortName === modelShortName);
+                            return (
+                              <Tooltip key={idx} title={model ? `${model.shortName} - ${model.name}` : modelShortName}>
+                                <Chip
+                                  icon={<DataObjectIcon />}
+                                  label={model ? model.shortName : modelShortName}
+                                  size="small"
+                                  onClick={() => model && navigate(`/models/${model.shortName}`)}
+                                  sx={{
+                                    bgcolor: darkMode ? 'rgba(33, 150, 243, 0.2)' : 'rgba(33, 150, 243, 0.1)',
+                                    color: currentTheme.text,
+                                    maxWidth: 150,
+                                    cursor: model ? 'pointer' : 'default',
+                                    '&:hover': model ? {
+                                      borderColor: currentTheme.primary
+                                    } : {}
+                                  }}
+                                />
+                              </Tooltip>
+                            );
+                          })}
+                          {term.taggedModels?.length > 5 && (
+                            <Chip
+                              label={`+${term.taggedModels.length - 5} more`}
+                              size="small"
+                              sx={{
+                                bgcolor: darkMode ? 'rgba(33, 150, 243, 0.2)' : 'rgba(33, 150, 243, 0.1)',
+                                color: currentTheme.text
+                              }}
+                            />
+                          )}
+                        </Box>
+                        {term.lastUpdated && (
+                          <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
+                            Last Updated: {new Date(term.lastUpdated).toLocaleDateString()}
+                          </Typography>
+                        )}
+                      </Box>
+                    }
+                  />
+                  <ListItemSecondaryAction>
+                    {canCreate && (
+                      <Box sx={{ display: 'flex', gap: 0.5 }}>
+                        <IconButton
+                          edge="end"
+                          onClick={() => navigate(`/glossary/${term.id || term.term}/edit`)}
+                          sx={{
+                            color: currentTheme.textSecondary,
+                            '&:hover': {
+                              bgcolor: darkMode ? 'rgba(33, 150, 243, 0.2)' : 'rgba(33, 150, 243, 0.1)',
+                              color: darkMode ? '#64b5f6' : '#1565c0'
+                            }
+                          }}
+                        >
+                          <EditIcon />
+                        </IconButton>
                         {term.documentation && (
                           <IconButton
-                            size="small"
+                            edge="end"
                             onClick={() => window.open(term.documentation, '_blank')}
                             sx={{
                               color: currentTheme.textSecondary,
                               '&:hover': {
-                                color: currentTheme.primary,
-                                bgcolor: darkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)'
+                                bgcolor: darkMode ? 'rgba(33, 150, 243, 0.2)' : 'rgba(33, 150, 243, 0.1)',
+                                color: darkMode ? '#64b5f6' : '#1565c0'
                               }
                             }}
                           >
-                            <DescriptionIcon fontSize="small" />
+                            <DescriptionIcon />
                           </IconButton>
                         )}
                       </Box>
                     )}
-                    {term.lastUpdated && (
-                      <Typography variant="caption" sx={{ color: currentTheme.textSecondary, mt: 'auto' }}>
-                        Last Updated: {new Date(term.lastUpdated).toLocaleDateString()}
-                      </Typography>
-                    )}
-              </Box>
+                  </ListItemSecondaryAction>
                 </ListItem>
                 {index < filteredData.length - 1 && (
-                  <Divider 
-                    sx={{ 
+                  <Divider
+                    sx={{
                       borderColor: currentTheme.border,
                       opacity: 0.5
-                    }} 
+                    }}
                   />
                 )}
               </React.Fragment>
             ))}
           </List>
         )}
-      </Paper>
+      </Box>
 
       {canCreate && (
         <Fab

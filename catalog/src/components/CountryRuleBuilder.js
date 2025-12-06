@@ -41,7 +41,8 @@ import {
   Save as SaveIcon,
   Cancel as CancelIcon,
   BarChart as BarChartIcon,
-  Search as SearchIcon
+  Search as SearchIcon,
+  Description as DescriptionIcon
 } from '@mui/icons-material';
 import { ThemeContext } from '../contexts/ThemeContext';
 import { 
@@ -150,6 +151,7 @@ const CountryRuleBuilder = ({ onBack }) => {
   const [ruleForm, setRuleForm] = useState({
     name: '',
     description: '',
+    documentation: '',
     country: '',
     taggedFunctions: [],
     ruleType: 'validation',
@@ -289,6 +291,7 @@ const CountryRuleBuilder = ({ onBack }) => {
     setRuleForm({
       name: '',
       description: '',
+      documentation: '',
       country: selectedCountry || '',
       taggedFunctions: [],
       ruleType: 'validation',
@@ -302,6 +305,7 @@ const CountryRuleBuilder = ({ onBack }) => {
     setRuleForm({
       name: rule.name || '',
       description: rule.description || '',
+      documentation: rule.documentation || '',
       country: rule.country || selectedCountry || '',
       taggedFunctions: rule.taggedFunctions || [],
       ruleType: rule.ruleType || 'validation',
@@ -709,166 +713,179 @@ const CountryRuleBuilder = ({ onBack }) => {
 
       {/* Search and Filters */}
       {selectedCountry && (
-        <Paper elevation={0} sx={{ p: 3, mb: 3, bgcolor: currentTheme?.card, border: `1px solid ${currentTheme?.border}` }}>
-          <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12} md={4}>
-              <TextField
-                fullWidth
-                placeholder="Search rules..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon sx={{ color: currentTheme?.textSecondary }} />
-                    </InputAdornment>
-                  )
-                }}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    bgcolor: currentTheme?.background,
-                    color: currentTheme?.text,
-                    '& fieldset': {
-                      borderColor: currentTheme?.border
+        <Box sx={{ mb: 4, display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
+          <TextField
+            fullWidth
+            variant="outlined"
+            placeholder="Search rules..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon sx={{ color: currentTheme?.textSecondary }} />
+                </InputAdornment>
+              ),
+              endAdornment: searchQuery && (
+                <InputAdornment position="end">
+                  <IconButton
+                    size="small"
+                    onClick={() => setSearchQuery('')}
+                    sx={{ color: currentTheme?.textSecondary }}
+                  >
+                    ×
+                  </IconButton>
+                </InputAdornment>
+              )
+            }}
+            sx={{
+              flex: 1,
+              minWidth: 300,
+              '& .MuiOutlinedInput-root': {
+                bgcolor: currentTheme?.card,
+                '& fieldset': {
+                  borderColor: currentTheme?.border
+                },
+                '&:hover fieldset': {
+                  borderColor: currentTheme?.primary
+                },
+                '&.Mui-focused fieldset': {
+                  borderColor: currentTheme?.primary
+                }
+              },
+              '& .MuiInputBase-input': {
+                color: currentTheme?.text
+              },
+              '& .MuiInputBase-input::placeholder': {
+                color: currentTheme?.textSecondary,
+                opacity: 1
+              }
+            }}
+          />
+          
+          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', flex: 1, minWidth: 200 }}>
+            <Autocomplete
+              options={filterOptions.functions}
+              getOptionLabel={(option) => option.name || option.id}
+              value={selectedFunctionFilter ? filterOptions.functions.find(f => f.id === selectedFunctionFilter) : null}
+              onChange={(event, newValue) => setSelectedFunctionFilter(newValue ? newValue.id : null)}
+              sx={{ minWidth: 200, flex: 1 }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  placeholder="Filter by Function"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      bgcolor: currentTheme?.card,
+                      '& fieldset': {
+                        borderColor: currentTheme?.border
+                      },
+                      '&:hover fieldset': {
+                        borderColor: currentTheme?.primary
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: currentTheme?.primary
+                      }
                     },
-                    '&:hover fieldset': {
-                      borderColor: currentTheme?.primary
+                    '& .MuiInputBase-input': {
+                      color: currentTheme?.text
                     },
-                    '&.Mui-focused fieldset': {
-                      borderColor: currentTheme?.primary
-                    },
-                    '& input::placeholder': {
+                    '& .MuiInputBase-input::placeholder': {
                       color: currentTheme?.textSecondary,
                       opacity: 1
                     }
+                  }}
+                />
+              )}
+              renderOption={(props, option) => (
+                <Box component="li" {...props} sx={{ color: currentTheme?.text }}>
+                  <img src="/python.svg" alt="Python" style={{ width: 18, height: 18, marginRight: 8 }} />
+                  {option.name}
+                </Box>
+              )}
+              PaperComponent={({ children, ...other }) => (
+                <Paper {...other} elevation={0} sx={{ bgcolor: currentTheme?.card, border: `1px solid ${currentTheme?.border}` }}>
+                  {children}
+                </Paper>
+              )}
+            />
+            <FormControl sx={{ minWidth: 200, flex: 1 }}>
+              <InputLabel sx={{ color: currentTheme?.textSecondary, '&.Mui-focused': { color: currentTheme?.primary } }}>
+                Country
+              </InputLabel>
+              <Select
+                value={selectedCountry || ''}
+                onChange={(e) => setSelectedCountry(e.target.value)}
+                label="Country"
+                sx={{
+                  bgcolor: currentTheme?.card,
+                  color: currentTheme?.text,
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    borderColor: currentTheme?.border
+                  },
+                  '&:hover .MuiOutlinedInput-notchedOutline': {
+                    borderColor: currentTheme?.primary
+                  },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                    borderColor: currentTheme?.primary
+                  },
+                  '& .MuiSvgIcon-root': {
+                    color: currentTheme?.textSecondary
+                  },
+                  '& .MuiSelect-select': {
+                    color: currentTheme?.text
                   }
                 }}
-              />
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <Autocomplete
-                options={filterOptions.functions}
-                getOptionLabel={(option) => option.name || option.id}
-                value={selectedFunctionFilter ? filterOptions.functions.find(f => f.id === selectedFunctionFilter) : null}
-                onChange={(event, newValue) => setSelectedFunctionFilter(newValue ? newValue.id : null)}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    placeholder="Filter by Function"
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        bgcolor: currentTheme?.background,
+                MenuProps={{
+                  PaperProps: {
+                    sx: {
+                      bgcolor: currentTheme?.card,
+                      color: currentTheme?.text,
+                      border: `1px solid ${currentTheme?.border}`,
+                      maxHeight: 400,
+                      '& .MuiMenuItem-root': {
                         color: currentTheme?.text,
-                        '& fieldset': {
-                          borderColor: currentTheme?.border
+                        '&:hover': {
+                          bgcolor: darkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)'
                         },
-                        '&:hover fieldset': {
-                          borderColor: currentTheme?.primary
-                        },
-                        '&.Mui-focused fieldset': {
-                          borderColor: currentTheme?.primary
-                        },
-                        '& input::placeholder': {
-                          color: currentTheme?.textSecondary,
-                          opacity: 1
-                        }
-                      }
-                    }}
-                  />
-                )}
-                renderOption={(props, option) => (
-                  <Box component="li" {...props} sx={{ color: currentTheme?.text }}>
-                    <img src="/python.svg" alt="Python" style={{ width: 18, height: 18, marginRight: 8 }} />
-                    {option.name}
-                  </Box>
-                )}
-                sx={{ width: '100%' }}
-                PaperComponent={({ children, ...other }) => (
-                  <Paper {...other} sx={{ bgcolor: currentTheme?.card, border: `1px solid ${currentTheme?.border}` }}>
-                    {children}
-                  </Paper>
-                )}
-              />
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <FormControl fullWidth>
-                <InputLabel sx={{ color: currentTheme?.textSecondary, '&.Mui-focused': { color: currentTheme?.primary } }}>
-                  Country
-                </InputLabel>
-                <Select
-                  value={selectedCountry || ''}
-                  onChange={(e) => setSelectedCountry(e.target.value)}
-                  label="Country"
-                  sx={{
-                    bgcolor: currentTheme?.background,
-                    color: currentTheme?.text,
-                    '& .MuiOutlinedInput-notchedOutline': {
-                      borderColor: currentTheme?.border
-                    },
-                    '&:hover .MuiOutlinedInput-notchedOutline': {
-                      borderColor: currentTheme?.primary
-                    },
-                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                      borderColor: currentTheme?.primary
-                    },
-                    '& .MuiSvgIcon-root': {
-                      color: currentTheme?.textSecondary
-                    },
-                    '& .MuiSelect-select': {
-                      color: currentTheme?.text
-                    }
-                  }}
-                  MenuProps={{
-                    PaperProps: {
-                      sx: {
-                        bgcolor: currentTheme?.card,
-                        color: currentTheme?.text,
-                        border: `1px solid ${currentTheme?.border}`,
-                        maxHeight: 400,
-                        '& .MuiMenuItem-root': {
-                          color: currentTheme?.text,
+                        '&.Mui-selected': {
+                          bgcolor: darkMode ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)',
                           '&:hover': {
-                            bgcolor: darkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)'
-                          },
-                          '&.Mui-selected': {
-                            bgcolor: darkMode ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)',
-                            '&:hover': {
-                              bgcolor: darkMode ? 'rgba(255, 255, 255, 0.16)' : 'rgba(0, 0, 0, 0.12)'
-                            }
+                            bgcolor: darkMode ? 'rgba(255, 255, 255, 0.16)' : 'rgba(0, 0, 0, 0.12)'
                           }
                         }
                       }
                     }
-                  }}
-                >
-                  {allCountries.map((country) => (
-                    <MenuItem key={country} value={country}>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
-                        <Typography>{country}</Typography>
-                        {countryRuleCounts[country] > 0 && (
-                          <Chip
-                            label={countryRuleCounts[country]}
-                            size="small"
-                            sx={{
-                              ml: 1,
-                              bgcolor: currentTheme?.primary,
-                              color: '#fff',
-                              fontSize: '0.7rem',
-                              height: 20
-                            }}
-                          />
-                        )}
-                      </Box>
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-          </Grid>
+                  }
+                }}
+              >
+                {allCountries.map((country) => (
+                  <MenuItem key={country} value={country}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+                      <Typography>{country}</Typography>
+                      {countryRuleCounts[country] > 0 && (
+                        <Chip
+                          label={countryRuleCounts[country]}
+                          size="small"
+                          sx={{
+                            ml: 1,
+                            bgcolor: currentTheme?.primary,
+                            color: '#fff',
+                            fontSize: '0.7rem',
+                            height: 20
+                          }}
+                        />
+                      )}
+                    </Box>
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
           
           {/* Active Filters */}
           {selectedFunctionFilter && (
-            <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+            <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 1, width: '100%' }}>
               <Chip
                 label={`Function: ${filterOptions.functions.find(f => f.id === selectedFunctionFilter)?.name || selectedFunctionFilter}`}
                 onDelete={() => setSelectedFunctionFilter(null)}
@@ -877,17 +894,15 @@ const CountryRuleBuilder = ({ onBack }) => {
               />
             </Box>
           )}
-        </Paper>
+        </Box>
       )}
 
       {/* Rules List */}
       {selectedCountry && (
-        <Paper elevation={0} sx={{ bgcolor: currentTheme?.card, border: `1px solid ${currentTheme?.border}` }}>
-          <Box sx={{ p: 2, borderBottom: `1px solid ${currentTheme?.border}` }}>
-            <Typography variant="h6" sx={{ color: currentTheme?.text }}>
-              Rules ({filteredRules.length})
-            </Typography>
-          </Box>
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="h6" sx={{ mb: 2, color: currentTheme?.text }}>
+            Rules ({filteredRules.length})
+          </Typography>
           {loading ? (
             <Box sx={{ p: 3, display: 'flex', justifyContent: 'center' }}>
               <CircularProgress sx={{ color: currentTheme?.primary }} />
@@ -908,13 +923,19 @@ const CountryRuleBuilder = ({ onBack }) => {
                   <React.Fragment key={rule.id || index}>
                     <ListItem
                       sx={{
-                        bgcolor: currentTheme?.background,
+                        bgcolor: currentTheme?.card,
+                        borderRadius: 1,
+                        mb: 1,
+                        border: `1px solid ${currentTheme?.border}`,
                         '&:hover': {
                           bgcolor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)'
                         }
                       }}
                     >
                       <ListItemText
+                        sx={{
+                          pr: rule.documentation ? 16 : 8
+                        }}
                         primary={
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                             <Typography variant="subtitle1" sx={{ color: currentTheme?.text, fontWeight: 600 }}>
@@ -972,12 +993,35 @@ const CountryRuleBuilder = ({ onBack }) => {
                         }
                       />
                       <ListItemSecondaryAction>
-                        <Box sx={{ display: 'flex', gap: 1 }}>
+                        <Box sx={{ display: 'flex', gap: 0.5 }}>
+                          {rule.documentation && (
+                            <Tooltip title="View Documentation">
+                              <IconButton
+                                edge="end"
+                                onClick={() => window.open(rule.documentation, '_blank')}
+                                sx={{ 
+                                  color: currentTheme?.textSecondary,
+                                  '&:hover': {
+                                    bgcolor: darkMode ? 'rgba(33, 150, 243, 0.2)' : 'rgba(33, 150, 243, 0.1)',
+                                    color: darkMode ? '#64b5f6' : '#1565c0'
+                                  }
+                                }}
+                              >
+                                <DescriptionIcon />
+                              </IconButton>
+                            </Tooltip>
+                          )}
                           <Tooltip title="Edit">
                             <IconButton
                               edge="end"
                               onClick={() => handleEditRule(rule)}
-                              sx={{ color: currentTheme?.textSecondary }}
+                              sx={{ 
+                                color: currentTheme?.textSecondary,
+                                '&:hover': {
+                                  bgcolor: darkMode ? 'rgba(33, 150, 243, 0.2)' : 'rgba(33, 150, 243, 0.1)',
+                                  color: darkMode ? '#64b5f6' : '#1565c0'
+                                }
+                              }}
                             >
                               <EditIcon />
                             </IconButton>
@@ -986,7 +1030,13 @@ const CountryRuleBuilder = ({ onBack }) => {
                             <IconButton
                               edge="end"
                               onClick={() => handleDeleteRule(rule.id)}
-                              sx={{ color: currentTheme?.textSecondary }}
+                              sx={{ 
+                                color: currentTheme?.textSecondary,
+                                '&:hover': {
+                                  bgcolor: darkMode ? 'rgba(255, 0, 0, 0.2)' : 'rgba(255, 0, 0, 0.1)',
+                                  color: darkMode ? '#ff6b6b' : '#d32f2f'
+                                }
+                              }}
                             >
                               <DeleteIcon />
                             </IconButton>
@@ -1000,7 +1050,7 @@ const CountryRuleBuilder = ({ onBack }) => {
               })}
             </List>
           )}
-        </Paper>
+        </Box>
       )}
 
       {/* Create Rule FAB */}
@@ -1116,6 +1166,40 @@ const CountryRuleBuilder = ({ onBack }) => {
                 label="Description"
                 value={ruleForm.description}
                 onChange={(e) => setRuleForm({ ...ruleForm, description: e.target.value })}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    bgcolor: currentTheme?.background,
+                    color: currentTheme?.text,
+                    '& fieldset': {
+                      borderColor: currentTheme?.border
+                    },
+                    '&:hover fieldset': {
+                      borderColor: currentTheme?.primary
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: currentTheme?.primary
+                    },
+                    '& input::placeholder': {
+                      color: currentTheme?.textSecondary,
+                      opacity: 1
+                    }
+                  },
+                  '& .MuiInputLabel-root': {
+                    color: currentTheme?.textSecondary,
+                    '&.Mui-focused': {
+                      color: currentTheme?.primary
+                    }
+                  }
+                }}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Documentation Link"
+                placeholder="https://example.com/docs"
+                value={ruleForm.documentation || ''}
+                onChange={(e) => setRuleForm({ ...ruleForm, documentation: e.target.value })}
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     bgcolor: currentTheme?.background,

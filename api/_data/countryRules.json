@@ -1,4 +1,18 @@
 {
   "rules": [
+    {
+      "name": "example rule",
+      "description": "example rule",
+      "documentation": "https://git.example.com/",
+      "country": "United States",
+      "taggedFunctions": [
+        "5fe4f8e5-345a-40ab-a676-4dd6019b5ab1"
+      ],
+      "ruleType": "validation",
+      "enabled": true,
+      "id": "613ffac2-392f-4f34-8ce9-616a7bb9e595",
+      "lastUpdated": "2025-12-06 16:36:30",
+      "createdBy": "bypass_user"
+    }
   ]
 }

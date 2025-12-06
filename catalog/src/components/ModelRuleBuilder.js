@@ -3,7 +3,6 @@ import {
   Box,
   Typography,
   Button,
-  Grid,
   TextField,
   Autocomplete,
   Chip,
@@ -18,7 +17,6 @@ import {
   ListItemSecondaryAction,
   Paper,
   Divider,
-  LinearProgress,
   Tooltip,
   Fab,
   InputAdornment,
@@ -38,8 +36,8 @@ import {
   Cancel as CancelIcon,
   DataObject as DataObjectIcon,
   ViewColumn as ViewColumnIcon,
-  BarChart as BarChartIcon,
-  Search as SearchIcon
+  Search as SearchIcon,
+  Description as DescriptionIcon
 } from '@mui/icons-material';
 import { ThemeContext } from '../contexts/ThemeContext';
 import { 
@@ -47,7 +45,6 @@ import {
   createRule, 
   updateRule, 
   deleteRule, 
-  getRuleCoverage,
   fetchData as fetchToolkit
 } from '../services/api';
 
@@ -60,7 +57,6 @@ const ModelRuleBuilder = ({ selectedModel, onBack }) => {
   const [selectedObjectFilter, setSelectedObjectFilter] = useState(null);
   const [selectedColumnFilter, setSelectedColumnFilter] = useState(null);
   const [selectedFunctionFilter, setSelectedFunctionFilter] = useState(null);
-  const [coverage, setCoverage] = useState(null);
   const [loading, setLoading] = useState(false);
   const [editingRule, setEditingRule] = useState(null);
   const [ruleDialogOpen, setRuleDialogOpen] = useState(false);
@@ -71,6 +67,7 @@ const ModelRuleBuilder = ({ selectedModel, onBack }) => {
   const [ruleForm, setRuleForm] = useState({
     name: '',
     description: '',
+    documentation: '',
     modelShortName: '',
     taggedObjects: [],
     taggedColumns: [],
@@ -81,11 +78,10 @@ const ModelRuleBuilder = ({ selectedModel, onBack }) => {
     newColumnInput: ''
   });
 
-  // Load rules and coverage when model is selected
+  // Load rules when model is selected
   useEffect(() => {
     if (selectedModel) {
       loadRules();
-      loadCoverage();
       loadAvailableOptions();
     }
   }, [selectedModel]);
@@ -108,15 +104,6 @@ const ModelRuleBuilder = ({ selectedModel, onBack }) => {
     }
   };
 
-  const loadCoverage = async () => {
-    if (!selectedModel) return;
-    try {
-      const data = await getRuleCoverage(selectedModel.shortName);
-      setCoverage(data);
-    } catch (error) {
-      console.error('Error loading coverage:', error);
-    }
-  };
 
   const loadAvailableOptions = async () => {
     try {
@@ -128,15 +115,70 @@ const ModelRuleBuilder = ({ selectedModel, onBack }) => {
     }
   };
 
-  // Get unique objects, columns, and functions from all rules for filter options
+  // Get rules that match all OTHER filters (excluding the filter type being built)
+  const getRulesForFilterOptions = (excludeFilterType) => {
+    let filtered = [...rules];
+
+    // Apply search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      filtered = filtered.filter(rule => {
+        if (rule.name?.toLowerCase().includes(query)) return true;
+        if (rule.description?.toLowerCase().includes(query)) return true;
+        if (rule.ruleType?.toLowerCase().includes(query)) return true;
+        if (rule.taggedObjects?.some(obj => obj.toLowerCase().includes(query))) return true;
+        if (rule.taggedColumns?.some(col => col.toLowerCase().includes(query))) return true;
+        if (rule.taggedFunctions?.some(funcId => {
+          const func = availableFunctions.find(f => f.id === funcId);
+          const funcName = func ? func.name : funcId;
+          return funcName.toLowerCase().includes(query);
+        })) return true;
+        return false;
+      });
+    }
+
+    // Apply other filters (excluding the one we're building options for)
+    if (excludeFilterType !== 'object' && selectedObjectFilter) {
+      filtered = filtered.filter(rule => 
+        rule.taggedObjects?.includes(selectedObjectFilter)
+      );
+    }
+
+    if (excludeFilterType !== 'column' && selectedColumnFilter) {
+      filtered = filtered.filter(rule => 
+        rule.taggedColumns?.includes(selectedColumnFilter)
+      );
+    }
+
+    if (excludeFilterType !== 'function' && selectedFunctionFilter) {
+      filtered = filtered.filter(rule => 
+        rule.taggedFunctions?.includes(selectedFunctionFilter)
+      );
+    }
+
+    return filtered;
+  };
+
+  // Get unique objects, columns, and functions from filtered rules for filter options
   const getFilterOptions = () => {
     const objects = new Set();
     const columns = new Set();
     const functions = new Set();
 
-    rules.forEach(rule => {
+    // Get rules matching all OTHER filters (not the current one)
+    const rulesForObjects = getRulesForFilterOptions('object');
+    const rulesForColumns = getRulesForFilterOptions('column');
+    const rulesForFunctions = getRulesForFilterOptions('function');
+
+    rulesForObjects.forEach(rule => {
       rule.taggedObjects?.forEach(obj => objects.add(obj));
+    });
+
+    rulesForColumns.forEach(rule => {
       rule.taggedColumns?.forEach(col => columns.add(col));
+    });
+
+    rulesForFunctions.forEach(rule => {
       rule.taggedFunctions?.forEach(funcId => functions.add(funcId));
     });
 
@@ -152,6 +194,42 @@ const ModelRuleBuilder = ({ selectedModel, onBack }) => {
       }).sort((a, b) => a.name.localeCompare(b.name))
     };
   };
+
+  // Validate and clear invalid filters when other filters change
+  useEffect(() => {
+    const rulesForObjects = getRulesForFilterOptions('object');
+    const rulesForColumns = getRulesForFilterOptions('column');
+    const rulesForFunctions = getRulesForFilterOptions('function');
+
+    const availableObjects = new Set();
+    const availableColumns = new Set();
+    const availableFunctions = new Set();
+
+    rulesForObjects.forEach(rule => {
+      rule.taggedObjects?.forEach(obj => availableObjects.add(obj));
+    });
+
+    rulesForColumns.forEach(rule => {
+      rule.taggedColumns?.forEach(col => availableColumns.add(col));
+    });
+
+    rulesForFunctions.forEach(rule => {
+      rule.taggedFunctions?.forEach(funcId => availableFunctions.add(funcId));
+    });
+
+    // Clear filters that are no longer available
+    if (selectedObjectFilter && !availableObjects.has(selectedObjectFilter)) {
+      setSelectedObjectFilter(null);
+    }
+    
+    if (selectedColumnFilter && !availableColumns.has(selectedColumnFilter)) {
+      setSelectedColumnFilter(null);
+    }
+    
+    if (selectedFunctionFilter && !availableFunctions.has(selectedFunctionFilter)) {
+      setSelectedFunctionFilter(null);
+    }
+  }, [searchQuery, selectedObjectFilter, selectedColumnFilter, selectedFunctionFilter, rules, availableFunctions]);
 
   // Filter rules based on search query and filters
   useEffect(() => {
@@ -209,6 +287,7 @@ const ModelRuleBuilder = ({ selectedModel, onBack }) => {
     setRuleForm({
       name: '',
       description: '',
+      documentation: '',
       modelShortName: selectedModel.shortName,
       taggedObjects: [],
       taggedColumns: [],
@@ -226,6 +305,7 @@ const ModelRuleBuilder = ({ selectedModel, onBack }) => {
     setRuleForm({
       name: rule.name || '',
       description: rule.description || '',
+      documentation: rule.documentation || '',
       modelShortName: rule.modelShortName || selectedModel.shortName,
       taggedObjects: rule.taggedObjects || [],
       taggedColumns: rule.taggedColumns || [],
@@ -246,7 +326,6 @@ const ModelRuleBuilder = ({ selectedModel, onBack }) => {
       await deleteRule(ruleId);
       setSnackbar({ open: true, message: 'Rule deleted successfully', severity: 'success' });
       loadRules();
-      loadCoverage();
     } catch (error) {
       console.error('Error deleting rule:', error);
       setSnackbar({ open: true, message: 'Failed to delete rule', severity: 'error' });
@@ -278,7 +357,6 @@ const ModelRuleBuilder = ({ selectedModel, onBack }) => {
       }
       setRuleDialogOpen(false);
       loadRules();
-      loadCoverage();
     } catch (error) {
       console.error('Error saving rule:', error);
       setSnackbar({ open: true, message: 'Failed to save rule', severity: 'error' });
@@ -335,89 +413,11 @@ const ModelRuleBuilder = ({ selectedModel, onBack }) => {
         </Typography>
       </Box>
 
-      {/* Coverage Visualization */}
-      {coverage && (
-        <Paper elevation={0} sx={{ p: 3, mb: 3, bgcolor: currentTheme?.card, border: `1px solid ${currentTheme?.border}` }}>
-          <Typography variant="h6" sx={{ mb: 2, color: currentTheme?.text, display: 'flex', alignItems: 'center' }}>
-            <BarChartIcon sx={{ mr: 1 }} />
-            Rule Coverage
-          </Typography>
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={4}>
-              <Box>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography variant="body2" sx={{ color: currentTheme?.textSecondary }}>
-                    Objects Tagged
-                  </Typography>
-                  <Typography variant="body2" sx={{ fontWeight: 'bold', color: currentTheme?.text }}>
-                    {coverage.objectCoverage}
-                  </Typography>
-                </Box>
-                <LinearProgress 
-                  variant="determinate" 
-                  value={100}
-                  sx={{ height: 8, borderRadius: 1 }}
-                />
-                <Typography variant="caption" sx={{ color: currentTheme?.textSecondary, mt: 0.5, display: 'block' }}>
-                  {coverage.taggedObjects?.length > 0 ? coverage.taggedObjects.join(', ') : 'None'}
-                </Typography>
-              </Box>
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <Box>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography variant="body2" sx={{ color: currentTheme?.textSecondary }}>
-                    Columns Tagged
-                  </Typography>
-                  <Typography variant="body2" sx={{ fontWeight: 'bold', color: currentTheme?.text }}>
-                    {coverage.columnCoverage}
-                  </Typography>
-                </Box>
-                <LinearProgress 
-                  variant="determinate" 
-                  value={100}
-                  sx={{ height: 8, borderRadius: 1 }}
-                />
-                <Typography variant="caption" sx={{ color: currentTheme?.textSecondary, mt: 0.5, display: 'block' }}>
-                  {coverage.taggedColumns?.length > 0 ? coverage.taggedColumns.join(', ') : 'None'}
-                </Typography>
-              </Box>
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <Box>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography variant="body2" sx={{ color: currentTheme?.textSecondary }}>
-                    Functions Tagged
-                  </Typography>
-                  <Typography variant="body2" sx={{ fontWeight: 'bold', color: currentTheme?.text }}>
-                    {coverage.functionCoverage}
-                  </Typography>
-                </Box>
-                <LinearProgress 
-                  variant="determinate" 
-                  value={Math.min(100, (coverage.functionCoverage / Math.max(1, availableFunctions.length)) * 100)}
-                  sx={{ height: 8, borderRadius: 1 }}
-                />
-              </Box>
-            </Grid>
-          </Grid>
-          <Box sx={{ mt: 2, pt: 2, borderTop: `1px solid ${currentTheme?.border}` }}>
-            <Typography variant="body2" sx={{ color: currentTheme?.textSecondary }}>
-              Total Rules: <strong style={{ color: currentTheme?.text }}>{coverage.totalRules}</strong>
-            </Typography>
-          </Box>
-        </Paper>
-      )}
-
       {/* Search and Filters */}
-      <Paper elevation={0} sx={{ p: 3, mb: 3, bgcolor: currentTheme?.card, border: `1px solid ${currentTheme?.border}` }}>
-        <Typography variant="h6" sx={{ mb: 2, color: currentTheme?.text }}>
-          Search & Filter Rules
-        </Typography>
-        
-        {/* Search */}
+      <Box sx={{ mb: 4 }}>
         <TextField
           fullWidth
+          variant="outlined"
           placeholder="Search rules..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
@@ -442,8 +442,7 @@ const ModelRuleBuilder = ({ selectedModel, onBack }) => {
           sx={{
             mb: 2,
             '& .MuiOutlinedInput-root': {
-              color: currentTheme?.text,
-              bgcolor: currentTheme?.background,
+              bgcolor: currentTheme?.card,
               '& fieldset': {
                 borderColor: currentTheme?.border
               },
@@ -454,186 +453,156 @@ const ModelRuleBuilder = ({ selectedModel, onBack }) => {
                 borderColor: currentTheme?.primary
               }
             },
+            '& .MuiInputBase-input': {
+              color: currentTheme?.text
+            },
             '& .MuiInputBase-input::placeholder': {
               color: currentTheme?.textSecondary,
               opacity: 1
             }
           }}
         />
-
+        
         {/* Filter Controls */}
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={4}>
-            <Autocomplete
-              options={getFilterOptions().objects}
-              value={selectedObjectFilter}
-              onChange={(event, newValue) => setSelectedObjectFilter(newValue)}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Filter by Object"
-                  placeholder="Select object..."
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      color: currentTheme?.text,
-                      bgcolor: currentTheme?.background,
-                      '& fieldset': {
-                        borderColor: currentTheme?.border
-                      },
-                      '&:hover fieldset': {
-                        borderColor: currentTheme?.primary
-                      },
-                      '&.Mui-focused fieldset': {
-                        borderColor: currentTheme?.primary
-                      }
+        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+          <Autocomplete
+            options={getFilterOptions('object').objects}
+            value={selectedObjectFilter}
+            onChange={(event, newValue) => setSelectedObjectFilter(newValue)}
+            sx={{ minWidth: 200, flex: 1 }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                placeholder="Filter by Object"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    bgcolor: currentTheme?.card,
+                    '& fieldset': {
+                      borderColor: currentTheme?.border
                     },
-                    '& .MuiInputLabel-root': {
-                      color: currentTheme?.textSecondary
+                    '&:hover fieldset': {
+                      borderColor: currentTheme?.primary
                     },
-                    '& .MuiInputBase-input::placeholder': {
-                      color: currentTheme?.textSecondary,
-                      opacity: 1
+                    '&.Mui-focused fieldset': {
+                      borderColor: currentTheme?.primary
                     }
-                  }}
-                />
-              )}
-              renderOption={(props, option) => (
-                <Box component="li" {...props} sx={{ color: currentTheme?.text }}>
-                  <DataObjectIcon sx={{ mr: 1, fontSize: 18, color: currentTheme?.textSecondary }} />
-                  {option}
-                </Box>
-              )}
-              sx={{
-                '& .MuiAutocomplete-popupIndicator': {
-                  color: currentTheme?.textSecondary
-                },
-                '& .MuiAutocomplete-clearIndicator': {
-                  color: currentTheme?.textSecondary
-                }
-              }}
-              PaperComponent={({ children, ...other }) => (
-                <Paper {...other} elevation={0} sx={{ bgcolor: currentTheme?.card, border: `1px solid ${currentTheme?.border}` }}>
-                  {children}
-                </Paper>
-              )}
-            />
-          </Grid>
-          <Grid item xs={12} sm={4}>
-            <Autocomplete
-              options={getFilterOptions().columns}
-              value={selectedColumnFilter}
-              onChange={(event, newValue) => setSelectedColumnFilter(newValue)}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Filter by Column"
-                  placeholder="Select column..."
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      color: currentTheme?.text,
-                      bgcolor: currentTheme?.background,
-                      '& fieldset': {
-                        borderColor: currentTheme?.border
-                      },
-                      '&:hover fieldset': {
-                        borderColor: currentTheme?.primary
-                      },
-                      '&.Mui-focused fieldset': {
-                        borderColor: currentTheme?.primary
-                      }
+                  },
+                  '& .MuiInputBase-input': {
+                    color: currentTheme?.text
+                  },
+                  '& .MuiInputBase-input::placeholder': {
+                    color: currentTheme?.textSecondary,
+                    opacity: 1
+                  }
+                }}
+              />
+            )}
+            renderOption={(props, option) => (
+              <Box component="li" {...props} sx={{ color: currentTheme?.text }}>
+                <DataObjectIcon sx={{ mr: 1, fontSize: 18, color: currentTheme?.textSecondary }} />
+                {option}
+              </Box>
+            )}
+            PaperComponent={({ children, ...other }) => (
+              <Paper {...other} elevation={0} sx={{ bgcolor: currentTheme?.card, border: `1px solid ${currentTheme?.border}` }}>
+                {children}
+              </Paper>
+            )}
+          />
+          <Autocomplete
+            options={getFilterOptions('column').columns}
+            value={selectedColumnFilter}
+            onChange={(event, newValue) => setSelectedColumnFilter(newValue)}
+            sx={{ minWidth: 200, flex: 1 }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                placeholder="Filter by Column"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    bgcolor: currentTheme?.card,
+                    '& fieldset': {
+                      borderColor: currentTheme?.border
                     },
-                    '& .MuiInputLabel-root': {
-                      color: currentTheme?.textSecondary
+                    '&:hover fieldset': {
+                      borderColor: currentTheme?.primary
                     },
-                    '& .MuiInputBase-input::placeholder': {
-                      color: currentTheme?.textSecondary,
-                      opacity: 1
+                    '&.Mui-focused fieldset': {
+                      borderColor: currentTheme?.primary
                     }
-                  }}
-                />
-              )}
-              renderOption={(props, option) => (
-                <Box component="li" {...props} sx={{ color: currentTheme?.text }}>
-                  <ViewColumnIcon sx={{ mr: 1, fontSize: 18, color: currentTheme?.textSecondary }} />
-                  {option}
-                </Box>
-              )}
-              sx={{
-                '& .MuiAutocomplete-popupIndicator': {
-                  color: currentTheme?.textSecondary
-                },
-                '& .MuiAutocomplete-clearIndicator': {
-                  color: currentTheme?.textSecondary
-                }
-              }}
-              PaperComponent={({ children, ...other }) => (
-                <Paper {...other} elevation={0} sx={{ bgcolor: currentTheme?.card, border: `1px solid ${currentTheme?.border}` }}>
-                  {children}
-                </Paper>
-              )}
-            />
-          </Grid>
-          <Grid item xs={12} sm={4}>
-            <Autocomplete
-              options={getFilterOptions().functions}
-              getOptionLabel={(option) => option.name}
-              value={selectedFunctionFilter ? getFilterOptions().functions.find(f => f.id === selectedFunctionFilter) : null}
-              onChange={(event, newValue) => setSelectedFunctionFilter(newValue ? newValue.id : null)}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Filter by Function"
-                  placeholder="Select function..."
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      color: currentTheme?.text,
-                      bgcolor: currentTheme?.background,
-                      '& fieldset': {
-                        borderColor: currentTheme?.border
-                      },
-                      '&:hover fieldset': {
-                        borderColor: currentTheme?.primary
-                      },
-                      '&.Mui-focused fieldset': {
-                        borderColor: currentTheme?.primary
-                      }
+                  },
+                  '& .MuiInputBase-input': {
+                    color: currentTheme?.text
+                  },
+                  '& .MuiInputBase-input::placeholder': {
+                    color: currentTheme?.textSecondary,
+                    opacity: 1
+                  }
+                }}
+              />
+            )}
+            renderOption={(props, option) => (
+              <Box component="li" {...props} sx={{ color: currentTheme?.text }}>
+                <ViewColumnIcon sx={{ mr: 1, fontSize: 18, color: currentTheme?.textSecondary }} />
+                {option}
+              </Box>
+            )}
+            PaperComponent={({ children, ...other }) => (
+              <Paper {...other} elevation={0} sx={{ bgcolor: currentTheme?.card, border: `1px solid ${currentTheme?.border}` }}>
+                {children}
+              </Paper>
+            )}
+          />
+          <Autocomplete
+            options={getFilterOptions('function').functions}
+            getOptionLabel={(option) => option.name}
+            value={selectedFunctionFilter ? getFilterOptions('function').functions.find(f => f.id === selectedFunctionFilter) : null}
+            onChange={(event, newValue) => setSelectedFunctionFilter(newValue ? newValue.id : null)}
+            sx={{ minWidth: 200, flex: 1 }}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                placeholder="Filter by Function"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    bgcolor: currentTheme?.card,
+                    '& fieldset': {
+                      borderColor: currentTheme?.border
                     },
-                    '& .MuiInputLabel-root': {
-                      color: currentTheme?.textSecondary
+                    '&:hover fieldset': {
+                      borderColor: currentTheme?.primary
                     },
-                    '& .MuiInputBase-input::placeholder': {
-                      color: currentTheme?.textSecondary,
-                      opacity: 1
+                    '&.Mui-focused fieldset': {
+                      borderColor: currentTheme?.primary
                     }
-                  }}
-                />
-              )}
-              renderOption={(props, option) => (
-                <Box component="li" {...props} sx={{ color: currentTheme?.text, display: 'flex', alignItems: 'center' }}>
-                  <img src="/python.svg" alt="Python" style={{ width: 18, height: 18, marginRight: 8 }} />
-                  {option.name}
-                </Box>
-              )}
-              sx={{
-                '& .MuiAutocomplete-popupIndicator': {
-                  color: currentTheme?.textSecondary
-                },
-                '& .MuiAutocomplete-clearIndicator': {
-                  color: currentTheme?.textSecondary
-                }
-              }}
-              PaperComponent={({ children, ...other }) => (
-                <Paper {...other} elevation={0} sx={{ bgcolor: currentTheme?.card, border: `1px solid ${currentTheme?.border}` }}>
-                  {children}
-                </Paper>
-              )}
-            />
-          </Grid>
-        </Grid>
+                  },
+                  '& .MuiInputBase-input': {
+                    color: currentTheme?.text
+                  },
+                  '& .MuiInputBase-input::placeholder': {
+                    color: currentTheme?.textSecondary,
+                    opacity: 1
+                  }
+                }}
+              />
+            )}
+            renderOption={(props, option) => (
+              <Box component="li" {...props} sx={{ color: currentTheme?.text, display: 'flex', alignItems: 'center' }}>
+                <img src="/python.svg" alt="Python" style={{ width: 18, height: 18, marginRight: 8 }} />
+                {option.name}
+              </Box>
+            )}
+            PaperComponent={({ children, ...other }) => (
+              <Paper {...other} elevation={0} sx={{ bgcolor: currentTheme?.card, border: `1px solid ${currentTheme?.border}` }}>
+                {children}
+              </Paper>
+            )}
+          />
+        </Box>
 
         {/* Active Filter Chips */}
         {hasActiveFilters && (
-          <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 1, alignItems: 'center' }}>
+          <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 1, alignItems: 'center', width: '100%' }}>
             {selectedObjectFilter && (
               <Chip
                 icon={<DataObjectIcon />}
@@ -685,10 +654,10 @@ const ModelRuleBuilder = ({ selectedModel, onBack }) => {
             </Button>
           </Box>
         )}
-      </Paper>
+      </Box>
 
       {/* Rules List */}
-      <Paper elevation={0} sx={{ p: 3, mb: 3, bgcolor: currentTheme?.card, border: `1px solid ${currentTheme?.border}` }}>
+      <Box sx={{ mb: 3 }}>
         <Typography variant="h6" sx={{ mb: 2, color: currentTheme?.text }}>
           Rules ({filteredRules.length})
         </Typography>
@@ -706,15 +675,19 @@ const ModelRuleBuilder = ({ selectedModel, onBack }) => {
               <React.Fragment key={rule.id}>
                 <ListItem
                   sx={{
-                    bgcolor: currentTheme?.background,
+                    bgcolor: currentTheme?.card,
                     borderRadius: 1,
                     mb: 1,
+                    border: `1px solid ${currentTheme?.border}`,
                     '&:hover': {
                       bgcolor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)'
                     }
                   }}
                 >
                   <ListItemText
+                    sx={{
+                      pr: rule.documentation ? 16 : 8
+                    }}
                     primary={
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                         <Typography variant="h6" sx={{ color: currentTheme?.text }}>
@@ -826,32 +799,55 @@ const ModelRuleBuilder = ({ selectedModel, onBack }) => {
                     }
                   />
                   <ListItemSecondaryAction>
-                    <IconButton
-                      edge="end"
-                      onClick={() => handleEditRule(rule)}
-                      sx={{ 
-                        color: currentTheme?.textSecondary,
-                        '&:hover': {
-                          bgcolor: darkMode ? 'rgba(33, 150, 243, 0.2)' : 'rgba(33, 150, 243, 0.1)',
-                          color: darkMode ? '#64b5f6' : '#1565c0'
-                        }
-                      }}
-                    >
-                      <EditIcon />
-                    </IconButton>
-                    <IconButton
-                      edge="end"
-                      onClick={() => handleDeleteRule(rule.id)}
-                      sx={{ 
-                        color: currentTheme?.textSecondary,
-                        '&:hover': {
-                          bgcolor: darkMode ? 'rgba(255, 0, 0, 0.2)' : 'rgba(255, 0, 0, 0.1)',
-                          color: darkMode ? '#ff6b6b' : '#d32f2f'
-                        }
-                      }}
-                    >
-                      <DeleteIcon />
-                    </IconButton>
+                    <Box sx={{ display: 'flex', gap: 0.5 }}>
+                      {rule.documentation && (
+                        <Tooltip title="View Documentation">
+                          <IconButton
+                            edge="end"
+                            onClick={() => window.open(rule.documentation, '_blank')}
+                            sx={{ 
+                              color: currentTheme?.textSecondary,
+                              '&:hover': {
+                                bgcolor: darkMode ? 'rgba(33, 150, 243, 0.2)' : 'rgba(33, 150, 243, 0.1)',
+                                color: darkMode ? '#64b5f6' : '#1565c0'
+                              }
+                            }}
+                          >
+                            <DescriptionIcon />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                      <Tooltip title="Edit">
+                        <IconButton
+                          edge="end"
+                          onClick={() => handleEditRule(rule)}
+                          sx={{ 
+                            color: currentTheme?.textSecondary,
+                            '&:hover': {
+                              bgcolor: darkMode ? 'rgba(33, 150, 243, 0.2)' : 'rgba(33, 150, 243, 0.1)',
+                              color: darkMode ? '#64b5f6' : '#1565c0'
+                            }
+                          }}
+                        >
+                          <EditIcon />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Delete">
+                        <IconButton
+                          edge="end"
+                          onClick={() => handleDeleteRule(rule.id)}
+                          sx={{ 
+                            color: currentTheme?.textSecondary,
+                            '&:hover': {
+                              bgcolor: darkMode ? 'rgba(255, 0, 0, 0.2)' : 'rgba(255, 0, 0, 0.1)',
+                              color: darkMode ? '#ff6b6b' : '#d32f2f'
+                            }
+                          }}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
                   </ListItemSecondaryAction>
                 </ListItem>
                 {index < filteredRules.length - 1 && (
@@ -866,7 +862,7 @@ const ModelRuleBuilder = ({ selectedModel, onBack }) => {
             ))}
           </List>
         )}
-      </Paper>
+      </Box>
 
       {/* Rule Editor Dialog */}
       <Dialog
@@ -941,6 +937,38 @@ const ModelRuleBuilder = ({ selectedModel, onBack }) => {
                   '&.Mui-focused': {
                     color: currentTheme?.primary
                   }
+                }
+              }}
+            />
+            <TextField
+              fullWidth
+              label="Documentation Link"
+              placeholder="https://example.com/docs"
+              value={ruleForm.documentation || ''}
+              onChange={(e) => setRuleForm({ ...ruleForm, documentation: e.target.value })}
+              sx={{
+                mb: 2,
+                '& .MuiOutlinedInput-root': {
+                  color: currentTheme?.text,
+                  '& fieldset': {
+                    borderColor: currentTheme?.border
+                  },
+                  '&:hover fieldset': {
+                    borderColor: currentTheme?.primary
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: currentTheme?.primary
+                  }
+                },
+                '& .MuiInputLabel-root': {
+                  color: currentTheme?.textSecondary,
+                  '&.Mui-focused': {
+                    color: currentTheme?.primary
+                  }
+                },
+                '& .MuiInputBase-input::placeholder': {
+                  color: currentTheme?.textSecondary,
+                  opacity: 1
                 }
               }}
             />

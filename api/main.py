@@ -2775,18 +2775,8 @@ async def create_rule(request: Dict[str, Any], current_user: dict = Depends(requ
             # File doesn't exist, create new structure
             rules_data = {"rules": []}
         
-        # Generate automatic ID
-        existing_ids = [rule['id'] for rule in rules_data.get('rules', []) if 'id' in rule]
-        max_number = 0
-        for rule_id in existing_ids:
-            if rule_id.startswith('rule-'):
-                try:
-                    number = int(rule_id[5:])
-                    max_number = max(max_number, number)
-                except ValueError:
-                    continue
-        
-        new_id = f"rule-{max_number + 1:03d}"
+        # Generate UUID as ID
+        new_id = str(uuid.uuid4())
         
         # Add lastUpdated timestamp and assign the generated ID
         # Remove form state fields that shouldn't be saved
@@ -2831,18 +2821,8 @@ async def create_country_rule(request: Dict[str, Any], current_user: dict = Depe
             # File doesn't exist, create new structure
             rules_data = {"rules": []}
         
-        # Generate automatic ID
-        existing_ids = [rule['id'] for rule in rules_data.get('rules', []) if 'id' in rule]
-        max_number = 0
-        for rule_id in existing_ids:
-            if rule_id.startswith('country-rule-'):
-                try:
-                    number = int(rule_id[12:])
-                    max_number = max(max_number, number)
-                except ValueError:
-                    continue
-        
-        new_id = f"country-rule-{max_number + 1:03d}"
+        # Generate UUID as ID
+        new_id = str(uuid.uuid4())
         
         # Add lastUpdated timestamp and assign the generated ID
         # Remove form state fields that shouldn't be saved
