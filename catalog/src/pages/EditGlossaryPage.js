@@ -251,15 +251,15 @@ const EditGlossaryPage = () => {
               value={editedTerm?.category || ''}
               onChange={(e) => handleFieldChange('category', e.target.value)}
               placeholder="Enter category"
-              sx={{
-                '& .MuiInputLabel-root': { color: currentTheme.textSecondary },
-                '& .MuiOutlinedInput-root': {
-                  color: currentTheme.text,
-                  '& fieldset': { borderColor: currentTheme.border },
-                  '&:hover fieldset': { borderColor: currentTheme.primary },
-                  '&.Mui-focused fieldset': { borderColor: currentTheme.primary }
-                },
-              }}
+                  sx={{
+                    '& .MuiInputLabel-root': { color: currentTheme.textSecondary },
+                    '& .MuiOutlinedInput-root': {
+                      color: currentTheme.text,
+                      '& fieldset': { borderColor: currentTheme.border },
+                      '&:hover fieldset': { borderColor: currentTheme.primary },
+                      '&.Mui-focused fieldset': { borderColor: currentTheme.primary }
+                    },
+                  }}
             />
           </Grid>
 

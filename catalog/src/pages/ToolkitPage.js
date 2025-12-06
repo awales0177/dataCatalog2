@@ -315,7 +315,7 @@ const ToolkitPage = () => {
                 <Chip
                   label={getPackageName(component)}
                   size="small"
-                  sx={{
+                sx={{ 
                     mt: 0.5,
                     height: 20,
                     fontSize: '0.65rem',

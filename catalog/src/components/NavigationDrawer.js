@@ -37,7 +37,7 @@ const NavigationDrawer = ({
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, currentRole, isAdmin } = useAuth();
+  const { user, currentRole, isAdmin, canEdit } = useAuth();
 
   const getRoleIcon = (role) => {
     switch (role) {
@@ -90,7 +90,13 @@ const NavigationDrawer = ({
           }
           
           return menuData.items
-            .filter(item => !item.adminOnly || isAdmin()) // Filter admin-only items
+            .filter(item => {
+              // Filter admin-only items
+              if (item.adminOnly && !isAdmin()) return false;
+              // Filter editor-only items (editors and admins can see)
+              if (item.editorOnly && !canEdit() && !isAdmin()) return false;
+              return true;
+            })
             .map((item, index) => {
             // Add divider after the specified item (start of second section)
             const shouldAddDividerAfter = item.id === DIVIDER_AFTER_ITEM_ID && !isDrawerCollapsed;

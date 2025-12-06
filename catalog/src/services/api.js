@@ -833,12 +833,139 @@ export const importFunctionsFromLibrary = async (packageName, modulePath = null,
         ...getAuthHeaders()
       },
     });
-
+    
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
     }
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    throw error;
+  }
+};
 
+// Rules Management Functions
+export const getRulesForModel = async (modelShortName, options = {}) => {
+  try {
+    const response = await fetch(`${API_URL}/rules/${modelShortName}`, {
+      headers: getAuthHeaders()
+    });
+    if (!response.ok) {
+      let errorMessage = `HTTP error! status: ${response.status}`;
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.detail || errorMessage;
+      } catch (e) {
+        // If response is not JSON, use status text
+        errorMessage = response.statusText || errorMessage;
+      }
+      throw new Error(errorMessage);
+    }
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching rules:', error);
+    throw error;
+  }
+};
+
+export const getRuleCountForModel = async (modelShortName, options = {}) => {
+  try {
+    const response = await fetch(`${API_URL}/rules/${modelShortName}/count`, {
+      headers: getAuthHeaders()
+    });
+    if (!response.ok) {
+      let errorMessage = `HTTP error! status: ${response.status}`;
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.detail || errorMessage;
+      } catch (e) {
+        errorMessage = response.statusText || errorMessage;
+      }
+      throw new Error(errorMessage);
+    }
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching rule count:', error);
+    // Return 0 on error so UI doesn't break
+    return { count: 0 };
+  }
+};
+
+export const createRule = async (ruleData) => {
+  try {
+    const response = await fetch(`${API_URL}/rules`, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
+      },
+      body: JSON.stringify(ruleData),
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+    }
+    const result = await response.json();
+    cacheService.invalidateByPrefix('rules');
+    return result;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const updateRule = async (ruleId, ruleData) => {
+  try {
+    const response = await fetch(`${API_URL}/rules/${ruleId}`, {
+      method: 'PUT',
+      headers: { 
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
+      },
+      body: JSON.stringify(ruleData),
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+    }
+    const result = await response.json();
+    cacheService.invalidateByPrefix('rules');
+    return result;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const deleteRule = async (ruleId) => {
+  try {
+    const response = await fetch(`${API_URL}/rules/${ruleId}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+    }
+    const result = await response.json();
+    cacheService.invalidateByPrefix('rules');
+    return result;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getRuleCoverage = async (modelShortName) => {
+  try {
+    const response = await fetch(`${API_URL}/rules/${modelShortName}/coverage`, {
+      headers: getAuthHeaders()
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+    }
     const data = await response.json();
     return data;
   } catch (error) {

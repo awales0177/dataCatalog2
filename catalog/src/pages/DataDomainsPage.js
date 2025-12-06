@@ -50,7 +50,7 @@ const DataDomainsPage = () => {
 
     const query = searchQuery.toLowerCase();
     return domains.filter(domain => {
-      return domain.name.toLowerCase().includes(query) ||
+        return domain.name.toLowerCase().includes(query) ||
              (domain.description && domain.description.toLowerCase().includes(query)) ||
              (domain.owner && domain.owner.toLowerCase().includes(query));
     });
@@ -130,8 +130,8 @@ const DataDomainsPage = () => {
               <DomainCard
                 domain={domain}
                 onClick={() => handleDomainClick(domain)}
-                currentTheme={currentTheme}
-              />
+              currentTheme={currentTheme}
+            />
             </Grid>
           ))}
         </Grid>
@@ -159,4 +159,4 @@ const DataDomainsPage = () => {
   );
 };
 
-export default DataDomainsPage;
+export default DataDomainsPage; 

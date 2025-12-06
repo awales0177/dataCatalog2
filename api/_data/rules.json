@@ -1,0 +1,60 @@
+{
+  "rules": [
+    {
+      "id": "rule-001",
+      "name": "All ways lowercase",
+      "description": "All ways lowercase every feild",
+      "modelShortName": "CUST",
+      "taggedObjects": [
+        "person"
+      ],
+      "taggedColumns": [
+        "id"
+      ],
+      "taggedFunctions": [
+        "0d66eafa-199f-420f-83b3-47753d2a7471"
+      ],
+      "ruleType": "validation",
+      "enabled": true,
+      "lastUpdated": "2025-12-06 04:43:48",
+      "createdBy": "bypass_user",
+      "updatedBy": "bypass_user"
+    },
+    {
+      "name": "Pyspark version",
+      "description": "always increase",
+      "modelShortName": "CUST",
+      "taggedObjects": [
+        "Catalog"
+      ],
+      "taggedColumns": [
+        "1.0.0"
+      ],
+      "taggedFunctions": [
+        "dfb5764e-0d55-4f4a-8cf3-149d799b3c8e"
+      ],
+      "ruleType": "business",
+      "enabled": true,
+      "id": "rule-002",
+      "lastUpdated": "2025-12-06 05:08:10",
+      "createdBy": "bypass_user"
+    },
+    {
+      "name": "New",
+      "description": "general",
+      "modelShortName": "CUST",
+      "taggedObjects": [
+        "all"
+      ],
+      "taggedColumns": [
+        "all"
+      ],
+      "taggedFunctions": [],
+      "ruleType": "validation",
+      "enabled": true,
+      "id": "rule-003",
+      "lastUpdated": "2025-12-06 05:13:40",
+      "createdBy": "bypass_user"
+    }
+  ]
+}

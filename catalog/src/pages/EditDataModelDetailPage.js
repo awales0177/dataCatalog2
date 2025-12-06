@@ -55,6 +55,7 @@ import DomainSelector from '../components/DomainSelector';
 import TeamSelector from '../components/TeamSelector';
 import ReferenceDataSelector from '../components/ReferenceDataSelector';
 import { useAuth } from '../contexts/AuthContext';
+import { modelFieldsConfig } from '../config/modelFields';
 
 const EditDataModelDetailPage = ({ currentTheme }) => {
   const { shortName } = useParams();
@@ -518,7 +519,8 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
       'name', 'shortName', 'description', 'extendedDescription', 'version',
       'domain', 'referenceData', 'users', 'meta.tier', 'meta.verified', 
       'resources.code', 'resources.documentation', 'resources.rules', 
-      'resources.tools', 'resources.git', 'resources.validation'
+      'resources.tools', 'resources.git', 'resources.validation',
+      modelFieldsConfig.field1.jsonKey
     ];
     
     // Check owner and specMaintainer separately since they're handled by TeamSelector
@@ -763,6 +765,226 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
     }
   };
 
+  // Generic render function for configurable model fields
+  const renderConfigurableField = (fieldConfig, path, value, label) => {
+    const options = fieldConfig.options || [];
+    const isFreeText = options.length === 0;
+
+    const handleChange = (index, newValue) => {
+      setEditedModel(prev => {
+        const newModel = { ...prev };
+        const pathArray = path.split('.');
+        let current = newModel;
+        
+        for (let i = 0; i < pathArray.length - 1; i++) {
+          if (!current[pathArray[i]]) {
+            current[pathArray[i]] = {};
+          }
+          current = current[pathArray[i]];
+        }
+        
+        const lastKey = pathArray[pathArray.length - 1];
+        if (!Array.isArray(current[lastKey])) {
+          current[lastKey] = [];
+        }
+        
+        // Create a new array with the updated item
+        const newArray = [...current[lastKey]];
+        newArray[index] = newValue;
+        current[lastKey] = newArray;
+        
+        return newModel;
+      });
+    };
+
+    const handleDelete = (indexToDelete) => {
+      setEditedModel(prev => {
+        const newModel = { ...prev };
+        const pathArray = path.split('.');
+        let current = newModel;
+        
+        for (let i = 0; i < pathArray.length - 1; i++) {
+          if (!current[pathArray[i]]) {
+            current[pathArray[i]] = {};
+          }
+          current = current[pathArray[i]];
+        }
+        
+        const lastKey = pathArray[pathArray.length - 1];
+        if (!Array.isArray(current[lastKey])) {
+          current[lastKey] = [];
+        }
+        
+        // Create a new array without the deleted item
+        const newArray = current[lastKey].filter((_, index) => index !== indexToDelete);
+        current[lastKey] = newArray;
+        
+        return newModel;
+      });
+    };
+
+    const addItem = () => {
+      setEditedModel(prev => {
+        const newModel = { ...prev };
+        const pathArray = path.split('.');
+        let current = newModel;
+        
+        for (let i = 0; i < pathArray.length - 1; i++) {
+          if (!current[pathArray[i]]) {
+            current[pathArray[i]] = {};
+          }
+          current = current[pathArray[i]];
+        }
+        
+        const lastKey = pathArray[pathArray.length - 1];
+        if (!Array.isArray(current[lastKey])) {
+          current[lastKey] = [];
+        }
+        
+        // Create a new array with the additional item (empty string for free text)
+        current[lastKey] = [...current[lastKey], ''];
+        
+        return newModel;
+      });
+    };
+
+    return (
+      <Box key={path} sx={{ mb: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+          <Typography variant="subtitle2" sx={{ 
+            color: currentTheme.text, 
+            fontWeight: 600
+          }}>
+            {label}
+          </Typography>
+        </Box>
+
+        {/* Existing items */}
+        {(value || []).map((item, index) => (
+          <Box key={index} sx={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: 1, 
+            mb: 1.5
+          }}>
+            {isFreeText ? (
+              <TextField
+                size="small"
+                value={item || ''}
+                onChange={(e) => handleChange(index, e.target.value)}
+                placeholder={`Enter ${label.toLowerCase()}`}
+                sx={{ 
+                  flex: 1,
+                  '& .MuiInputLabel-root': { color: currentTheme.textSecondary },
+                  '& .MuiOutlinedInput-root': { 
+                    color: currentTheme.text,
+                    '& fieldset': { borderColor: currentTheme.border },
+                    '&:hover fieldset': { borderColor: currentTheme.primary },
+                    '&.Mui-focused fieldset': { borderColor: currentTheme.primary }
+                  },
+                  '& .MuiInputBase-input': { color: currentTheme.text },
+                  '& .MuiInputBase-input::placeholder': { color: currentTheme.textSecondary, opacity: 0.7 }
+                }}
+              />
+            ) : (
+              <Select
+                size="small"
+                value={item}
+                onChange={(e) => handleChange(index, e.target.value)}
+                sx={{ 
+                  flex: 1,
+                  '& .MuiInputLabel-root': { color: currentTheme.textSecondary },
+                  '& .MuiOutlinedInput-root': { 
+                    color: currentTheme.text,
+                    '& fieldset': { borderColor: currentTheme.border },
+                    '&:hover fieldset': { borderColor: currentTheme.primary },
+                    '&.Mui-focused fieldset': { borderColor: currentTheme.primary }
+                  },
+                  '& .MuiInputBase-input': { color: currentTheme.text },
+                  '& .MuiSelect-icon': { color: currentTheme.textSecondary }
+                }}
+                MenuProps={{
+                  PaperProps: {
+                    sx: {
+                      bgcolor: currentTheme.card,
+                      color: currentTheme.text,
+                      border: `1px solid ${currentTheme.border}`,
+                      '& .MuiMenuItem-root': {
+                        color: currentTheme.text,
+                        '&:hover': {
+                          bgcolor: alpha(currentTheme.primary, 0.1),
+                          color: currentTheme.text,
+                        },
+                        '&.Mui-selected': {
+                          bgcolor: alpha(currentTheme.primary, 0.2),
+                          color: currentTheme.text,
+                          '&:hover': {
+                            bgcolor: alpha(currentTheme.primary, 0.3),
+                          },
+                        },
+                      },
+                    },
+                  },
+                }}
+              >
+                {options.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box sx={{ 
+                        width: 12, 
+                        height: 12, 
+                        borderRadius: '50%', 
+                        bgcolor: option.color 
+                      }} />
+                      {option.label}
+                    </Box>
+                  </MenuItem>
+                ))}
+              </Select>
+            )}
+            <IconButton
+              size="small"
+              onClick={() => handleDelete(index)}
+              sx={{ 
+                color: 'error.main',
+                '&:hover': {
+                  bgcolor: 'error.main',
+                  color: 'white'
+                }
+              }}
+              title={`Delete ${fieldConfig.name.toLowerCase()}`}
+            >
+              <DeleteIcon />
+            </IconButton>
+          </Box>
+        ))}
+
+        {/* Add new item button */}
+        <Box sx={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          mt: 2
+        }}>
+          <Button
+            variant="outlined"
+            startIcon={<AddIcon />}
+            onClick={addItem}
+            sx={{
+              color: currentTheme.primary,
+              borderColor: currentTheme.border,
+              '&:hover': {
+                bgcolor: currentTheme.primary,
+                color: 'white'
+              }
+            }}
+          >
+            Add {fieldConfig.name}
+          </Button>
+        </Box>
+      </Box>
+    );
+  };
+
   const renderField = (path, value, label, type = 'text', options = null, isRequired = false) => {
     // Special handling for tools section to make tool names editable
     if (path === 'resources.tools' && typeof value === 'object' && value !== null) {
@@ -843,6 +1065,14 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
     }
 
     if (Array.isArray(value)) {
+      // Special handling for configurable fields (field1)
+      // Check if this path matches any configured field's jsonKey
+      const field1Config = modelFieldsConfig.field1;
+      
+      if (path === field1Config.jsonKey) {
+        return renderConfigurableField(field1Config, path, value, label);
+      }
+
       // Special handling for users field - use TeamSelector
       if (path === 'users') {
         return (
@@ -1364,6 +1594,11 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
               { value: 'bronze', label: 'Bronze' }
             ])}
             {renderField('meta.verified', editedModel.meta?.verified, 'Verified', 'boolean')}
+            {renderField(
+              modelFieldsConfig.field1.jsonKey, 
+              editedModel[modelFieldsConfig.field1.jsonKey], 
+              modelFieldsConfig.field1.name
+            )}
           </Grid>
         </Grid>
 

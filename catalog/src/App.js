@@ -38,6 +38,7 @@ import RolePage from './pages/RolePage';
 import UnauthorizedPage from './pages/UnauthorizedPage';
 import UserManagementPage from './pages/UserManagementPage';
 import StatisticsPage from './pages/StatisticsPage';
+import RuleBuilderPage from './pages/RuleBuilderPage';
 import InfoSidebar from './components/InfoSidebar';
 import AppHeader from './components/AppHeader';
 import NavigationDrawer from './components/NavigationDrawer';
@@ -411,6 +412,14 @@ function AppContent() {
                   <EditAgreementPage 
                     currentTheme={currentTheme}
                   />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/rules" 
+              element={
+                <ProtectedRoute requiredRole="editor">
+                  <RuleBuilderPage />
                 </ProtectedRoute>
               } 
             />

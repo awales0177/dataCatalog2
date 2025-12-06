@@ -6,7 +6,7 @@ import { MdHandshake, MdDomain } from "react-icons/md";
 import { AiOutlineAppstore } from "react-icons/ai";
 import { IoIosApps } from "react-icons/io";
 import { PiGraph } from "react-icons/pi";
-import { Policy as PolicyIcon, MenuBook as MenuBookIcon, BarChart as BarChartIcon } from '@mui/icons-material';
+import { Policy as PolicyIcon, MenuBook as MenuBookIcon, BarChart as BarChartIcon, Rule as RuleIcon } from '@mui/icons-material';
 
 export const drawerWidth = 280;
 export const collapsedDrawerWidth = 72;
@@ -27,6 +27,13 @@ export const menuItems = [
     path: '/models',
     icon: <PiGraph />,
     id: 'models'
+  },
+  {
+    name: 'Rule Builder',
+    path: '/rules',
+    icon: <RuleIcon />,
+    id: 'rules',
+    editorOnly: true
   },
   {
     name: 'Toolkit',

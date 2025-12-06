@@ -222,7 +222,8 @@ JSON_FILES = {
     "policies": "dataPolicies.json",
     "zones": "zones.json",
     "glossary": "glossary.json",
-    "statistics": "statistics.json"
+    "statistics": "statistics.json",
+    "rules": "rules.json"
 }
 
 # Data type to key mapping for counting items
@@ -2374,6 +2375,331 @@ def get_statistics(current_user: dict = Depends(require_admin)):
     except Exception as e:
         logger.error(f"Error getting statistics: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error getting statistics: {str(e)}")
+
+# Rules Management Endpoints
+@app.get("/api/rules/{model_short_name}")
+async def get_rules_for_model(model_short_name: str):
+    """
+    Get all rules for a specific model.
+    
+    Args:
+        model_short_name (str): The short name of the model
+        
+    Returns:
+        dict: List of rules for the model
+    """
+    try:
+        try:
+            rules_data = read_json_file(JSON_FILES['rules'])
+        except HTTPException as e:
+            # File doesn't exist or can't be read, return empty structure
+            logger.warning(f"Rules file not found or can't be read: {str(e)}")
+            return {"rules": []}
+        except Exception as e:
+            # Other errors reading file
+            logger.warning(f"Error reading rules file: {str(e)}, returning empty rules")
+            return {"rules": []}
+        
+        # Ensure rules_data has the expected structure
+        if not isinstance(rules_data, dict):
+            logger.warning("Rules file has invalid structure, returning empty rules")
+            return {"rules": []}
+        
+        if 'rules' not in rules_data:
+            logger.warning("Rules file missing 'rules' key, returning empty rules")
+            return {"rules": []}
+        
+        # Filter rules by model
+        model_rules = [
+            rule for rule in rules_data.get('rules', [])
+            if rule.get('modelShortName', '').lower() == model_short_name.lower()
+        ]
+        
+        logger.info(f"Found {len(model_rules)} rules for model {model_short_name}")
+        return {
+            "rules": model_rules,
+            "count": len(model_rules)
+        }
+    except Exception as e:
+        logger.error(f"Error getting rules: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Error getting rules: {str(e)}")
+
+@app.post("/api/rules")
+async def create_rule(request: Dict[str, Any], current_user: dict = Depends(require_editor_or_admin)):
+    """
+    Create a new rule.
+    
+    Args:
+        request (dict): The new rule data
+        
+    Returns:
+        dict: Success message and created rule info
+    """
+    try:
+        logger.info(f"Create request for new rule")
+        
+        try:
+            rules_data = read_json_file(JSON_FILES['rules'])
+        except HTTPException:
+            # File doesn't exist, create new structure
+            rules_data = {"rules": []}
+        
+        # Generate automatic ID
+        existing_ids = [rule['id'] for rule in rules_data.get('rules', []) if 'id' in rule]
+        max_number = 0
+        for rule_id in existing_ids:
+            if rule_id.startswith('rule-'):
+                try:
+                    number = int(rule_id[5:])
+                    max_number = max(max_number, number)
+                except ValueError:
+                    continue
+        
+        new_id = f"rule-{max_number + 1:03d}"
+        
+        # Add lastUpdated timestamp and assign the generated ID
+        # Remove form state fields that shouldn't be saved
+        new_rule = {k: v for k, v in request.items() if k not in ['newObjectInput', 'newColumnInput']}
+        new_rule['id'] = new_id
+        new_rule['lastUpdated'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        new_rule['createdBy'] = current_user.get('username', 'unknown')
+        
+        rules_data['rules'].append(new_rule)
+        local_file_path = JSON_FILES['rules']
+        write_json_file(local_file_path, rules_data)
+        
+        logger.info(f"Created new rule in local file {local_file_path}")
+        logger.info(f"Rule {new_id} created successfully")
+        
+        return {
+            "message": "Rule created successfully",
+            "id": new_id,
+            "created": True
+        }
+    except Exception as e:
+        logger.error(f"Error creating rule: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error creating rule: {str(e)}")
+
+@app.put("/api/rules/{rule_id}")
+async def update_rule(rule_id: str, request: Dict[str, Any], current_user: dict = Depends(require_editor_or_admin)):
+    """
+    Update an existing rule.
+    
+    Args:
+        rule_id (str): The ID of the rule to update
+        request (dict): The updated rule data
+        
+    Returns:
+        dict: Success message and updated rule info
+    """
+    try:
+        logger.info(f"Update request for rule: {rule_id}")
+        
+        rules_data = read_json_file(JSON_FILES['rules'])
+        
+        # Find the rule to update
+        rule_to_update = None
+        for i, rule in enumerate(rules_data.get('rules', [])):
+            if rule.get('id', '').lower() == rule_id.lower():
+                rule_to_update = i
+                break
+        
+        if rule_to_update is None:
+            raise HTTPException(status_code=404, detail=f"Rule with ID '{rule_id}' not found")
+        
+        # Update the rule
+        updated_rule = rules_data['rules'][rule_to_update].copy()
+        # Remove form state fields that shouldn't be saved
+        cleaned_request = {k: v for k, v in request.items() if k not in ['newObjectInput', 'newColumnInput']}
+        updated_rule.update(cleaned_request)
+        updated_rule['id'] = rule_id  # Ensure ID doesn't change
+        updated_rule['lastUpdated'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        updated_rule['updatedBy'] = current_user.get('username', 'unknown')
+        
+        rules_data['rules'][rule_to_update] = updated_rule
+        
+        local_file_path = JSON_FILES['rules']
+        write_json_file(local_file_path, rules_data)
+        
+        logger.info(f"Rule updated in local file {local_file_path}")
+        logger.info(f"Rule {rule_id} updated successfully")
+        
+        return {
+            "message": "Rule updated successfully",
+            "id": rule_id,
+            "updated": True
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating rule: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error updating rule: {str(e)}")
+
+@app.delete("/api/rules/{rule_id}")
+async def delete_rule(rule_id: str, current_user: dict = Depends(require_editor_or_admin)):
+    """
+    Delete a rule by its ID.
+    
+    Args:
+        rule_id (str): The ID of the rule to delete
+        
+    Returns:
+        dict: Success message and deleted rule info
+    """
+    try:
+        logger.info(f"Delete request for rule: {rule_id}")
+        
+        rules_data = read_json_file(JSON_FILES['rules'])
+        
+        rule_to_delete = None
+        for rule in rules_data.get('rules', []):
+            if rule.get('id', '').lower() == rule_id.lower():
+                rule_to_delete = rule
+                break
+        
+        if not rule_to_delete:
+            raise HTTPException(status_code=404, detail=f"Rule with ID '{rule_id}' not found")
+        
+        rules_data['rules'] = [
+            r for r in rules_data.get('rules', [])
+            if r.get('id', '').lower() != rule_id.lower()
+        ]
+        
+        local_file_path = JSON_FILES['rules']
+        write_json_file(local_file_path, rules_data)
+        
+        logger.info(f"Rule deleted from local file {local_file_path}")
+        logger.info(f"Rule {rule_id} deleted successfully")
+        
+        return {
+            "message": "Rule deleted successfully",
+            "id": rule_id,
+            "deleted": True
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting rule: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error deleting rule: {str(e)}")
+
+@app.get("/api/rules/{model_short_name}/count")
+async def get_rule_count(model_short_name: str):
+    """
+    Get the count of rules for a specific model.
+    
+    Args:
+        model_short_name (str): The short name of the model
+        
+    Returns:
+        dict: Count of rules for the model
+    """
+    try:
+        try:
+            rules_data = read_json_file(JSON_FILES['rules'])
+        except HTTPException as e:
+            logger.warning(f"Rules file not found or can't be read: {str(e)}")
+            return {"count": 0}
+        except Exception as e:
+            logger.warning(f"Error reading rules file: {str(e)}, returning count 0")
+            return {"count": 0}
+        
+        # Ensure rules_data has the expected structure
+        if not isinstance(rules_data, dict):
+            logger.warning("Rules file has invalid structure, returning count 0")
+            return {"count": 0}
+        
+        if 'rules' not in rules_data:
+            logger.warning("Rules file missing 'rules' key, returning count 0")
+            return {"count": 0}
+        
+        # Filter rules by model and count
+        model_rules = [
+            rule for rule in rules_data.get('rules', [])
+            if rule.get('modelShortName', '').lower() == model_short_name.lower()
+        ]
+        
+        return {"count": len(model_rules)}
+    except Exception as e:
+        logger.error(f"Error getting rule count: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Error getting rule count: {str(e)}")
+
+@app.get("/api/rules/{model_short_name}/coverage")
+async def get_rule_coverage(model_short_name: str):
+    """
+    Get rule coverage statistics for a model.
+    
+    Args:
+        model_short_name (str): The short name of the model
+        
+    Returns:
+        dict: Coverage statistics showing rules per object/column
+    """
+    try:
+        # Get model data to understand structure
+        try:
+            models_data = read_json_file(JSON_FILES['models'])
+            model = next(
+                (m for m in models_data.get('models', []) if m.get('shortName', '').lower() == model_short_name.lower()),
+                None
+            )
+        except Exception as e:
+            logger.warning(f"Error reading models file: {str(e)}")
+            model = None
+        
+        if not model:
+            logger.warning(f"Model with short name '{model_short_name}' not found")
+            # Don't raise error, just return empty coverage
+        
+        # Get rules for this model
+        try:
+            rules_data = read_json_file(JSON_FILES['rules'])
+        except HTTPException:
+            rules_data = {"rules": []}
+        except Exception as e:
+            logger.warning(f"Error reading rules file: {str(e)}")
+            rules_data = {"rules": []}
+        
+        if not isinstance(rules_data, dict):
+            rules_data = {"rules": []}
+        
+        model_rules = [
+            rule for rule in rules_data.get('rules', [])
+            if rule.get('modelShortName', '').lower() == model_short_name.lower()
+        ]
+        
+        # Calculate coverage
+        tagged_objects = set()
+        tagged_columns = set()
+        tagged_functions = set()
+        
+        for rule in model_rules:
+            if rule.get('taggedObjects') and isinstance(rule.get('taggedObjects'), list):
+                tagged_objects.update(rule['taggedObjects'])
+            if rule.get('taggedColumns') and isinstance(rule.get('taggedColumns'), list):
+                tagged_columns.update(rule['taggedColumns'])
+            if rule.get('taggedFunctions') and isinstance(rule.get('taggedFunctions'), list):
+                tagged_functions.update(rule['taggedFunctions'])
+        
+        # Extract objects and columns from model (if available in resources or schema)
+        # For now, we'll return what we have
+        coverage = {
+            "modelShortName": model_short_name,
+            "totalRules": len(model_rules),
+            "taggedObjects": list(tagged_objects),
+            "taggedColumns": list(tagged_columns),
+            "taggedFunctions": list(tagged_functions),
+            "objectCoverage": len(tagged_objects),
+            "columnCoverage": len(tagged_columns),
+            "functionCoverage": len(tagged_functions),
+            "rules": model_rules
+        }
+        
+        return coverage
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting rule coverage: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Error getting rule coverage: {str(e)}")
 
 
 if __name__ == "__main__":

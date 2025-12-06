@@ -42,9 +42,10 @@ import { IoIosApps } from "react-icons/io";
 import { formatDate } from '../utils/themeUtils';
 import { calculateModelScore, getModelQualityColor } from '../utils/modelScoreUtils';
 import verifiedLogo from '../imgs/verified.svg';
-import { fetchData, fetchAgreementsByModel } from '../services/api';
+import { fetchData, fetchAgreementsByModel, getRuleCountForModel } from '../services/api';
 import ProductAgreementCard from '../components/ProductAgreementCard';
 import { GoVerified } from "react-icons/go";
+import { modelFieldsConfig } from '../config/modelFields';
 
 const DataModelDetailPage = ({ currentTheme }) => {
   const { shortName } = useParams();
@@ -56,6 +57,7 @@ const DataModelDetailPage = ({ currentTheme }) => {
   const [currentAgreementIndex, setCurrentAgreementIndex] = React.useState(0);
   const [applications, setApplications] = React.useState([]);
   const [maintainerEmail, setMaintainerEmail] = React.useState(null);
+  const [ruleCount, setRuleCount] = React.useState(0);
 
   React.useEffect(() => {
     const loadModelAndAgreements = async () => {
@@ -78,6 +80,15 @@ const DataModelDetailPage = ({ currentTheme }) => {
             if (maintainerApp && maintainerApp.email) {
               setMaintainerEmail(maintainerApp.email);
             }
+          }
+          
+          // Load rule count
+          try {
+            const ruleCountData = await getRuleCountForModel(foundModel.shortName);
+            setRuleCount(ruleCountData.count || 0);
+          } catch (error) {
+            console.error('Error loading rule count:', error);
+            setRuleCount(0);
           }
         } else {
           setError('Model not found');
@@ -555,6 +566,63 @@ const DataModelDetailPage = ({ currentTheme }) => {
               </Box>
             </Box>
 
+            {/* Sensitivity Level Field */}
+            {model[modelFieldsConfig.field1.jsonKey] && (
+              <>
+                <Divider sx={{ my: 2 }} />
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary, mb: 1 }}>
+                    {modelFieldsConfig.field1.name}
+                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                    {(Array.isArray(model[modelFieldsConfig.field1.jsonKey]) 
+                      ? model[modelFieldsConfig.field1.jsonKey] 
+                      : [model[modelFieldsConfig.field1.jsonKey]]
+                    ).map((value, index) => {
+                      // If options exist, try to find matching option, otherwise use free text
+                      const options = modelFieldsConfig.field1.options || [];
+                      if (options.length > 0) {
+                        const option = options.find(opt => opt.value === value);
+                        const label = option ? option.label : value;
+                        const color = option ? option.color : '#9e9e9e';
+                        
+                        return (
+                          <Chip
+                            key={index}
+                            label={label}
+                            size="small"
+                            sx={{
+                              bgcolor: alpha(color, 0.1),
+                              color: color,
+                              '&:hover': {
+                                bgcolor: alpha(color, 0.2),
+                              }
+                            }}
+                          />
+                        );
+                      } else {
+                        // Free text - display as plain chip
+                        return (
+                          <Chip
+                            key={index}
+                            label={value}
+                            size="small"
+                            sx={{
+                              bgcolor: alpha(currentTheme.primary, 0.1),
+                              color: currentTheme.primary,
+                              '&:hover': {
+                                bgcolor: alpha(currentTheme.primary, 0.2),
+                              }
+                            }}
+                          />
+                        );
+                      }
+                    })}
+                  </Box>
+                </Box>
+              </>
+            )}
+
             <Divider sx={{ my: 2 }} />
 
             <Typography variant="h6" sx={{ color: currentTheme.text, mb: 2 }}>
@@ -673,26 +741,30 @@ const DataModelDetailPage = ({ currentTheme }) => {
                     </AccordionDetails>
                   </Accordion>
               )}
-              {model.resources?.rules && (
-                <Link
-                  href={model.resources.rules}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  sx={{
-                    color: currentTheme.text,
-                    textDecoration: 'none',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1,
-                    '&:hover': {
-                      color: currentTheme.primary,
-                    },
-                  }}
-                >
-                  <GavelIcon sx={{ fontSize: 20 }} />
-                  <Typography variant="body2">Rules</Typography>
-                </Link>
-              )}
+              <Link
+                component="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigate(`/rules?model=${model.shortName}`);
+                }}
+                sx={{
+                  color: currentTheme.text,
+                  textDecoration: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                  cursor: 'pointer',
+                  border: 'none',
+                  background: 'none',
+                  padding: 0,
+                  '&:hover': {
+                    color: currentTheme.primary,
+                  },
+                }}
+              >
+                <GavelIcon sx={{ fontSize: 20 }} />
+                <Typography variant="body2">Rules {ruleCount > 0 && `(${ruleCount})`}</Typography>
+              </Link>
               {model.resources?.git && (
                 <Link
                   href={model.resources.git}

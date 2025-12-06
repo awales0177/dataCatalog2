@@ -25,7 +25,7 @@
       "meta": {
         "tier": "gold",
         "verified": false,
-        "clickCount": 4
+        "clickCount": 5
       },
       "changelog": [
         {
@@ -188,7 +188,7 @@
       "meta": {
         "tier": "silver",
         "verified": false,
-        "clickCount": 11
+        "clickCount": 12
       },
       "changelog": [
         {
@@ -456,7 +456,8 @@
       ],
       "meta": {
         "tier": "gold",
-        "verified": true
+        "verified": true,
+        "clickCount": 1
       },
       "resources": {
         "code": "https://github.com/org/marketing-campaign-data",
