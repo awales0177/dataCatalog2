@@ -871,6 +871,141 @@ export const getRulesForModel = async (modelShortName, options = {}) => {
   }
 };
 
+export const getAllCountryRules = async () => {
+  try {
+    const response = await fetch(`${API_URL}/country-rules`, {
+      headers: getAuthHeaders()
+    });
+    if (!response.ok) {
+      let errorMessage = `HTTP error! status: ${response.status}`;
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.detail || errorMessage;
+      } catch (e) {
+        errorMessage = response.statusText || errorMessage;
+      }
+      throw new Error(errorMessage);
+    }
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching all country rules:', error);
+    throw error;
+  }
+};
+
+export const getRulesForCountry = async (country, options = {}) => {
+  try {
+    const response = await fetch(`${API_URL}/country-rules/${encodeURIComponent(country)}`, {
+      headers: getAuthHeaders()
+    });
+    if (!response.ok) {
+      let errorMessage = `HTTP error! status: ${response.status}`;
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.detail || errorMessage;
+      } catch (e) {
+        errorMessage = response.statusText || errorMessage;
+      }
+      throw new Error(errorMessage);
+    }
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error fetching country rules:', error);
+    throw error;
+  }
+};
+
+export const getCountryRuleCoverage = async (country) => {
+  try {
+    const response = await fetch(`${API_URL}/country-rules/${encodeURIComponent(country)}/coverage`, {
+      headers: getAuthHeaders()
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching country rule coverage:', error);
+    throw error;
+  }
+};
+
+export const getCountryRuleCount = async (country) => {
+  try {
+    const response = await fetch(`${API_URL}/country-rules/${encodeURIComponent(country)}/count`, {
+      headers: getAuthHeaders()
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching country rule count:', error);
+    throw error;
+  }
+};
+
+export const createCountryRule = async (ruleData) => {
+  try {
+    const response = await fetch(`${API_URL}/country-rules`, {
+      method: 'POST',
+      headers: {
+        ...getAuthHeaders(),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(ruleData)
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || 'Failed to create country rule');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error creating country rule:', error);
+    throw error;
+  }
+};
+
+export const updateCountryRule = async (ruleId, ruleData) => {
+  try {
+    const response = await fetch(`${API_URL}/country-rules/${ruleId}`, {
+      method: 'PUT',
+      headers: {
+        ...getAuthHeaders(),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(ruleData)
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || 'Failed to update country rule');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error updating country rule:', error);
+    throw error;
+  }
+};
+
+export const deleteCountryRule = async (ruleId) => {
+  try {
+    const response = await fetch(`${API_URL}/country-rules/${ruleId}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || 'Failed to delete country rule');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error deleting country rule:', error);
+    throw error;
+  }
+};
+
 export const getRuleCountForModel = async (modelShortName, options = {}) => {
   try {
     const response = await fetch(`${API_URL}/rules/${modelShortName}/count`, {

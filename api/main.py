@@ -223,7 +223,8 @@ JSON_FILES = {
     "zones": "zones.json",
     "glossary": "glossary.json",
     "statistics": "statistics.json",
-    "rules": "rules.json"
+    "rules": "rules.json",
+    "countryRules": "countryRules.json"
 }
 
 # Data type to key mapping for counting items
@@ -480,6 +481,190 @@ def get_zones():
     except Exception as e:
         logger.error(f"Error getting zones: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error getting zones: {str(e)}")
+
+# Country rules endpoints (must come before generic {file_name} route)
+@app.get("/api/country-rules")
+async def get_all_country_rules():
+    """
+    Get all country rules.
+    
+    Returns:
+        dict: List of all country rules
+    """
+    try:
+        try:
+            rules_data = read_json_file(JSON_FILES['countryRules'])
+        except HTTPException as e:
+            logger.warning(f"Country rules file not found or can't be read: {str(e)}")
+            return {"rules": []}
+        except Exception as e:
+            logger.warning(f"Error reading country rules file: {str(e)}, returning empty rules")
+            return {"rules": []}
+        
+        # Ensure rules_data has the expected structure
+        if not isinstance(rules_data, dict):
+            logger.warning("Country rules file has invalid structure, returning empty rules")
+            return {"rules": []}
+        
+        if 'rules' not in rules_data:
+            logger.warning("Country rules file missing 'rules' key, returning empty rules")
+            return {"rules": []}
+        
+        all_rules = rules_data.get('rules', [])
+        logger.info(f"Returning all {len(all_rules)} country rules")
+        return {
+            "rules": all_rules,
+            "count": len(all_rules)
+        }
+    except Exception as e:
+        logger.error(f"Error getting all country rules: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Error getting all country rules: {str(e)}")
+
+@app.get("/api/country-rules/{country}")
+async def get_rules_for_country(country: str):
+    """
+    Get all rules for a specific country.
+    
+    Args:
+        country (str): The name of the country
+        
+    Returns:
+        dict: List of rules for the country
+    """
+    try:
+        try:
+            rules_data = read_json_file(JSON_FILES['countryRules'])
+        except HTTPException as e:
+            logger.warning(f"Country rules file not found or can't be read: {str(e)}")
+            return {"rules": []}
+        except Exception as e:
+            logger.warning(f"Error reading country rules file: {str(e)}, returning empty rules")
+            return {"rules": []}
+        
+        # Ensure rules_data has the expected structure
+        if not isinstance(rules_data, dict):
+            logger.warning("Country rules file has invalid structure, returning empty rules")
+            return {"rules": []}
+        
+        if 'rules' not in rules_data:
+            logger.warning("Country rules file missing 'rules' key, returning empty rules")
+            return {"rules": []}
+        
+        # Filter rules by country
+        country_rules = [
+            rule for rule in rules_data.get('rules', [])
+            if rule.get('country', '').lower() == country.lower()
+        ]
+        
+        logger.info(f"Found {len(country_rules)} rules for country {country}")
+        return {
+            "rules": country_rules,
+            "count": len(country_rules)
+        }
+    except Exception as e:
+        logger.error(f"Error getting country rules: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Error getting country rules: {str(e)}")
+
+@app.get("/api/country-rules/{country}/count")
+async def get_country_rule_count(country: str):
+    """
+    Get the count of rules for a specific country.
+    
+    Args:
+        country (str): The name of the country
+        
+    Returns:
+        dict: Count of rules for the country
+    """
+    try:
+        try:
+            rules_data = read_json_file(JSON_FILES['countryRules'])
+        except HTTPException as e:
+            logger.warning(f"Country rules file not found or can't be read: {str(e)}")
+            return {"count": 0}
+        except Exception as e:
+            logger.warning(f"Error reading country rules file: {str(e)}, returning count 0")
+            return {"count": 0}
+        
+        if not isinstance(rules_data, dict):
+            logger.warning("Country rules file has invalid structure, returning count 0")
+            return {"count": 0}
+        
+        if 'rules' not in rules_data:
+            logger.warning("Country rules file missing 'rules' key, returning count 0")
+            return {"count": 0}
+        
+        # Filter rules by country and count
+        country_rules = [
+            rule for rule in rules_data.get('rules', [])
+            if rule.get('country', '').lower() == country.lower()
+        ]
+        
+        return {"count": len(country_rules)}
+    except Exception as e:
+        logger.error(f"Error getting country rule count: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Error getting country rule count: {str(e)}")
+
+@app.get("/api/country-rules/{country}/coverage")
+async def get_country_rule_coverage(country: str):
+    """
+    Get rule coverage statistics for a country.
+    
+    Args:
+        country (str): The name of the country
+        
+    Returns:
+        dict: Coverage statistics showing rules per object/column
+    """
+    try:
+        # Get country rules
+        try:
+            rules_data = read_json_file(JSON_FILES['countryRules'])
+        except HTTPException:
+            rules_data = {"rules": []}
+        except Exception as e:
+            logger.warning(f"Error reading country rules file: {str(e)}")
+            rules_data = {"rules": []}
+        
+        if not isinstance(rules_data, dict):
+            rules_data = {"rules": []}
+        
+        country_rules = [
+            rule for rule in rules_data.get('rules', [])
+            if rule.get('country', '').lower() == country.lower()
+        ]
+        
+        # Calculate coverage
+        tagged_objects = set()
+        tagged_columns = set()
+        tagged_functions = set()
+        
+        for rule in country_rules:
+            if rule.get('taggedObjects') and isinstance(rule.get('taggedObjects'), list):
+                tagged_objects.update(rule['taggedObjects'])
+            if rule.get('taggedColumns') and isinstance(rule.get('taggedColumns'), list):
+                tagged_columns.update(rule['taggedColumns'])
+            if rule.get('taggedFunctions') and isinstance(rule.get('taggedFunctions'), list):
+                tagged_functions.update(rule['taggedFunctions'])
+        
+        coverage = {
+            "country": country,
+            "totalRules": len(country_rules),
+            "taggedObjects": list(tagged_objects),
+            "taggedColumns": list(tagged_columns),
+            "taggedFunctions": list(tagged_functions),
+            "objectCoverage": len(tagged_objects),
+            "columnCoverage": len(tagged_columns),
+            "functionCoverage": len(tagged_functions),
+            "rules": country_rules
+        }
+        
+        return coverage
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting country rule coverage: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Error getting country rule coverage: {str(e)}")
 
 @app.get("/api/{file_name}")
 def get_json_file(file_name: str):
@@ -2424,10 +2609,156 @@ async def get_rules_for_model(model_short_name: str):
         logger.error(f"Error getting rules: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Error getting rules: {str(e)}")
 
+@app.get("/api/country-rules/{country}")
+async def get_rules_for_country(country: str):
+    """
+    Get all rules for a specific country.
+    
+    Args:
+        country (str): The name of the country
+        
+    Returns:
+        dict: List of rules for the country
+    """
+    try:
+        try:
+            rules_data = read_json_file(JSON_FILES['countryRules'])
+        except HTTPException as e:
+            logger.warning(f"Country rules file not found or can't be read: {str(e)}")
+            return {"rules": []}
+        except Exception as e:
+            logger.warning(f"Error reading country rules file: {str(e)}, returning empty rules")
+            return {"rules": []}
+        
+        # Ensure rules_data has the expected structure
+        if not isinstance(rules_data, dict):
+            logger.warning("Country rules file has invalid structure, returning empty rules")
+            return {"rules": []}
+        
+        if 'rules' not in rules_data:
+            logger.warning("Country rules file missing 'rules' key, returning empty rules")
+            return {"rules": []}
+        
+        # Filter rules by country
+        country_rules = [
+            rule for rule in rules_data.get('rules', [])
+            if rule.get('country', '').lower() == country.lower()
+        ]
+        
+        logger.info(f"Found {len(country_rules)} rules for country {country}")
+        return {
+            "rules": country_rules,
+            "count": len(country_rules)
+        }
+    except Exception as e:
+        logger.error(f"Error getting country rules: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Error getting country rules: {str(e)}")
+
+@app.get("/api/country-rules/{country}/count")
+async def get_country_rule_count(country: str):
+    """
+    Get the count of rules for a specific country.
+    
+    Args:
+        country (str): The name of the country
+        
+    Returns:
+        dict: Count of rules for the country
+    """
+    try:
+        try:
+            rules_data = read_json_file(JSON_FILES['countryRules'])
+        except HTTPException as e:
+            logger.warning(f"Country rules file not found or can't be read: {str(e)}")
+            return {"count": 0}
+        except Exception as e:
+            logger.warning(f"Error reading country rules file: {str(e)}, returning count 0")
+            return {"count": 0}
+        
+        if not isinstance(rules_data, dict):
+            logger.warning("Country rules file has invalid structure, returning count 0")
+            return {"count": 0}
+        
+        if 'rules' not in rules_data:
+            logger.warning("Country rules file missing 'rules' key, returning count 0")
+            return {"count": 0}
+        
+        # Filter rules by country and count
+        country_rules = [
+            rule for rule in rules_data.get('rules', [])
+            if rule.get('country', '').lower() == country.lower()
+        ]
+        
+        return {"count": len(country_rules)}
+    except Exception as e:
+        logger.error(f"Error getting country rule count: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Error getting country rule count: {str(e)}")
+
+@app.get("/api/country-rules/{country}/coverage")
+async def get_country_rule_coverage(country: str):
+    """
+    Get rule coverage statistics for a country.
+    
+    Args:
+        country (str): The name of the country
+        
+    Returns:
+        dict: Coverage statistics showing rules per object/column
+    """
+    try:
+        # Get country rules
+        try:
+            rules_data = read_json_file(JSON_FILES['countryRules'])
+        except HTTPException:
+            rules_data = {"rules": []}
+        except Exception as e:
+            logger.warning(f"Error reading country rules file: {str(e)}")
+            rules_data = {"rules": []}
+        
+        if not isinstance(rules_data, dict):
+            rules_data = {"rules": []}
+        
+        country_rules = [
+            rule for rule in rules_data.get('rules', [])
+            if rule.get('country', '').lower() == country.lower()
+        ]
+        
+        # Calculate coverage
+        tagged_objects = set()
+        tagged_columns = set()
+        tagged_functions = set()
+        
+        for rule in country_rules:
+            if rule.get('taggedObjects') and isinstance(rule.get('taggedObjects'), list):
+                tagged_objects.update(rule['taggedObjects'])
+            if rule.get('taggedColumns') and isinstance(rule.get('taggedColumns'), list):
+                tagged_columns.update(rule['taggedColumns'])
+            if rule.get('taggedFunctions') and isinstance(rule.get('taggedFunctions'), list):
+                tagged_functions.update(rule['taggedFunctions'])
+        
+        coverage = {
+            "country": country,
+            "totalRules": len(country_rules),
+            "taggedObjects": list(tagged_objects),
+            "taggedColumns": list(tagged_columns),
+            "taggedFunctions": list(tagged_functions),
+            "objectCoverage": len(tagged_objects),
+            "columnCoverage": len(tagged_columns),
+            "functionCoverage": len(tagged_functions),
+            "rules": country_rules
+        }
+        
+        return coverage
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting country rule coverage: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Error getting country rule coverage: {str(e)}")
+
 @app.post("/api/rules")
 async def create_rule(request: Dict[str, Any], current_user: dict = Depends(require_editor_or_admin)):
     """
-    Create a new rule.
+    Create a new rule (model rule).
     
     Args:
         request (dict): The new rule data
@@ -2436,7 +2767,7 @@ async def create_rule(request: Dict[str, Any], current_user: dict = Depends(requ
         dict: Success message and created rule info
     """
     try:
-        logger.info(f"Create request for new rule")
+        logger.info(f"Create request for new model rule")
         
         try:
             rules_data = read_json_file(JSON_FILES['rules'])
@@ -2459,7 +2790,7 @@ async def create_rule(request: Dict[str, Any], current_user: dict = Depends(requ
         
         # Add lastUpdated timestamp and assign the generated ID
         # Remove form state fields that shouldn't be saved
-        new_rule = {k: v for k, v in request.items() if k not in ['newObjectInput', 'newColumnInput']}
+        new_rule = {k: v for k, v in request.items() if k not in ['newObjectInput', 'newColumnInput', 'ruleTypeIdentifier']}
         new_rule['id'] = new_id
         new_rule['lastUpdated'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         new_rule['createdBy'] = current_user.get('username', 'unknown')
@@ -2480,10 +2811,66 @@ async def create_rule(request: Dict[str, Any], current_user: dict = Depends(requ
         logger.error(f"Error creating rule: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error creating rule: {str(e)}")
 
+@app.post("/api/country-rules")
+async def create_country_rule(request: Dict[str, Any], current_user: dict = Depends(require_editor_or_admin)):
+    """
+    Create a new country rule.
+    
+    Args:
+        request (dict): The new country rule data
+        
+    Returns:
+        dict: Success message and created rule info
+    """
+    try:
+        logger.info(f"Create request for new country rule")
+        
+        try:
+            rules_data = read_json_file(JSON_FILES['countryRules'])
+        except HTTPException:
+            # File doesn't exist, create new structure
+            rules_data = {"rules": []}
+        
+        # Generate automatic ID
+        existing_ids = [rule['id'] for rule in rules_data.get('rules', []) if 'id' in rule]
+        max_number = 0
+        for rule_id in existing_ids:
+            if rule_id.startswith('country-rule-'):
+                try:
+                    number = int(rule_id[12:])
+                    max_number = max(max_number, number)
+                except ValueError:
+                    continue
+        
+        new_id = f"country-rule-{max_number + 1:03d}"
+        
+        # Add lastUpdated timestamp and assign the generated ID
+        # Remove form state fields that shouldn't be saved
+        new_rule = {k: v for k, v in request.items() if k not in ['newObjectInput', 'newColumnInput', 'ruleTypeIdentifier']}
+        new_rule['id'] = new_id
+        new_rule['lastUpdated'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        new_rule['createdBy'] = current_user.get('username', 'unknown')
+        
+        rules_data['rules'].append(new_rule)
+        local_file_path = JSON_FILES['countryRules']
+        write_json_file(local_file_path, rules_data)
+        
+        logger.info(f"Created new country rule in local file {local_file_path}")
+        logger.info(f"Country rule {new_id} created successfully")
+        
+        return {
+            "message": "Country rule created successfully",
+            "id": new_id,
+            "created": True
+        }
+    except Exception as e:
+        logger.error(f"Error creating country rule: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error creating country rule: {str(e)}")
+
 @app.put("/api/rules/{rule_id}")
 async def update_rule(rule_id: str, request: Dict[str, Any], current_user: dict = Depends(require_editor_or_admin)):
     """
-    Update an existing rule.
+    Update an existing model rule.
     
     Args:
         rule_id (str): The ID of the rule to update
@@ -2493,7 +2880,7 @@ async def update_rule(rule_id: str, request: Dict[str, Any], current_user: dict 
         dict: Success message and updated rule info
     """
     try:
-        logger.info(f"Update request for rule: {rule_id}")
+        logger.info(f"Update request for model rule: {rule_id}")
         
         rules_data = read_json_file(JSON_FILES['rules'])
         
@@ -2510,7 +2897,7 @@ async def update_rule(rule_id: str, request: Dict[str, Any], current_user: dict 
         # Update the rule
         updated_rule = rules_data['rules'][rule_to_update].copy()
         # Remove form state fields that shouldn't be saved
-        cleaned_request = {k: v for k, v in request.items() if k not in ['newObjectInput', 'newColumnInput']}
+        cleaned_request = {k: v for k, v in request.items() if k not in ['newObjectInput', 'newColumnInput', 'ruleTypeIdentifier']}
         updated_rule.update(cleaned_request)
         updated_rule['id'] = rule_id  # Ensure ID doesn't change
         updated_rule['lastUpdated'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -2535,10 +2922,65 @@ async def update_rule(rule_id: str, request: Dict[str, Any], current_user: dict 
         logger.error(f"Error updating rule: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error updating rule: {str(e)}")
 
+@app.put("/api/country-rules/{rule_id}")
+async def update_country_rule(rule_id: str, request: Dict[str, Any], current_user: dict = Depends(require_editor_or_admin)):
+    """
+    Update an existing country rule.
+    
+    Args:
+        rule_id (str): The ID of the country rule to update
+        request (dict): The updated rule data
+        
+    Returns:
+        dict: Success message and updated rule info
+    """
+    try:
+        logger.info(f"Update request for country rule: {rule_id}")
+        
+        rules_data = read_json_file(JSON_FILES['countryRules'])
+        
+        # Find the rule to update
+        rule_to_update = None
+        for i, rule in enumerate(rules_data.get('rules', [])):
+            if rule.get('id', '').lower() == rule_id.lower():
+                rule_to_update = i
+                break
+        
+        if rule_to_update is None:
+            raise HTTPException(status_code=404, detail=f"Country rule with ID '{rule_id}' not found")
+        
+        # Update the rule
+        updated_rule = rules_data['rules'][rule_to_update].copy()
+        # Remove form state fields that shouldn't be saved
+        cleaned_request = {k: v for k, v in request.items() if k not in ['newObjectInput', 'newColumnInput', 'ruleTypeIdentifier']}
+        updated_rule.update(cleaned_request)
+        updated_rule['id'] = rule_id  # Ensure ID doesn't change
+        updated_rule['lastUpdated'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        updated_rule['updatedBy'] = current_user.get('username', 'unknown')
+        
+        rules_data['rules'][rule_to_update] = updated_rule
+        
+        local_file_path = JSON_FILES['countryRules']
+        write_json_file(local_file_path, rules_data)
+        
+        logger.info(f"Country rule updated in local file {local_file_path}")
+        logger.info(f"Country rule {rule_id} updated successfully")
+        
+        return {
+            "message": "Country rule updated successfully",
+            "id": rule_id,
+            "updated": True
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating country rule: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error updating country rule: {str(e)}")
+
 @app.delete("/api/rules/{rule_id}")
 async def delete_rule(rule_id: str, current_user: dict = Depends(require_editor_or_admin)):
     """
-    Delete a rule by its ID.
+    Delete a model rule by its ID.
     
     Args:
         rule_id (str): The ID of the rule to delete
@@ -2547,7 +2989,7 @@ async def delete_rule(rule_id: str, current_user: dict = Depends(require_editor_
         dict: Success message and deleted rule info
     """
     try:
-        logger.info(f"Delete request for rule: {rule_id}")
+        logger.info(f"Delete request for model rule: {rule_id}")
         
         rules_data = read_json_file(JSON_FILES['rules'])
         
