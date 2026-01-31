@@ -432,6 +432,29 @@ export const updateGlossaryTerm = async (termId, glossaryData) => {
   }
 };
 
+export const updateDataProduct = async (productId, productData) => {
+  try {
+    const response = await fetch(`${API_URL}/data-products/${productId}`, {
+      method: 'PUT',
+      headers: { 
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
+      },
+      body: JSON.stringify(productData),
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+    }
+    const result = await response.json();
+    cacheService.invalidateByPrefix('data-products');
+    cacheService.invalidateByPrefix('dataProducts');
+    return result;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const deleteGlossaryTerm = async (termId) => {
   try {
     const response = await fetch(`${API_URL}/glossary/${termId}`, {
@@ -576,6 +599,66 @@ export const deleteToolkitComponent = async (componentType, componentId) => {
   }
 };
 
+export const updateToolkitPackage = async (packageId, packageData) => {
+  try {
+    const response = await fetch(`${API_URL}/toolkit/packages/${encodeURIComponent(packageId)}`, {
+      method: 'PUT',
+      headers: { 
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
+      },
+      body: JSON.stringify(packageData),
+    });
+    
+    if (!response.ok) {
+      let errorMessage = `HTTP error! status: ${response.status}`;
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.detail || errorData.message || errorMessage;
+      } catch (e) {
+        // If response is not JSON, try to get text
+        try {
+          const text = await response.text();
+          if (text) errorMessage = text;
+        } catch (e2) {
+          // Ignore
+        }
+      }
+      throw new Error(errorMessage);
+    }
+    
+    const result = await response.json();
+    cacheService.invalidateByPrefix('toolkit');
+    return result;
+  } catch (error) {
+    // Re-throw with more context if it's not already an Error
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error(String(error));
+  }
+};
+
+export const deleteToolkitPackage = async (packageId) => {
+  try {
+    const response = await fetch(`${API_URL}/toolkit/packages/${encodeURIComponent(packageId)}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders()
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+    }
+    
+    const result = await response.json();
+    cacheService.invalidateByPrefix('toolkit');
+    return result;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const trackToolkitComponentClick = async (componentType, componentId) => {
   try {
     const response = await fetch(`${API_URL}/toolkit/${componentType}/${componentId}/click`, {
@@ -599,6 +682,33 @@ export const trackToolkitComponentClick = async (componentType, componentId) => 
   } catch (error) {
     // Don't throw error - click tracking shouldn't break navigation
     console.error('Error tracking toolkit click:', error);
+    return { clickCount: 0 };
+  }
+};
+
+export const trackToolkitPackageClick = async (packageName) => {
+  try {
+    const response = await fetch(`${API_URL}/toolkit/packages/${encodeURIComponent(packageName)}/click`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    
+    // Invalidate cache for toolkit to get updated click count
+    cacheService.invalidateByPrefix('toolkit');
+    
+    return result;
+  } catch (error) {
+    // Don't throw error - click tracking shouldn't break navigation
+    console.error('Error tracking toolkit package click:', error);
     return { clickCount: 0 };
   }
 };
@@ -1104,6 +1214,48 @@ export const getRuleCoverage = async (modelShortName) => {
     const data = await response.json();
     return data;
   } catch (error) {
+    throw error;
+  }
+};
+
+// Datasets and Pipelines Functions
+export const fetchDatasets = async (options = {}) => {
+  try {
+    const data = await fetchData('datasets', options);
+    return data.datasets || data || [];
+  } catch (error) {
+    console.error('Error fetching datasets:', error);
+    throw error;
+  }
+};
+
+export const fetchDatasetById = async (datasetId, options = {}) => {
+  try {
+    const response = await fetch(`${API_URL}/datasets/${datasetId}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
+      }
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const fetchPipelines = async (options = {}) => {
+  try {
+    const data = await fetchData('pipelines', options);
+    return data.pipelines || data || [];
+  } catch (error) {
+    console.error('Error fetching pipelines:', error);
     throw error;
   }
 };

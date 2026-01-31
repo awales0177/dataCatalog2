@@ -34,12 +34,12 @@ import {
   Storage as StorageIcon,
   Cloud as CloudIcon,
   Add as AddIcon,
-  Visibility as VisibilityIcon,
   FilterList as FilterListIcon,
   Clear as ClearIcon,
+  AutoAwesome as AutoAwesomeIcon,
 } from '@mui/icons-material';
 import { ThemeContext } from '../contexts/ThemeContext';
-import { fetchData, trackToolkitComponentClick } from '../services/api';
+import { fetchData } from '../services/api';
 import { useNavigate } from 'react-router-dom';
 
 const ToolkitPage = () => {
@@ -51,7 +51,6 @@ const ToolkitPage = () => {
   const [selectedTab, setSelectedTab] = useState(0);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
   const [addMenuAnchor, setAddMenuAnchor] = useState(null);
-  const [componentClickCounts, setComponentClickCounts] = useState({});
   const [selectedPackage, setSelectedPackage] = useState('all');
 
   useEffect(() => {
@@ -59,17 +58,6 @@ const ToolkitPage = () => {
       try {
         const data = await fetchData('toolkit');
         setToolkitData(data);
-        
-        // Initialize click counts from loaded data
-        const counts = {};
-        ['functions', 'containers', 'infrastructure'].forEach(type => {
-          const components = data.toolkit[type] || [];
-          components.forEach(component => {
-            const key = `${type}_${component.id}`;
-            counts[key] = component.clickCount || 0;
-          });
-        });
-        setComponentClickCounts(counts);
       } catch (error) {
 
         setSnackbar({ open: true, message: 'Failed to load toolkit data', severity: 'error' });
@@ -118,51 +106,121 @@ const ToolkitPage = () => {
     return null;
   };
 
-  // Get all available packages from Python functions
-  const getAvailablePackages = () => {
-    if (!toolkitData || !toolkitData.toolkit.functions) return [];
+  // Group functions by package
+  const groupFunctionsByPackage = () => {
+    if (!toolkitData) return {};
     
-    const packages = new Set();
-    toolkitData.toolkit.functions.forEach(func => {
-      if (func.language === 'python') {
-        const pkg = getPackageName(func);
-        if (pkg) packages.add(pkg);
+    const packages = {};
+    const functions = toolkitData.toolkit.functions || [];
+    const packageMetadata = toolkitData.toolkit.packages || [];
+    
+    // First, create packages from functions (existing behavior)
+    functions.forEach(func => {
+      const pkgName = getPackageName(func) || 'Other';
+      if (!packages[pkgName]) {
+        packages[pkgName] = {
+          name: pkgName,
+          functions: [],
+          language: func.language || 'python',
+          description: `Package containing ${functions.filter(f => getPackageName(f) === pkgName).length} functions`,
+        };
+      }
+      packages[pkgName].functions.push(func);
+    });
+    
+    // Then, add packages from toolkit.packages array that don't have functions yet
+    packageMetadata.forEach(pkgMeta => {
+      const pkgName = pkgMeta.name;
+      if (!packages[pkgName]) {
+        // Package exists in metadata but has no functions
+        packages[pkgName] = {
+          name: pkgName,
+          functions: [],
+          language: 'python', // Default to python
+          description: pkgMeta.description || `Package ${pkgName}`,
+        };
+      } else {
+        // Package already exists, update description from metadata if available
+        if (pkgMeta.description) {
+          packages[pkgName].description = pkgMeta.description;
+        }
+      }
+      
+      // If package has functionIds, use those to populate functions
+      if (pkgMeta.functionIds && pkgMeta.functionIds.length > 0) {
+        const pkgFunctions = functions.filter(f => pkgMeta.functionIds.includes(f.id));
+        packages[pkgName].functions = pkgFunctions;
       }
     });
+    
+    return packages;
+  };
+
+  // Get all available packages from Python functions and packages array
+  const getAvailablePackages = () => {
+    if (!toolkitData) return [];
+    
+    const packages = new Set();
+    
+    // Add packages from functions
+    if (toolkitData.toolkit.functions) {
+      toolkitData.toolkit.functions.forEach(func => {
+        if (func.language === 'python') {
+          const pkg = getPackageName(func);
+          if (pkg) packages.add(pkg);
+        }
+      });
+    }
+    
+    // Add packages from toolkit.packages array
+    if (toolkitData.toolkit.packages) {
+      toolkitData.toolkit.packages.forEach(pkg => {
+        if (pkg.name) packages.add(pkg.name);
+      });
+    }
     
     return Array.from(packages).sort();
   };
 
   // Filter components based on search and package
   const getFilteredComponents = () => {
-    if (!toolkitData) return { functions: [], containers: [], infrastructure: [] };
+    if (!toolkitData) return { packages: [], containers: [], infrastructure: [] };
 
     let filtered = {
-      functions: toolkitData.toolkit.functions || [],
+      packages: Object.values(groupFunctionsByPackage()),
       containers: toolkitData.toolkit.containers || [],
       infrastructure: toolkitData.toolkit.infrastructure || []
     };
 
-    // Filter by package (only for Python functions)
+    // Filter by package (only for packages tab)
     if (selectedTab === 0 && selectedPackage !== 'all') {
-      filtered.functions = filtered.functions.filter(component => {
-        if (component.language !== 'python') return true; // Keep non-Python functions
-        const pkg = getPackageName(component);
-        return pkg === selectedPackage;
-      });
+      filtered.packages = filtered.packages.filter(pkg => pkg.name === selectedPackage);
     }
 
     // Filter by search term
     if (searchTerm.trim()) {
       const searchLower = searchTerm.toLowerCase();
-      Object.keys(filtered).forEach(key => {
+      
+      // Filter packages
+      filtered.packages = filtered.packages.filter(pkg => {
+        const matchesPackage = pkg.name.toLowerCase().includes(searchLower);
+        const matchesFunctions = pkg.functions.some(func =>
+          (func.displayName && func.displayName.toLowerCase().includes(searchLower)) ||
+          (func.name && func.name.toLowerCase().includes(searchLower)) ||
+          (func.description && func.description.toLowerCase().includes(searchLower)) ||
+          (func.tags && func.tags.some(tag => tag.toLowerCase().includes(searchLower)))
+        );
+        return matchesPackage || matchesFunctions;
+      });
+      
+      // Filter containers and infrastructure
+      ['containers', 'infrastructure'].forEach(key => {
         filtered[key] = filtered[key].filter(component =>
-          // Prioritize displayName over name for search
           (component.displayName && component.displayName.toLowerCase().includes(searchLower)) ||
           (component.name && component.name.toLowerCase().includes(searchLower)) ||
-          component.description.toLowerCase().includes(searchLower) ||
-          component.tags.some(tag => tag.toLowerCase().includes(searchLower)) ||
-          component.author.toLowerCase().includes(searchLower)
+          (component.description && component.description.toLowerCase().includes(searchLower)) ||
+          (component.tags && component.tags.some(tag => tag.toLowerCase().includes(searchLower))) ||
+          (component.author && component.author.toLowerCase().includes(searchLower))
         );
       });
     }
@@ -175,11 +233,6 @@ const ToolkitPage = () => {
 
   // Component card renderer
   const renderComponentCard = (component, type) => {
-    // Get click count from state or component data
-    const componentKey = `${type}_${component.id}`;
-    const clickCount = componentClickCounts[componentKey] !== undefined 
-      ? componentClickCounts[componentKey] 
-      : (component.clickCount || 0);
     const getLanguageIcon = (language) => {
       if (!language) return <CodeIcon />;
       
@@ -234,8 +287,8 @@ const ToolkitPage = () => {
 
     const getTypeIcon = () => {
       switch (type) {
-        case 'functions': 
-          return getLanguageIcon(component.language);
+        case 'packages': 
+          return getLanguageIcon(component.language || 'python');
         case 'containers': 
           return <StorageIcon />;
         case 'infrastructure': 
@@ -247,49 +300,41 @@ const ToolkitPage = () => {
 
     const getTypeColor = () => {
       switch (type) {
-        case 'functions': return currentTheme.primary;
+        case 'packages': return currentTheme.primary;
         case 'containers': return currentTheme.secondary || '#9c27b0';
         case 'infrastructure': return currentTheme.success || '#4caf50';
         default: return currentTheme.primary;
       }
     };
 
-    // Convert rating to percentage for progress bar
-    const ratingPercentage = (component.rating / 5) * 100;
+    // Get test coverage percentage (default to 0 if not available)
+    const testCoverage = component.testCoverage !== undefined ? component.testCoverage : 0;
 
-    const handleCardClick = async () => {
-      if (!component.id) return;
-      
-      // Check if this component has already been clicked in this session
-      const sessionKey = `toolkit_clicked_${type}_${component.id.toLowerCase()}`;
-      const alreadyClicked = sessionStorage.getItem(sessionKey);
-      
-      // Only track the click if it hasn't been clicked in this session
-      if (!alreadyClicked) {
-        try {
-          const result = await trackToolkitComponentClick(type, component.id);
-          if (result && result.clickCount !== undefined) {
-            // Update the click count in state
-            setComponentClickCounts(prev => ({
-              ...prev,
-              [componentKey]: result.clickCount
-            }));
-            // Mark as clicked in this session
-            sessionStorage.setItem(sessionKey, 'true');
-          }
-        } catch (error) {
-          // Silently fail - don't block navigation
-          console.error('Failed to track click:', error);
-        }
-      }
-      
+    const handleCardClick = () => {
       // Navigate to the detail page
       handleViewComponent(component, type);
     };
 
+    // For packages, get all unique tags from functions
+    const getAllTags = () => {
+      if (type === 'packages') {
+        const allTags = new Set();
+        component.functions.forEach(func => {
+          if (func.tags) {
+            func.tags.forEach(tag => allTags.add(tag));
+          }
+        });
+        return Array.from(allTags);
+      }
+      return component.tags || [];
+    };
+
+    const allTags = getAllTags();
+    const functionCount = type === 'packages' ? component.functions.length : null;
+
     return (
       <Card 
-        key={component.id} 
+        key={type === 'packages' ? component.name : component.id} 
         elevation={0}
         onClick={handleCardClick}
         sx={{ 
@@ -309,13 +354,13 @@ const ToolkitPage = () => {
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
             <Box>
               <Typography variant="h6" sx={{ fontWeight: 600, color: currentTheme.text }}>
-                {component.displayName || component.name}
+                {type === 'packages' ? component.name : (component.displayName || component.name)}
               </Typography>
-              {type === 'functions' && component.language === 'python' && getPackageName(component) && (
+              {type === 'packages' && functionCount !== null && (
                 <Chip
-                  label={getPackageName(component)}
+                  label={`${functionCount} ${functionCount === 1 ? 'function' : 'functions'}`}
                   size="small"
-                sx={{ 
+                  sx={{ 
                     mt: 0.5,
                     height: 20,
                     fontSize: '0.65rem',
@@ -340,11 +385,11 @@ const ToolkitPage = () => {
           </Box>
 
           <Typography variant="body2" sx={{ color: currentTheme.textSecondary, mb: 2 }}>
-            {component.description}
+            {component.description || (type === 'packages' ? `Package containing ${functionCount} functions` : component.description)}
           </Typography>
 
           <Box sx={{ mb: 2, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-            {component.tags.slice(0, 4).map((tag, index) => (
+            {allTags.slice(0, 4).map((tag, index) => (
               <Chip
                 key={index}
                 label={tag}
@@ -356,9 +401,9 @@ const ToolkitPage = () => {
                 }}
               />
             ))}
-            {component.tags.length > 4 && (
+            {allTags.length > 4 && (
               <Chip
-                label={`+${component.tags.length - 4} more`}
+                label={`+${allTags.length - 4} more`}
                 size="small"
                 sx={{
                   bgcolor: alpha(currentTheme.primary, 0.1),
@@ -372,15 +417,15 @@ const ToolkitPage = () => {
           <Box sx={{ mb: 2 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
               <Typography variant="caption" sx={{ color: currentTheme.textSecondary, mr: 1 }}>
-                Rating
+                Test Coverage
               </Typography>
               <Typography variant="caption" sx={{ color: currentTheme.primary, fontWeight: 600 }}>
-                {component.rating}/5
+                {testCoverage}%
               </Typography>
             </Box>
             <LinearProgress
               variant="determinate"
-              value={ratingPercentage}
+              value={testCoverage}
               sx={{
                 height: 6,
                 borderRadius: 3,
@@ -394,16 +439,6 @@ const ToolkitPage = () => {
           </Box>
 
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Tooltip title={`${clickCount} views`}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  <Typography variant="body2" sx={{ color: currentTheme.textSecondary }}>
-                    {clickCount}
-                  </Typography>
-                  <VisibilityIcon sx={{ fontSize: 16, color: currentTheme.primary }} />
-                </Box>
-              </Tooltip>
-            </Box>
             <Tooltip title={`v${component.version} - ${new Date(component.lastUpdated).toLocaleDateString()}`}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                 <Box
@@ -428,8 +463,8 @@ const ToolkitPage = () => {
 
   // Handle component viewing
   const handleViewComponent = (component, type) => {
-    if (type === 'functions') {
-      navigate(`/toolkit/function/${component.id}`);
+    if (type === 'packages') {
+      navigate(`/toolkit/package/${encodeURIComponent(component.id || component.name)}`);
     } else if (type === 'containers') {
       navigate(`/toolkit/container/${component.id}`);
     } else if (type === 'infrastructure') {
@@ -591,8 +626,8 @@ const ToolkitPage = () => {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 <CodeIcon />
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  Functions
-                  <Badge badgeContent={filteredComponents.functions.length} />
+                  Packages
+                  <Badge badgeContent={filteredComponents.packages.length} />
                 </Box>
               </Box>
             }
@@ -624,9 +659,9 @@ const ToolkitPage = () => {
 
       {/* Components Grid */}
       <Grid container spacing={3}>
-        {selectedTab === 0 && filteredComponents.functions.map(component => (
-          <Grid item xs={12} sm={6} md={4} lg={3} key={component.id}>
-            {renderComponentCard(component, 'functions')}
+        {selectedTab === 0 && filteredComponents.packages.map(component => (
+          <Grid item xs={12} sm={6} md={4} lg={3} key={component.name}>
+            {renderComponentCard(component, 'packages')}
           </Grid>
         ))}
         
@@ -688,7 +723,7 @@ const ToolkitPage = () => {
           <MenuItem
             onClick={() => {
               setAddMenuAnchor(null);
-              navigate('/toolkit/function/new');
+              navigate('/toolkit/package/new');
             }}
             sx={{
               color: currentTheme.text,
@@ -700,7 +735,7 @@ const ToolkitPage = () => {
             <ListItemIcon>
               <CodeIcon sx={{ color: currentTheme.primary }} />
             </ListItemIcon>
-            <ListItemText primary="Add Function" />
+            <ListItemText primary="Add Package" />
           </MenuItem>
           
           <MenuItem

@@ -661,6 +661,177 @@
       ]
     },
     {
+      "id": "agreement-001",
+      "name": "hi",
+      "description": "hi",
+      "status": "draft",
+      "owner": [
+        "Customer Portal"
+      ],
+      "specificationMaintainer": "",
+      "parentSystem": "",
+      "dataProducer": [
+        ""
+      ],
+      "dataValidator": "",
+      "dataConsumer": [],
+      "modelShortName": "",
+      "contractVersion": "1.0.0",
+      "deliveredVersion": [
+        "1.0.0"
+      ],
+      "deliveryFrequency": [
+        "One-Time"
+      ],
+      "startDate": "2025-12-11",
+      "endDate": "",
+      "fileFormat": "JSON",
+      "restricted": false,
+      "network": [
+        "internet"
+      ],
+      "sensitivityLevel": [
+        "public"
+      ],
+      "location": [
+        {
+          "bucket": "",
+          "description": ""
+        }
+      ],
+      "todo": {
+        "date": "2025-12-11T02:59:33.907Z",
+        "items": [
+          "Initial setup tasks"
+        ]
+      },
+      "changelog": [
+        {
+          "version": "1.0.0",
+          "date": "2025-12-11",
+          "changes": [
+            "Initial agreement creation"
+          ]
+        }
+      ],
+      "lastUpdated": "2025-12-10 21:59:45",
+      "versionHistory": [
+        {
+          "version": "1.0.0",
+          "timestamp": "2025-12-11T02:59:45.693Z",
+          "updatedBy": "user",
+          "changeDescription": "Agreement created",
+          "fieldChanges": [
+            {
+              "field": "owner",
+              "oldValue": "empty",
+              "newValue": "Customer Portal"
+            },
+            {
+              "field": "name",
+              "oldValue": "empty",
+              "newValue": "hi"
+            },
+            {
+              "field": "description",
+              "oldValue": "empty",
+              "newValue": "hi"
+            },
+            {
+              "field": "status",
+              "oldValue": "empty",
+              "newValue": "draft"
+            },
+            {
+              "field": "specificationMaintainer",
+              "oldValue": "empty",
+              "newValue": "empty"
+            },
+            {
+              "field": "parentSystem",
+              "oldValue": "empty",
+              "newValue": "empty"
+            },
+            {
+              "field": "dataProducer",
+              "oldValue": "empty",
+              "newValue": "[]"
+            },
+            {
+              "field": "dataValidator",
+              "oldValue": "empty",
+              "newValue": "empty"
+            },
+            {
+              "field": "dataConsumer",
+              "oldValue": "empty",
+              "newValue": "empty array"
+            },
+            {
+              "field": "modelShortName",
+              "oldValue": "empty",
+              "newValue": "empty"
+            },
+            {
+              "field": "contractVersion",
+              "oldValue": "empty",
+              "newValue": "1.0.0"
+            },
+            {
+              "field": "deliveredVersion",
+              "oldValue": "empty",
+              "newValue": "[1.0.0]"
+            },
+            {
+              "field": "deliveryFrequency",
+              "oldValue": "empty",
+              "newValue": "[One-Time]"
+            },
+            {
+              "field": "startDate",
+              "oldValue": "empty",
+              "newValue": "2025-12-11"
+            },
+            {
+              "field": "endDate",
+              "oldValue": "empty",
+              "newValue": "empty"
+            },
+            {
+              "field": "fileFormat",
+              "oldValue": "empty",
+              "newValue": "JSON"
+            },
+            {
+              "field": "restricted",
+              "oldValue": "empty",
+              "newValue": "false"
+            },
+            {
+              "field": "network",
+              "oldValue": "empty",
+              "newValue": "[internet]"
+            },
+            {
+              "field": "sensitivityLevel",
+              "oldValue": "empty",
+              "newValue": "[public]"
+            },
+            {
+              "field": "location",
+              "oldValue": "empty",
+              "newValue": "[[object Object]]"
+            },
+            {
+              "field": "todo",
+              "oldValue": "empty",
+              "newValue": "{date, items}"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "id": "contract-007",
       "name": "Content Managemen",
       "description": "Product agreement for content validation and publishing",
@@ -681,7 +852,7 @@
       "startDate": "2024-02-01T09:30:00Z",
       "endDate": null,
       "fileFormat": "ndjson",
-      "restricted": false,
+      "restricted": true,
       "network": [
         "internet"
       ],
@@ -727,7 +898,7 @@
           ]
         }
       ],
-      "lastUpdated": "2025-11-12 21:20:15",
+      "lastUpdated": "2025-12-10 22:13:56",
       "dataPolicies": [
         "retention_policy_001",
         "access_policy_001",
@@ -800,6 +971,19 @@
               "field": "owner",
               "oldValue": "Customer Porta",
               "newValue": "Analytics Dashboard"
+            }
+          ]
+        },
+        {
+          "version": "2.0.0",
+          "timestamp": "2025-12-11T03:13:56.021Z",
+          "updatedBy": "user",
+          "changeDescription": "Updated restricted",
+          "fieldChanges": [
+            {
+              "field": "restricted",
+              "oldValue": "false",
+              "newValue": "true"
             }
           ]
         }

@@ -153,16 +153,6 @@ const ProductAgreementsPage = () => {
             searchStr += agreement.network + ' ';
           }
         }
-        if (agreement.sensitivityLevel) {
-          if (Array.isArray(agreement.sensitivityLevel)) {
-            agreement.sensitivityLevel.forEach(level => {
-              if (level) searchStr += level + ' ';
-            });
-          } else {
-            searchStr += agreement.sensitivityLevel + ' ';
-          }
-        }
-        
         if (agreement.tags) {
           for (let i = 0; i < agreement.tags.length; i++) {
             if (agreement.tags[i]) {
@@ -233,9 +223,7 @@ const ProductAgreementsPage = () => {
       startDate: new Date().toISOString().slice(0, 10),
       endDate: '',
       fileFormat: 'JSON',
-      restricted: false,
       network: ['internet'],
-      sensitivityLevel: ['public'],
       location: {},
       todo: {
         date: new Date().toISOString(),

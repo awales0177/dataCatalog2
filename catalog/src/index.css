@@ -57,10 +57,12 @@ html.dark-mode {
 .MuiCard-root:hover {
   transform: translateY(-4px);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  border-color: #37ABBF;
 }
 
 .dark-mode .MuiCard-root:hover {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  border-color: #37ABBF;
 }
 
 /* Button hover effects */

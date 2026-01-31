@@ -25,7 +25,7 @@
       "meta": {
         "tier": "gold",
         "verified": false,
-        "clickCount": 5
+        "clickCount": 7
       },
       "changelog": [
         {
@@ -323,7 +323,7 @@
       "meta": {
         "tier": "bronze",
         "verified": true,
-        "clickCount": 1
+        "clickCount": 2
       },
       "changelog": [
         {
@@ -554,7 +554,8 @@
       ],
       "meta": {
         "tier": "gold",
-        "verified": true
+        "verified": true,
+        "clickCount": 1
       },
       "resources": {
         "code": "https://github.com/org/financial-transaction-model",
@@ -687,7 +688,8 @@
       ],
       "meta": {
         "tier": "silver",
-        "verified": true
+        "verified": true,
+        "clickCount": 1
       },
       "resources": {
         "code": "https://github.com/org/social-services-programs",

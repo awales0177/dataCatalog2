@@ -6,7 +6,13 @@ import { menuItems } from '../constants/navigation';
 export const useAppState = () => {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [isDrawerCollapsed, setIsDrawerCollapsed] = useState(false);
+  const [isDrawerCollapsed, setIsDrawerCollapsed] = useState(() => {
+    const saved = localStorage.getItem('drawerCollapsed');
+    return saved ? JSON.parse(saved) : false;
+  });
+  const [userManuallyCollapsed, setUserManuallyCollapsed] = useState(() => {
+    return localStorage.getItem('drawerManuallyCollapsed') === 'true';
+  });
   const [anchorEl, setAnchorEl] = useState(null);
   const [notificationsAnchorEl, setNotificationsAnchorEl] = useState(null);
   const [infoSidebarOpen, setInfoSidebarOpen] = useState(false);
@@ -40,6 +46,8 @@ export const useAppState = () => {
     if (path === '/toolkit' || path.startsWith('/toolkit/')) return 'toolkit';
     if (path === '/policies' || path.startsWith('/policies/')) return 'policies';
     if (path === '/reference' || path.startsWith('/reference/')) return 'reference';
+    if (path === '/pipelines' || path.startsWith('/pipelines/')) return 'pipelines';
+    if (path === '/data-products' || path.startsWith('/data-products/')) return 'data-products';
     if (path === '/glossary' || path.startsWith('/glossary/')) return 'glossary';
     if (path === '/statistics') return 'statistics';
     if (path === '/users') return 'users';
@@ -69,6 +77,10 @@ export const useAppState = () => {
       title = 'Data Policies';
     } else if (path === '/reference') {
       title = 'Reference Data';
+    } else if (path === '/pipelines') {
+      title = 'Pipelines';
+    } else if (path === '/data-products') {
+      title = 'Data Products';
     } else if (path.startsWith('/models/')) {
       const shortName = path.split('/').pop().toUpperCase();
       title = shortName;
@@ -173,8 +185,14 @@ export const useAppState = () => {
           menuItems.map(async (item) => {
             if (item.id === 'home') return item;
             try {
-              const endpoint = item.id === 'agreements' ? 'dataAgreements' : 
-                              item.id === 'models' ? 'models' : item.id;
+              let endpoint = item.id;
+              if (item.id === 'agreements') {
+                endpoint = 'dataAgreements';
+              } else if (item.id === 'models') {
+                endpoint = 'models';
+              } else if (item.id === 'data-products') {
+                endpoint = 'data-products';
+              }
               const count = await fetchItemCount(endpoint);
               return { ...item, count };
             } catch (error) {
@@ -227,7 +245,13 @@ export const useAppState = () => {
   }, [fetchDataModels]);
 
   // Add effect to handle sidebar collapse on detail pages, 2-level navigation and edit mode
+  // Only auto-collapse if user hasn't manually set a preference
   useEffect(() => {
+    // If user manually collapsed, respect that preference and don't auto-collapse
+    if (userManuallyCollapsed) {
+      return;
+    }
+
     const pathSegments = location.pathname.split('/').filter(segment => segment !== '');
     
     // Collapse if we're exactly 2 levels deep (e.g., /models/CUST)
@@ -246,7 +270,7 @@ export const useAppState = () => {
     } else {
       setIsDrawerCollapsed(false);
     }
-  }, [location.pathname]);
+  }, [location.pathname, userManuallyCollapsed]);
 
   // Event handlers
   const handleDrawerToggle = () => {
@@ -273,7 +297,20 @@ export const useAppState = () => {
   };
 
   const handleDrawerCollapse = () => {
-    setIsDrawerCollapsed(!isDrawerCollapsed);
+    const newCollapsedState = !isDrawerCollapsed;
+    setIsDrawerCollapsed(newCollapsedState);
+    // Save to localStorage
+    localStorage.setItem('drawerCollapsed', JSON.stringify(newCollapsedState));
+    
+    if (newCollapsedState) {
+      // User manually collapsed - mark as manual preference
+      setUserManuallyCollapsed(true);
+      localStorage.setItem('drawerManuallyCollapsed', 'true');
+    } else {
+      // User manually expanded - clear manual preference to allow auto-collapse again
+      setUserManuallyCollapsed(false);
+      localStorage.setItem('drawerManuallyCollapsed', 'false');
+    }
   };
 
   const handleInfoSidebarToggle = () => {

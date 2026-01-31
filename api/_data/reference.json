@@ -278,6 +278,21 @@
         ]
       },
       "id": "ref-002"
+    },
+    {
+      "name": "hi",
+      "domain": [],
+      "description": "hi",
+      "version": "1.0.0",
+      "status": "active",
+      "sourceDatasets": [],
+      "owner": "",
+      "upstreamLineage": [],
+      "downstreamLineage": [],
+      "changeLog": [],
+      "childTables": [],
+      "lastUpdated": "2025-12-10 21:59:29",
+      "id": "ref-003"
     }
   ]
 }

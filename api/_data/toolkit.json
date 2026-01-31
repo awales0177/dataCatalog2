@@ -2,376 +2,22 @@
   "toolkit": {
     "functions": [
       {
-        "id": "9d01dc44-4460-4460-8658-ae2b87541f21",
-        "name": "data_validation_utility",
-        "displayName": "Data Validation Utility",
-        "description": "A comprehensive data validation function that checks data types, formats, and business rules",
-        "language": "python",
-        "category": "data-processing",
+        "id": "7ccbebed-4d06-4a7c-8a82-c7096f5c9358",
+        "name": "Field",
+        "displayName": "Field",
+        "description": "Usage docs: https://docs.pydantic.dev/2.4/concepts/fields",
+        "type": "functions",
+        "category": "library-function",
         "tags": [
-          "validation",
-          "data",
-          "utility"
-        ],
-        "code": "def validate_data(data, schema):\n    # Data validation logic here\n    pass",
-        "author": "Data Team",
-        "version": "1.0.0",
-        "lastUpdated": "2025-08-28T00:01:34.133730",
-        "usage": "Import and use for any data validation needs",
-        "dependencies": [
           "pydantic",
-          "jsonschema"
-        ],
-        "examples": [
-          "data_cleaning",
-          "api_validation",
-          "database_checks"
-        ],
-        "parameters": [
-          {
-            "name": "data",
-            "type": "any",
-            "description": "The data to be validated against the schema",
-            "required": true,
-            "example": {
-              "name": "John",
-              "age": 30
-            }
-          },
-          {
-            "name": "schema",
-            "type": "dict",
-            "description": "The validation schema defining the expected data structure",
-            "required": true,
-            "example": {
-              "type": "object",
-              "properties": {
-                "name": {
-                  "type": "string"
-                },
-                "age": {
-                  "type": "number"
-                }
-              }
-            }
-          },
-          {
-            "name": "strict",
-            "type": "boolean",
-            "description": "Whether to enforce strict validation rules",
-            "required": false,
-            "default": false,
-            "allowedValues": [
-              true,
-              false
-            ]
-          },
-          {
-            "name": "maxErrors",
-            "type": "integer",
-            "description": "Maximum number of validation errors to collect before stopping",
-            "required": false,
-            "default": 10,
-            "min": 1,
-            "max": 100
-          },
-          {
-            "name": "datetype",
-            "type": "string",
-            "description": "Type of data to validate - either date or time format",
-            "required": true,
-            "allowedValues": [
-              "date",
-              "time"
-            ],
-            "default": "date",
-            "example": "date"
-          }
-        ],
-        "git": "https://github.com/example/data-validation-utility",
-        "rating": 4.8,
-        "downloads": 156,
-        "clickCount": 2
-      },
-      {
-        "id": "925ed9a2-9d8e-4dbf-b18e-3650ad28b2f0",
-        "name": "api_rate_limiter",
-        "displayName": "API Rate Limiter",
-        "description": "Efficient rate limiting implementation for API endpoints with Redis backend",
-        "language": "javascript",
-        "category": "api-management",
-        "tags": [
-          "rate-limiting",
-          "api",
-          "redis",
-          "performance"
-        ],
-        "code": "class RateLimiter {\n  constructor(options) {\n    // Rate limiting logic\n  }\n}",
-        "author": "DevOps Team",
-        "version": "2.1.0",
-        "lastUpdated": "2024-01-20T14:30:00Z",
-        "usage": "Add to Express.js middleware for API protection",
-        "dependencies": [
-          "redis",
-          "express"
-        ],
-        "examples": [
-          "user_api",
-          "public_api",
-          "webhook_endpoints"
-        ],
-        "parameters": [
-          {
-            "name": "options",
-            "type": "object",
-            "description": "Configuration options for the rate limiter including limits and time windows",
-            "required": true,
-            "example": {
-              "maxRequests": 100,
-              "windowMs": 60000
-            }
-          },
-          {
-            "name": "maxRequests",
-            "type": "integer",
-            "description": "Maximum number of requests allowed per time window",
-            "required": false,
-            "default": 100,
-            "min": 1,
-            "max": 10000
-          },
-          {
-            "name": "windowMs",
-            "type": "integer",
-            "description": "Time window in milliseconds for rate limiting",
-            "required": false,
-            "default": 60000,
-            "min": 1000,
-            "max": 3600000,
-            "example": 60000
-          },
-          {
-            "name": "skipSuccessfulRequests",
-            "type": "boolean",
-            "description": "Whether to skip rate limiting for successful requests",
-            "required": false,
-            "default": false,
-            "allowedValues": [
-              true,
-              false
-            ]
-          }
-        ],
-        "git": "https://github.com/example/api-rate-limiter",
-        "rating": 4.9,
-        "downloads": 89,
-        "clickCount": 1
-      },
-      {
-        "id": "f376221c-ff07-4ce3-aea5-f6312aa62af1",
-        "name": "what_do_i_do",
-        "displayName": "What Do I Do Function",
-        "description": "A placeholder function for testing and demonstration purposes",
-        "type": "functions",
-        "category": "utility",
-        "tags": [
-          "placeholder",
-          "test",
-          "demo"
-        ],
-        "author": "Developer",
-        "version": "1.0.0",
-        "lastUpdated": "2025-08-28T00:10:59.568073",
-        "usage": "This is a placeholder function for testing the toolkit system",
-        "dependencies": [],
-        "examples": [
-          "testing",
-          "demonstration"
-        ],
-        "git": "",
-        "rating": 5,
-        "downloads": 0,
-        "language": "python",
-        "code": "# This is a placeholder function\ndef what_do_i_do():\n    return 'This is a test function'",
-        "parameters": []
-      },
-      {
-        "id": "88f87bbc-0d07-4455-afa9-686d360adee6",
-        "name": "data_transformer",
-        "displayName": "Data Transformer",
-        "description": "Flexible data transformation utility that can convert between various data formats and structures",
-        "language": "python",
-        "category": "data-processing",
-        "tags": [
-          "transformation",
-          "data",
-          "conversion",
-          "utility"
-        ],
-        "code": "def transform_data(data, transformation_rules):\n    # Data transformation logic here\n    transformed = {}\n    for rule in transformation_rules:\n        # Apply transformation rules\n        pass\n    return transformed",
-        "author": "Data Engineering Team",
-        "version": "1.0.0",
-        "lastUpdated": "2025-01-15T10:30:00Z",
-        "usage": "Use for converting data between different formats and schemas",
-        "dependencies": [
-          "pandas",
-          "numpy"
-        ],
-        "examples": [
-          "csv_to_json",
-          "schema_migration",
-          "data_cleaning"
-        ],
-        "parameters": [
-          {
-            "name": "data",
-            "type": "any",
-            "description": "Input data to be transformed",
-            "required": true
-          },
-          {
-            "name": "transformation_rules",
-            "type": "list",
-            "description": "List of transformation rules to apply",
-            "required": true
-          }
-        ],
-        "git": "https://github.com/example/data-transformer",
-        "rating": 4.7,
-        "downloads": 78,
-        "clickCount": 1
-      },
-      {
-        "id": "5fe4f8e5-345a-40ab-a676-4dd6019b5ab1",
-        "name": "file_processor",
-        "displayName": "File Processo",
-        "description": "Efficient file processing utility with support for multiple file formats and batch operations",
-        "language": "python",
-        "category": "file-management",
-        "tags": [
-          "file",
-          "processing",
-          "batch",
-          "utility"
-        ],
-        "code": "def process_files(file_paths, processor_func):\n    results = []\n    for file_path in file_paths:\n        # Process each file\n        result = processor_func(file_path)\n        results.append(result)\n    return results",
-        "author": "Backend Team",
-        "version": "1.2.0",
-        "lastUpdated": "2025-09-09T03:50:33.931363",
-        "usage": "Process multiple files in batch with custom processing logic",
-        "dependencies": [
-          "pathlib",
-          "pandas"
-        ],
-        "examples": [
-          "batch_csv_processing",
-          "log_file_analysis",
-          "image_processing"
-        ],
-        "parameters": [
-          {
-            "name": "file_paths",
-            "type": "list",
-            "description": "List of file paths to process",
-            "required": true
-          },
-          {
-            "name": "processor_func",
-            "type": "function",
-            "description": "Function to apply to each file",
-            "required": true
-          }
-        ],
-        "git": "https://github.com/example/file-processor",
-        "rating": 4.6,
-        "downloads": 92
-      },
-      {
-        "id": "dfb5764e-0d55-4f4a-8cf3-149d799b3c8e",
-        "name": "load",
-        "displayName": "Load",
-        "description": "Load arrays or pickled objects from ``.npy``, ``.npz`` or pickled files.",
-        "type": "functions",
-        "category": "library-function",
-        "tags": [
-          "numpy",
           "auto-generated"
         ],
-        "author": "numpy library",
-        "version": "1.26.3",
-        "lastUpdated": "2025-12-02T19:49:36.916402",
-        "usage": "from numpy import load",
+        "author": "pydantic library",
+        "version": "2.4.2",
+        "lastUpdated": "2025-12-09T23:23:01.050713",
+        "usage": "from pydantic import Field",
         "dependencies": [
-          "numpy"
-        ],
-        "examples": [],
-        "git": "",
-        "rating": 5,
-        "downloads": 0,
-        "language": "python",
-        "code": "@set_module('numpy')\ndef load(file, mmap_mode=None, allow_pickle=False, fix_imports=True,\n         encoding='ASCII', *, max_header_size=format._MAX_HEADER_SIZE):\n    \"\"\"\n    Load arrays or pickled objects from ``.npy``, ``.npz`` or pickled files.\n\n    .. warning:: Loading files that contain object arrays uses the ``pickle``\n                 module, which is not secure against erroneous or maliciously\n                 constructed data. Consider passing ``allow_pickle=False`` to\n                 load data that is known not to contain object arrays for the\n                 safer handling of untrusted sources.\n\n    Parameters\n    ----------\n    file : file-like object, string, or pathlib.Path\n        The file to read. File-like objects must support the\n        ``seek()`` and ``read()`` methods and must always\n        be opened in binary mode.  Pickled files require that the\n        file-like object support the ``readline()`` method as well.\n    mmap_mode : {None, 'r+', 'r', 'w+', 'c'}, optional\n        If not None, then memory-map the file, using the given mode (see\n        `numpy.memmap` for a detailed description of the modes).  A\n        memory-mapped array is kept on disk. However, it can be accessed\n        and sliced like any ndarray.  Memory mapping is especially useful\n        for accessing small fragments of large files without reading the\n        entire file into memory.\n    allow_pickle : bool, optional\n        Allow loading pickled object arrays stored in npy files. Reasons for\n        disallowing pickles include security, as loading pickled data can\n        execute arbitrary code. If pickles are disallowed, loading object\n        arrays will fail. Default: False\n\n        .. versionchanged:: 1.16.3\n            Made default False in response to CVE-2019-6446.\n\n    fix_imports : bool, optional\n        Only useful when loading Python 2 generated pickled files on Python 3,\n        which includes npy/npz files containing object arrays. If `fix_imports`\n        is True, pickle will try to map the old Python 2 names to the new names\n        used in Python 3.\n    encoding : str, optional\n        What encoding to use when reading Python 2 strings. Only useful when\n        loading Python 2 generated pickled files in Python 3, which includes\n        npy/npz files containing object arrays. Values other than 'latin1',\n        'ASCII', and 'bytes' are not allowed, as they can corrupt numerical\n        data. Default: 'ASCII'\n    max_header_size : int, optional\n        Maximum allowed size of the header.  Large headers may not be safe\n        to load securely and thus require explicitly passing a larger value.\n        See :py:func:`ast.literal_eval()` for details.\n        This option is ignored when `allow_pickle` is passed.  In that case\n        the file is by definition trusted and the limit is unnecessary.\n\n    Returns\n    -------\n    result : array, tuple, dict, etc.\n        Data stored in the file. For ``.npz`` files, the returned instance\n        of NpzFile class must be closed to avoid leaking file descriptors.\n\n    Raises\n    ------\n    OSError\n        If the input file does not exist or cannot be read.\n    UnpicklingError\n        If ``allow_pickle=True``, but the file cannot be loaded as a pickle.\n    ValueError\n        The file contains an object array, but ``allow_pickle=False`` given.\n    EOFError\n        When calling ``np.load`` multiple times on the same file handle,\n        if all data has already been read\n\n    See Also\n    --------\n    save, savez, savez_compressed, loadtxt\n    memmap : Create a memory-map to an array stored in a file on disk.\n    lib.format.open_memmap : Create or load a memory-mapped ``.npy`` file.\n\n    Notes\n    -----\n    - If the file contains pickle data, then whatever object is stored\n      in the pickle is returned.\n    - If the file is a ``.npy`` file, then a single array is returned.\n    - If the file is a ``.npz`` file, then a dictionary-like object is\n      returned, containing ``{filename: array}`` key-value pairs, one for\n      each file in the archive.\n    - If the file is a ``.npz`` file, the returned value supports the\n      context manager protocol in a similar fashion to the open function::\n\n        with load('foo.npz') as data:\n            a = data['a']\n\n      The underlying file descriptor is closed when exiting the 'with'\n      block.\n\n    Examples\n    --------\n    Store data to disk, and load it again:\n\n    >>> np.save('/tmp/123', np.array([[1, 2, 3], [4, 5, 6]]))\n    >>> np.load('/tmp/123.npy')\n    array([[1, 2, 3],\n           [4, 5, 6]])\n\n    Store compressed data to disk, and load it again:\n\n    >>> a=np.array([[1, 2, 3], [4, 5, 6]])\n    >>> b=np.array([1, 2])\n    >>> np.savez('/tmp/123.npz', a=a, b=b)\n    >>> data = np.load('/tmp/123.npz')\n    >>> data['a']\n    array([[1, 2, 3],\n           [4, 5, 6]])\n    >>> data['b']\n    array([1, 2])\n    >>> data.close()\n\n    Mem-map the stored array, and then access the second row\n    directly from disk:\n\n    >>> X = np.load('/tmp/123.npy', mmap_mode='r')\n    >>> X[1, :]\n    memmap([4, 5, 6])\n\n    \"\"\"\n    if encoding not in ('ASCII', 'latin1', 'bytes'):\n        # The 'encoding' value for pickle also affects what encoding\n        # the serialized binary data of NumPy arrays is loaded\n        # in. Pickle does not pass on the encoding information to\n        # NumPy. The unpickling code in numpy.core.multiarray is\n        # written to assume that unicode data appearing where binary\n        # should be is in 'latin1'. 'bytes' is also safe, as is 'ASCII'.\n        #\n        # Other encoding values can corrupt binary data, and we\n        # purposefully disallow them. For the same reason, the errors=\n        # argument is not exposed, as values other than 'strict'\n        # result can similarly silently corrupt numerical data.\n        raise ValueError(\"encoding must be 'ASCII', 'latin1', or 'bytes'\")\n\n    pickle_kwargs = dict(encoding=encoding, fix_imports=fix_imports)\n\n    with contextlib.ExitStack() as stack:\n        if hasattr(file, 'read'):\n            fid = file\n            own_fid = False\n        else:\n            fid = stack.enter_context(open(os_fspath(file), \"rb\"))\n            own_fid = True\n\n        # Code to distinguish from NumPy binary files and pickles.\n        _ZIP_PREFIX = b'PK\\x03\\x04'\n        _ZIP_SUFFIX = b'PK\\x05\\x06' # empty zip files start with this\n        N = len(format.MAGIC_PREFIX)\n        magic = fid.read(N)\n        if not magic:\n            raise EOFError(\"No data left in file\")\n        # If the file size is less than N, we need to make sure not\n        # to seek past the beginning of the file\n        fid.seek(-min(N, len(magic)), 1)  # back-up\n        if magic.startswith(_ZIP_PREFIX) or magic.startswith(_ZIP_SUFFIX):\n            # zip-file (assume .npz)\n            # Potentially transfer file ownership to NpzFile\n            stack.pop_all()\n            ret = NpzFile(fid, own_fid=own_fid, allow_pickle=allow_pickle,\n                          pickle_kwargs=pickle_kwargs,\n                          max_header_size=max_header_size)\n            return ret\n        elif magic == format.MAGIC_PREFIX:\n            # .npy file\n            if mmap_mode:\n                if allow_pickle:\n                    max_header_size = 2**64\n                return format.open_memmap(file, mode=mmap_mode,\n                                          max_header_size=max_header_size)\n            else:\n                return format.read_array(fid, allow_pickle=allow_pickle,\n                                         pickle_kwargs=pickle_kwargs,\n                                         max_header_size=max_header_size)\n        else:\n            # Try a pickle\n            if not allow_pickle:\n                raise ValueError(\"Cannot load file containing pickled data \"\n                                 \"when allow_pickle=False\")\n            try:\n                return pickle.load(fid, **pickle_kwargs)\n            except Exception as e:\n                raise pickle.UnpicklingError(\n                    f\"Failed to interpret file {file!r} as a pickle\") from e\n",
-        "parameters": [
-          {
-            "name": "file",
-            "type": "any",
-            "description": "",
-            "required": true,
-            "default": null
-          },
-          {
-            "name": "mmap_mode",
-            "type": "any",
-            "description": "",
-            "required": false,
-            "default": "None"
-          },
-          {
-            "name": "allow_pickle",
-            "type": "any",
-            "description": "",
-            "required": false,
-            "default": "False"
-          },
-          {
-            "name": "fix_imports",
-            "type": "any",
-            "description": "",
-            "required": false,
-            "default": "True"
-          },
-          {
-            "name": "encoding",
-            "type": "any",
-            "description": "",
-            "required": false,
-            "default": "ASCII"
-          },
-          {
-            "name": "max_header_size",
-            "type": "any",
-            "description": "",
-            "required": false,
-            "default": "10000"
-          }
-        ]
-      },
-      {
-        "id": "0d66eafa-199f-420f-83b3-47753d2a7471",
-        "name": "cast",
-        "displayName": "Cast",
-        "description": "Cast a value to a type.",
-        "type": "functions",
-        "category": "library-function",
-        "tags": [
-          "pyspark",
-          "auto-generated"
-        ],
-        "author": "pyspark library",
-        "version": "4.0.1",
-        "lastUpdated": "2025-12-02T20:07:46.474268",
-        "usage": "from pyspark import cast",
-        "dependencies": [
-          "pyspark"
+          "pydantic"
         ],
         "examples": [],
         "git": "",
@@ -379,422 +25,1376 @@
         "downloads": 0,
         "clickCount": 0,
         "language": "python",
-        "code": "def cast(typ, val):\n    \"\"\"Cast a value to a type.\n\n    This returns the value unchanged.  To the type checker this\n    signals that the return value has the designated type, but at\n    runtime we intentionally don't check anything (we want this\n    to be as fast as possible).\n    \"\"\"\n    return val\n",
+        "code": "def Field(  # noqa: C901\n    default: Any = PydanticUndefined,\n    *,\n    default_factory: typing.Callable[[], Any] | None = _Unset,\n    alias: str | None = _Unset,\n    alias_priority: int | None = _Unset,\n    validation_alias: str | AliasPath | AliasChoices | None = _Unset,\n    serialization_alias: str | None = _Unset,\n    title: str | None = _Unset,\n    description: str | None = _Unset,\n    examples: list[Any] | None = _Unset,\n    exclude: bool | None = _Unset,\n    discriminator: str | None = _Unset,\n    json_schema_extra: dict[str, Any] | typing.Callable[[dict[str, Any]], None] | None = _Unset,\n    frozen: bool | None = _Unset,\n    validate_default: bool | None = _Unset,\n    repr: bool = _Unset,\n    init_var: bool | None = _Unset,\n    kw_only: bool | None = _Unset,\n    pattern: str | None = _Unset,\n    strict: bool | None = _Unset,\n    gt: float | None = _Unset,\n    ge: float | None = _Unset,\n    lt: float | None = _Unset,\n    le: float | None = _Unset,\n    multiple_of: float | None = _Unset,\n    allow_inf_nan: bool | None = _Unset,\n    max_digits: int | None = _Unset,\n    decimal_places: int | None = _Unset,\n    min_length: int | None = _Unset,\n    max_length: int | None = _Unset,\n    union_mode: Literal['smart', 'left_to_right'] = _Unset,\n    **extra: Unpack[_EmptyKwargs],\n) -> Any:\n    \"\"\"Usage docs: https://docs.pydantic.dev/2.4/concepts/fields\n\n    Create a field for objects that can be configured.\n\n    Used to provide extra information about a field, either for the model schema or complex validation. Some arguments\n    apply only to number fields (`int`, `float`, `Decimal`) and some apply only to `str`.\n\n    Note:\n        - Any `_Unset` objects will be replaced by the corresponding value defined in the `_DefaultValues` dictionary. If a key for the `_Unset` object is not found in the `_DefaultValues` dictionary, it will default to `None`\n\n    Args:\n        default: Default value if the field is not set.\n        default_factory: A callable to generate the default value, such as :func:`~datetime.utcnow`.\n        alias: An alternative name for the attribute.\n        alias_priority: Priority of the alias. This affects whether an alias generator is used.\n        validation_alias: 'Whitelist' validation step. The field will be the single one allowed by the alias or set of\n            aliases defined.\n        serialization_alias: 'Blacklist' validation step. The vanilla field will be the single one of the alias' or set\n            of aliases' fields and all the other fields will be ignored at serialization time.\n        title: Human-readable title.\n        description: Human-readable description.\n        examples: Example values for this field.\n        exclude: Whether to exclude the field from the model serialization.\n        discriminator: Field name for discriminating the type in a tagged union.\n        json_schema_extra: Any additional JSON schema data for the schema property.\n        frozen: Whether the field is frozen.\n        validate_default: Run validation that isn't only checking existence of defaults. This can be set to `True` or `False`. If not set, it defaults to `None`.\n        repr: A boolean indicating whether to include the field in the `__repr__` output.\n        init_var: Whether the field should be included in the constructor of the dataclass.\n        kw_only: Whether the field should be a keyword-only argument in the constructor of the dataclass.\n        strict: If `True`, strict validation is applied to the field.\n            See [Strict Mode](../concepts/strict_mode.md) for details.\n        gt: Greater than. If set, value must be greater than this. Only applicable to numbers.\n        ge: Greater than or equal. If set, value must be greater than or equal to this. Only applicable to numbers.\n        lt: Less than. If set, value must be less than this. Only applicable to numbers.\n        le: Less than or equal. If set, value must be less than or equal to this. Only applicable to numbers.\n        multiple_of: Value must be a multiple of this. Only applicable to numbers.\n        min_length: Minimum length for strings.\n        max_length: Maximum length for strings.\n        pattern: Pattern for strings.\n        allow_inf_nan: Allow `inf`, `-inf`, `nan`. Only applicable to numbers.\n        max_digits: Maximum number of allow digits for strings.\n        decimal_places: Maximum number of decimal places allowed for numbers.\n        union_mode: The strategy to apply when validating a union. Can be `smart` (the default), or `left_to_right`.\n            See [Union Mode](standard_library_types.md#union-mode) for details.\n        extra: Include extra fields used by the JSON schema.\n\n            !!! warning Deprecated\n                The `extra` kwargs is deprecated. Use `json_schema_extra` instead.\n\n    Returns:\n        A new [`FieldInfo`][pydantic.fields.FieldInfo], the return annotation is `Any` so `Field` can be used on\n            type annotated fields without causing a typing error.\n    \"\"\"\n    # Check deprecated and removed params from V1. This logic should eventually be removed.\n    const = extra.pop('const', None)  # type: ignore\n    if const is not None:\n        raise PydanticUserError('`const` is removed, use `Literal` instead', code='removed-kwargs')\n\n    min_items = extra.pop('min_items', None)  # type: ignore\n    if min_items is not None:\n        warn('`min_items` is deprecated and will be removed, use `min_length` instead', DeprecationWarning)\n        if min_length in (None, _Unset):\n            min_length = min_items  # type: ignore\n\n    max_items = extra.pop('max_items', None)  # type: ignore\n    if max_items is not None:\n        warn('`max_items` is deprecated and will be removed, use `max_length` instead', DeprecationWarning)\n        if max_length in (None, _Unset):\n            max_length = max_items  # type: ignore\n\n    unique_items = extra.pop('unique_items', None)  # type: ignore\n    if unique_items is not None:\n        raise PydanticUserError(\n            (\n                '`unique_items` is removed, use `Set` instead'\n                '(this feature is discussed in https://github.com/pydantic/pydantic-core/issues/296)'\n            ),\n            code='removed-kwargs',\n        )\n\n    allow_mutation = extra.pop('allow_mutation', None)  # type: ignore\n    if allow_mutation is not None:\n        warn('`allow_mutation` is deprecated and will be removed. use `frozen` instead', DeprecationWarning)\n        if allow_mutation is False:\n            frozen = True\n\n    regex = extra.pop('regex', None)  # type: ignore\n    if regex is not None:\n        raise PydanticUserError('`regex` is removed. use `pattern` instead', code='removed-kwargs')\n\n    if extra:\n        warn(\n            'Using extra keyword arguments on `Field` is deprecated and will be removed.'\n            ' Use `json_schema_extra` instead.'\n            f' (Extra keys: {\", \".join(k.__repr__() for k in extra.keys())})',\n            DeprecationWarning,\n        )\n        if not json_schema_extra or json_schema_extra is _Unset:\n            json_schema_extra = extra  # type: ignore\n\n    if (\n        validation_alias\n        and validation_alias is not _Unset\n        and not isinstance(validation_alias, (str, AliasChoices, AliasPath))\n    ):\n        raise TypeError('Invalid `validation_alias` type. it should be `str`, `AliasChoices`, or `AliasPath`')\n\n    if serialization_alias in (_Unset, None) and isinstance(alias, str):\n        serialization_alias = alias\n\n    if validation_alias in (_Unset, None):\n        validation_alias = alias\n\n    include = extra.pop('include', None)  # type: ignore\n    if include is not None:\n        warn('`include` is deprecated and does nothing. It will be removed, use `exclude` instead', DeprecationWarning)\n\n    return FieldInfo.from_field(\n        default,\n        default_factory=default_factory,\n        alias=alias,\n        alias_priority=alias_priority,\n        validation_alias=validation_alias,\n        serialization_alias=serialization_alias,\n        title=title,\n        description=description,\n        examples=examples,\n        exclude=exclude,\n        discriminator=discriminator,\n        json_schema_extra=json_schema_extra,\n        frozen=frozen,\n        pattern=pattern,\n        validate_default=validate_default,\n        repr=repr,\n        init_var=init_var,\n        kw_only=kw_only,\n        strict=strict,\n        gt=gt,\n        ge=ge,\n        lt=lt,\n        le=le,\n        multiple_of=multiple_of,\n        min_length=min_length,\n        max_length=max_length,\n        allow_inf_nan=allow_inf_nan,\n        max_digits=max_digits,\n        decimal_places=decimal_places,\n        union_mode=union_mode,\n    )\n",
         "parameters": [
           {
-            "name": "typ",
-            "type": "any",
-            "description": "",
-            "required": true,
-            "default": null
+            "name": "default",
+            "type": "Any",
+            "description": "Default value if the field is not set.",
+            "required": false,
+            "default": "PydanticUndefined"
           },
           {
-            "name": "val",
-            "type": "any",
-            "description": "",
-            "required": true,
-            "default": null
-          }
-        ]
-      },
-      {
-        "id": "88127fef-4b02-4809-ba8f-5d08dc20c48c",
-        "name": "inheritable_thread_target",
-        "displayName": "Inheritable Thread Target",
-        "description": "Return thread target wrapper which is recommended to be used in PySpark when the",
-        "type": "functions",
-        "category": "library-function",
-        "tags": [
-          "pyspark",
-          "auto-generated"
-        ],
-        "author": "pyspark library",
-        "version": "4.0.1",
-        "lastUpdated": "2025-12-02T20:07:46.509729",
-        "usage": "from pyspark import inheritable_thread_target",
-        "dependencies": [
-          "pyspark"
-        ],
-        "examples": [],
-        "git": "",
-        "rating": 5.0,
-        "downloads": 0,
-        "clickCount": 0,
-        "language": "python",
-        "code": "def inheritable_thread_target(f: Optional[Union[Callable, \"SparkSession\"]] = None) -> Callable:\n    \"\"\"\n    Return thread target wrapper which is recommended to be used in PySpark when the\n    pinned thread mode is enabled. The wrapper function, before calling original\n    thread target, it inherits the inheritable properties specific\n    to JVM thread such as ``InheritableThreadLocal``, or thread local such as tags\n    with Spark Connect.\n\n    When the pinned thread mode is off, it return the original ``f``.\n\n    .. versionadded:: 3.2.0\n\n    .. versionchanged:: 3.5.0\n        Supports Spark Connect.\n\n    Parameters\n    ----------\n    f : function, or :class:`SparkSession`\n        the original thread target, or :class:`SparkSession` if Spark Connect is being used.\n        See the examples below.\n\n    Notes\n    -----\n    This API is experimental.\n\n    It is important to know that it captures the local properties or tags when you\n    decorate it whereas :class:`InheritableThread` captures when the thread is started.\n    Therefore, it is encouraged to decorate it when you want to capture the local\n    properties.\n\n    For example, the local properties or tags from the current Spark context or Spark\n    session is captured when you define a function here instead of the invocation:\n\n    >>> @inheritable_thread_target\n    ... def target_func():\n    ...     pass  # your codes.\n\n    If you have any updates on local properties or tags afterwards, it would not be\n    reflected to the Spark context in ``target_func()``.\n\n    The example below mimics the behavior of JVM threads as close as possible:\n\n    >>> Thread(target=inheritable_thread_target(target_func)).start()  # doctest: +SKIP\n\n    If you're using Spark Connect or if you want to inherit the tags properly,\n    you should explicitly provide Spark session as follows:\n\n    >>> @inheritable_thread_target(session)  # doctest: +SKIP\n    ... def target_func():\n    ...     pass  # your codes.\n\n    >>> Thread(target=inheritable_thread_target(session)(target_func)).start()  # doctest: +SKIP\n    \"\"\"\n    from pyspark.sql import is_remote\n\n    # Spark Connect\n    if is_remote():\n        session = f\n        assert session is not None, \"Spark Connect session must be provided.\"\n\n        def outer(ff: Callable) -> Callable:\n            thread_local = session.client.thread_local  # type: ignore[union-attr, operator]\n            session_client_thread_local_attrs = [\n                (attr, copy.deepcopy(value))\n                for (\n                    attr,\n                    value,\n                ) in thread_local.__dict__.items()\n            ]\n\n            @functools.wraps(ff)\n            def inner(*args: Any, **kwargs: Any) -> Any:\n                # Set thread locals in child thread.\n                for attr, value in session_client_thread_local_attrs:\n                    setattr(\n                        session.client.thread_local,  # type: ignore[union-attr, operator]\n                        attr,\n                        value,\n                    )\n                return ff(*args, **kwargs)\n\n            return inner\n\n        return outer\n\n    # Non Spark Connect with SparkSession or Callable\n    from pyspark.sql import SparkSession\n    from pyspark import SparkContext\n    from py4j.clientserver import ClientServer\n\n    if isinstance(SparkContext._gateway, ClientServer):\n        # Here's when the pinned-thread mode (PYSPARK_PIN_THREAD) is on.\n\n        if isinstance(f, SparkSession):\n            session = f\n            assert session is not None\n            tags = set(session.getTags())\n            # Local properties are copied when wrapping the function.\n            assert SparkContext._active_spark_context is not None\n            properties = SparkContext._active_spark_context._jsc.sc().getLocalProperties().clone()\n\n            def outer(ff: Callable) -> Callable:\n                @functools.wraps(ff)\n                def wrapped(*args: Any, **kwargs: Any) -> Any:\n                    # Apply properties and tags in the child thread.\n                    assert SparkContext._active_spark_context is not None\n                    SparkContext._active_spark_context._jsc.sc().setLocalProperties(properties)\n                    for tag in tags:\n                        session.addTag(tag)  # type: ignore[union-attr]\n                    return ff(*args, **kwargs)\n\n                return wrapped\n\n            return outer\n\n        warnings.warn(\n            \"Spark session is not provided. Tags will not be inherited.\",\n            UserWarning,\n        )\n\n        # NOTICE the internal difference vs `InheritableThread`. `InheritableThread`\n        # copies local properties when the thread starts but `inheritable_thread_target`\n        # copies when the function is wrapped.\n        assert SparkContext._active_spark_context is not None\n        properties = SparkContext._active_spark_context._jsc.sc().getLocalProperties().clone()\n        assert callable(f)\n\n        @functools.wraps(f)\n        def wrapped(*args: Any, **kwargs: Any) -> Any:\n            # Set local properties in child thread.\n            assert SparkContext._active_spark_context is not None\n            SparkContext._active_spark_context._jsc.sc().setLocalProperties(properties)\n            return f(*args, **kwargs)  # type: ignore[misc, operator]\n\n        return wrapped\n    else:\n        return f  # type: ignore[return-value]\n",
-        "parameters": [
+            "name": "default_factory",
+            "type": "typing.Callable[[], Any] | None",
+            "description": "A callable to generate the default value, such as :func:`~datetime.utcnow`.",
+            "required": false,
+            "default": "PydanticUndefined"
+          },
           {
-            "name": "f",
-            "type": "typing.Union[typing.Callable, ForwardRef('SparkSession'), NoneType]",
+            "name": "alias",
+            "type": "str | None",
+            "description": "An alternative name for the attribute.",
+            "required": false,
+            "default": "PydanticUndefined"
+          },
+          {
+            "name": "alias_priority",
+            "type": "int | None",
+            "description": "Priority of the alias. This affects whether an alias generator is used.",
+            "required": false,
+            "default": "PydanticUndefined"
+          },
+          {
+            "name": "validation_alias",
+            "type": "str | AliasPath | AliasChoices | None",
+            "description": "'Whitelist' validation step. The field will be the single one allowed by the alias or set of",
+            "required": false,
+            "default": "PydanticUndefined"
+          },
+          {
+            "name": "serialization_alias",
+            "type": "str | None",
+            "description": "'Blacklist' validation step. The vanilla field will be the single one of the alias' or set",
+            "required": false,
+            "default": "PydanticUndefined"
+          },
+          {
+            "name": "title",
+            "type": "str | None",
+            "description": "Human-readable title.",
+            "required": false,
+            "default": "PydanticUndefined"
+          },
+          {
+            "name": "description",
+            "type": "str | None",
+            "description": "Human-readable description.",
+            "required": false,
+            "default": "PydanticUndefined"
+          },
+          {
+            "name": "examples",
+            "type": "list[Any] | None",
             "description": "",
             "required": false,
-            "default": "None"
-          }
-        ]
-      },
-      {
-        "id": "c02ed318-77bc-47d0-a99d-af741d70f1ce",
-        "name": "is_remote_only",
-        "displayName": "Is Remote Only",
-        "description": "Returns if the current running environment is only for Spark Connect.",
-        "type": "functions",
-        "category": "library-function",
-        "tags": [
-          "pyspark",
-          "auto-generated"
-        ],
-        "author": "pyspark library",
-        "version": "4.0.1",
-        "lastUpdated": "2025-12-02T20:07:46.518231",
-        "usage": "from pyspark import is_remote_only",
-        "dependencies": [
-          "pyspark"
-        ],
-        "examples": [],
-        "git": "",
-        "rating": 5.0,
-        "downloads": 0,
-        "clickCount": 0,
-        "language": "python",
-        "code": "def is_remote_only() -> bool:\n    \"\"\"\n    Returns if the current running environment is only for Spark Connect.\n    If users install pyspark-client alone, RDD API does not exist.\n\n    .. versionadded:: 4.0.0\n\n    Notes\n    -----\n    This will only return ``True`` if installed PySpark is only for Spark Connect.\n    Otherwise, it returns ``False``.\n\n    This API is unstable, and for developers.\n\n    Returns\n    -------\n    bool\n\n    Examples\n    --------\n    >>> from pyspark.sql import is_remote\n    >>> is_remote()\n    False\n    \"\"\"\n    global _is_remote_only\n\n    if \"SPARK_SKIP_CONNECT_COMPAT_TESTS\" in os.environ:\n        return True\n\n    if _is_remote_only is not None:\n        return _is_remote_only\n    try:\n        from pyspark import core  # noqa: F401\n\n        _is_remote_only = False\n        return _is_remote_only\n    except ImportError:\n        _is_remote_only = True\n        return _is_remote_only\n",
-        "parameters": []
-      },
-      {
-        "id": "c09a4e73-1b60-424f-93b3-054aed77cff1",
-        "name": "keyword_only",
-        "displayName": "Keyword Only",
-        "description": "A decorator that forces keyword arguments in the wrapped method",
-        "type": "functions",
-        "category": "library-function",
-        "tags": [
-          "pyspark",
-          "auto-generated"
-        ],
-        "author": "pyspark library",
-        "version": "4.0.1",
-        "lastUpdated": "2025-12-02T20:07:46.524052",
-        "usage": "from pyspark import keyword_only",
-        "dependencies": [
-          "pyspark"
-        ],
-        "examples": [],
-        "git": "",
-        "rating": 5.0,
-        "downloads": 0,
-        "clickCount": 0,
-        "language": "python",
-        "code": "def keyword_only(func: _F) -> _F:\n    \"\"\"\n    A decorator that forces keyword arguments in the wrapped method\n    and saves actual input keyword arguments in `_input_kwargs`.\n\n    Notes\n    -----\n    Should only be used to wrap a method where first arg is `self`\n    \"\"\"\n\n    @wraps(func)\n    def wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:\n        if len(args) > 0:\n            raise TypeError(\"Method %s forces keyword arguments.\" % func.__name__)\n        self._input_kwargs = kwargs\n        return func(self, **kwargs)\n\n    return cast(_F, wrapper)\n",
-        "parameters": [
-          {
-            "name": "func",
-            "type": "~_F",
-            "description": "",
-            "required": true,
-            "default": null
-          }
-        ]
-      },
-      {
-        "id": "684bea60-18bd-4aaa-abd5-0d3980ef51f7",
-        "name": "since",
-        "displayName": "Since",
-        "description": "A decorator that annotates a function to append the version of Spark the function was added.",
-        "type": "functions",
-        "category": "library-function",
-        "tags": [
-          "pyspark",
-          "auto-generated"
-        ],
-        "author": "pyspark library",
-        "version": "4.0.1",
-        "lastUpdated": "2025-12-02T20:07:46.530424",
-        "usage": "from pyspark import since",
-        "dependencies": [
-          "pyspark"
-        ],
-        "examples": [],
-        "git": "",
-        "rating": 5.0,
-        "downloads": 0,
-        "clickCount": 0,
-        "language": "python",
-        "code": "def since(version: Union[str, float]) -> Callable[[_F], _F]:\n    \"\"\"\n    A decorator that annotates a function to append the version of Spark the function was added.\n    \"\"\"\n    import re\n\n    indent_p = re.compile(r\"\\n( +)\")\n\n    def deco(f: _F) -> _F:\n        assert f.__doc__ is not None\n\n        indents = indent_p.findall(f.__doc__)\n        indent = \" \" * (min(len(m) for m in indents) if indents else 0)\n        f.__doc__ = f.__doc__.rstrip() + \"\\n\\n%s.. versionadded:: %s\" % (indent, version)\n        return f\n\n    return deco\n",
-        "parameters": [
-          {
-            "name": "version",
-            "type": "typing.Union[str, float]",
-            "description": "",
-            "required": true,
-            "default": null
-          }
-        ]
-      },
-      {
-        "id": "5b426587-1355-4e79-9a7e-16a0eb1bd938",
-        "name": "wraps",
-        "displayName": "Wraps",
-        "description": "Decorator factory to apply update_wrapper() to a wrapper function",
-        "type": "functions",
-        "category": "library-function",
-        "tags": [
-          "pyspark",
-          "auto-generated"
-        ],
-        "author": "pyspark library",
-        "version": "4.0.1",
-        "lastUpdated": "2025-12-02T20:07:46.535445",
-        "usage": "from pyspark import wraps",
-        "dependencies": [
-          "pyspark"
-        ],
-        "examples": [],
-        "git": "",
-        "rating": 5.0,
-        "downloads": 0,
-        "clickCount": 1,
-        "language": "python",
-        "code": "def wraps(wrapped,\n          assigned = WRAPPER_ASSIGNMENTS,\n          updated = WRAPPER_UPDATES):\n    \"\"\"Decorator factory to apply update_wrapper() to a wrapper function\n\n       Returns a decorator that invokes update_wrapper() with the decorated\n       function as the wrapper argument and the arguments to wraps() as the\n       remaining arguments. Default arguments are as for update_wrapper().\n       This is a convenience function to simplify applying partial() to\n       update_wrapper().\n    \"\"\"\n    return partial(update_wrapper, wrapped=wrapped,\n                   assigned=assigned, updated=updated)\n",
-        "parameters": [
-          {
-            "name": "wrapped",
-            "type": "any",
-            "description": "",
-            "required": true,
-            "default": null
+            "default": "PydanticUndefined"
           },
           {
-            "name": "assigned",
-            "type": "any",
+            "name": "exclude",
+            "type": "bool | None",
             "description": "",
             "required": false,
-            "default": "('__module__', '__name__', '__qualname__', '__doc__', '__annotations__')"
+            "default": "PydanticUndefined"
           },
           {
-            "name": "updated",
-            "type": "any",
+            "name": "discriminator",
+            "type": "str | None",
             "description": "",
             "required": false,
-            "default": "('__dict__',)"
-          }
-        ]
-      },
-      {
-        "id": "ddde1c0e-deac-4692-8e26-711d78faa703",
-        "name": "array",
-        "displayName": "Array",
-        "description": "Create an array.",
-        "type": "functions",
-        "category": "library-function",
-        "tags": [
-          "pandas",
-          "auto-generated"
-        ],
-        "author": "pandas library",
-        "version": "2.2.0",
-        "lastUpdated": "2025-12-02T20:34:31.475791",
-        "usage": "from pandas import array",
-        "dependencies": [
-          "pandas"
-        ],
-        "examples": [],
-        "git": "",
-        "rating": 5,
-        "downloads": 0,
-        "clickCount": 1,
-        "language": "python",
-        "code": "def array(\n    data: Sequence[object] | AnyArrayLike,\n    dtype: Dtype | None = None,\n    copy: bool = True,\n) -> ExtensionArray:\n    \"\"\"\n    Create an array.\n\n    Parameters\n    ----------\n    data : Sequence of objects\n        The scalars inside `data` should be instances of the\n        scalar type for `dtype`. It's expected that `data`\n        represents a 1-dimensional array of data.\n\n        When `data` is an Index or Series, the underlying array\n        will be extracted from `data`.\n\n    dtype : str, np.dtype, or ExtensionDtype, optional\n        The dtype to use for the array. This may be a NumPy\n        dtype or an extension type registered with pandas using\n        :meth:`pandas.api.extensions.register_extension_dtype`.\n\n        If not specified, there are two possibilities:\n\n        1. When `data` is a :class:`Series`, :class:`Index`, or\n           :class:`ExtensionArray`, the `dtype` will be taken\n           from the data.\n        2. Otherwise, pandas will attempt to infer the `dtype`\n           from the data.\n\n        Note that when `data` is a NumPy array, ``data.dtype`` is\n        *not* used for inferring the array type. This is because\n        NumPy cannot represent all the types of data that can be\n        held in extension arrays.\n\n        Currently, pandas will infer an extension dtype for sequences of\n\n        ============================== =======================================\n        Scalar Type                    Array Type\n        ============================== =======================================\n        :class:`pandas.Interval`       :class:`pandas.arrays.IntervalArray`\n        :class:`pandas.Period`         :class:`pandas.arrays.PeriodArray`\n        :class:`datetime.datetime`     :class:`pandas.arrays.DatetimeArray`\n        :class:`datetime.timedelta`    :class:`pandas.arrays.TimedeltaArray`\n        :class:`int`                   :class:`pandas.arrays.IntegerArray`\n        :class:`float`                 :class:`pandas.arrays.FloatingArray`\n        :class:`str`                   :class:`pandas.arrays.StringArray` or\n                                       :class:`pandas.arrays.ArrowStringArray`\n        :class:`bool`                  :class:`pandas.arrays.BooleanArray`\n        ============================== =======================================\n\n        The ExtensionArray created when the scalar type is :class:`str` is determined by\n        ``pd.options.mode.string_storage`` if the dtype is not explicitly given.\n\n        For all other cases, NumPy's usual inference rules will be used.\n    copy : bool, default True\n        Whether to copy the data, even if not necessary. Depending\n        on the type of `data`, creating the new array may require\n        copying data, even if ``copy=False``.\n\n    Returns\n    -------\n    ExtensionArray\n        The newly created array.\n\n    Raises\n    ------\n    ValueError\n        When `data` is not 1-dimensional.\n\n    See Also\n    --------\n    numpy.array : Construct a NumPy array.\n    Series : Construct a pandas Series.\n    Index : Construct a pandas Index.\n    arrays.NumpyExtensionArray : ExtensionArray wrapping a NumPy array.\n    Series.array : Extract the array stored within a Series.\n\n    Notes\n    -----\n    Omitting the `dtype` argument means pandas will attempt to infer the\n    best array type from the values in the data. As new array types are\n    added by pandas and 3rd party libraries, the \"best\" array type may\n    change. We recommend specifying `dtype` to ensure that\n\n    1. the correct array type for the data is returned\n    2. the returned array type doesn't change as new extension types\n       are added by pandas and third-party libraries\n\n    Additionally, if the underlying memory representation of the returned\n    array matters, we recommend specifying the `dtype` as a concrete object\n    rather than a string alias or allowing it to be inferred. For example,\n    a future version of pandas or a 3rd-party library may include a\n    dedicated ExtensionArray for string data. In this event, the following\n    would no longer return a :class:`arrays.NumpyExtensionArray` backed by a\n    NumPy array.\n\n    >>> pd.array(['a', 'b'], dtype=str)\n    <NumpyExtensionArray>\n    ['a', 'b']\n    Length: 2, dtype: str32\n\n    This would instead return the new ExtensionArray dedicated for string\n    data. If you really need the new array to be backed by a  NumPy array,\n    specify that in the dtype.\n\n    >>> pd.array(['a', 'b'], dtype=np.dtype(\"<U1\"))\n    <NumpyExtensionArray>\n    ['a', 'b']\n    Length: 2, dtype: str32\n\n    Finally, Pandas has arrays that mostly overlap with NumPy\n\n      * :class:`arrays.DatetimeArray`\n      * :class:`arrays.TimedeltaArray`\n\n    When data with a ``datetime64[ns]`` or ``timedelta64[ns]`` dtype is\n    passed, pandas will always return a ``DatetimeArray`` or ``TimedeltaArray``\n    rather than a ``NumpyExtensionArray``. This is for symmetry with the case of\n    timezone-aware data, which NumPy does not natively support.\n\n    >>> pd.array(['2015', '2016'], dtype='datetime64[ns]')\n    <DatetimeArray>\n    ['2015-01-01 00:00:00', '2016-01-01 00:00:00']\n    Length: 2, dtype: datetime64[ns]\n\n    >>> pd.array([\"1h\", \"2h\"], dtype='timedelta64[ns]')\n    <TimedeltaArray>\n    ['0 days 01:00:00', '0 days 02:00:00']\n    Length: 2, dtype: timedelta64[ns]\n\n    Examples\n    --------\n    If a dtype is not specified, pandas will infer the best dtype from the values.\n    See the description of `dtype` for the types pandas infers for.\n\n    >>> pd.array([1, 2])\n    <IntegerArray>\n    [1, 2]\n    Length: 2, dtype: Int64\n\n    >>> pd.array([1, 2, np.nan])\n    <IntegerArray>\n    [1, 2, <NA>]\n    Length: 3, dtype: Int64\n\n    >>> pd.array([1.1, 2.2])\n    <FloatingArray>\n    [1.1, 2.2]\n    Length: 2, dtype: Float64\n\n    >>> pd.array([\"a\", None, \"c\"])\n    <StringArray>\n    ['a', <NA>, 'c']\n    Length: 3, dtype: string\n\n    >>> with pd.option_context(\"string_storage\", \"pyarrow\"):\n    ...     arr = pd.array([\"a\", None, \"c\"])\n    ...\n    >>> arr\n    <ArrowStringArray>\n    ['a', <NA>, 'c']\n    Length: 3, dtype: string\n\n    >>> pd.array([pd.Period('2000', freq=\"D\"), pd.Period(\"2000\", freq=\"D\")])\n    <PeriodArray>\n    ['2000-01-01', '2000-01-01']\n    Length: 2, dtype: period[D]\n\n    You can use the string alias for `dtype`\n\n    >>> pd.array(['a', 'b', 'a'], dtype='category')\n    ['a', 'b', 'a']\n    Categories (2, object): ['a', 'b']\n\n    Or specify the actual dtype\n\n    >>> pd.array(['a', 'b', 'a'],\n    ...          dtype=pd.CategoricalDtype(['a', 'b', 'c'], ordered=True))\n    ['a', 'b', 'a']\n    Categories (3, object): ['a' < 'b' < 'c']\n\n    If pandas does not infer a dedicated extension type a\n    :class:`arrays.NumpyExtensionArray` is returned.\n\n    >>> pd.array([1 + 1j, 3 + 2j])\n    <NumpyExtensionArray>\n    [(1+1j), (3+2j)]\n    Length: 2, dtype: complex128\n\n    As mentioned in the \"Notes\" section, new extension types may be added\n    in the future (by pandas or 3rd party libraries), causing the return\n    value to no longer be a :class:`arrays.NumpyExtensionArray`. Specify the\n    `dtype` as a NumPy dtype if you need to ensure there's no future change in\n    behavior.\n\n    >>> pd.array([1, 2], dtype=np.dtype(\"int32\"))\n    <NumpyExtensionArray>\n    [1, 2]\n    Length: 2, dtype: int32\n\n    `data` must be 1-dimensional. A ValueError is raised when the input\n    has the wrong dimensionality.\n\n    >>> pd.array(1)\n    Traceback (most recent call last):\n      ...\n    ValueError: Cannot pass scalar '1' to 'pandas.array'.\n    \"\"\"\n    from pandas.core.arrays import (\n        BooleanArray,\n        DatetimeArray,\n        ExtensionArray,\n        FloatingArray,\n        IntegerArray,\n        IntervalArray,\n        NumpyExtensionArray,\n        PeriodArray,\n        TimedeltaArray,\n    )\n    from pandas.core.arrays.string_ import StringDtype\n\n    if lib.is_scalar(data):\n        msg = f\"Cannot pass scalar '{data}' to 'pandas.array'.\"\n        raise ValueError(msg)\n    elif isinstance(data, ABCDataFrame):\n        raise TypeError(\"Cannot pass DataFrame to 'pandas.array'\")\n\n    if dtype is None and isinstance(data, (ABCSeries, ABCIndex, ExtensionArray)):\n        # Note: we exclude np.ndarray here, will do type inference on it\n        dtype = data.dtype\n\n    data = extract_array(data, extract_numpy=True)\n\n    # this returns None for not-found dtypes.\n    if dtype is not None:\n        dtype = pandas_dtype(dtype)\n\n    if isinstance(data, ExtensionArray) and (dtype is None or data.dtype == dtype):\n        # e.g. TimedeltaArray[s], avoid casting to NumpyExtensionArray\n        if copy:\n            return data.copy()\n        return data\n\n    if isinstance(dtype, ExtensionDtype):\n        cls = dtype.construct_array_type()\n        return cls._from_sequence(data, dtype=dtype, copy=copy)\n\n    if dtype is None:\n        inferred_dtype = lib.infer_dtype(data, skipna=True)\n        if inferred_dtype == \"period\":\n            period_data = cast(Union[Sequence[Optional[Period]], AnyArrayLike], data)\n            return PeriodArray._from_sequence(period_data, copy=copy)\n\n        elif inferred_dtype == \"interval\":\n            return IntervalArray(data, copy=copy)\n\n        elif inferred_dtype.startswith(\"datetime\"):\n            # datetime, datetime64\n            try:\n                return DatetimeArray._from_sequence(data, copy=copy)\n            except ValueError:\n                # Mixture of timezones, fall back to NumpyExtensionArray\n                pass\n\n        elif inferred_dtype.startswith(\"timedelta\"):\n            # timedelta, timedelta64\n            return TimedeltaArray._from_sequence(data, copy=copy)\n\n        elif inferred_dtype == \"string\":\n            # StringArray/ArrowStringArray depending on pd.options.mode.string_storage\n            dtype = StringDtype()\n            cls = dtype.construct_array_type()\n            return cls._from_sequence(data, dtype=dtype, copy=copy)\n\n        elif inferred_dtype == \"integer\":\n            return IntegerArray._from_sequence(data, copy=copy)\n        elif inferred_dtype == \"empty\" and not hasattr(data, \"dtype\") and not len(data):\n            return FloatingArray._from_sequence(data, copy=copy)\n        elif (\n            inferred_dtype in (\"floating\", \"mixed-integer-float\")\n            and getattr(data, \"dtype\", None) != np.float16\n        ):\n            # GH#44715 Exclude np.float16 bc FloatingArray does not support it;\n            #  we will fall back to NumpyExtensionArray.\n            return FloatingArray._from_sequence(data, copy=copy)\n\n        elif inferred_dtype == \"boolean\":\n            return BooleanArray._from_sequence(data, dtype=\"boolean\", copy=copy)\n\n    # Pandas overrides NumPy for\n    #   1. datetime64[ns,us,ms,s]\n    #   2. timedelta64[ns,us,ms,s]\n    # so that a DatetimeArray is returned.\n    if lib.is_np_dtype(dtype, \"M\") and is_supported_dtype(dtype):\n        return DatetimeArray._from_sequence(data, dtype=dtype, copy=copy)\n    if lib.is_np_dtype(dtype, \"m\") and is_supported_dtype(dtype):\n        return TimedeltaArray._from_sequence(data, dtype=dtype, copy=copy)\n\n    elif lib.is_np_dtype(dtype, \"mM\"):\n        warnings.warn(\n            r\"datetime64 and timedelta64 dtype resolutions other than \"\n            r\"'s', 'ms', 'us', and 'ns' are deprecated. \"\n            r\"In future releases passing unsupported resolutions will \"\n            r\"raise an exception.\",\n            FutureWarning,\n            stacklevel=find_stack_level(),\n        )\n\n    return NumpyExtensionArray._from_sequence(data, dtype=dtype, copy=copy)\n",
-        "parameters": [
-          {
-            "name": "data",
-            "type": "Sequence[object] | AnyArrayLike",
-            "description": "",
-            "required": true,
-            "default": null
+            "default": "PydanticUndefined"
           },
           {
-            "name": "dtype",
-            "type": "Dtype | None",
+            "name": "json_schema_extra",
+            "type": "dict[str, Any] | typing.Callable[[dict[str, Any]], None] | None",
             "description": "",
             "required": false,
-            "default": "None"
+            "default": "PydanticUndefined"
           },
           {
-            "name": "copy",
+            "name": "frozen",
+            "type": "bool | None",
+            "description": "",
+            "required": false,
+            "default": "PydanticUndefined"
+          },
+          {
+            "name": "validate_default",
+            "type": "bool | None",
+            "description": "",
+            "required": false,
+            "default": "PydanticUndefined"
+          },
+          {
+            "name": "repr",
             "type": "bool",
             "description": "",
             "required": false,
-            "default": "True"
+            "default": "PydanticUndefined"
+          },
+          {
+            "name": "init_var",
+            "type": "bool | None",
+            "description": "",
+            "required": false,
+            "default": "PydanticUndefined"
+          },
+          {
+            "name": "kw_only",
+            "type": "bool | None",
+            "description": "",
+            "required": false,
+            "default": "PydanticUndefined"
+          },
+          {
+            "name": "pattern",
+            "type": "str | None",
+            "description": "",
+            "required": false,
+            "default": "PydanticUndefined"
+          },
+          {
+            "name": "strict",
+            "type": "bool | None",
+            "description": "",
+            "required": false,
+            "default": "PydanticUndefined"
+          },
+          {
+            "name": "gt",
+            "type": "float | None",
+            "description": "",
+            "required": false,
+            "default": "PydanticUndefined"
+          },
+          {
+            "name": "ge",
+            "type": "float | None",
+            "description": "",
+            "required": false,
+            "default": "PydanticUndefined"
+          },
+          {
+            "name": "lt",
+            "type": "float | None",
+            "description": "",
+            "required": false,
+            "default": "PydanticUndefined"
+          },
+          {
+            "name": "le",
+            "type": "float | None",
+            "description": "",
+            "required": false,
+            "default": "PydanticUndefined"
+          },
+          {
+            "name": "multiple_of",
+            "type": "float | None",
+            "description": "",
+            "required": false,
+            "default": "PydanticUndefined"
+          },
+          {
+            "name": "allow_inf_nan",
+            "type": "bool | None",
+            "description": "",
+            "required": false,
+            "default": "PydanticUndefined"
+          },
+          {
+            "name": "max_digits",
+            "type": "int | None",
+            "description": "",
+            "required": false,
+            "default": "PydanticUndefined"
+          },
+          {
+            "name": "decimal_places",
+            "type": "int | None",
+            "description": "",
+            "required": false,
+            "default": "PydanticUndefined"
+          },
+          {
+            "name": "min_length",
+            "type": "int | None",
+            "description": "",
+            "required": false,
+            "default": "PydanticUndefined"
+          },
+          {
+            "name": "max_length",
+            "type": "int | None",
+            "description": "",
+            "required": false,
+            "default": "PydanticUndefined"
+          },
+          {
+            "name": "union_mode",
+            "type": "Literal['smart', 'left_to_right']",
+            "description": "",
+            "required": false,
+            "default": "PydanticUndefined"
+          },
+          {
+            "name": "extra",
+            "type": "Unpack[_EmptyKwargs]",
+            "description": "",
+            "required": true,
+            "default": null
+          }
+        ]
+      },
+      {
+        "id": "58e4fc2e-b4f8-414f-8aae-8d103139d9d5",
+        "name": "PrivateAttr",
+        "displayName": "Privateattr",
+        "description": "Indicates that attribute is only used internally and never mixed with regular fields.",
+        "type": "functions",
+        "category": "library-function",
+        "tags": [
+          "pydantic",
+          "auto-generated"
+        ],
+        "author": "pydantic library",
+        "version": "2.4.2",
+        "lastUpdated": "2025-12-09T23:23:01.059300",
+        "usage": "from pydantic import PrivateAttr",
+        "dependencies": [
+          "pydantic"
+        ],
+        "examples": [],
+        "git": "",
+        "rating": 5.0,
+        "downloads": 0,
+        "clickCount": 0,
+        "language": "python",
+        "code": "def PrivateAttr(\n    default: Any = PydanticUndefined,\n    *,\n    default_factory: typing.Callable[[], Any] | None = None,\n) -> Any:\n    \"\"\"Indicates that attribute is only used internally and never mixed with regular fields.\n\n    Private attributes are not checked by Pydantic, so it's up to you to maintain their accuracy.\n\n    Private attributes are stored in `__private_attributes__` on the model.\n\n    Args:\n        default: The attribute's default value. Defaults to Undefined.\n        default_factory: Callable that will be\n            called when a default value is needed for this attribute.\n            If both `default` and `default_factory` are set, an error will be raised.\n\n    Returns:\n        An instance of [`ModelPrivateAttr`][pydantic.fields.ModelPrivateAttr] class.\n\n    Raises:\n        ValueError: If both `default` and `default_factory` are set.\n    \"\"\"\n    if default is not PydanticUndefined and default_factory is not None:\n        raise TypeError('cannot specify both default and default_factory')\n\n    return ModelPrivateAttr(\n        default,\n        default_factory=default_factory,\n    )\n",
+        "parameters": [
+          {
+            "name": "default",
+            "type": "Any",
+            "description": "The attribute's default value. Defaults to Undefined.",
+            "required": false,
+            "default": "PydanticUndefined"
+          },
+          {
+            "name": "default_factory",
+            "type": "typing.Callable[[], Any] | None",
+            "description": "Callable that will be",
+            "required": false,
+            "default": "None"
+          }
+        ]
+      },
+      {
+        "id": "712e967a-d954-4c4c-92a6-632e425b8b90",
+        "name": "computed_field",
+        "displayName": "Computed Field",
+        "description": "Decorator to include `property` and `cached_property` when serializing models or dataclasses.",
+        "type": "functions",
+        "category": "library-function",
+        "tags": [
+          "pydantic",
+          "auto-generated"
+        ],
+        "author": "pydantic library",
+        "version": "2.4.2",
+        "lastUpdated": "2025-12-09T23:23:01.069203",
+        "usage": "from pydantic import computed_field",
+        "dependencies": [
+          "pydantic"
+        ],
+        "examples": [],
+        "git": "",
+        "rating": 5.0,
+        "downloads": 0,
+        "clickCount": 0,
+        "language": "python",
+        "code": "def computed_field(\n    __f: PropertyT | None = None,\n    *,\n    alias: str | None = None,\n    alias_priority: int | None = None,\n    title: str | None = None,\n    description: str | None = None,\n    repr: bool | None = None,\n    return_type: Any = PydanticUndefined,\n) -> PropertyT | typing.Callable[[PropertyT], PropertyT]:\n    \"\"\"Decorator to include `property` and `cached_property` when serializing models or dataclasses.\n\n    This is useful for fields that are computed from other fields, or for fields that are expensive to compute and should be cached.\n\n    ```py\n    from pydantic import BaseModel, computed_field\n\n    class Rectangle(BaseModel):\n        width: int\n        length: int\n\n        @computed_field\n        @property\n        def area(self) -> int:\n            return self.width * self.length\n\n    print(Rectangle(width=3, length=2).model_dump())\n    #> {'width': 3, 'length': 2, 'area': 6}\n    ```\n\n    If applied to functions not yet decorated with `@property` or `@cached_property`, the function is\n    automatically wrapped with `property`. Although this is more concise, you will lose IntelliSense in your IDE,\n    and confuse static type checkers, thus explicit use of `@property` is recommended.\n\n    !!! warning \"Mypy Warning\"\n        Even with the `@property` or `@cached_property` applied to your function before `@computed_field`,\n        mypy may throw a `Decorated property not supported` error.\n        See [mypy issue #1362](https://github.com/python/mypy/issues/1362), for more information.\n        To avoid this error message, add `# type: ignore[misc]` to the `@computed_field` line.\n\n        [pyright](https://github.com/microsoft/pyright) supports `@computed_field` without error.\n\n    ```py\n    import random\n\n    from pydantic import BaseModel, computed_field\n\n    class Square(BaseModel):\n        width: float\n\n        @computed_field\n        def area(self) -> float:  # converted to a `property` by `computed_field`\n            return round(self.width**2, 2)\n\n        @area.setter\n        def area(self, new_area: float) -> None:\n            self.width = new_area**0.5\n\n        @computed_field(alias='the magic number', repr=False)\n        def random_number(self) -> int:\n            return random.randint(0, 1_000)\n\n    square = Square(width=1.3)\n\n    # `random_number` does not appear in representation\n    print(repr(square))\n    #> Square(width=1.3, area=1.69)\n\n    print(square.random_number)\n    #> 3\n\n    square.area = 4\n\n    print(square.model_dump_json(by_alias=True))\n    #> {\"width\":2.0,\"area\":4.0,\"the magic number\":3}\n    ```\n\n    !!! warning \"Overriding with `computed_field`\"\n        You can't override a field from a parent class with a `computed_field` in the child class.\n        `mypy` complains about this behavior if allowed, and `dataclasses` doesn't allow this pattern either.\n        See the example below:\n\n    ```py\n    from pydantic import BaseModel, computed_field\n\n    class Parent(BaseModel):\n        a: str\n\n    try:\n\n        class Child(Parent):\n            @computed_field\n            @property\n            def a(self) -> str:\n                return 'new a'\n\n    except ValueError as e:\n        print(repr(e))\n        #> ValueError(\"you can't override a field with a computed field\")\n    ```\n\n    Private properties decorated with `@computed_field` have `repr=False` by default.\n\n    ```py\n    from functools import cached_property\n\n    from pydantic import BaseModel, computed_field\n\n    class Model(BaseModel):\n        foo: int\n\n        @computed_field\n        @cached_property\n        def _private_cached_property(self) -> int:\n            return -self.foo\n\n        @computed_field\n        @property\n        def _private_property(self) -> int:\n            return -self.foo\n\n    m = Model(foo=1)\n    print(repr(m))\n    #> M(foo=1)\n    ```\n\n    Args:\n        __f: the function to wrap.\n        alias: alias to use when serializing this computed field, only used when `by_alias=True`\n        alias_priority: priority of the alias. This affects whether an alias generator is used\n        title: Title to used when including this computed field in JSON Schema, currently unused waiting for #4697\n        description: Description to used when including this computed field in JSON Schema, defaults to the functions\n            docstring, currently unused waiting for #4697\n        repr: whether to include this computed field in model repr.\n            Default is `False` for private properties and `True` for public properties.\n        return_type: optional return for serialization logic to expect when serializing to JSON, if included\n            this must be correct, otherwise a `TypeError` is raised.\n            If you don't include a return type Any is used, which does runtime introspection to handle arbitrary\n            objects.\n\n    Returns:\n        A proxy wrapper for the property.\n    \"\"\"\n\n    def dec(f: Any) -> Any:\n        nonlocal description, return_type, alias_priority\n        unwrapped = _decorators.unwrap_wrapped_function(f)\n        if description is None and unwrapped.__doc__:\n            description = inspect.cleandoc(unwrapped.__doc__)\n\n        # if the function isn't already decorated with `@property` (or another descriptor), then we wrap it now\n        f = _decorators.ensure_property(f)\n        alias_priority = (alias_priority or 2) if alias is not None else None\n\n        if repr is None:\n            repr_: bool = False if _wrapped_property_is_private(property_=f) else True\n        else:\n            repr_ = repr\n\n        dec_info = ComputedFieldInfo(f, return_type, alias, alias_priority, title, description, repr_)\n        return _decorators.PydanticDescriptorProxy(f, dec_info)\n\n    if __f is None:\n        return dec\n    else:\n        return dec(__f)\n",
+        "parameters": [
+          {
+            "name": "__f",
+            "type": "PropertyT | None",
+            "description": "the function to wrap.",
+            "required": false,
+            "default": "None"
+          },
+          {
+            "name": "alias",
+            "type": "str | None",
+            "description": "alias to use when serializing this computed field, only used when `by_alias=True`",
+            "required": false,
+            "default": "None"
+          },
+          {
+            "name": "alias_priority",
+            "type": "int | None",
+            "description": "priority of the alias. This affects whether an alias generator is used",
+            "required": false,
+            "default": "None"
+          },
+          {
+            "name": "title",
+            "type": "str | None",
+            "description": "Title to used when including this computed field in JSON Schema, currently unused waiting for #4697",
+            "required": false,
+            "default": "None"
+          },
+          {
+            "name": "description",
+            "type": "str | None",
+            "description": "Description to used when including this computed field in JSON Schema, defaults to the functions",
+            "required": false,
+            "default": "None"
+          },
+          {
+            "name": "repr",
+            "type": "bool | None",
+            "description": "whether to include this computed field in model repr.",
+            "required": false,
+            "default": "None"
+          },
+          {
+            "name": "return_type",
+            "type": "Any",
+            "description": "optional return for serialization logic to expect when serializing to JSON, if included",
+            "required": false,
+            "default": "PydanticUndefined"
+          }
+        ]
+      },
+      {
+        "id": "af9b3a11-20e2-450c-b40f-895293c6d522",
+        "name": "conbytes",
+        "displayName": "Conbytes",
+        "description": "A wrapper around `bytes` that allows for additional constraints.",
+        "type": "functions",
+        "category": "library-function",
+        "tags": [
+          "pydantic",
+          "auto-generated"
+        ],
+        "author": "pydantic library",
+        "version": "2.4.2",
+        "lastUpdated": "2025-12-09T23:23:01.076190",
+        "usage": "from pydantic import conbytes",
+        "dependencies": [
+          "pydantic"
+        ],
+        "examples": [],
+        "git": "",
+        "rating": 5.0,
+        "downloads": 0,
+        "clickCount": 0,
+        "language": "python",
+        "code": "def conbytes(\n    *,\n    min_length: int | None = None,\n    max_length: int | None = None,\n    strict: bool | None = None,\n) -> type[bytes]:\n    \"\"\"A wrapper around `bytes` that allows for additional constraints.\n\n    Args:\n        min_length: The minimum length of the bytes.\n        max_length: The maximum length of the bytes.\n        strict: Whether to validate the bytes in strict mode.\n\n    Returns:\n        The wrapped bytes type.\n    \"\"\"\n    return Annotated[\n        bytes,\n        Strict(strict) if strict is not None else None,\n        annotated_types.Len(min_length or 0, max_length),\n    ]\n",
+        "parameters": [
+          {
+            "name": "min_length",
+            "type": "int | None",
+            "description": "The minimum length of the bytes.",
+            "required": false,
+            "default": "None"
+          },
+          {
+            "name": "max_length",
+            "type": "int | None",
+            "description": "The maximum length of the bytes.",
+            "required": false,
+            "default": "None"
+          },
+          {
+            "name": "strict",
+            "type": "bool | None",
+            "description": "Whether to validate the bytes in strict mode.",
+            "required": false,
+            "default": "None"
+          }
+        ]
+      },
+      {
+        "id": "b0938b8e-d043-439f-989d-e33f13215d56",
+        "name": "condate",
+        "displayName": "Condate",
+        "description": "A wrapper for date that adds constraints.",
+        "type": "functions",
+        "category": "library-function",
+        "tags": [
+          "pydantic",
+          "auto-generated"
+        ],
+        "author": "pydantic library",
+        "version": "2.4.2",
+        "lastUpdated": "2025-12-09T23:23:01.081961",
+        "usage": "from pydantic import condate",
+        "dependencies": [
+          "pydantic"
+        ],
+        "examples": [],
+        "git": "",
+        "rating": 5.0,
+        "downloads": 0,
+        "clickCount": 0,
+        "language": "python",
+        "code": "def condate(\n    *,\n    strict: bool | None = None,\n    gt: date | None = None,\n    ge: date | None = None,\n    lt: date | None = None,\n    le: date | None = None,\n) -> type[date]:\n    \"\"\"A wrapper for date that adds constraints.\n\n    Args:\n        strict: Whether to validate the date value in strict mode. Defaults to `None`.\n        gt: The value must be greater than this. Defaults to `None`.\n        ge: The value must be greater than or equal to this. Defaults to `None`.\n        lt: The value must be less than this. Defaults to `None`.\n        le: The value must be less than or equal to this. Defaults to `None`.\n\n    Returns:\n        A date type with the specified constraints.\n    \"\"\"\n    return Annotated[\n        date,\n        Strict(strict) if strict is not None else None,\n        annotated_types.Interval(gt=gt, ge=ge, lt=lt, le=le),\n    ]\n",
+        "parameters": [
+          {
+            "name": "strict",
+            "type": "bool | None",
+            "description": "Whether to validate the date value in strict mode. Defaults to `None`.",
+            "required": false,
+            "default": "None"
+          },
+          {
+            "name": "gt",
+            "type": "date | None",
+            "description": "The value must be greater than this. Defaults to `None`.",
+            "required": false,
+            "default": "None"
+          },
+          {
+            "name": "ge",
+            "type": "date | None",
+            "description": "The value must be greater than or equal to this. Defaults to `None`.",
+            "required": false,
+            "default": "None"
+          },
+          {
+            "name": "lt",
+            "type": "date | None",
+            "description": "The value must be less than this. Defaults to `None`.",
+            "required": false,
+            "default": "None"
+          },
+          {
+            "name": "le",
+            "type": "date | None",
+            "description": "The value must be less than or equal to this. Defaults to `None`.",
+            "required": false,
+            "default": "None"
+          }
+        ]
+      },
+      {
+        "id": "8176f964-0823-4d94-b6d2-90b9b239272f",
+        "name": "condecimal",
+        "displayName": "Condecimal",
+        "description": "!!! warning \"Discouraged\"",
+        "type": "functions",
+        "category": "library-function",
+        "tags": [
+          "pydantic",
+          "auto-generated"
+        ],
+        "author": "pydantic library",
+        "version": "2.4.2",
+        "lastUpdated": "2025-12-09T23:23:01.088379",
+        "usage": "from pydantic import condecimal",
+        "dependencies": [
+          "pydantic"
+        ],
+        "examples": [],
+        "git": "",
+        "rating": 5.0,
+        "downloads": 0,
+        "clickCount": 0,
+        "language": "python",
+        "code": "def condecimal(\n    *,\n    strict: bool | None = None,\n    gt: int | Decimal | None = None,\n    ge: int | Decimal | None = None,\n    lt: int | Decimal | None = None,\n    le: int | Decimal | None = None,\n    multiple_of: int | Decimal | None = None,\n    max_digits: int | None = None,\n    decimal_places: int | None = None,\n    allow_inf_nan: bool | None = None,\n) -> type[Decimal]:\n    \"\"\"\n    !!! warning \"Discouraged\"\n        This function is **discouraged** in favor of using\n        [`Annotated`](https://docs.python.org/3/library/typing.html#typing.Annotated) with\n        [`Field`][pydantic.fields.Field] instead.\n\n        This function will be **deprecated** in Pydantic 3.0.\n\n        The reason is that `condecimal` returns a type, which doesn't play well with static analysis tools.\n\n        === \":x: Don't do this\"\n            ```py\n            from pydantic import BaseModel, condecimal\n\n            class Foo(BaseModel):\n                bar: condecimal(strict=True, allow_inf_nan=True)\n            ```\n\n        === \":white_check_mark: Do this\"\n            ```py\n            from decimal import Decimal\n            from typing_extensions import Annotated\n\n            from pydantic import BaseModel, Field\n\n            class Foo(BaseModel):\n                bar: Annotated[Decimal, Field(strict=True, allow_inf_nan=True)]\n            ```\n\n    A wrapper around Decimal that adds validation.\n\n    Args:\n        strict: Whether to validate the value in strict mode. Defaults to `None`.\n        gt: The value must be greater than this. Defaults to `None`.\n        ge: The value must be greater than or equal to this. Defaults to `None`.\n        lt: The value must be less than this. Defaults to `None`.\n        le: The value must be less than or equal to this. Defaults to `None`.\n        multiple_of: The value must be a multiple of this. Defaults to `None`.\n        max_digits: The maximum number of digits. Defaults to `None`.\n        decimal_places: The number of decimal places. Defaults to `None`.\n        allow_inf_nan: Whether to allow infinity and NaN. Defaults to `None`.\n\n    ```py\n    from decimal import Decimal\n\n    from pydantic import BaseModel, ValidationError, condecimal\n\n    class ConstrainedExample(BaseModel):\n        constrained_decimal: condecimal(gt=Decimal('1.0'))\n\n    m = ConstrainedExample(constrained_decimal=Decimal('1.1'))\n    print(repr(m))\n    #> ConstrainedExample(constrained_decimal=Decimal('1.1'))\n\n    try:\n        ConstrainedExample(constrained_decimal=Decimal('0.9'))\n    except ValidationError as e:\n        print(e.errors())\n        '''\n        [\n            {\n                'type': 'greater_than',\n                'loc': ('constrained_decimal',),\n                'msg': 'Input should be greater than 1.0',\n                'input': Decimal('0.9'),\n                'ctx': {'gt': Decimal('1.0')},\n                'url': 'https://errors.pydantic.dev/2/v/greater_than',\n            }\n        ]\n        '''\n    ```\n    \"\"\"  # noqa: D212\n    return Annotated[\n        Decimal,\n        Strict(strict) if strict is not None else None,\n        annotated_types.Interval(gt=gt, ge=ge, lt=lt, le=le),\n        annotated_types.MultipleOf(multiple_of) if multiple_of is not None else None,\n        _fields.PydanticGeneralMetadata(max_digits=max_digits, decimal_places=decimal_places),\n        AllowInfNan(allow_inf_nan) if allow_inf_nan is not None else None,\n    ]\n",
+        "parameters": [
+          {
+            "name": "strict",
+            "type": "bool | None",
+            "description": "Whether to validate the value in strict mode. Defaults to `None`.",
+            "required": false,
+            "default": "None"
+          },
+          {
+            "name": "gt",
+            "type": "int | Decimal | None",
+            "description": "The value must be greater than this. Defaults to `None`.",
+            "required": false,
+            "default": "None"
+          },
+          {
+            "name": "ge",
+            "type": "int | Decimal | None",
+            "description": "The value must be greater than or equal to this. Defaults to `None`.",
+            "required": false,
+            "default": "None"
+          },
+          {
+            "name": "lt",
+            "type": "int | Decimal | None",
+            "description": "The value must be less than this. Defaults to `None`.",
+            "required": false,
+            "default": "None"
+          },
+          {
+            "name": "le",
+            "type": "int | Decimal | None",
+            "description": "The value must be less than or equal to this. Defaults to `None`.",
+            "required": false,
+            "default": "None"
+          },
+          {
+            "name": "multiple_of",
+            "type": "int | Decimal | None",
+            "description": "The value must be a multiple of this. Defaults to `None`.",
+            "required": false,
+            "default": "None"
+          },
+          {
+            "name": "max_digits",
+            "type": "int | None",
+            "description": "The maximum number of digits. Defaults to `None`.",
+            "required": false,
+            "default": "None"
+          },
+          {
+            "name": "decimal_places",
+            "type": "int | None",
+            "description": "The number of decimal places. Defaults to `None`.",
+            "required": false,
+            "default": "None"
+          },
+          {
+            "name": "allow_inf_nan",
+            "type": "bool | None",
+            "description": "Whether to allow infinity and NaN. Defaults to `None`.",
+            "required": false,
+            "default": "None"
+          }
+        ]
+      },
+      {
+        "id": "0a1cf751-587f-4044-ace8-382d4d033e86",
+        "name": "confloat",
+        "displayName": "Confloat",
+        "description": "!!! warning \"Discouraged\"",
+        "type": "functions",
+        "category": "library-function",
+        "tags": [
+          "pydantic",
+          "auto-generated"
+        ],
+        "author": "pydantic library",
+        "version": "2.4.2",
+        "lastUpdated": "2025-12-09T23:23:01.094144",
+        "usage": "from pydantic import confloat",
+        "dependencies": [
+          "pydantic"
+        ],
+        "examples": [],
+        "git": "",
+        "rating": 5.0,
+        "downloads": 0,
+        "clickCount": 0,
+        "language": "python",
+        "code": "def confloat(\n    *,\n    strict: bool | None = None,\n    gt: float | None = None,\n    ge: float | None = None,\n    lt: float | None = None,\n    le: float | None = None,\n    multiple_of: float | None = None,\n    allow_inf_nan: bool | None = None,\n) -> type[float]:\n    \"\"\"\n    !!! warning \"Discouraged\"\n        This function is **discouraged** in favor of using\n        [`Annotated`](https://docs.python.org/3/library/typing.html#typing.Annotated) with\n        [`Field`][pydantic.fields.Field] instead.\n\n        This function will be **deprecated** in Pydantic 3.0.\n\n        The reason is that `confloat` returns a type, which doesn't play well with static analysis tools.\n\n        === \":x: Don't do this\"\n            ```py\n            from pydantic import BaseModel, confloat\n\n            class Foo(BaseModel):\n                bar: confloat(strict=True, gt=0)\n            ```\n\n        === \":white_check_mark: Do this\"\n            ```py\n            from typing_extensions import Annotated\n            from pydantic import BaseModel, Field\n\n            class Foo(BaseModel):\n                bar: Annotated[float, Field(strict=True, gt=0)]\n            ```\n\n    A wrapper around `float` that allows for additional constraints.\n\n    Args:\n        strict: Whether to validate the float in strict mode.\n        gt: The value must be greater than this.\n        ge: The value must be greater than or equal to this.\n        lt: The value must be less than this.\n        le: The value must be less than or equal to this.\n        multiple_of: The value must be a multiple of this.\n        allow_inf_nan: Whether to allow `-inf`, `inf`, and `nan`.\n\n    Returns:\n        The wrapped float type.\n\n    ```py\n    from pydantic import BaseModel, ValidationError, confloat\n\n    class ConstrainedExample(BaseModel):\n        constrained_float: confloat(gt=1.0)\n\n    m = ConstrainedExample(constrained_float=1.1)\n    print(repr(m))\n    #> ConstrainedExample(constrained_float=1.1)\n\n    try:\n        ConstrainedExample(constrained_float=0.9)\n    except ValidationError as e:\n        print(e.errors())\n        '''\n        [\n            {\n                'type': 'greater_than',\n                'loc': ('constrained_float',),\n                'msg': 'Input should be greater than 1',\n                'input': 0.9,\n                'ctx': {'gt': 1.0},\n                'url': 'https://errors.pydantic.dev/2/v/greater_than',\n            }\n        ]\n        '''\n    ```\n    \"\"\"  # noqa: D212\n    return Annotated[\n        float,\n        Strict(strict) if strict is not None else None,\n        annotated_types.Interval(gt=gt, ge=ge, lt=lt, le=le),\n        annotated_types.MultipleOf(multiple_of) if multiple_of is not None else None,\n        AllowInfNan(allow_inf_nan) if allow_inf_nan is not None else None,\n    ]\n",
+        "parameters": [
+          {
+            "name": "strict",
+            "type": "bool | None",
+            "description": "Whether to validate the float in strict mode.",
+            "required": false,
+            "default": "None"
+          },
+          {
+            "name": "gt",
+            "type": "float | None",
+            "description": "The value must be greater than this.",
+            "required": false,
+            "default": "None"
+          },
+          {
+            "name": "ge",
+            "type": "float | None",
+            "description": "The value must be greater than or equal to this.",
+            "required": false,
+            "default": "None"
+          },
+          {
+            "name": "lt",
+            "type": "float | None",
+            "description": "The value must be less than this.",
+            "required": false,
+            "default": "None"
+          },
+          {
+            "name": "le",
+            "type": "float | None",
+            "description": "The value must be less than or equal to this.",
+            "required": false,
+            "default": "None"
+          },
+          {
+            "name": "multiple_of",
+            "type": "float | None",
+            "description": "The value must be a multiple of this.",
+            "required": false,
+            "default": "None"
+          },
+          {
+            "name": "allow_inf_nan",
+            "type": "bool | None",
+            "description": "Whether to allow `-inf`, `inf`, and `nan`.",
+            "required": false,
+            "default": "None"
+          }
+        ]
+      },
+      {
+        "id": "98619ba5-c7c8-48ef-b6cc-37f79cddc477",
+        "name": "confrozenset",
+        "displayName": "Confrozenset",
+        "description": "A wrapper around `typing.FrozenSet` that allows for additional constraints.",
+        "type": "functions",
+        "category": "library-function",
+        "tags": [
+          "pydantic",
+          "auto-generated"
+        ],
+        "author": "pydantic library",
+        "version": "2.4.2",
+        "lastUpdated": "2025-12-09T23:23:01.099815",
+        "usage": "from pydantic import confrozenset",
+        "dependencies": [
+          "pydantic"
+        ],
+        "examples": [],
+        "git": "",
+        "rating": 5.0,
+        "downloads": 0,
+        "clickCount": 0,
+        "language": "python",
+        "code": "def confrozenset(\n    item_type: type[HashableItemType], *, min_length: int | None = None, max_length: int | None = None\n) -> type[frozenset[HashableItemType]]:\n    \"\"\"A wrapper around `typing.FrozenSet` that allows for additional constraints.\n\n    Args:\n        item_type: The type of the items in the frozenset.\n        min_length: The minimum length of the frozenset.\n        max_length: The maximum length of the frozenset.\n\n    Returns:\n        The wrapped frozenset type.\n    \"\"\"\n    return Annotated[FrozenSet[item_type], annotated_types.Len(min_length or 0, max_length)]\n",
+        "parameters": [
+          {
+            "name": "item_type",
+            "type": "type[HashableItemType]",
+            "description": "The type of the items in the frozenset.",
+            "required": true,
+            "default": null
+          },
+          {
+            "name": "min_length",
+            "type": "int | None",
+            "description": "The minimum length of the frozenset.",
+            "required": false,
+            "default": "None"
+          },
+          {
+            "name": "max_length",
+            "type": "int | None",
+            "description": "The maximum length of the frozenset.",
+            "required": false,
+            "default": "None"
+          }
+        ]
+      },
+      {
+        "id": "544b0886-69d1-43bb-b118-63647e94185b",
+        "name": "conint",
+        "displayName": "Conint",
+        "description": "!!! warning \"Discouraged\"",
+        "type": "functions",
+        "category": "library-function",
+        "tags": [
+          "pydantic",
+          "auto-generated"
+        ],
+        "author": "pydantic library",
+        "version": "2.4.2",
+        "lastUpdated": "2025-12-09T23:23:01.105166",
+        "usage": "from pydantic import conint",
+        "dependencies": [
+          "pydantic"
+        ],
+        "examples": [],
+        "git": "",
+        "rating": 5.0,
+        "downloads": 0,
+        "clickCount": 0,
+        "language": "python",
+        "code": "def conint(\n    *,\n    strict: bool | None = None,\n    gt: int | None = None,\n    ge: int | None = None,\n    lt: int | None = None,\n    le: int | None = None,\n    multiple_of: int | None = None,\n) -> type[int]:\n    \"\"\"\n    !!! warning \"Discouraged\"\n        This function is **discouraged** in favor of using\n        [`Annotated`](https://docs.python.org/3/library/typing.html#typing.Annotated) with\n        [`Field`][pydantic.fields.Field] instead.\n\n        This function will be **deprecated** in Pydantic 3.0.\n\n        The reason is that `conint` returns a type, which doesn't play well with static analysis tools.\n\n        === \":x: Don't do this\"\n            ```py\n            from pydantic import BaseModel, conint\n\n            class Foo(BaseModel):\n                bar: conint(strict=True, gt=0)\n            ```\n\n        === \":white_check_mark: Do this\"\n            ```py\n            from typing_extensions import Annotated\n\n            from pydantic import BaseModel, Field\n\n            class Foo(BaseModel):\n                bar: Annotated[int, Field(strict=True, gt=0)]\n            ```\n\n    A wrapper around `int` that allows for additional constraints.\n\n    Args:\n        strict: Whether to validate the integer in strict mode. Defaults to `None`.\n        gt: The value must be greater than this.\n        ge: The value must be greater than or equal to this.\n        lt: The value must be less than this.\n        le: The value must be less than or equal to this.\n        multiple_of: The value must be a multiple of this.\n\n    Returns:\n        The wrapped integer type.\n\n    ```py\n    from pydantic import BaseModel, ValidationError, conint\n\n    class ConstrainedExample(BaseModel):\n        constrained_int: conint(gt=1)\n\n    m = ConstrainedExample(constrained_int=2)\n    print(repr(m))\n    #> ConstrainedExample(constrained_int=2)\n\n    try:\n        ConstrainedExample(constrained_int=0)\n    except ValidationError as e:\n        print(e.errors())\n        '''\n        [\n            {\n                'type': 'greater_than',\n                'loc': ('constrained_int',),\n                'msg': 'Input should be greater than 1',\n                'input': 0,\n                'ctx': {'gt': 1},\n                'url': 'https://errors.pydantic.dev/2/v/greater_than',\n            }\n        ]\n        '''\n    ```\n\n    \"\"\"  # noqa: D212\n    return Annotated[\n        int,\n        Strict(strict) if strict is not None else None,\n        annotated_types.Interval(gt=gt, ge=ge, lt=lt, le=le),\n        annotated_types.MultipleOf(multiple_of) if multiple_of is not None else None,\n    ]\n",
+        "parameters": [
+          {
+            "name": "strict",
+            "type": "bool | None",
+            "description": "Whether to validate the integer in strict mode. Defaults to `None`.",
+            "required": false,
+            "default": "None"
+          },
+          {
+            "name": "gt",
+            "type": "int | None",
+            "description": "The value must be greater than this.",
+            "required": false,
+            "default": "None"
+          },
+          {
+            "name": "ge",
+            "type": "int | None",
+            "description": "The value must be greater than or equal to this.",
+            "required": false,
+            "default": "None"
+          },
+          {
+            "name": "lt",
+            "type": "int | None",
+            "description": "The value must be less than this.",
+            "required": false,
+            "default": "None"
+          },
+          {
+            "name": "le",
+            "type": "int | None",
+            "description": "The value must be less than or equal to this.",
+            "required": false,
+            "default": "None"
+          },
+          {
+            "name": "multiple_of",
+            "type": "int | None",
+            "description": "The value must be a multiple of this.",
+            "required": false,
+            "default": "None"
+          }
+        ]
+      },
+      {
+        "id": "d46d2a39-3d44-44cb-97f3-4691964b747b",
+        "name": "conlist",
+        "displayName": "Conlist",
+        "description": "A wrapper around typing.List that adds validation.",
+        "type": "functions",
+        "category": "library-function",
+        "tags": [
+          "pydantic",
+          "auto-generated"
+        ],
+        "author": "pydantic library",
+        "version": "2.4.2",
+        "lastUpdated": "2025-12-09T23:23:01.110613",
+        "usage": "from pydantic import conlist",
+        "dependencies": [
+          "pydantic"
+        ],
+        "examples": [],
+        "git": "",
+        "rating": 5.0,
+        "downloads": 0,
+        "clickCount": 0,
+        "language": "python",
+        "code": "def conlist(\n    item_type: type[AnyItemType],\n    *,\n    min_length: int | None = None,\n    max_length: int | None = None,\n    unique_items: bool | None = None,\n) -> type[list[AnyItemType]]:\n    \"\"\"A wrapper around typing.List that adds validation.\n\n    Args:\n        item_type: The type of the items in the list.\n        min_length: The minimum length of the list. Defaults to None.\n        max_length: The maximum length of the list. Defaults to None.\n        unique_items: Whether the items in the list must be unique. Defaults to None.\n\n    Returns:\n        The wrapped list type.\n    \"\"\"\n    if unique_items is not None:\n        raise PydanticUserError(\n            (\n                '`unique_items` is removed, use `Set` instead'\n                '(this feature is discussed in https://github.com/pydantic/pydantic-core/issues/296)'\n            ),\n            code='removed-kwargs',\n        )\n    return Annotated[List[item_type], annotated_types.Len(min_length or 0, max_length)]\n",
+        "parameters": [
+          {
+            "name": "item_type",
+            "type": "type[AnyItemType]",
+            "description": "The type of the items in the list.",
+            "required": true,
+            "default": null
+          },
+          {
+            "name": "min_length",
+            "type": "int | None",
+            "description": "The minimum length of the list. Defaults to None.",
+            "required": false,
+            "default": "None"
+          },
+          {
+            "name": "max_length",
+            "type": "int | None",
+            "description": "The maximum length of the list. Defaults to None.",
+            "required": false,
+            "default": "None"
+          },
+          {
+            "name": "unique_items",
+            "type": "bool | None",
+            "description": "Whether the items in the list must be unique. Defaults to None.",
+            "required": false,
+            "default": "None"
+          }
+        ]
+      },
+      {
+        "id": "145e6fc5-c9bd-4aac-b21f-a65d6f3604b7",
+        "name": "conset",
+        "displayName": "Conset",
+        "description": "A wrapper around `typing.Set` that allows for additional constraints.",
+        "type": "functions",
+        "category": "library-function",
+        "tags": [
+          "pydantic",
+          "auto-generated"
+        ],
+        "author": "pydantic library",
+        "version": "2.4.2",
+        "lastUpdated": "2025-12-09T23:23:01.115102",
+        "usage": "from pydantic import conset",
+        "dependencies": [
+          "pydantic"
+        ],
+        "examples": [],
+        "git": "",
+        "rating": 5.0,
+        "downloads": 0,
+        "clickCount": 0,
+        "language": "python",
+        "code": "def conset(\n    item_type: type[HashableItemType], *, min_length: int | None = None, max_length: int | None = None\n) -> type[set[HashableItemType]]:\n    \"\"\"A wrapper around `typing.Set` that allows for additional constraints.\n\n    Args:\n        item_type: The type of the items in the set.\n        min_length: The minimum length of the set.\n        max_length: The maximum length of the set.\n\n    Returns:\n        The wrapped set type.\n    \"\"\"\n    return Annotated[Set[item_type], annotated_types.Len(min_length or 0, max_length)]\n",
+        "parameters": [
+          {
+            "name": "item_type",
+            "type": "type[HashableItemType]",
+            "description": "The type of the items in the set.",
+            "required": true,
+            "default": null
+          },
+          {
+            "name": "min_length",
+            "type": "int | None",
+            "description": "The minimum length of the set.",
+            "required": false,
+            "default": "None"
+          },
+          {
+            "name": "max_length",
+            "type": "int | None",
+            "description": "The maximum length of the set.",
+            "required": false,
+            "default": "None"
+          }
+        ]
+      },
+      {
+        "id": "31e19249-155a-421b-8117-485bfceb0776",
+        "name": "constr",
+        "displayName": "Constr",
+        "description": "!!! warning \"Discouraged\"",
+        "type": "functions",
+        "category": "library-function",
+        "tags": [
+          "pydantic",
+          "auto-generated"
+        ],
+        "author": "pydantic library",
+        "version": "2.4.2",
+        "lastUpdated": "2025-12-09T23:23:01.121658",
+        "usage": "from pydantic import constr",
+        "dependencies": [
+          "pydantic"
+        ],
+        "examples": [],
+        "git": "",
+        "rating": 5.0,
+        "downloads": 0,
+        "clickCount": 0,
+        "language": "python",
+        "code": "def constr(\n    *,\n    strip_whitespace: bool | None = None,\n    to_upper: bool | None = None,\n    to_lower: bool | None = None,\n    strict: bool | None = None,\n    min_length: int | None = None,\n    max_length: int | None = None,\n    pattern: str | None = None,\n) -> type[str]:\n    \"\"\"\n    !!! warning \"Discouraged\"\n        This function is **discouraged** in favor of using\n        [`Annotated`](https://docs.python.org/3/library/typing.html#typing.Annotated) with\n        [`StringConstraints`][pydantic.types.StringConstraints] instead.\n\n        This function will be **deprecated** in Pydantic 3.0.\n\n        The reason is that `constr` returns a type, which doesn't play well with static analysis tools.\n\n        === \":x: Don't do this\"\n            ```py\n            from pydantic import BaseModel, constr\n\n            class Foo(BaseModel):\n                bar: constr(strip_whitespace=True, to_upper=True, pattern=r'^[A-Z]+$')\n            ```\n\n        === \":white_check_mark: Do this\"\n            ```py\n            from pydantic import BaseModel, Annotated, StringConstraints\n\n            class Foo(BaseModel):\n                bar: Annotated[str, StringConstraints(strip_whitespace=True, to_upper=True, pattern=r'^[A-Z]+$')]\n            ```\n\n    A wrapper around `str` that allows for additional constraints.\n\n    ```py\n    from pydantic import BaseModel, constr\n\n    class Foo(BaseModel):\n        bar: constr(strip_whitespace=True, to_upper=True, pattern=r'^[A-Z]+$')\n\n\n    foo = Foo(bar='  hello  ')\n    print(foo)\n    #> bar='HELLO'\n    ```\n\n    Args:\n        strip_whitespace: Whether to remove leading and trailing whitespace.\n        to_upper: Whether to turn all characters to uppercase.\n        to_lower: Whether to turn all characters to lowercase.\n        strict: Whether to validate the string in strict mode.\n        min_length: The minimum length of the string.\n        max_length: The maximum length of the string.\n        pattern: A regex pattern to validate the string against.\n\n    Returns:\n        The wrapped string type.\n    \"\"\"  # noqa: D212\n    return Annotated[\n        str,\n        StringConstraints(\n            strip_whitespace=strip_whitespace,\n            to_upper=to_upper,\n            to_lower=to_lower,\n            strict=strict,\n            min_length=min_length,\n            max_length=max_length,\n            pattern=pattern,\n        ),\n    ]\n",
+        "parameters": [
+          {
+            "name": "strip_whitespace",
+            "type": "bool | None",
+            "description": "Whether to remove leading and trailing whitespace.",
+            "required": false,
+            "default": "None"
+          },
+          {
+            "name": "to_upper",
+            "type": "bool | None",
+            "description": "Whether to turn all characters to uppercase.",
+            "required": false,
+            "default": "None"
+          },
+          {
+            "name": "to_lower",
+            "type": "bool | None",
+            "description": "Whether to turn all characters to lowercase.",
+            "required": false,
+            "default": "None"
+          },
+          {
+            "name": "strict",
+            "type": "bool | None",
+            "description": "Whether to validate the string in strict mode.",
+            "required": false,
+            "default": "None"
+          },
+          {
+            "name": "min_length",
+            "type": "int | None",
+            "description": "The minimum length of the string.",
+            "required": false,
+            "default": "None"
+          },
+          {
+            "name": "max_length",
+            "type": "int | None",
+            "description": "The maximum length of the string.",
+            "required": false,
+            "default": "None"
+          },
+          {
+            "name": "pattern",
+            "type": "str | None",
+            "description": "A regex pattern to validate the string against.",
+            "required": false,
+            "default": "None"
+          }
+        ]
+      },
+      {
+        "id": "99ed2310-b957-4c67-9135-0a9121a63da4",
+        "name": "create_model",
+        "displayName": "Create Model",
+        "description": "Dynamically creates and returns a new Pydantic model, in other words, `create_model` dynamically creates a",
+        "type": "functions",
+        "category": "library-function",
+        "tags": [
+          "pydantic",
+          "auto-generated"
+        ],
+        "author": "pydantic library",
+        "version": "2.4.2",
+        "lastUpdated": "2025-12-09T23:23:01.127088",
+        "usage": "from pydantic import create_model",
+        "dependencies": [
+          "pydantic"
+        ],
+        "examples": [],
+        "git": "",
+        "rating": 5.0,
+        "downloads": 0,
+        "clickCount": 0,
+        "language": "python",
+        "code": "def create_model(\n    __model_name: str,\n    *,\n    __config__: ConfigDict | None = None,\n    __base__: type[Model] | tuple[type[Model], ...] | None = None,\n    __module__: str = __name__,\n    __validators__: dict[str, AnyClassMethod] | None = None,\n    __cls_kwargs__: dict[str, Any] | None = None,\n    __slots__: tuple[str, ...] | None = None,\n    **field_definitions: Any,\n) -> type[Model]:\n    \"\"\"Dynamically creates and returns a new Pydantic model, in other words, `create_model` dynamically creates a\n    subclass of [`BaseModel`][pydantic.BaseModel].\n\n    Args:\n        __model_name: The name of the newly created model.\n        __config__: The configuration of the new model.\n        __base__: The base class for the new model.\n        __module__: The name of the module that the model belongs to.\n        __validators__: A dictionary of methods that validate\n            fields.\n        __cls_kwargs__: A dictionary of keyword arguments for class creation.\n        __slots__: Deprecated. Should not be passed to `create_model`.\n        **field_definitions: Attributes of the new model. They should be passed in the format:\n            `<name>=(<type>, <default value>)` or `<name>=(<type>, <FieldInfo>)`.\n\n    Returns:\n        The new [model][pydantic.BaseModel].\n\n    Raises:\n        PydanticUserError: If `__base__` and `__config__` are both passed.\n    \"\"\"\n    if __slots__ is not None:\n        # __slots__ will be ignored from here on\n        warnings.warn('__slots__ should not be passed to create_model', RuntimeWarning)\n\n    if __base__ is not None:\n        if __config__ is not None:\n            raise PydanticUserError(\n                'to avoid confusion `__config__` and `__base__` cannot be used together',\n                code='create-model-config-base',\n            )\n        if not isinstance(__base__, tuple):\n            __base__ = (__base__,)\n    else:\n        __base__ = (typing.cast(typing.Type['Model'], BaseModel),)\n\n    __cls_kwargs__ = __cls_kwargs__ or {}\n\n    fields = {}\n    annotations = {}\n\n    for f_name, f_def in field_definitions.items():\n        if not _fields.is_valid_field_name(f_name):\n            warnings.warn(f'fields may not start with an underscore, ignoring \"{f_name}\"', RuntimeWarning)\n        if isinstance(f_def, tuple):\n            f_def = typing.cast('tuple[str, Any]', f_def)\n            try:\n                f_annotation, f_value = f_def\n            except ValueError as e:\n                raise PydanticUserError(\n                    'Field definitions should be a `(<type>, <default>)`.',\n                    code='create-model-field-definitions',\n                ) from e\n        else:\n            f_annotation, f_value = None, f_def\n\n        if f_annotation:\n            annotations[f_name] = f_annotation\n        fields[f_name] = f_value\n\n    namespace: dict[str, Any] = {'__annotations__': annotations, '__module__': __module__}\n    if __validators__:\n        namespace.update(__validators__)\n    namespace.update(fields)\n    if __config__:\n        namespace['model_config'] = _config.ConfigWrapper(__config__).config_dict\n    resolved_bases = types.resolve_bases(__base__)\n    meta, ns, kwds = types.prepare_class(__model_name, resolved_bases, kwds=__cls_kwargs__)\n    if resolved_bases is not __base__:\n        ns['__orig_bases__'] = __base__\n    namespace.update(ns)\n    return meta(__model_name, resolved_bases, namespace, __pydantic_reset_parent_namespace__=False, **kwds)\n",
+        "parameters": [
+          {
+            "name": "__model_name",
+            "type": "str",
+            "description": "The name of the newly created model.",
+            "required": true,
+            "default": null
+          },
+          {
+            "name": "__config__",
+            "type": "ConfigDict | None",
+            "description": "The configuration of the new model.",
+            "required": false,
+            "default": "None"
+          },
+          {
+            "name": "__base__",
+            "type": "type[Model] | tuple[type[Model], ...] | None",
+            "description": "The base class for the new model.",
+            "required": false,
+            "default": "None"
+          },
+          {
+            "name": "__module__",
+            "type": "str",
+            "description": "The name of the module that the model belongs to.",
+            "required": false,
+            "default": "pydantic.main"
+          },
+          {
+            "name": "__validators__",
+            "type": "dict[str, AnyClassMethod] | None",
+            "description": "A dictionary of methods that validate",
+            "required": false,
+            "default": "None"
+          },
+          {
+            "name": "__cls_kwargs__",
+            "type": "dict[str, Any] | None",
+            "description": "A dictionary of keyword arguments for class creation.",
+            "required": false,
+            "default": "None"
+          },
+          {
+            "name": "__slots__",
+            "type": "tuple[str, ...] | None",
+            "description": "Deprecated. Should not be passed to `create_model`.",
+            "required": false,
+            "default": "None"
+          },
+          {
+            "name": "field_definitions",
+            "type": "Any",
+            "description": "",
+            "required": true,
+            "default": null
+          }
+        ]
+      },
+      {
+        "id": "da2fcd89-faf5-4985-904f-9727c9336240",
+        "name": "field_serializer",
+        "displayName": "Field Serializer",
+        "description": "Decorator that enables custom field serialization.",
+        "type": "functions",
+        "category": "library-function",
+        "tags": [
+          "pydantic",
+          "auto-generated"
+        ],
+        "author": "pydantic library",
+        "version": "2.4.2",
+        "lastUpdated": "2025-12-09T23:23:01.131551",
+        "usage": "from pydantic import field_serializer",
+        "dependencies": [
+          "pydantic"
+        ],
+        "examples": [],
+        "git": "",
+        "rating": 5.0,
+        "downloads": 0,
+        "clickCount": 0,
+        "language": "python",
+        "code": "def field_serializer(\n    *fields: str,\n    mode: Literal['plain', 'wrap'] = 'plain',\n    return_type: Any = PydanticUndefined,\n    when_used: Literal['always', 'unless-none', 'json', 'json-unless-none'] = 'always',\n    check_fields: bool | None = None,\n) -> Callable[[Any], Any]:\n    \"\"\"Decorator that enables custom field serialization.\n\n    See [Custom serializers](../concepts/serialization.md#custom-serializers) for more information.\n\n    Four signatures are supported:\n\n    - `(self, value: Any, info: FieldSerializationInfo)`\n    - `(self, value: Any, nxt: SerializerFunctionWrapHandler, info: FieldSerializationInfo)`\n    - `(value: Any, info: SerializationInfo)`\n    - `(value: Any, nxt: SerializerFunctionWrapHandler, info: SerializationInfo)`\n\n    Args:\n        fields: Which field(s) the method should be called on.\n        mode: The serialization mode.\n\n            - `plain` means the function will be called instead of the default serialization logic,\n            - `wrap` means the function will be called with an argument to optionally call the\n               default serialization logic.\n        return_type: Optional return type for the function, if omitted it will be inferred from the type annotation.\n        when_used: Determines the serializer will be used for serialization.\n        check_fields: Whether to check that the fields actually exist on the model.\n\n    Returns:\n        The decorator function.\n    \"\"\"\n\n    def dec(\n        f: Callable[..., Any] | staticmethod[Any, Any] | classmethod[Any, Any, Any]\n    ) -> _decorators.PydanticDescriptorProxy[Any]:\n        dec_info = _decorators.FieldSerializerDecoratorInfo(\n            fields=fields,\n            mode=mode,\n            return_type=return_type,\n            when_used=when_used,\n            check_fields=check_fields,\n        )\n        return _decorators.PydanticDescriptorProxy(f, dec_info)\n\n    return dec\n",
+        "parameters": [
+          {
+            "name": "fields",
+            "type": "str",
+            "description": "Which field(s) the method should be called on.",
+            "required": true,
+            "default": null
+          },
+          {
+            "name": "mode",
+            "type": "Literal['plain', 'wrap']",
+            "description": "The serialization mode.",
+            "required": false,
+            "default": "plain"
+          },
+          {
+            "name": "return_type",
+            "type": "Any",
+            "description": "Optional return type for the function, if omitted it will be inferred from the type annotation.",
+            "required": false,
+            "default": "PydanticUndefined"
+          },
+          {
+            "name": "when_used",
+            "type": "Literal['always', 'unless-none', 'json', 'json-unless-none']",
+            "description": "Determines the serializer will be used for serialization.",
+            "required": false,
+            "default": "always"
+          },
+          {
+            "name": "check_fields",
+            "type": "bool | None",
+            "description": "Whether to check that the fields actually exist on the model.",
+            "required": false,
+            "default": "None"
+          }
+        ]
+      },
+      {
+        "id": "dd3a5a17-9eb5-446c-b3f5-f90edb11b9f7",
+        "name": "field_validator",
+        "displayName": "Field Validator",
+        "description": "Usage docs: https://docs.pydantic.dev/2.4/concepts/validators/#field-validators",
+        "type": "functions",
+        "category": "library-function",
+        "tags": [
+          "pydantic",
+          "auto-generated"
+        ],
+        "author": "pydantic library",
+        "version": "2.4.2",
+        "lastUpdated": "2025-12-09T23:23:01.137898",
+        "usage": "from pydantic import field_validator",
+        "dependencies": [
+          "pydantic"
+        ],
+        "examples": [],
+        "git": "",
+        "rating": 5.0,
+        "downloads": 0,
+        "clickCount": 0,
+        "language": "python",
+        "code": "def field_validator(\n    __field: str,\n    *fields: str,\n    mode: FieldValidatorModes = 'after',\n    check_fields: bool | None = None,\n) -> Callable[[Any], Any]:\n    \"\"\"Usage docs: https://docs.pydantic.dev/2.4/concepts/validators/#field-validators\n\n    Decorate methods on the class indicating that they should be used to validate fields.\n\n    Args:\n        __field: The first field the `field_validator` should be called on; this is separate\n            from `fields` to ensure an error is raised if you don't pass at least one.\n        *fields: Additional field(s) the `field_validator` should be called on.\n        mode: Specifies whether to validate the fields before or after validation.\n        check_fields: Whether to check that the fields actually exist on the model.\n\n    Returns:\n        A decorator that can be used to decorate a function to be used as a field_validator.\n\n    Raises:\n        PydanticUserError:\n            - If `@field_validator` is used bare (with no fields).\n            - If the args passed to `@field_validator` as fields are not strings.\n            - If `@field_validator` applied to instance methods.\n    \"\"\"\n    if isinstance(__field, FunctionType):\n        raise PydanticUserError(\n            '`@field_validator` should be used with fields and keyword arguments, not bare. '\n            \"E.g. usage should be `@validator('<field_name>', ...)`\",\n            code='validator-no-fields',\n        )\n    fields = __field, *fields\n    if not all(isinstance(field, str) for field in fields):\n        raise PydanticUserError(\n            '`@field_validator` fields should be passed as separate string args. '\n            \"E.g. usage should be `@validator('<field_name_1>', '<field_name_2>', ...)`\",\n            code='validator-invalid-fields',\n        )\n\n    def dec(\n        f: Callable[..., Any] | staticmethod[Any, Any] | classmethod[Any, Any, Any]\n    ) -> _decorators.PydanticDescriptorProxy[Any]:\n        if _decorators.is_instance_method_from_sig(f):\n            raise PydanticUserError(\n                '`@field_validator` cannot be applied to instance methods', code='validator-instance-method'\n            )\n\n        # auto apply the @classmethod decorator\n        f = _decorators.ensure_classmethod_based_on_signature(f)\n\n        dec_info = _decorators.FieldValidatorDecoratorInfo(fields=fields, mode=mode, check_fields=check_fields)\n        return _decorators.PydanticDescriptorProxy(f, dec_info)\n\n    return dec\n",
+        "parameters": [
+          {
+            "name": "__field",
+            "type": "str",
+            "description": "The first field the `field_validator` should be called on; this is separate",
+            "required": true,
+            "default": null
+          },
+          {
+            "name": "fields",
+            "type": "str",
+            "description": "",
+            "required": true,
+            "default": null
+          },
+          {
+            "name": "mode",
+            "type": "FieldValidatorModes",
+            "description": "Specifies whether to validate the fields before or after validation.",
+            "required": false,
+            "default": "after"
+          },
+          {
+            "name": "check_fields",
+            "type": "bool | None",
+            "description": "Whether to check that the fields actually exist on the model.",
+            "required": false,
+            "default": "None"
+          }
+        ]
+      },
+      {
+        "id": "656af366-245c-4837-b0e9-f85fb4a5e883",
+        "name": "getattr_migration",
+        "displayName": "Getattr Migration",
+        "description": "Implement PEP 562 for objects that were either moved or removed on the migration",
+        "type": "functions",
+        "category": "library-function",
+        "tags": [
+          "pydantic",
+          "auto-generated"
+        ],
+        "author": "pydantic library",
+        "version": "2.4.2",
+        "lastUpdated": "2025-12-09T23:23:01.143486",
+        "usage": "from pydantic import getattr_migration",
+        "dependencies": [
+          "pydantic"
+        ],
+        "examples": [],
+        "git": "",
+        "rating": 5.0,
+        "downloads": 0,
+        "clickCount": 0,
+        "language": "python",
+        "code": "def getattr_migration(module: str) -> Callable[[str], Any]:\n    \"\"\"Implement PEP 562 for objects that were either moved or removed on the migration\n    to V2.\n\n    Args:\n        module: The module name.\n\n    Returns:\n        A callable that will raise an error if the object is not found.\n    \"\"\"\n    # This avoids circular import with errors.py.\n    from .errors import PydanticImportError\n\n    def wrapper(name: str) -> object:\n        \"\"\"Raise an error if the object is not found, or warn if it was moved.\n\n        In case it was moved, it still returns the object.\n\n        Args:\n            name: The object name.\n\n        Returns:\n            The object.\n        \"\"\"\n        if name == '__path__':\n            raise AttributeError(f'module {__name__!r} has no attribute {name!r}')\n\n        import_path = f'{module}:{name}'\n        if import_path in MOVED_IN_V2.keys():\n            new_location = MOVED_IN_V2[import_path]\n            warnings.warn(f'`{import_path}` has been moved to `{new_location}`.')\n            return import_string(MOVED_IN_V2[import_path])\n        if import_path in DEPRECATED_MOVED_IN_V2:\n            # skip the warning here because a deprecation warning will be raised elsewhere\n            return import_string(DEPRECATED_MOVED_IN_V2[import_path])\n        if import_path in REDIRECT_TO_V1:\n            new_location = REDIRECT_TO_V1[import_path]\n            warnings.warn(\n                f'`{import_path}` has been removed. We are importing from `{new_location}` instead.'\n                'See the migration guide for more details: https://docs.pydantic.dev/latest/migration/'\n            )\n            return import_string(REDIRECT_TO_V1[import_path])\n        if import_path == 'pydantic:BaseSettings':\n            raise PydanticImportError(\n                '`BaseSettings` has been moved to the `pydantic-settings` package. '\n                f'See https://docs.pydantic.dev/{version_short()}/migration/#basesettings-has-moved-to-pydantic-settings '\n                'for more details.'\n            )\n        if import_path in REMOVED_IN_V2:\n            raise PydanticImportError(f'`{import_path}` has been removed in V2.')\n        globals: Dict[str, Any] = sys.modules[module].__dict__\n        if name in globals:\n            return globals[name]\n        raise AttributeError(f'module {__name__!r} has no attribute {name!r}')\n\n    return wrapper\n",
+        "parameters": [
+          {
+            "name": "module",
+            "type": "str",
+            "description": "The module name.",
+            "required": true,
+            "default": null
+          }
+        ]
+      },
+      {
+        "id": "8efec3a2-8625-4778-b557-644f93017920",
+        "name": "model_serializer",
+        "displayName": "Model Serializer",
+        "description": "Decorator that enables custom model serialization.",
+        "type": "functions",
+        "category": "library-function",
+        "tags": [
+          "pydantic",
+          "auto-generated"
+        ],
+        "author": "pydantic library",
+        "version": "2.4.2",
+        "lastUpdated": "2025-12-09T23:23:01.148880",
+        "usage": "from pydantic import model_serializer",
+        "dependencies": [
+          "pydantic"
+        ],
+        "examples": [],
+        "git": "",
+        "rating": 5.0,
+        "downloads": 0,
+        "clickCount": 0,
+        "language": "python",
+        "code": "def model_serializer(\n    __f: Callable[..., Any] | None = None,\n    *,\n    mode: Literal['plain', 'wrap'] = 'plain',\n    when_used: Literal['always', 'unless-none', 'json', 'json-unless-none'] = 'always',\n    return_type: Any = PydanticUndefined,\n) -> Callable[[Any], Any]:\n    \"\"\"Decorator that enables custom model serialization.\n\n    See [Custom serializers](../concepts/serialization.md#custom-serializers) for more information.\n\n    Args:\n        __f: The function to be decorated.\n        mode: The serialization mode.\n\n            - `'plain'` means the function will be called instead of the default serialization logic\n            - `'wrap'` means the function will be called with an argument to optionally call the default\n                serialization logic.\n        when_used: Determines when this serializer should be used.\n        return_type: The return type for the function. If omitted it will be inferred from the type annotation.\n\n    Returns:\n        The decorator function.\n    \"\"\"\n\n    def dec(f: Callable[..., Any]) -> _decorators.PydanticDescriptorProxy[Any]:\n        dec_info = _decorators.ModelSerializerDecoratorInfo(mode=mode, return_type=return_type, when_used=when_used)\n        return _decorators.PydanticDescriptorProxy(f, dec_info)\n\n    if __f is None:\n        return dec\n    else:\n        return dec(__f)  # type: ignore\n",
+        "parameters": [
+          {
+            "name": "__f",
+            "type": "Callable[..., Any] | None",
+            "description": "The function to be decorated.",
+            "required": false,
+            "default": "None"
+          },
+          {
+            "name": "mode",
+            "type": "Literal['plain', 'wrap']",
+            "description": "The serialization mode.",
+            "required": false,
+            "default": "plain"
+          },
+          {
+            "name": "when_used",
+            "type": "Literal['always', 'unless-none', 'json', 'json-unless-none']",
+            "description": "Determines when this serializer should be used.",
+            "required": false,
+            "default": "always"
+          },
+          {
+            "name": "return_type",
+            "type": "Any",
+            "description": "The return type for the function. If omitted it will be inferred from the type annotation.",
+            "required": false,
+            "default": "PydanticUndefined"
+          }
+        ]
+      },
+      {
+        "id": "ee0d0c35-2162-427c-92e8-7752f2169771",
+        "name": "model_validator",
+        "displayName": "Model Validator",
+        "description": "Decorate model methods for validation purposes.",
+        "type": "functions",
+        "category": "library-function",
+        "tags": [
+          "pydantic",
+          "auto-generated"
+        ],
+        "author": "pydantic library",
+        "version": "2.4.2",
+        "lastUpdated": "2025-12-09T23:23:01.155361",
+        "usage": "from pydantic import model_validator",
+        "dependencies": [
+          "pydantic"
+        ],
+        "examples": [],
+        "git": "",
+        "rating": 5.0,
+        "downloads": 0,
+        "clickCount": 0,
+        "language": "python",
+        "code": "def model_validator(\n    *,\n    mode: Literal['wrap', 'before', 'after'],\n) -> Any:\n    \"\"\"Decorate model methods for validation purposes.\n\n    Args:\n        mode: A required string literal that specifies the validation mode.\n            It can be one of the following: 'wrap', 'before', or 'after'.\n\n    Returns:\n        A decorator that can be used to decorate a function to be used as a model validator.\n    \"\"\"\n\n    def dec(f: Any) -> _decorators.PydanticDescriptorProxy[Any]:\n        # auto apply the @classmethod decorator\n        f = _decorators.ensure_classmethod_based_on_signature(f)\n        dec_info = _decorators.ModelValidatorDecoratorInfo(mode=mode)\n        return _decorators.PydanticDescriptorProxy(f, dec_info)\n\n    return dec\n",
+        "parameters": [
+          {
+            "name": "mode",
+            "type": "Literal['wrap', 'before', 'after']",
+            "description": "A required string literal that specifies the validation mode.",
+            "required": true,
+            "default": null
+          }
+        ]
+      },
+      {
+        "id": "72a198d9-e3ae-4bae-b0dc-ab8e2f944bb0",
+        "name": "validate_call",
+        "displayName": "Validate Call",
+        "description": "Usage docs: https://docs.pydantic.dev/2.4/concepts/validation_decorator/",
+        "type": "functions",
+        "category": "library-function",
+        "tags": [
+          "pydantic",
+          "auto-generated"
+        ],
+        "author": "pydantic library",
+        "version": "2.4.2",
+        "lastUpdated": "2025-12-09T23:23:01.161471",
+        "usage": "from pydantic import validate_call",
+        "dependencies": [
+          "pydantic"
+        ],
+        "examples": [],
+        "git": "",
+        "rating": 5.0,
+        "downloads": 0,
+        "clickCount": 0,
+        "language": "python",
+        "code": "def validate_call(\n    __func: AnyCallableT | None = None,\n    *,\n    config: ConfigDict | None = None,\n    validate_return: bool = False,\n) -> AnyCallableT | Callable[[AnyCallableT], AnyCallableT]:\n    \"\"\"Usage docs: https://docs.pydantic.dev/2.4/concepts/validation_decorator/\n\n    Returns a decorated wrapper around the function that validates the arguments and, optionally, the return value.\n\n    Usage may be either as a plain decorator `@validate_call` or with arguments `@validate_call(...)`.\n\n    Args:\n        __func: The function to be decorated.\n        config: The configuration dictionary.\n        validate_return: Whether to validate the return value.\n\n    Returns:\n        The decorated function.\n    \"\"\"\n\n    def validate(function: AnyCallableT) -> AnyCallableT:\n        if isinstance(function, (classmethod, staticmethod)):\n            name = type(function).__name__\n            raise TypeError(f'The `@{name}` decorator should be applied after `@validate_call` (put `@{name}` on top)')\n        return _validate_call.ValidateCallWrapper(function, config, validate_return)  # type: ignore\n\n    if __func:\n        return validate(__func)\n    else:\n        return validate\n",
+        "parameters": [
+          {
+            "name": "__func",
+            "type": "AnyCallableT | None",
+            "description": "The function to be decorated.",
+            "required": false,
+            "default": "None"
+          },
+          {
+            "name": "config",
+            "type": "ConfigDict | None",
+            "description": "The configuration dictionary.",
+            "required": false,
+            "default": "None"
+          },
+          {
+            "name": "validate_return",
+            "type": "bool",
+            "description": "Whether to validate the return value.",
+            "required": false,
+            "default": "False"
+          }
+        ]
+      },
+      {
+        "id": "c9107e0a-d316-48f9-ab7a-4f0229bf135a",
+        "name": "validate_email",
+        "displayName": "Validate Email",
+        "description": "Email address validation using [email-validator](https://pypi.org/project/email-validator/).",
+        "type": "functions",
+        "category": "library-function",
+        "tags": [
+          "pydantic",
+          "auto-generated"
+        ],
+        "author": "pydantic library",
+        "version": "2.4.2",
+        "lastUpdated": "2025-12-09T23:23:01.167028",
+        "usage": "from pydantic import validate_email",
+        "dependencies": [
+          "pydantic"
+        ],
+        "examples": [],
+        "git": "",
+        "rating": 5.0,
+        "downloads": 0,
+        "clickCount": 0,
+        "language": "python",
+        "code": "def validate_email(value: str) -> tuple[str, str]:\n    \"\"\"Email address validation using [email-validator](https://pypi.org/project/email-validator/).\n\n    Note:\n        Note that:\n\n        * Raw IP address (literal) domain parts are not allowed.\n        * `\"John Doe <local_part@domain.com>\"` style \"pretty\" email addresses are processed.\n        * Spaces are striped from the beginning and end of addresses, but no error is raised.\n    \"\"\"\n    if email_validator is None:\n        import_email_validator()\n\n    if len(value) > MAX_EMAIL_LENGTH:\n        raise PydanticCustomError(\n            'value_error',\n            'value is not a valid email address: {reason}',\n            {'reason': f'Length must not exceed {MAX_EMAIL_LENGTH} characters'},\n        )\n\n    m = pretty_email_regex.fullmatch(value)\n    name: str | None = None\n    if m:\n        unquoted_name, quoted_name, value = m.groups()\n        name = unquoted_name or quoted_name\n\n    email = value.strip()\n\n    try:\n        parts = email_validator.validate_email(email, check_deliverability=False)\n    except email_validator.EmailNotValidError as e:\n        raise PydanticCustomError(\n            'value_error', 'value is not a valid email address: {reason}', {'reason': str(e.args[0])}\n        ) from e\n\n    email = parts.normalized\n    assert email is not None\n    name = name or parts.local_part\n    return name, email\n",
+        "parameters": [
+          {
+            "name": "value",
+            "type": "str",
+            "description": "",
+            "required": true,
+            "default": null
           }
         ]
       }
     ],
-    "containers": [
+    "containers": [],
+    "infrastructure": [],
+    "packages": [
       {
-        "id": "cont_001",
-        "name": "PostgreSQL Development Container",
-        "description": "Ready-to-use PostgreSQL container with common development tools and extensions",
-        "type": "docker",
-        "category": "database",
-        "tags": [
-          "postgresql",
-          "database",
-          "development",
-          "docker"
-        ],
-        "dockerfile": "FROM postgres:15\n# Development setup\nRUN apt-get update && apt-get install -y \\\n    postgresql-contrib \\\n    postgresql-15-postgis-3",
-        "dockerCompose": "version: '3.8'\nservices:\n  postgres:\n    build: .\n    environment:\n      POSTGRES_DB: devdb\n      POSTGRES_USER: devuser",
-        "author": "Infrastructure Team",
-        "version": "1.2.0",
-        "lastUpdated": "2025-11-12T18:30:15.774185",
-        "usage": "Perfect for local development and testing",
-        "dependencies": [
-          "docker",
-          "docker-compose"
-        ],
-        "examples": [
-          "local_dev",
-          "testing",
-          "ci_cd"
-        ],
-        "rating": 4.7,
-        "downloads": 203,
-        "displayName": "PostgreSQL Development Container",
-        "git": ""
-      },
-      {
-        "id": "cont_002",
-        "name": "Node.js Microservice Base",
-        "description": "Lightweight Node.js container optimized for microservices with health checks",
-        "type": "docker",
-        "category": "runtime",
-        "tags": [
-          "nodejs",
-          "microservice",
-          "health-check",
-          "optimized"
-        ],
-        "dockerfile": "FROM node:18-alpine\nWORKDIR /app\nCOPY package*.json ./\nRUN npm ci --only=production",
-        "dockerCompose": "version: '3.8'\nservices:\n  app:\n    build: .\n    ports:\n      - '3000:3000'\n    healthcheck:\n      test: ['CMD', 'curl', '-f', 'http://localhost:3000/health']",
-        "author": "Backend Team",
-        "version": "1.0.0",
-        "lastUpdated": "2024-01-22T16:45:00Z",
-        "usage": "Base image for Node.js microservices",
-        "dependencies": [
-          "docker"
-        ],
-        "examples": [
-          "api_service",
-          "worker_service",
-          "webhook_service"
-        ],
-        "rating": 4.6,
-        "downloads": 134
-      },
-      {
-        "id": "cont_003",
-        "name": "dfffgfdg",
-        "displayName": "dfffgfdg",
-        "description": "fdgdf",
-        "type": "containers",
-        "category": "web-server",
-        "tags": [],
-        "author": "",
-        "version": "1.0.0",
-        "lastUpdated": "2025-11-12T18:36:50.325905",
-        "usage": "",
-        "dependencies": [],
-        "examples": [],
-        "git": "",
-        "rating": 5,
-        "downloads": 0,
-        "dockerfile": "dfgfdgd",
-        "dockerCompose": "dfgdfgf"
-      },
-      {
-        "id": "cont_004",
-        "name": "fhgfh",
-        "displayName": "fhgfh",
-        "description": "ffghfghgfh",
-        "type": "containers",
-        "category": "message-queue",
-        "tags": [],
-        "author": "",
-        "version": "1.0.0",
-        "lastUpdated": "2025-11-12T18:41:03.855810",
-        "usage": "",
-        "dependencies": [],
-        "examples": [],
-        "git": "",
-        "rating": 5,
-        "downloads": 0,
-        "dockerfile": "fghfgh",
-        "dockerCompose": ""
-      }
-    ],
-    "infrastructure": [
-      {
-        "id": "tf_001",
-        "name": "AWS VPC with Private Subnets",
-        "description": "Complete VPC setup with public/private subnets, NAT gateway, and security groups",
-        "provider": "aws",
-        "category": "networking",
-        "tags": [
-          "aws",
-          "vpc",
-          "networking",
-          "security",
-          "infrastructure"
-        ],
-        "mainTf": "resource \"aws_vpc\" \"main\" {\n  cidr_block = var.vpc_cidr\n  \n  tags = {\n    Name = \"${var.environment}-vpc\"\n  }\n}",
-        "variablesTf": "variable \"vpc_cidr\" {\n  description = \"CIDR block for VPC\"\n  type        = string\n  default     = \"10.0.0.0/16\"\n}",
-        "outputsTf": "output \"vpc_id\" {\n  value = aws_vpc.main.id\n}",
-        "author": "Cloud Team",
-        "version": "2.0.0",
-        "lastUpdated": "2024-01-19T11:20:00Z",
-        "usage": "Deploy secure VPC infrastructure for production workloads",
-        "dependencies": [
-          "terraform",
-          "aws_provider"
-        ],
-        "examples": [
-          "production_env",
-          "staging_env",
-          "multi_az_setup"
-        ],
-        "rating": 4.9,
-        "downloads": 312
-      },
-      {
-        "id": "tf_002",
-        "name": "Kubernetes Cluster on GCP",
-        "description": "Production-ready GKE cluster with node pools, monitoring, and logging",
-        "provider": "gcp",
-        "category": "kubernetes",
-        "tags": [
-          "gcp",
-          "kubernetes",
-          "gke",
-          "monitoring",
-          "infrastructure"
-        ],
-        "mainTf": "resource \"google_container_cluster\" \"primary\" {\n  name     = var.cluster_name\n  location = var.region\n  \n  node_config {\n    machine_type = var.machine_type\n  }\n}",
-        "variablesTf": "variable \"cluster_name\" {\n  description = \"Name of the GKE cluster\"\n  type        = string\n}",
-        "outputsTf": "output \"cluster_endpoint\" {\n  value = google_container_cluster.primary.endpoint\n}",
-        "author": "Platform Team",
-        "version": "1.5.0",
-        "lastUpdated": "2024-01-21T13:10:00Z",
-        "usage": "Deploy managed Kubernetes clusters on Google Cloud",
-        "dependencies": [
-          "terraform",
-          "google_provider"
-        ],
-        "examples": [
-          "production_cluster",
-          "development_cluster",
-          "multi_region"
-        ],
-        "rating": 4.8,
-        "downloads": 178
+        "id": "eb3bbcdd-ec98-49ae-99cb-740bb91e3e85",
+        "name": "pydantic",
+        "description": "Python package pydantics",
+        "version": "",
+        "latestReleaseDate": "",
+        "maintainers": [],
+        "documentation": "",
+        "githubRepo": "",
+        "pipInstall": "pip install pydantic",
+        "functionIds": [
+          "7ccbebed-4d06-4a7c-8a82-c7096f5c9358",
+          "58e4fc2e-b4f8-414f-8aae-8d103139d9d5",
+          "712e967a-d954-4c4c-92a6-632e425b8b90",
+          "af9b3a11-20e2-450c-b40f-895293c6d522",
+          "b0938b8e-d043-439f-989d-e33f13215d56",
+          "8176f964-0823-4d94-b6d2-90b9b239272f",
+          "0a1cf751-587f-4044-ace8-382d4d033e86",
+          "98619ba5-c7c8-48ef-b6cc-37f79cddc477",
+          "544b0886-69d1-43bb-b118-63647e94185b",
+          "d46d2a39-3d44-44cb-97f3-4691964b747b",
+          "145e6fc5-c9bd-4aac-b21f-a65d6f3604b7",
+          "31e19249-155a-421b-8117-485bfceb0776",
+          "99ed2310-b957-4c67-9135-0a9121a63da4",
+          "da2fcd89-faf5-4985-904f-9727c9336240",
+          "dd3a5a17-9eb5-446c-b3f5-f90edb11b9f7",
+          "656af366-245c-4837-b0e9-f85fb4a5e883",
+          "8efec3a2-8625-4778-b557-644f93017920",
+          "ee0d0c35-2162-427c-92e8-7752f2169771",
+          "72a198d9-e3ae-4bae-b0dc-ab8e2f944bb0",
+          "c9107e0a-d316-48f9-ab7a-4f0229bf135a"
+        ]
       }
     ]
   },
@@ -807,25 +1407,5 @@
     "runtime": "Application runtime environments and base images",
     "networking": "Network infrastructure and security configurations",
     "kubernetes": "Kubernetes manifests, operators, and configurations"
-  },
-  "tags": [
-    "python",
-    "javascript",
-    "docker",
-    "infrastructure",
-    "aws",
-    "gcp",
-    "kubernetes",
-    "validation",
-    "api",
-    "database",
-    "microservice",
-    "networking",
-    "security",
-    "monitoring",
-    "development",
-    "production",
-    "testing",
-    "ci_cd"
-  ]
+  }
 }

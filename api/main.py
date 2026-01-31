@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends, Query
+from fastapi import FastAPI, HTTPException, Depends, Query, Body
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from pydantic import BaseModel, Field
@@ -224,7 +224,11 @@ JSON_FILES = {
     "glossary": "glossary.json",
     "statistics": "statistics.json",
     "rules": "rules.json",
-    "countryRules": "countryRules.json"
+    "countryRules": "countryRules.json",
+    "datasets": "datasets.json",
+    "pipelines": "pipelines.json",
+    "data-products": "dataProducts.json",
+    "dataProducts": "dataProducts.json"  # Alias for data-products
 }
 
 # Data type to key mapping for counting items
@@ -239,7 +243,11 @@ DATA_TYPE_KEYS = {
     "toolkit": "toolkit",
     "policies": "policies",
     "zones": "zones",
-    "glossary": "terms"
+    "glossary": "terms",
+    "datasets": "datasets",
+    "pipelines": "pipelines",
+    "data-products": "products",
+    "dataProducts": "products"  # Alias for data-products
 }
 
 def fetch_from_github(file_name: str) -> Dict:
@@ -666,12 +674,77 @@ async def get_country_rule_coverage(country: str):
         logger.error(f"Error getting country rule coverage: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Error getting country rule coverage: {str(e)}")
 
+# Datasets and Pipelines endpoints (handle array data)
+@app.get("/api/datasets")
+def get_datasets():
+    """Get all datasets."""
+    start_time = perf_counter()
+    logger.info("Request for datasets")
+    try:
+        data = get_cached_data("datasets") if not PASSTHROUGH_MODE else fetch_from_github("datasets")
+        # datasets.json is an array, wrap it in an object
+        if isinstance(data, list):
+            result = {"datasets": data}
+        else:
+            result = data if "datasets" in data else {"datasets": []}
+        log_performance("get_datasets", start_time)
+        return result
+    except Exception as e:
+        logger.error(f"Error getting datasets: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error getting datasets: {str(e)}")
+
+@app.get("/api/datasets/{dataset_id}")
+def get_dataset_by_id(dataset_id: int):
+    """Get a specific dataset by ID."""
+    start_time = perf_counter()
+    logger.info(f"Request for dataset {dataset_id}")
+    try:
+        data = get_cached_data("datasets") if not PASSTHROUGH_MODE else fetch_from_github("datasets")
+        datasets = data if isinstance(data, list) else data.get("datasets", [])
+        dataset = next((d for d in datasets if d.get("id") == dataset_id), None)
+        if not dataset:
+            raise HTTPException(status_code=404, detail=f"Dataset with id {dataset_id} not found")
+        log_performance("get_dataset_by_id", start_time)
+        return dataset
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting dataset: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error getting dataset: {str(e)}")
+
+@app.get("/api/pipelines")
+def get_pipelines():
+    """Get all pipelines."""
+    start_time = perf_counter()
+    logger.info("Request for pipelines")
+    try:
+        data = get_cached_data("pipelines") if not PASSTHROUGH_MODE else fetch_from_github("pipelines")
+        # pipelines.json is an array, wrap it in an object
+        if isinstance(data, list):
+            result = {"pipelines": data}
+        else:
+            result = data if "pipelines" in data else {"pipelines": []}
+        log_performance("get_pipelines", start_time)
+        return result
+    except Exception as e:
+        logger.error(f"Error getting pipelines: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error getting pipelines: {str(e)}")
+
 @app.get("/api/{file_name}")
 def get_json_file(file_name: str):
     """Get JSON file content with direct file reading or passthrough mode."""
     start_time = perf_counter()
     logger.info(f"Request for {file_name} - Using {'passthrough' if PASSTHROUGH_MODE else 'direct'} mode")
     result = fetch_from_github(file_name) if PASSTHROUGH_MODE else get_cached_data(file_name)
+    
+    # Ensure clickCount is initialized for all toolkit components
+    if file_name == 'toolkit' and isinstance(result, dict) and 'toolkit' in result:
+        for component_type in ['functions', 'containers', 'infrastructure']:
+            if component_type in result['toolkit'] and isinstance(result['toolkit'][component_type], list):
+                for component in result['toolkit'][component_type]:
+                    if 'clickCount' not in component or component['clickCount'] is None:
+                        component['clickCount'] = 0
+    
     log_performance("get_json_file", start_time)
     return result
 
@@ -1153,17 +1226,17 @@ def read_json_file(file_path: str) -> Dict:
             data_path = os.path.join('_data', file_path)
         
         logger.info(f"Reading JSON file from: {data_path}")
-        with open(data_path, 'r') as f:
+        with open(data_path, 'r', encoding='utf-8') as f:
             return json.load(f)
     except FileNotFoundError:
         logger.error(f"File not found: {data_path}")
         raise HTTPException(status_code=404, detail=f"File not found: {file_path}")
-    except json.JSONDecodeError:
-        logger.error(f"Invalid JSON file: {data_path}")
-        raise HTTPException(status_code=500, detail=str(e))
+    except json.JSONDecodeError as e:
+        logger.error(f"Invalid JSON file: {data_path}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Invalid JSON in file {file_path}: {str(e)}")
     except Exception as e:
         logger.error(f"Error reading file {data_path}: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"Error reading file {file_path}: {str(e)}")
 
 def write_json_file(file_path: str, data: Dict):
     try:
@@ -1173,13 +1246,29 @@ def write_json_file(file_path: str, data: Dict):
         else:
             data_path = os.path.join('_data', file_path)
         
+        # Ensure directory exists
+        os.makedirs(os.path.dirname(data_path), exist_ok=True)
+        
         logger.info(f"Writing JSON file to: {data_path}")
-        with open(data_path, 'w') as f:
-            json.dump(data, f, indent=2)
+        
+        # Write to a temporary file first, then rename (atomic write)
+        temp_path = f"{data_path}.tmp"
+        with open(temp_path, 'w', encoding='utf-8') as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+        
+        # Atomic rename
+        if os.path.exists(data_path):
+            os.replace(temp_path, data_path)
+        else:
+            os.rename(temp_path, data_path)
+        
         logger.info(f"Successfully wrote to: {data_path}")
+    except json.JSONEncodeError as e:
+        logger.error(f"JSON encoding error writing file {data_path}: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Error encoding JSON for file {file_path}: {str(e)}")
     except Exception as e:
-        logger.error(f"Error writing file {data_path}: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error writing file {data_path}: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Error writing file {file_path}: {str(e)}")
 
 def update_search_index(data_type: str, action: str, item: Dict[str, Any] = None, item_id: str = None):
     """Update search index after data changes"""
@@ -1304,6 +1393,63 @@ async def update_agreement(agreement_id: str, request: Dict[str, Any], current_u
     except Exception as e:
         logger.error(f"Error updating agreement: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error updating agreement: {str(e)}")
+
+@app.put("/api/data-products/{product_id}")
+async def update_data_product(product_id: str, request: Dict[str, Any], current_user: dict = Depends(require_editor_or_admin)):
+    """
+    Update an existing data product.
+    
+    Args:
+        product_id (str): The ID of the data product to update
+        request (dict): The updated data product data
+        
+    Returns:
+        dict: Success message and updated data product info
+        
+    Raises:
+        HTTPException: If the data product is not found or update fails
+    """
+    try:
+        logger.info(f"Update request for data product: {product_id}")
+        products_data = read_json_file(JSON_FILES['data-products'])
+        
+        # Find the product to update
+        product_to_update = None
+        product_index = None
+        for i, product in enumerate(products_data.get('products', [])):
+            if product.get('id', '').lower() == product_id.lower():
+                product_to_update = product
+                product_index = i
+                break
+        
+        if not product_to_update:
+            raise HTTPException(status_code=404, detail=f"Data product with ID '{product_id}' not found")
+        
+        # Update the product
+        updated_product = product_to_update.copy()
+        updated_product.update(request)
+        updated_product['lastUpdated'] = datetime.now().strftime('%Y-%m-%d')
+        
+        # Replace the old product with the updated one
+        products_data['products'][product_index] = updated_product
+        
+        local_file_path = JSON_FILES['data-products']
+        write_json_file(local_file_path, products_data)
+        
+        # Update search index
+        update_search_index("data-products", "update", updated_product, product_id)
+        
+        logger.info(f"Data product updated in local file {local_file_path}")
+        logger.info(f"Data product {product_id} updated successfully")
+        
+        return {
+            "message": "Data product updated successfully",
+            "id": product_id,
+            "updated": True
+        }
+    except Exception as e:
+        logger.error(f"Error updating data product: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error updating data product: {str(e)}")
 
 @app.delete("/api/agreements/{agreement_id}")
 async def delete_agreement(agreement_id: str, current_user: dict = Depends(require_editor_or_admin)):
@@ -1888,12 +2034,22 @@ async def create_toolkit_component(component: Dict[str, Any], current_user: dict
     """
     try:
         logger.info(f"Create request for toolkit component: {component.get('name', 'Unknown')}")
+        logger.debug(f"Component data received: {json.dumps(component, default=str)[:500]}")  # Log first 500 chars
+        
         toolkit_data = read_json_file(JSON_FILES['toolkit'])
+        
+        # Ensure toolkit structure exists
+        if 'toolkit' not in toolkit_data:
+            toolkit_data['toolkit'] = {}
         
         # Determine component type and generate ID
         component_type = component.get('type', 'functions')
         if component_type not in ['functions', 'containers', 'terraform']:
             raise HTTPException(status_code=400, detail="Invalid component type")
+        
+        # Initialize component type array if it doesn't exist
+        if component_type not in toolkit_data['toolkit']:
+            toolkit_data['toolkit'][component_type] = []
         
         # For functions, generate a UUID as the ID
         if component_type == 'functions':
@@ -1902,7 +2058,7 @@ async def create_toolkit_component(component: Dict[str, Any], current_user: dict
                 raise HTTPException(status_code=400, detail="Function name is required")
             
             # Check if function name already exists (for display purposes, not ID)
-            existing_names = [item['name'] for item in toolkit_data['toolkit'][component_type]]
+            existing_names = [item.get('name', '') for item in toolkit_data['toolkit'][component_type] if item.get('name')]
             if function_name in existing_names:
                 raise HTTPException(status_code=400, detail=f"Function with name '{function_name}' already exists")
             
@@ -1910,7 +2066,7 @@ async def create_toolkit_component(component: Dict[str, Any], current_user: dict
             new_id = str(uuid.uuid4())
         else:
             # Generate new ID based on type for other component types
-            existing_ids = [item['id'] for item in toolkit_data['toolkit'][component_type]]
+            existing_ids = [item.get('id', '') for item in toolkit_data['toolkit'][component_type] if item.get('id')]
             if component_type == 'containers':
                 prefix = 'cont_'
             else:
@@ -1918,11 +2074,11 @@ async def create_toolkit_component(component: Dict[str, Any], current_user: dict
             
             max_num = 0
             for item_id in existing_ids:
-                if item_id.startswith(prefix):
+                if item_id and item_id.startswith(prefix):
                     try:
                         num = int(item_id.split('_')[1])
                         max_num = max(max_num, num)
-                    except:
+                    except (ValueError, IndexError):
                         pass
             
             new_id = f"{prefix}{max_num + 1:03d}"
@@ -1950,9 +2106,13 @@ async def create_toolkit_component(component: Dict[str, Any], current_user: dict
         
         # Add type-specific fields
         if component_type == 'functions':
-            new_component['language'] = component.get('language', '')
-            new_component['code'] = component.get('code', '')
-            new_component['parameters'] = component.get('parameters', [])
+            new_component['language'] = component.get('language', 'python')
+            # Safely handle code field - ensure it's a string
+            code_value = component.get('code', '')
+            new_component['code'] = str(code_value) if code_value is not None else ''
+            # Safely handle parameters - ensure it's a list
+            params = component.get('parameters', [])
+            new_component['parameters'] = params if isinstance(params, list) else []
         elif component_type == 'containers':
             new_component['dockerfile'] = component.get('dockerfile', '')
             new_component['dockerCompose'] = component.get('dockerCompose', '')
@@ -1963,6 +2123,8 @@ async def create_toolkit_component(component: Dict[str, Any], current_user: dict
             new_component['outputsTf'] = component.get('outputsTf', '')
         
         toolkit_data['toolkit'][component_type].append(new_component)
+        
+        logger.debug(f"About to write component with ID: {new_id}, name: {new_component.get('name')}")
         
         local_file_path = JSON_FILES['toolkit']
         write_json_file(local_file_path, toolkit_data)
@@ -1975,9 +2137,149 @@ async def create_toolkit_component(component: Dict[str, Any], current_user: dict
             "id": new_id,
             "component": new_component
         }
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"Error creating toolkit component: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error creating toolkit component: {str(e)}")
+        logger.error(f"Error creating toolkit component: {str(e)}", exc_info=True)
+        error_detail = str(e) if str(e) else f"Unknown error: {type(e).__name__}"
+        raise HTTPException(status_code=500, detail=f"Error creating toolkit component: {error_detail}")
+
+@app.put("/api/toolkit/packages/{package_id}")
+async def update_toolkit_package(
+    package_id: str, 
+    package_data: Dict[str, Any], 
+    current_user: dict = Depends(require_editor_or_admin)
+):
+    """
+    Update or create a toolkit package.
+    
+    Args:
+        package_id: UUID of the package (or 'new' for creating a new package)
+        package_data: Package metadata including description, version, maintainers, etc.
+        
+    Returns:
+        dict: Success message and package info
+    """
+    try:
+        logger.info(f"Update request for toolkit package: {package_id}")
+        logger.info(f"Package data type: {type(package_data)}")
+        logger.info(f"Package data received: {package_data}")
+        
+        # Validate package_data
+        if package_data is None:
+            raise HTTPException(status_code=400, detail="Package data is required")
+        
+        if not isinstance(package_data, dict):
+            raise HTTPException(status_code=400, detail=f"Package data must be a dictionary, got {type(package_data)}")
+        
+        # Read toolkit data
+        try:
+            toolkit_data = read_json_file(JSON_FILES['toolkit'])
+        except Exception as e:
+            logger.error(f"Error reading toolkit file: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Error reading toolkit data: {str(e)}")
+        
+        # Ensure toolkit structure exists
+        if 'toolkit' not in toolkit_data:
+            toolkit_data['toolkit'] = {}
+        
+        # Initialize packages array if it doesn't exist
+        if 'packages' not in toolkit_data['toolkit']:
+            toolkit_data['toolkit']['packages'] = []
+        
+        # Find existing package or create new one
+        packages = toolkit_data['toolkit'].get('packages', [])
+        package_index = None
+        is_new_package = (package_id == 'new' or package_id not in [pkg.get('id') for pkg in packages])
+        
+        if not is_new_package:
+            for i, pkg in enumerate(packages):
+                if pkg.get('id') == package_id:
+                    package_index = i
+                    break
+        
+        # Safely extract and validate data
+        try:
+            # Ensure functionIds is a list
+            function_ids = package_data.get('functionIds', [])
+            if function_ids is None:
+                function_ids = []
+            elif not isinstance(function_ids, list):
+                logger.warning(f"functionIds is not a list, converting: {function_ids}")
+                function_ids = list(function_ids) if hasattr(function_ids, '__iter__') else []
+            
+            # Ensure maintainers is a list
+            maintainers = package_data.get('maintainers', [])
+            if maintainers is None:
+                maintainers = []
+            elif not isinstance(maintainers, list):
+                logger.warning(f"maintainers is not a list, converting: {maintainers}")
+                maintainers = list(maintainers) if hasattr(maintainers, '__iter__') else []
+            
+            # Safely get string fields
+            description = str(package_data.get('description', '')) if package_data.get('description') is not None else ''
+            version = str(package_data.get('version', '')) if package_data.get('version') is not None else ''
+            latest_release_date = str(package_data.get('latestReleaseDate', '')) if package_data.get('latestReleaseDate') is not None else ''
+            documentation = str(package_data.get('documentation', '')) if package_data.get('documentation') is not None else ''
+            github_repo = str(package_data.get('githubRepo', '')) if package_data.get('githubRepo') is not None else ''
+            package_name = package_data.get('name', '')
+            if not package_name:
+                raise HTTPException(status_code=400, detail="Package name is required")
+            
+            pip_install = str(package_data.get('pipInstall', f'pip install {package_name}')) if package_data.get('pipInstall') is not None else f'pip install {package_name}'
+            
+            # Generate UUID for new packages
+            if is_new_package:
+                package_uuid = str(uuid.uuid4())
+            else:
+                package_uuid = package_id
+            
+            package_metadata = {
+                "id": package_uuid,
+                "name": package_name,
+                "description": description,
+                "version": version,
+                "latestReleaseDate": latest_release_date,
+                "maintainers": maintainers,
+                "documentation": documentation,
+                "githubRepo": github_repo,
+                "pipInstall": pip_install,
+                "functionIds": function_ids,
+            }
+        except Exception as e:
+            logger.error(f"Error processing package data: {str(e)}", exc_info=True)
+            raise HTTPException(status_code=400, detail=f"Error processing package data: {str(e)}")
+        
+        # Update or create package
+        try:
+            if package_index is not None:
+                toolkit_data['toolkit']['packages'][package_index] = package_metadata
+                logger.info(f"Updated existing package: {package_name} (ID: {package_uuid})")
+            else:
+                toolkit_data['toolkit']['packages'].append(package_metadata)
+                logger.info(f"Created new package: {package_name} (ID: {package_uuid})")
+        except Exception as e:
+            logger.error(f"Error updating package in memory: {str(e)}", exc_info=True)
+            raise HTTPException(status_code=500, detail=f"Error updating package: {str(e)}")
+        
+        # Save the updated toolkit data
+        try:
+            local_file_path = JSON_FILES['toolkit']
+            write_json_file(local_file_path, toolkit_data)
+            logger.info(f"Package {package_name} (ID: {package_uuid}) saved successfully")
+        except Exception as e:
+            logger.error(f"Error writing toolkit file: {str(e)}", exc_info=True)
+            raise HTTPException(status_code=500, detail=f"Error saving toolkit data: {str(e)}")
+        
+        return {
+            "message": "Package saved successfully",
+            "package": package_metadata
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error saving toolkit package: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Error saving toolkit package: {str(e)}")
 
 @app.put("/api/toolkit/{component_type}/{component_id}")
 async def update_toolkit_component(component_type: str, component_id: str, component: Dict[str, Any], current_user: dict = Depends(require_editor_or_admin)):
@@ -2111,78 +2413,87 @@ async def import_functions_from_library(
             detail=f"Error importing from library: {str(e)}"
         )
 
-@app.post("/api/toolkit/{component_type}/{component_id}/click")
-async def track_toolkit_component_click(component_type: str, component_id: str):
+@app.delete("/api/toolkit/packages/{package_id}")
+async def delete_toolkit_package(
+    package_id: str,
+    current_user: dict = Depends(require_editor_or_admin)
+):
     """
-    Track a click on a toolkit component card and increment the click counter.
+    Delete a toolkit package.
     
     Args:
-        component_type (str): The type of component (functions, containers, terraform)
-        component_id (str): The ID of the component to track
+        package_id: UUID of the package to delete
         
     Returns:
-        dict: Success message and updated click count
+        dict: Success message and deleted package info
         
     Raises:
-        HTTPException: If the component is not found
+        HTTPException: If the package is not found or deletion fails
     """
     try:
-        logger.info(f"Click tracking request for toolkit component: {component_type}/{component_id}")
+        logger.info(f"Delete request for toolkit package: {package_id}")
         
-        if component_type not in ['functions', 'containers', 'terraform']:
-            raise HTTPException(status_code=400, detail="Invalid component type")
-        
-        # Read current toolkit data
+        # Read toolkit data
         toolkit_data = read_json_file(JSON_FILES['toolkit'])
         
-        # Find the component to update
-        component_index = None
-        components = toolkit_data['toolkit'].get(component_type, [])
+        # Ensure toolkit structure exists
+        if 'toolkit' not in toolkit_data:
+            toolkit_data['toolkit'] = {}
         
-        for i, component in enumerate(components):
-            if component['id'] == component_id:
-                component_index = i
+        # Initialize packages array if it doesn't exist
+        if 'packages' not in toolkit_data['toolkit']:
+            toolkit_data['toolkit']['packages'] = []
+        
+        # Find the package to delete by ID (with fallback to name for backward compatibility)
+        packages = toolkit_data['toolkit'].get('packages', [])
+        package_to_delete = None
+        actual_id = None
+        actual_name = None
+        
+        for pkg in packages:
+            # Check by ID first
+            if pkg.get('id') == package_id:
+                package_to_delete = pkg
+                actual_id = pkg.get('id')
+                actual_name = pkg.get('name')
+                break
+            # Fallback: check by name for backward compatibility
+            if pkg.get('name') == package_id:
+                package_to_delete = pkg
+                actual_id = pkg.get('id')
+                actual_name = pkg.get('name')
                 break
         
-        if component_index is None:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Component with ID '{component_id}' not found in {component_type}"
-            )
+        if not package_to_delete:
+            # Check if package_id looks like a UUID (has dashes and is 36 chars) or is a name
+            # If it's a name and no package found, it might not exist in packages array
+            # Log more details for debugging
+            logger.warning(f"Package not found. Searched for ID/name: '{package_id}'. Available packages: {[p.get('name') for p in packages]}")
+            raise HTTPException(status_code=404, detail=f"Package with ID/name '{package_id}' not found in packages array")
         
-        # Get the current component
-        component = components[component_index]
+        # Remove the package - use the actual ID or name from the found package
+        toolkit_data['toolkit']['packages'] = [
+            pkg for pkg in packages 
+            if not (actual_id and pkg.get('id') == actual_id) and not (actual_name and pkg.get('name') == actual_name and not pkg.get('id'))
+        ]
         
-        # Initialize clickCount if it doesn't exist
-        if 'clickCount' not in component:
-            component['clickCount'] = 0
-        
-        # Increment click count
-        component['clickCount'] = component.get('clickCount', 0) + 1
-        
-        # Update the component in the array
-        toolkit_data['toolkit'][component_type][component_index] = component
-        
-        # Save the updated data to local file
+        # Save the updated toolkit data
         local_file_path = JSON_FILES['toolkit']
         write_json_file(local_file_path, toolkit_data)
-        logger.info(f"Updated click count for {component_type}/{component_id} to {component['clickCount']}")
+        
+        logger.info(f"Package {package_to_delete.get('name', 'Unknown')} (ID: {package_id}) deleted successfully")
         
         return {
-            "message": "Click tracked successfully",
-            "componentType": component_type,
-            "componentId": component_id,
-            "clickCount": component['clickCount']
+            "message": "Package deleted successfully",
+            "id": package_id,
+            "name": package_to_delete.get('name', 'Unknown'),
+            "deleted": True
         }
-        
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error tracking toolkit component click: {str(e)}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error tracking click: {str(e)}"
-        )
+        logger.error(f"Error deleting toolkit package: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Error deleting toolkit package: {str(e)}")
 
 @app.delete("/api/toolkit/{component_type}/{component_id}")
 async def delete_toolkit_component(component_type: str, component_id: str, current_user: dict = Depends(require_editor_or_admin)):

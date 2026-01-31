@@ -35,7 +35,6 @@ import {
   Schedule as ScheduleIcon,
   Info as InfoIcon,
   ExpandMore as ExpandMoreIcon,
-  Star as StarIcon,
   Visibility as VisibilityIcon,
   Book as BookIcon,
   Build as BuildIcon,
@@ -299,8 +298,8 @@ const ToolkitFunctionDetailPage = () => {
                   }}
                 />
                 <Chip
-                  icon={<StarIcon />}
-                  label={`${functionData.rating}/5`}
+                  icon={<CheckCircleIcon />}
+                  label={`${functionData.testCoverage !== undefined ? functionData.testCoverage : 0}% coverage`}
                   size="small"
                   sx={{
                     bgcolor: alpha(currentTheme.primary, 0.1),

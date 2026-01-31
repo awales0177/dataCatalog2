@@ -10,29 +10,28 @@ import {
   Chip,
 } from '@mui/material';
 import {
-  MenuBook as MenuBookIcon,
   Description as DescriptionIcon,
   Link as LinkIcon,
+  DataObject as DataObjectIcon,
+  Edit as EditIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 
-const GlossaryCard = ({ term, currentTheme }) => {
+const GlossaryCard = ({ term, currentTheme, dataModels = [], canEdit = false }) => {
   const navigate = useNavigate();
-
   return (
     <Card 
       elevation={0}
-      onClick={() => navigate(`/glossary/${term.id}`)}
       sx={{ 
-        height: '100%',
         borderRadius: 2,
         transition: 'all 0.2s ease-in-out',
         bgcolor: currentTheme.card,
         border: `1px solid ${currentTheme.border}`,
-        cursor: 'pointer',
+        overflow: 'hidden',
         '&:hover': {
           transform: 'translateY(-4px)',
           boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+          borderColor: '#37ABBF',
         },
       }}
     >
@@ -57,18 +56,52 @@ const GlossaryCard = ({ term, currentTheme }) => {
               />
             )}
           </Box>
-          <Box
-            sx={{
-              p: 1,
-              borderRadius: 1,
-              bgcolor: alpha(currentTheme.primary, 0.1),
-              color: currentTheme.primary,
-              display: 'flex',
-              alignItems: 'center'
-            }}
-          >
-            <MenuBookIcon sx={{ fontSize: 20 }} />
-          </Box>
+          {term.taggedModels && term.taggedModels.length > 0 && (
+            <Box
+              sx={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: 0.5,
+                alignItems: 'center',
+                maxWidth: '40%',
+                justifyContent: 'flex-end',
+              }}
+            >
+              {term.taggedModels.slice(0, 2).map((modelShortName) => {
+                const model = dataModels.find(m => m.shortName === modelShortName);
+                return (
+                  <Chip
+                    key={modelShortName}
+                    icon={<DataObjectIcon sx={{ fontSize: 14 }} />}
+                    label={model ? model.shortName : modelShortName}
+                    size="small"
+                    sx={{
+                      height: 22,
+                      fontSize: '0.7rem',
+                      fontWeight: 500,
+                      bgcolor: alpha(currentTheme.primary, 0.1),
+                      color: currentTheme.primary,
+                      border: `1px solid ${alpha(currentTheme.primary, 0.3)}`,
+                    }}
+                  />
+                );
+              })}
+              {term.taggedModels.length > 2 && (
+                <Chip
+                  label={`+${term.taggedModels.length - 2}`}
+                  size="small"
+                  sx={{
+                    height: 22,
+                    fontSize: '0.7rem',
+                    fontWeight: 500,
+                    bgcolor: alpha(currentTheme.primary, 0.1),
+                    color: currentTheme.primary,
+                    border: `1px solid ${alpha(currentTheme.primary, 0.3)}`,
+                  }}
+                />
+              )}
+            </Box>
+          )}
         </Box>
 
         <Typography 
@@ -87,6 +120,25 @@ const GlossaryCard = ({ term, currentTheme }) => {
 
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            {canEdit && (
+              <Tooltip title="Edit Term">
+                <IconButton
+                  size="small"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/glossary/${term.id}/edit`);
+                  }}
+                  sx={{
+                    color: currentTheme.textSecondary,
+                    '&:hover': {
+                      color: currentTheme.primary,
+                    }
+                  }}
+                >
+                  <EditIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )}
             {term.documentation && (
               <Tooltip title="View Documentation">
                 <IconButton

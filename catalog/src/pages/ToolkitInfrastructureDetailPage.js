@@ -34,7 +34,6 @@ import {
   Schedule as ScheduleIcon,
   Info as InfoIcon,
   ExpandMore as ExpandMoreIcon,
-  Star as StarIcon,
   Visibility as VisibilityIcon,
   Book as BookIcon,
   Build as BuildIcon,
@@ -186,8 +185,8 @@ const ToolkitInfrastructureDetailPage = () => {
                   }}
                 />
                 <Chip
-                  icon={<StarIcon />}
-                  label={`${infrastructureData.rating}/5`}
+                  icon={<CheckCircleIcon />}
+                  label={`${infrastructureData.testCoverage !== undefined ? infrastructureData.testCoverage : 0}% coverage`}
                   size="small"
                   sx={{
                     bgcolor: alpha(currentTheme.primary, 0.1),

@@ -18,20 +18,29 @@ import ApplicationsPage from './pages/ApplicationsPage';
 import EditApplicationPage from './pages/EditApplicationPage';
 import ReferenceDataPage from './pages/ReferenceDataPage';
 import EditReferenceDataPage from './pages/EditReferenceDataPage';
+import PipelinesPage from './pages/PipelinesPage';
+import DataProductsPage from './pages/DataProductsPage';
+import DataProductDetailPage from './pages/DataProductDetailPage';
+import DatasetDetail from './components/datasets/DatasetDetail';
 import DataModelDetailPage from './pages/DataModelDetailPage';
 import GlossaryPage from './pages/GlossaryPage';
 import EditGlossaryPage from './pages/EditGlossaryPage';
+import GlossaryMarkdownPage from './pages/GlossaryMarkdownPage';
+import DataProductMarkdownPage from './pages/DataProductMarkdownPage';
 import EditDataModelDetailPage from './pages/EditDataModelDetailPage';
 import ProductAgreementDetailPage from './pages/ProductAgreementDetailPage';
 import EditAgreementPage from './pages/EditAgreementPage';
 import ReferenceDataDetailPage from './pages/ReferenceDataDetailPage';
 import ToolkitPage from './pages/ToolkitPage';
 import ToolkitFunctionDetailPage from './pages/ToolkitFunctionDetailPage';
+import ToolkitPackageDetailPage from './pages/ToolkitPackageDetailPage';
 import ToolkitContainerDetailPage from './pages/ToolkitContainerDetailPage';
 import ToolkitInfrastructureDetailPage from './pages/ToolkitInfrastructureDetailPage';
 import EditToolkitFunctionPage from './pages/EditToolkitFunctionPage';
+import EditToolkitPackagePage from './pages/EditToolkitPackagePage';
 import EditToolkitContainerPage from './pages/EditToolkitContainerPage';
 import EditToolkitInfrastructurePage from './pages/EditToolkitInfrastructurePage';
+import ImportToolkitPage from './pages/ImportToolkitPage';
 import DataPoliciesPage from './pages/DataPoliciesPage';
 import EditDataPolicyPage from './pages/EditDataPolicyPage';
 import RolePage from './pages/RolePage';
@@ -256,6 +265,26 @@ function AppContent() {
                 <ReferenceDataPage />
               </ProtectedRoute>
             } />
+            <Route path="/pipelines" element={
+              <ProtectedRoute>
+                <PipelinesPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/pipelines/datasets/:id" element={
+              <ProtectedRoute>
+                <DatasetDetail />
+              </ProtectedRoute>
+            } />
+            <Route path="/data-products" element={
+              <ProtectedRoute>
+                <DataProductsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/data-products/:id" element={
+              <ProtectedRoute>
+                <DataProductDetailPage />
+              </ProtectedRoute>
+            } />
             <Route path="/glossary" element={
               <ProtectedRoute>
                 <GlossaryPage />
@@ -298,6 +327,26 @@ function AppContent() {
             <Route path="/toolkit/function/:functionId" element={
               <ProtectedRoute>
                 <ToolkitFunctionDetailPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/toolkit/package/new" element={
+              <ProtectedRoute requiredRole="editor">
+                <EditToolkitPackagePage />
+              </ProtectedRoute>
+            } />
+            <Route path="/toolkit/package/:packageId" element={
+              <ProtectedRoute>
+                <ToolkitPackageDetailPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/toolkit/package/:packageId/edit" element={
+              <ProtectedRoute requiredRole="editor">
+                <EditToolkitPackagePage />
+              </ProtectedRoute>
+            } />
+            <Route path="/toolkit/import" element={
+              <ProtectedRoute requiredRole="editor">
+                <ImportToolkitPage />
               </ProtectedRoute>
             } />
             <Route path="/toolkit/container/new" element={
@@ -358,6 +407,16 @@ function AppContent() {
             <Route path="/glossary/:id/edit" element={
               <ProtectedRoute requiredRole="editor">
                 <EditGlossaryPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/glossary/:id/markdown" element={
+              <ProtectedRoute>
+                <GlossaryMarkdownPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/data-products/:id/markdown" element={
+              <ProtectedRoute>
+                <DataProductMarkdownPage />
               </ProtectedRoute>
             } />
             <Route path="/reference/:id" element={

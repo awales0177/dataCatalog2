@@ -1,0 +1,136 @@
+.metro-map-wrapper {
+  margin-bottom: 2rem;
+}
+
+.metro-map-header {
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 32px;
+  height: 32px;
+}
+
+.metro-map-header .section-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #000000;
+  margin: 0;
+  padding: 0;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  height: 32px;
+}
+
+.metro-map-header-toggle {
+  display: flex;
+  align-items: center;
+  height: 32px;
+}
+
+.metro-map-header-toggle .pipeline-view-toggle {
+  margin-bottom: 0;
+  margin-left: 0;
+}
+
+.metro-map-wrapper {
+  position: relative;
+  width: 100%;
+  overflow: visible;
+  background: transparent;
+  border-radius: 6px;
+  padding: 1rem;
+  line-height: 0;
+}
+
+.metro-map-svg-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  line-height: 0;
+}
+
+.metro-map-svg-container svg {
+  width: 100%;
+  height: auto;
+  max-height: 200px;
+  display: block;
+  overflow: visible;
+}
+
+.metro-line {
+  transition: all 0.2s ease;
+}
+
+.metro-station-hover {
+  transition: all 0.2s ease;
+}
+
+.metro-station-label {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  .metro-station-label {
+    fill: #000000 !important;
+  }
+}
+
+.metro-map-tooltip {
+  position: fixed;
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  padding: 0.75rem 0.75rem 0.5rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  pointer-events: none;
+  z-index: 10000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  white-space: normal;
+  max-width: 250px;
+  min-width: 120px;
+  animation: tooltipFadeIn 0.15s ease-out;
+}
+
+.metro-map-tooltip strong {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  word-wrap: break-word;
+}
+
+.tooltip-subtitle {
+  font-size: 0.75rem;
+  opacity: 0.8;
+  font-weight: normal;
+  line-height: 1.6;
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .metro-map-header .section-title {
+    color: #000000;
+  }
+  
+  .metro-map-wrapper {
+    background: transparent;
+  }
+}

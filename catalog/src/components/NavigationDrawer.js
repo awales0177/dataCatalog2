@@ -23,7 +23,7 @@ import {
   Diamond as CrownIcon,
   SwapHoriz as SwapHorizIcon,
 } from '@mui/icons-material';
-import { drawerWidth, collapsedDrawerWidth, DIVIDER_AFTER_ITEM_ID, DIVIDER_BEFORE_ITEM_ID } from '../constants/navigation';
+import { drawerWidth, collapsedDrawerWidth } from '../constants/navigation';
 import { useAuth } from '../contexts/AuthContext';
 
 const NavigationDrawer = ({ 
@@ -89,49 +89,29 @@ const NavigationDrawer = ({
             );
           }
           
-          return menuData.items
-            .filter(item => {
-              // Filter admin-only items
-              if (item.adminOnly && !isAdmin()) return false;
-              // Filter editor-only items (editors and admins can see)
-              if (item.editorOnly && !canEdit() && !isAdmin()) return false;
-              return true;
-            })
-            .map((item, index) => {
-            // Add divider after the specified item (start of second section)
-            const shouldAddDividerAfter = item.id === DIVIDER_AFTER_ITEM_ID && !isDrawerCollapsed;
-            // Add divider before the specified item (before data products)
-            const shouldAddDividerBefore = item.id === DIVIDER_BEFORE_ITEM_ID && !isDrawerCollapsed;
-            
+          const filteredItems = menuData.items.filter(item => {
+            // Filter admin-only items
+            if (item.adminOnly && !isAdmin()) return false;
+            // Filter editor-only items (editors and admins can see)
+            if (item.editorOnly && !canEdit() && !isAdmin()) return false;
+            return true;
+          });
+
+          // Find Pipelines and Data Products items
+          const pipelinesItem = filteredItems.find(item => item.id === 'pipelines');
+          const productsItem = filteredItems.find(item => item.id === 'data-products');
+          const hasPipelinesAndProducts = pipelinesItem && productsItem;
+
+          // Helper function to render a menu item
+          const renderMenuItem = (item, isCompact = false) => {
             // Check if this item should be highlighted
-            // For home (/), only match exactly. For other paths, match exact or child paths
             const isSelected = item.path === '/' 
               ? location.pathname === item.path
               : location.pathname === item.path || location.pathname.startsWith(item.path + '/');
             
             return (
-              <React.Fragment key={item.path}>
-                {shouldAddDividerBefore && (
-                  <Divider 
-                    sx={{ 
-                      my: 1, 
-                      mx: 2, 
-                      borderColor: alpha(currentTheme.border, 0.5),
-                      opacity: 0.6
-                    }} 
-                  />
-                )}
-                {shouldAddDividerAfter && (
-                  <Divider 
-                    sx={{ 
-                      my: 1, 
-                      mx: 2, 
-                      borderColor: alpha(currentTheme.border, 0.5),
-                      opacity: 0.6
-                    }} 
-                  />
-                )}
               <Tooltip
+                key={item.path}
                 title={item.name}
                 placement="right"
                 arrow
@@ -142,7 +122,8 @@ const NavigationDrawer = ({
                 <Box
                   sx={{
                     position: 'relative',
-                    mx: isDrawerCollapsed ? 0.5 : 1,
+                    mx: isDrawerCollapsed ? 0.5 : isCompact ? 0.5 : 1,
+                    flex: isCompact && !isDrawerCollapsed ? 1 : 'none',
                   }}
                 >
                   <ListItem
@@ -153,14 +134,15 @@ const NavigationDrawer = ({
                     sx={{
                       color: currentTheme.text,
                       py: 1.25,
-                      px: isDrawerCollapsed ? 1 : 1.5,
+                      px: isDrawerCollapsed ? 1 : isCompact ? 1 : 1.5,
                       justifyContent: isDrawerCollapsed ? 'center' : 'flex-start',
                       borderRadius: '8px',
                       '&.Mui-selected': {
-                        bgcolor: `${currentTheme.primary}20`,
+                        bgcolor: 'rgba(55, 171, 191, 0.2)',
                         borderRadius: '8px',
+                        color: '#37ABBF',
                         '&:hover': {
-                          bgcolor: `${currentTheme.primary}30`,
+                          bgcolor: 'rgba(55, 171, 191, 0.3)',
                         },
                       },
                       '&:hover': {
@@ -171,11 +153,11 @@ const NavigationDrawer = ({
                   >
                     <ListItemIcon sx={{ 
                       color: 'inherit', 
-                      minWidth: isDrawerCollapsed ? 0 : 36,
-                      marginRight: isDrawerCollapsed ? 0 : 1.5,
+                      minWidth: isDrawerCollapsed ? 0 : isCompact ? 28 : 36,
+                      marginRight: isDrawerCollapsed ? 0 : isCompact ? 0.75 : 1.5,
                       '& svg': {
-                        width: item.id === 'home' ? '1.2rem' : '1.35rem',
-                        height: item.id === 'home' ? '1.2rem' : '1.35rem'
+                        width: item.id === 'home' ? '1.2rem' : isCompact ? '1.2rem' : '1.35rem',
+                        height: item.id === 'home' ? '1.2rem' : isCompact ? '1.2rem' : '1.35rem'
                       }
                     }}>
                       {item.icon}
@@ -183,44 +165,100 @@ const NavigationDrawer = ({
                     {!isDrawerCollapsed && (
                       <ListItemText 
                         primary={
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Typography 
-                              variant="body2" 
-                              sx={{ 
-                                fontSize: '0.875rem',
-                                fontWeight: 500,
-                              }}
-                            >
-                              {item.name}
-                            </Typography>
-                            {item.beta && (
-                              <Chip
-                                label="BETA"
-                                size="small"
-                                sx={{
-                                  height: 16,
-                                  fontSize: '0.65rem',
-                                  fontWeight: 600,
-                                  bgcolor: alpha(currentTheme.primary, 0.1),
-                                  color: currentTheme.primary,
-                                  border: `1px solid ${alpha(currentTheme.primary, 0.3)}`,
-                                  '& .MuiChip-label': {
-                                    px: 0.75,
-                                    py: 0
-                                  }
-                                }}
-                              />
-                            )}
-                          </Box>
+                          <Typography 
+                            variant="body2" 
+                            sx={{ 
+                              fontSize: isCompact ? '0.8rem' : '0.875rem',
+                              fontWeight: 500,
+                            }}
+                          >
+                            {item.name}
+                          </Typography>
                         }
                       />
                     )}
                   </ListItem>
                 </Box>
               </Tooltip>
-            </React.Fragment>
-          );
+            );
+          };
+
+          // Build the menu items array
+          const menuItems = [];
+          filteredItems.forEach((item, index) => {
+            // Handle Pipelines and Data Products together on the same line
+            if (hasPipelinesAndProducts && item.id === 'pipelines') {
+              // Insert divider before Pipelines/Products combo
+              menuItems.push(
+                <React.Fragment key="pipelines-products-group">
+                  <Divider 
+                    sx={{ 
+                      my: 1, 
+                      mx: isDrawerCollapsed ? 1 : 2, 
+                      borderColor: alpha(currentTheme.border, 0.5),
+                      opacity: 0.6
+                    }} 
+                  />
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      flexDirection: isDrawerCollapsed ? 'column' : 'row',
+                      gap: 0.5,
+                      mx: isDrawerCollapsed ? 0.5 : 1,
+                      alignItems: 'stretch',
+                    }}
+                  >
+                    {renderMenuItem(pipelinesItem, true)}
+                    {!isDrawerCollapsed && (
+                      <Divider 
+                        orientation="vertical" 
+                        flexItem
+                        sx={{ 
+                          borderColor: alpha(currentTheme.border, 0.3),
+                          opacity: 0.4,
+                          my: 0.5,
+                        }} 
+                      />
+                    )}
+                    {isDrawerCollapsed && (
+                      <Divider 
+                        orientation="horizontal" 
+                        flexItem
+                        sx={{ 
+                          borderColor: alpha(currentTheme.border, 0.3),
+                          opacity: 0.4,
+                          mx: 0.5,
+                        }} 
+                      />
+                    )}
+                    {renderMenuItem(productsItem, true)}
+                  </Box>
+                  <Divider 
+                    sx={{ 
+                      my: 1, 
+                      mx: isDrawerCollapsed ? 1 : 2, 
+                      borderColor: alpha(currentTheme.border, 0.5),
+                      opacity: 0.6
+                    }} 
+                  />
+                </React.Fragment>
+              );
+              return; // Skip rendering pipelines individually
+            }
+            
+            // Skip data-products - it's rendered with pipelines above
+            if (hasPipelinesAndProducts && item.id === 'data-products') {
+              return;
+            }
+            
+            menuItems.push(
+              <React.Fragment key={item.path}>
+                {renderMenuItem(item)}
+              </React.Fragment>
+            );
           });
+
+          return menuItems;
         })()}
       </List>
 

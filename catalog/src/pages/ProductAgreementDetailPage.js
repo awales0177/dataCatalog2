@@ -1578,27 +1578,6 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
 
             <Divider sx={{ my: 2 }} />
 
-            <Box sx={{ mb: 2 }}>
-              <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
-                Access Level
-              </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Chip
-                  label={agreement.restricted ? 'Restricted' : 'Public'}
-                  size="small"
-                  sx={{
-                    bgcolor: agreement.restricted ? alpha('#f44336', 0.1) : alpha('#4caf50', 0.1),
-                    color: agreement.restricted ? '#f44336' : '#4caf50',
-                    '&:hover': {
-                      bgcolor: agreement.restricted ? alpha('#f44336', 0.2) : alpha('#4caf50', 0.2),
-                    }
-                  }}
-                />
-              </Box>
-            </Box>
-
-            <Divider sx={{ my: 2 }} />
-
             {/* Field 1 (Network) */}
             <Box sx={{ mb: 2 }}>
               <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
@@ -1608,38 +1587,6 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
                 {(agreement[agreementFieldsConfig.field1.jsonKey] || []).map((value, index) => {
                   // Find the option configuration for this value
                   const option = agreementFieldsConfig.field1.options.find(opt => opt.value === value);
-                  const label = option ? option.label : value;
-                  const color = option ? option.color : '#9e9e9e';
-                  
-                  return (
-                    <Chip
-                      key={index}
-                      label={label}
-                      size="small"
-                      sx={{
-                        bgcolor: alpha(color, 0.1),
-                        color: color,
-                        '&:hover': {
-                          bgcolor: alpha(color, 0.2),
-                        }
-                      }}
-                    />
-                  );
-                })}
-              </Box>
-            </Box>
-
-            <Divider sx={{ my: 2 }} />
-
-            {/* Field 2 (Sensitivity Level) */}
-            <Box sx={{ mb: 2 }}>
-              <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
-                {agreementFieldsConfig.field2.name}
-              </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-                {(agreement[agreementFieldsConfig.field2.jsonKey] || []).map((value, index) => {
-                  // Find the option configuration for this value
-                  const option = agreementFieldsConfig.field2.options.find(opt => opt.value === value);
                   const label = option ? option.label : value;
                   const color = option ? option.color : '#9e9e9e';
                   

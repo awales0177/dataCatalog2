@@ -655,7 +655,7 @@ const EditAgreementPage = () => {
       'name', 'description', 'status', 'specificationMaintainer', 'parentSystem',
       'dataProducer', 'dataValidator', 'dataConsumer', 'modelShortName',
       'contractVersion', 'deliveredVersion', 'deliveryFrequency', 'startDate', 'endDate',
-      'fileFormat', 'restricted', 'network', 'sensitivityLevel', 'location', 'todo'
+      'fileFormat', 'network', 'location', 'todo'
     ];
     
     // Normalize values for comparison (treat null, undefined, and empty string as equivalent)
@@ -1072,7 +1072,7 @@ const EditAgreementPage = () => {
     );
   };
 
-  // Generic render function for configurable agreement fields (field1 and field2)
+  // Generic render function for configurable agreement fields (field1)
   const renderConfigurableField = (fieldConfig, path, value, label) => {
     const options = fieldConfig.options || [];
     const defaultOption = options.length > 0 ? options[0].value : '';
@@ -1313,17 +1313,12 @@ const EditAgreementPage = () => {
         return renderDataProducerField(path, value, label);
       }
       
-      // Special handling for configurable fields (field1 and field2)
+      // Special handling for configurable fields (field1)
       // Check if this path matches any configured field's jsonKey
       const field1Config = agreementFieldsConfig.field1;
-      const field2Config = agreementFieldsConfig.field2;
       
       if (path === field1Config.jsonKey) {
         return renderConfigurableField(field1Config, path, value, label);
-      }
-      
-      if (path === field2Config.jsonKey) {
-        return renderConfigurableField(field2Config, path, value, label);
       }
       
       return (
@@ -1795,24 +1790,10 @@ const EditAgreementPage = () => {
           </Grid>
 
           <Grid item xs={12} md={6}>
-            {renderField('restricted', editedAgreement.restricted, 'Restricted', 'switch')}
-          </Grid>
-          <Grid item xs={12} md={6}>
             {renderField(
               agreementFieldsConfig.field1.jsonKey, 
               editedAgreement[agreementFieldsConfig.field1.jsonKey], 
               agreementFieldsConfig.field1.name, 
-              'text', 
-              null, 
-              false, 
-              'array'
-            )}
-          </Grid>
-          <Grid item xs={12} md={6}>
-            {renderField(
-              agreementFieldsConfig.field2.jsonKey, 
-              editedAgreement[agreementFieldsConfig.field2.jsonKey], 
-              agreementFieldsConfig.field2.name, 
               'text', 
               null, 
               false, 

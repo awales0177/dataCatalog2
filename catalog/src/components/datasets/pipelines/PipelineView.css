@@ -1,0 +1,75 @@
+.pipeline-view-toggle {
+  display: flex;
+  gap: 0.25rem;
+  margin-bottom: 1rem;
+  margin-left: auto;
+  padding: 0.25rem;
+  background: transparent;
+  border-radius: 6px;
+  width: fit-content;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.pipeline-view-toggle:hover {
+  opacity: 1;
+}
+
+.toggle-button {
+  padding: 0.5rem;
+  border: 1px solid transparent;
+  background: transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #999;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+}
+
+.toggle-button:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: #666;
+}
+
+.toggle-button.active {
+  background: rgba(0, 123, 255, 0.1);
+  color: #007bff;
+  border-color: rgba(0, 123, 255, 0.2);
+}
+
+.toggle-button.active:hover {
+  background: rgba(0, 123, 255, 0.15);
+  color: #0056b3;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .pipeline-view-toggle {
+    background: transparent;
+  }
+  
+  .toggle-button {
+    background: transparent;
+    color: #666;
+  }
+  
+  .toggle-button:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #999;
+  }
+  
+  .toggle-button.active {
+    background: rgba(0, 123, 255, 0.2);
+    color: #4da3ff;
+    border-color: rgba(0, 123, 255, 0.3);
+  }
+  
+  .toggle-button.active:hover {
+    background: rgba(0, 123, 255, 0.25);
+    color: #66b3ff;
+  }
+}

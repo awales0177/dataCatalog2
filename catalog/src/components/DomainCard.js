@@ -79,7 +79,7 @@ const DomainCard = ({ domain, onClick, currentTheme }) => {
         '&:hover': {
           transform: 'translateY(-1px)',
           boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
-          borderColor: currentTheme.primary,
+          borderColor: '#37ABBF',
         },
       }}
     >

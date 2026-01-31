@@ -34,7 +34,6 @@ import {
   Schedule as ScheduleIcon,
   Info as InfoIcon,
   ExpandMore as ExpandMoreIcon,
-  Star as StarIcon,
   Visibility as VisibilityIcon,
   Book as BookIcon,
   Build as BuildIcon,
@@ -186,8 +185,8 @@ const ToolkitContainerDetailPage = () => {
                   }}
                 />
                 <Chip
-                  icon={<StarIcon />}
-                  label={`${containerData.rating}/5`}
+                  icon={<CheckCircleIcon />}
+                  label={`${containerData.testCoverage !== undefined ? containerData.testCoverage : 0}% coverage`}
                   size="small"
                   sx={{
                     bgcolor: alpha(currentTheme.primary, 0.1),

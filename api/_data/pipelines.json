@@ -1,0 +1,20 @@
+[
+  {
+    "uuid": "550e8400-e29b-41d4-a716-446655440000",
+    "name": "Pipe A",
+    "type": "file-based",
+    "description": "File-based pipeline for processing documents and files with analytics, text extraction, and entity recognition"
+  },
+  {
+    "uuid": "550e8400-e29b-41d4-a716-446655440001",
+    "name": "Pipe B",
+    "type": "table-based",
+    "description": "Table-based pipeline for processing structured data tables with ETL operations and quality checks"
+  },
+  {
+    "uuid": "550e8400-e29b-41d4-a716-446655440002",
+    "name": "Pipe C",
+    "type": "zip-based",
+    "description": "Zip file-based pipeline for processing archived/compressed files with extraction and analysis"
+  }
+]

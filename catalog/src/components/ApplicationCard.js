@@ -85,6 +85,7 @@ const ApplicationCard = ({ application, currentTheme, onEdit }) => {
         '&:hover': {
           transform: 'translateY(-4px)',
           boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+          borderColor: '#37ABBF',
         },
         position: 'relative',
       }}

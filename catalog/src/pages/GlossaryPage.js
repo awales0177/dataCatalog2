@@ -19,6 +19,9 @@ import {
   Divider,
   Snackbar,
   Tooltip,
+  Collapse,
+  alpha,
+  Grid,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -29,11 +32,18 @@ import {
   Description as DescriptionIcon,
   Cancel as CancelIcon,
   DataObject as DataObjectIcon,
+  Code as CodeIcon,
+  ExpandMore as ExpandMoreIcon,
+  ExpandLess as ExpandLessIcon,
 } from '@mui/icons-material';
 import { ThemeContext } from '../contexts/ThemeContext';
 import { fetchData } from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import remarkEmoji from 'remark-emoji';
+import GlossaryCard from '../components/GlossaryCard';
 
 const GlossaryPage = () => {
   const { currentTheme, darkMode } = useContext(ThemeContext);
@@ -48,6 +58,8 @@ const GlossaryPage = () => {
   const [selectedModelFilter, setSelectedModelFilter] = useState(null);
   const [dataModels, setDataModels] = useState([]);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [expandedTerms, setExpandedTerms] = useState(new Set());
+  const [selectedTerm, setSelectedTerm] = useState(null);
 
   useEffect(() => {
     const loadGlossary = async () => {
@@ -148,6 +160,22 @@ const GlossaryPage = () => {
 
   const hasActiveFilters = searchQuery || selectedCategoryFilter || selectedModelFilter;
 
+  const toggleTermExpansion = (termId) => {
+    setExpandedTerms(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(termId)) {
+        newSet.delete(termId);
+      } else {
+        newSet.add(termId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleTermClick = (term) => {
+    setSelectedTerm(term);
+  };
+
 
   if (loading) {
     return (
@@ -168,74 +196,96 @@ const GlossaryPage = () => {
   }
 
   return (
-    <Box sx={{ p: 3 }}>
+    <Box sx={{ 
+      height: '100%',
+      width: '100%',
+      display: 'flex', 
+      flexDirection: 'column', 
+      gap: 2, 
+      p: 2, 
+      overflow: 'hidden',
+      minHeight: 0,
+      boxSizing: 'border-box',
+      position: 'relative',
+    }}>
       {/* Header */}
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" sx={{ color: currentTheme.text }}>
-            Glossary
-          </Typography>
+      <Box sx={{ flexShrink: 0 }}>
+        <Typography variant="h4" sx={{ color: currentTheme.text, mb: 0.5 }}>
+          Glossary
+        </Typography>
         <Typography variant="body2" sx={{ color: currentTheme.textSecondary }}>
-            Browse and search glossary terms, definitions, and documentation
-          </Typography>
-        </Box>
+          Browse and search glossary terms, definitions, and documentation
+        </Typography>
+      </Box>
 
-      {/* Search and Filters */}
-      <Box sx={{ mb: 4 }}>
-        <TextField
-          fullWidth
-          variant="outlined"
-          placeholder="Search terms, definitions, or categories..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon sx={{ color: currentTheme.textSecondary }} />
-              </InputAdornment>
-            ),
-            endAdornment: searchQuery && (
-              <InputAdornment position="end">
-                <IconButton
-                  size="small"
-                  onClick={() => setSearchQuery('')}
-                  sx={{ color: currentTheme.textSecondary }}
-                >
-                  ×
-                </IconButton>
-              </InputAdornment>
-            )
-          }}
-          sx={{
-            mb: 2,
-            '& .MuiOutlinedInput-root': {
-              bgcolor: currentTheme.card,
-              '& fieldset': {
-                borderColor: currentTheme.border
+      {/* Top Pane: Search and Filters */}
+      <Paper
+        elevation={0}
+        sx={{
+          flexShrink: 0,
+          p: 2,
+          borderRadius: 3,
+          bgcolor: currentTheme.card,
+          border: `1px solid ${currentTheme.border}`,
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
+        }}
+      >
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+          <TextField
+            fullWidth
+            variant="outlined"
+            placeholder="Search terms, definitions..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon sx={{ color: currentTheme.textSecondary }} />
+                </InputAdornment>
+              ),
+              endAdornment: searchQuery && (
+                <InputAdornment position="end">
+                  <IconButton
+                    size="small"
+                    onClick={() => setSearchQuery('')}
+                    sx={{ color: currentTheme.textSecondary }}
+                  >
+                    ×
+                  </IconButton>
+                </InputAdornment>
+              )
+            }}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                bgcolor: currentTheme.background,
+                '& fieldset': {
+                  borderColor: currentTheme.border
+                },
+                '&:hover fieldset': {
+                  borderColor: currentTheme.primary
+                },
+                '&.Mui-focused fieldset': {
+                  borderColor: currentTheme.primary
+                }
               },
-              '&:hover fieldset': {
-                borderColor: currentTheme.primary
+              '& .MuiInputBase-input': {
+                color: currentTheme.text
               },
-              '&.Mui-focused fieldset': {
-                borderColor: currentTheme.primary
+              '& .MuiInputBase-input::placeholder': {
+                color: currentTheme.textSecondary,
+                opacity: 1
               }
-            },
-            '& .MuiInputBase-input': {
-              color: currentTheme.text
-            },
-            '& .MuiInputBase-input::placeholder': {
-              color: currentTheme.textSecondary,
-              opacity: 1
-            }
-          }}
-        />
+            }}
+          />
 
-        {/* Filter Controls */}
-        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-          <Autocomplete
-            options={getFilterOptions().categories}
-            value={selectedCategoryFilter}
-            onChange={(event, newValue) => setSelectedCategoryFilter(newValue)}
-            sx={{ minWidth: 200, flex: 1 }}
+          {/* Filter Controls */}
+          <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap', alignItems: 'center' }}>
+            <Autocomplete
+              options={getFilterOptions().categories}
+              value={selectedCategoryFilter}
+              onChange={(event, newValue) => setSelectedCategoryFilter(newValue)}
+              sx={{ minWidth: 180, flex: 1 }}
+              size="small"
             renderInput={(params) => (
               <TextField
                 {...params}
@@ -275,12 +325,13 @@ const GlossaryPage = () => {
               </Paper>
             )}
           />
-          <Autocomplete
-            options={getFilterOptions().models}
-            getOptionLabel={(option) => option.name}
-            value={selectedModelFilter ? getFilterOptions().models.find(m => m.shortName === selectedModelFilter) : null}
-            onChange={(event, newValue) => setSelectedModelFilter(newValue ? newValue.shortName : null)}
-            sx={{ minWidth: 200, flex: 1 }}
+            <Autocomplete
+              options={getFilterOptions().models}
+              getOptionLabel={(option) => option.name}
+              value={selectedModelFilter ? getFilterOptions().models.find(m => m.shortName === selectedModelFilter) : null}
+              onChange={(event, newValue) => setSelectedModelFilter(newValue ? newValue.shortName : null)}
+              sx={{ minWidth: 180, flex: 1 }}
+              size="small"
             renderInput={(params) => (
               <TextField
                 {...params}
@@ -320,207 +371,365 @@ const GlossaryPage = () => {
               </Paper>
             )}
           />
+
+            {/* Active Filter Chips and Count */}
+            <Box sx={{ display: 'flex', gap: 0.75, alignItems: 'center', flexWrap: 'wrap' }}>
+              {hasActiveFilters && (
+                <>
+                  {selectedCategoryFilter && (
+                    <Chip
+                      icon={<MenuBookIcon sx={{ fontSize: 16 }} />}
+                      label={selectedCategoryFilter}
+                      onDelete={() => setSelectedCategoryFilter(null)}
+                      size="small"
+                      sx={{
+                        height: 24,
+                        fontSize: '0.75rem',
+                        bgcolor: darkMode ? 'rgba(156, 39, 176, 0.2)' : 'rgba(156, 39, 176, 0.1)',
+                        color: currentTheme.text,
+                        '& .MuiChip-deleteIcon': {
+                          color: currentTheme.textSecondary,
+                          fontSize: 16,
+                        }
+                      }}
+                    />
+                  )}
+                  {selectedModelFilter && (
+                    <Chip
+                      icon={<DataObjectIcon sx={{ fontSize: 16 }} />}
+                      label={getFilterOptions().models.find(m => m.shortName === selectedModelFilter)?.name || selectedModelFilter}
+                      onDelete={() => setSelectedModelFilter(null)}
+                      size="small"
+                      sx={{
+                        height: 24,
+                        fontSize: '0.75rem',
+                        bgcolor: darkMode ? 'rgba(33, 150, 243, 0.2)' : 'rgba(33, 150, 243, 0.1)',
+                        color: currentTheme.text,
+                        '& .MuiChip-deleteIcon': {
+                          color: currentTheme.textSecondary,
+                          fontSize: 16,
+                        }
+                      }}
+                    />
+                  )}
+                  <Button
+                    size="small"
+                    onClick={clearAllFilters}
+                    sx={{ 
+                      color: currentTheme.textSecondary,
+                      minWidth: 'auto',
+                      px: 1,
+                      fontSize: '0.75rem',
+                      height: 24,
+                    }}
+                  >
+                    Clear
+                  </Button>
+                </>
+              )}
+              <Typography variant="caption" sx={{ color: currentTheme.textSecondary, ml: 'auto', fontSize: '0.75rem' }}>
+                {filteredData.length} {filteredData.length === 1 ? 'term' : 'terms'}
+                {hasActiveFilters && ` of ${originalData.length}`}
+              </Typography>
+            </Box>
+          </Box>
         </Box>
+      </Paper>
 
-        {/* Active Filter Chips */}
-        {hasActiveFilters && (
-          <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 1, alignItems: 'center', width: '100%' }}>
-            {selectedCategoryFilter && (
-              <Chip
-                icon={<MenuBookIcon />}
-                label={`Category: ${selectedCategoryFilter}`}
-                onDelete={() => setSelectedCategoryFilter(null)}
-                sx={{
-                  bgcolor: darkMode ? 'rgba(156, 39, 176, 0.2)' : 'rgba(156, 39, 176, 0.1)',
-                  color: currentTheme.text,
-                  '& .MuiChip-deleteIcon': {
-                    color: currentTheme.textSecondary
-                  }
-                }}
-              />
+      {/* Bottom 2-Pane Layout */}
+      <Grid container spacing={2} sx={{ flex: 1, overflow: 'hidden', minHeight: 0, flexShrink: 1, height: 0 }}>
+        {/* Left Pane: Cards */}
+        <Grid item xs={12} md={5} sx={{ 
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          minHeight: 0,
+          height: '100%',
+        }}>
+          <Paper
+            elevation={0}
+            sx={{
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              borderRadius: 3,
+              bgcolor: currentTheme.card,
+              border: `1px solid ${currentTheme.border}`,
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
+              overflow: 'hidden',
+              minHeight: 0,
+              height: '100%',
+            }}
+          >
+            <Box sx={{ p: 2, borderBottom: `1px solid ${currentTheme.border}`, flexShrink: 0 }}>
+              <Typography variant="h6" sx={{ color: currentTheme.text }}>
+                Terms
+              </Typography>
+            </Box>
+            <Box sx={{ 
+              p: 2, 
+              overflowY: 'auto', 
+              overflowX: 'hidden',
+              flex: 1, 
+              minHeight: 0,
+              '&::-webkit-scrollbar': {
+                width: '8px',
+              },
+              '&::-webkit-scrollbar-track': {
+                bgcolor: 'transparent',
+              },
+              '&::-webkit-scrollbar-thumb': {
+                bgcolor: darkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)',
+                borderRadius: '4px',
+                '&:hover': {
+                  bgcolor: darkMode ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)',
+                },
+              },
+            }}>
+
+            {loading && filteredData.length === 0 ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+                <CircularProgress />
+              </Box>
+            ) : filteredData.length === 0 ? (
+              <Typography variant="body2" sx={{ color: currentTheme.textSecondary, textAlign: 'center', p: 3 }}>
+                {hasActiveFilters ? 'No terms found matching your filters' : 'No glossary terms available yet. Create your first term!'}
+              </Typography>
+            ) : (
+              <Grid container spacing={2}>
+                {filteredData.map((term) => (
+                  <Grid item xs={12} key={term.id || term.term}>
+                    <Box
+                      onClick={() => handleTermClick(term)}
+                      sx={{
+                        cursor: 'pointer',
+                        '& .MuiCard-root': {
+                          border: selectedTerm?.id === term.id ? `2px solid ${currentTheme.primary}` : `1px solid ${currentTheme.border}`,
+                          transition: 'all 0.2s ease-in-out',
+                        }
+                      }}
+                    >
+                      <GlossaryCard term={term} currentTheme={currentTheme} dataModels={dataModels} canEdit={canCreate} />
+                    </Box>
+                  </Grid>
+                ))}
+              </Grid>
             )}
-            {selectedModelFilter && (
-              <Chip
-                icon={<DataObjectIcon />}
-                label={`Model: ${getFilterOptions().models.find(m => m.shortName === selectedModelFilter)?.name || selectedModelFilter}`}
-                onDelete={() => setSelectedModelFilter(null)}
+            </Box>
+          </Paper>
+        </Grid>
+
+        {/* Right Pane: README */}
+        <Grid item xs={12} md={7} sx={{ 
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          minHeight: 0,
+          height: '100%',
+        }}>
+          <Paper
+            elevation={0}
+            sx={{
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              borderRadius: 3,
+              bgcolor: currentTheme.card,
+              border: `1px solid ${currentTheme.border}`,
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
+              overflow: 'hidden',
+              minHeight: 0,
+              height: '100%',
+            }}
+          >
+            <Box sx={{ p: 2, borderBottom: `1px solid ${currentTheme.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
+              <Typography variant="h6" sx={{ color: currentTheme.text }}>
+                README
+              </Typography>
+              {selectedTerm && (
+                <Tooltip title="Edit Markdown">
+                  <IconButton
+                    size="small"
+                    onClick={() => navigate(`/glossary/${selectedTerm.id}/markdown`)}
+                    sx={{
+                      color: currentTheme.textSecondary,
+                      '&:hover': {
+                        color: currentTheme.primary,
+                      }
+                    }}
+                  >
+                    <CodeIcon />
+                  </IconButton>
+                </Tooltip>
+              )}
+            </Box>
+            <Box sx={{ 
+              p: 3, 
+              overflowY: 'auto', 
+              overflowX: 'hidden',
+              flex: 1, 
+              minHeight: 0,
+              '&::-webkit-scrollbar': {
+                width: '8px',
+              },
+              '&::-webkit-scrollbar-track': {
+                bgcolor: 'transparent',
+              },
+              '&::-webkit-scrollbar-thumb': {
+                bgcolor: darkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)',
+                borderRadius: '4px',
+                '&:hover': {
+                  bgcolor: darkMode ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)',
+                },
+              },
+            }}>
+
+            {selectedTerm ? (
+              <Box
                 sx={{
-                  bgcolor: darkMode ? 'rgba(33, 150, 243, 0.2)' : 'rgba(33, 150, 243, 0.1)',
-                  color: currentTheme.text,
-                  '& .MuiChip-deleteIcon': {
-                    color: currentTheme.textSecondary
-                  }
-                }}
-              />
-            )}
-            <Button
-              size="small"
-              onClick={clearAllFilters}
-              sx={{ color: currentTheme.textSecondary }}
-            >
-              Clear All
-            </Button>
-          </Box>
-        )}
-      </Box>
-
-      {/* Terms List */}
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h6" sx={{ mb: 2, color: currentTheme.text }}>
-          Terms ({filteredData.length}{hasActiveFilters ? ` of ${originalData.length}` : ''})
-        </Typography>
-
-        {loading && filteredData.length === 0 ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-            <CircularProgress />
-          </Box>
-        ) : filteredData.length === 0 ? (
-          <Typography variant="body2" sx={{ color: currentTheme.textSecondary, textAlign: 'center', p: 3 }}>
-            {hasActiveFilters ? 'No terms found matching your filters' : 'No glossary terms available yet. Create your first term!'}
-          </Typography>
-        ) : (
-          <List>
-            {filteredData.map((term, index) => (
-              <React.Fragment key={term.id || term.term}>
-                <ListItem
-                  sx={{
-                    bgcolor: currentTheme.card,
+                  '& h1, & h2, & h3, & h4, & h5, & h6': {
+                    color: currentTheme.text,
+                    marginTop: 2,
+                    marginBottom: 1,
+                  },
+                  '& p': {
+                    color: currentTheme.textSecondary,
+                    marginBottom: 1.5,
+                  },
+                  '& code': {
+                    bgcolor: darkMode ? alpha(currentTheme.primary, 0.2) : alpha(currentTheme.primary, 0.1),
+                    color: darkMode ? '#a5d6ff' : currentTheme.primary,
+                    padding: '2px 6px',
                     borderRadius: 1,
-                    mb: 1,
+                    fontSize: '0.9em',
+                    fontFamily: 'monospace',
+                  },
+                  '& pre': {
+                    bgcolor: darkMode ? '#1e1e1e' : currentTheme.card,
+                    padding: 2,
+                    borderRadius: 1,
+                    overflow: 'auto',
                     border: `1px solid ${currentTheme.border}`,
+                    '& code': {
+                      bgcolor: 'transparent',
+                      padding: 0,
+                      color: darkMode ? '#d4d4d4' : currentTheme.text,
+                    }
+                  },
+                  '& ul, & ol': {
+                    color: currentTheme.textSecondary,
+                    paddingLeft: 3,
+                  },
+                  '& a': {
+                    color: currentTheme.primary,
+                    textDecoration: 'none',
                     '&:hover': {
-                      bgcolor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)'
+                      textDecoration: 'underline',
                     }
-                  }}
-                >
-                  <ListItemText
-                    sx={{
-                      pr: canCreate ? (term.documentation ? 16 : 8) : 0
-                    }}
-                    primary={
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                        <Typography variant="h6" sx={{ color: currentTheme.text }}>
-                          {term.term || 'Unnamed Term'}
-                        </Typography>
-                        {term.category && (
-                          <Chip
-                            label={term.category}
-                            size="small"
-                            sx={{
-                              bgcolor: darkMode ? 'rgba(156, 39, 176, 0.2)' : 'rgba(156, 39, 176, 0.1)',
-                              color: darkMode ? '#ba68c8' : '#9c27b0',
-                              border: `1px solid ${darkMode ? 'rgba(156, 39, 176, 0.5)' : '#9c27b0'}`,
-                              textTransform: 'capitalize'
-                            }}
-                          />
-                        )}
-                      </Box>
-                    }
-                    secondary={
-                      <Box>
-                        {term.definition && (
-                          <Typography 
-                            variant="body2" 
-                            sx={{ 
-                              color: currentTheme.textSecondary, 
-                              mb: 1,
-                              wordBreak: 'break-word',
-                              overflowWrap: 'break-word'
-                            }}
-                          >
-                            {term.definition}
-                          </Typography>
-                        )}
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 1 }}>
-                          {term.taggedModels?.slice(0, 5).map((modelShortName, idx) => {
-                            const model = dataModels.find(m => m.shortName === modelShortName);
-                            return (
-                              <Tooltip key={idx} title={model ? `${model.shortName} - ${model.name}` : modelShortName}>
-                                <Chip
-                                  icon={<DataObjectIcon />}
-                                  label={model ? model.shortName : modelShortName}
-                                  size="small"
-                                  onClick={() => model && navigate(`/models/${model.shortName}`)}
-                                  sx={{
-                                    bgcolor: darkMode ? 'rgba(33, 150, 243, 0.2)' : 'rgba(33, 150, 243, 0.1)',
-                                    color: currentTheme.text,
-                                    maxWidth: 150,
-                                    cursor: model ? 'pointer' : 'default',
-                                    '&:hover': model ? {
-                                      borderColor: currentTheme.primary
-                                    } : {}
-                                  }}
-                                />
-                              </Tooltip>
-                            );
-                          })}
-                          {term.taggedModels?.length > 5 && (
-                            <Chip
-                              label={`+${term.taggedModels.length - 5} more`}
-                              size="small"
-                              sx={{
-                                bgcolor: darkMode ? 'rgba(33, 150, 243, 0.2)' : 'rgba(33, 150, 243, 0.1)',
-                                color: currentTheme.text
-                              }}
-                            />
-                          )}
-                        </Box>
-                        {term.lastUpdated && (
-                          <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
-                            Last Updated: {new Date(term.lastUpdated).toLocaleDateString()}
-                          </Typography>
-                        )}
-                      </Box>
-                    }
-                  />
-                  <ListItemSecondaryAction>
-                    {canCreate && (
-                      <Box sx={{ display: 'flex', gap: 0.5 }}>
-                        <IconButton
-                          edge="end"
-                          onClick={() => navigate(`/glossary/${term.id || term.term}/edit`)}
-                          sx={{
-                            color: currentTheme.textSecondary,
-                            '&:hover': {
-                              bgcolor: darkMode ? 'rgba(33, 150, 243, 0.2)' : 'rgba(33, 150, 243, 0.1)',
-                              color: darkMode ? '#64b5f6' : '#1565c0'
-                            }
-                          }}
-                        >
-                          <EditIcon />
-                        </IconButton>
-                        {term.documentation && (
-                          <IconButton
-                            edge="end"
-                            onClick={() => window.open(term.documentation, '_blank')}
-                            sx={{
-                              color: currentTheme.textSecondary,
-                              '&:hover': {
-                                bgcolor: darkMode ? 'rgba(33, 150, 243, 0.2)' : 'rgba(33, 150, 243, 0.1)',
-                                color: darkMode ? '#64b5f6' : '#1565c0'
-                              }
-                            }}
-                          >
-                            <DescriptionIcon />
-                          </IconButton>
-                        )}
-                      </Box>
-                    )}
-                  </ListItemSecondaryAction>
-                </ListItem>
-                {index < filteredData.length - 1 && (
-                  <Divider
-                    sx={{
-                      borderColor: currentTheme.border,
-                      opacity: 0.5
-                    }}
-                  />
+                  },
+                  '& blockquote': {
+                    borderLeft: `4px solid ${currentTheme.primary}`,
+                    paddingLeft: 2,
+                    marginLeft: 0,
+                    color: currentTheme.textSecondary,
+                    fontStyle: 'italic',
+                    bgcolor: darkMode ? alpha(currentTheme.primary, 0.05) : 'transparent',
+                    padding: 1,
+                    borderRadius: '0 4px 4px 0',
+                  },
+                  '& hr': {
+                    borderColor: currentTheme.border,
+                    borderWidth: '1px 0 0 0',
+                    marginTop: 2,
+                    marginBottom: 2,
+                  },
+                  '& img': {
+                    maxWidth: '100%',
+                    height: 'auto',
+                    borderRadius: 1,
+                    border: `1px solid ${currentTheme.border}`,
+                  },
+                  '& strong': {
+                    color: currentTheme.text,
+                    fontWeight: 600,
+                  },
+                  '& em': {
+                    color: currentTheme.textSecondary,
+                    fontStyle: 'italic',
+                  },
+                  '& table': {
+                    width: '100%',
+                    borderCollapse: 'collapse',
+                    marginTop: 2,
+                    marginBottom: 2,
+                    display: 'table',
+                    border: `1px solid ${currentTheme.border}`,
+                    borderRadius: 1,
+                    overflow: 'hidden',
+                  },
+                  '& thead': {
+                    display: 'table-header-group',
+                  },
+                  '& tbody': {
+                    display: 'table-row-group',
+                  },
+                  '& tr': {
+                    display: 'table-row',
+                    borderBottom: `1px solid ${currentTheme.border}`,
+                    '&:last-child': {
+                      borderBottom: 'none',
+                    },
+                  },
+                  '& th, & td': {
+                    display: 'table-cell',
+                    border: `1px solid ${currentTheme.border}`,
+                    padding: 1.5,
+                    textAlign: 'left',
+                    verticalAlign: 'top',
+                  },
+                  '& th': {
+                    bgcolor: darkMode ? alpha(currentTheme.primary, 0.2) : alpha(currentTheme.primary, 0.1),
+                    fontWeight: 600,
+                    color: currentTheme.text,
+                  },
+                  '& td': {
+                    color: currentTheme.textSecondary,
+                    bgcolor: darkMode ? alpha(currentTheme.background, 0.5) : 'transparent',
+                  },
+                  '& tr:nth-of-type(even) td': {
+                    bgcolor: darkMode ? alpha(currentTheme.background, 0.3) : alpha(currentTheme.primary, 0.02),
+                  },
+                }}
+              >
+                {selectedTerm.markdown ? (
+                  <ReactMarkdown remarkPlugins={[remarkGfm, remarkEmoji]}>{selectedTerm.markdown}</ReactMarkdown>
+                ) : (
+                  <Typography variant="body2" sx={{ color: currentTheme.textSecondary, fontStyle: 'italic' }}>
+                    No markdown content available for this term. Click the code icon to add markdown.
+                  </Typography>
                 )}
-              </React.Fragment>
-            ))}
-          </List>
-        )}
-      </Box>
+              </Box>
+            ) : (
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  height: '100%',
+                  color: currentTheme.textSecondary,
+                }}
+              >
+                <MenuBookIcon sx={{ fontSize: 64, mb: 2, opacity: 0.3 }} />
+                <Typography variant="body1" sx={{ textAlign: 'center' }}>
+                  Select a term to view its markdown content
+                </Typography>
+              </Box>
+            )}
+            </Box>
+          </Paper>
+        </Grid>
+      </Grid>
 
       {canCreate && (
         <Fab
