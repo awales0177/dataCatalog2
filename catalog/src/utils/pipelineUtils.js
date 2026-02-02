@@ -2,12 +2,20 @@
  * Pipeline Utilities
  * 
  * Helper functions for working with pipelines using UUIDs
- * Updated to use API instead of static imports
+ * Updated to use hardcoded data instead of API
  */
 
-import { fetchData } from '../services/api';
+import pipelinesData from '../data/pipelines.json';
 
 let pipelinesCache = null;
+
+// Initialize cache immediately with hardcoded data
+try {
+  pipelinesCache = Array.isArray(pipelinesData) ? pipelinesData : (pipelinesData.pipelines || []);
+} catch (error) {
+  console.error('Error initializing pipelines cache:', error);
+  pipelinesCache = [];
+}
 
 /**
  * Get all pipelines (cached)
@@ -15,10 +23,10 @@ let pipelinesCache = null;
 export const getPipelines = async () => {
   if (!pipelinesCache) {
     try {
-      const data = await fetchData('pipelines');
-      pipelinesCache = data.pipelines || [];
+      // Use hardcoded pipelines data
+      pipelinesCache = Array.isArray(pipelinesData) ? pipelinesData : (pipelinesData.pipelines || []);
     } catch (error) {
-      console.error('Error fetching pipelines:', error);
+      console.error('Error loading pipelines:', error);
       pipelinesCache = [];
     }
   }
@@ -108,6 +116,14 @@ export const isUuid = (value) => {
 /**
  * Initialize pipelines cache (call this on app load)
  */
-export const initializePipelines = async () => {
-  await getPipelines();
+export const initializePipelines = () => {
+  // Synchronously initialize cache with hardcoded data
+  if (!pipelinesCache) {
+    try {
+      pipelinesCache = Array.isArray(pipelinesData) ? pipelinesData : (pipelinesData.pipelines || []);
+    } catch (error) {
+      console.error('Error initializing pipelines:', error);
+      pipelinesCache = [];
+    }
+  }
 };

@@ -19,8 +19,9 @@ import {
   LockOpen as LockOpenIcon,
 } from '@mui/icons-material';
 import { ThemeContext } from '../contexts/ThemeContext';
-import { fetchDatasetById, fetchPipelines } from '../services/api';
 import { getPipelineName, initializePipelines } from '../utils/pipelineUtils';
+import datasetsData from '../data/datasets.json';
+import pipelinesData from '../data/pipelines.json';
 
 const DatasetDetailPage = () => {
   const { currentTheme } = useContext(ThemeContext);
@@ -32,20 +33,22 @@ const DatasetDetailPage = () => {
   const [pipelineNames, setPipelineNames] = useState({});
 
   useEffect(() => {
-    const loadData = async () => {
+    const loadData = () => {
       try {
         setLoading(true);
-        await initializePipelines();
-        const pipelinesData = await fetchPipelines();
+        initializePipelines();
+        
+        const pipelinesArray = Array.isArray(pipelinesData) ? pipelinesData : [];
         const nameMap = {};
-        pipelinesData.forEach(p => {
+        pipelinesArray.forEach(p => {
           nameMap[p.uuid] = p.name;
         });
         setPipelineNames(nameMap);
 
-        const datasetData = await fetchDatasetById(parseInt(id));
-        setDataset(datasetData);
-        setError(null);
+        const datasetsArray = Array.isArray(datasetsData) ? datasetsData : [];
+        const datasetData = datasetsArray.find(d => d.id === parseInt(id));
+        setDataset(datasetData || null);
+        setError(datasetData ? null : 'Dataset not found');
       } catch (err) {
         console.error('Error loading dataset:', err);
         setError('Failed to load dataset');

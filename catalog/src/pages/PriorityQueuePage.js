@@ -247,6 +247,7 @@ const PriorityQueuePage = () => {
       <Grid container spacing={2} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={6} md={3}>
           <Paper
+            elevation={0}
             sx={{
               p: 2.5,
               bgcolor: currentTheme.card,
@@ -281,6 +282,7 @@ const PriorityQueuePage = () => {
         
         <Grid item xs={12} sm={6} md={3}>
           <Paper
+            elevation={0}
             sx={{
               p: 2.5,
               bgcolor: currentTheme.card,
@@ -318,6 +320,7 @@ const PriorityQueuePage = () => {
         
         <Grid item xs={12} sm={6} md={3}>
           <Paper
+            elevation={0}
             sx={{
               p: 2.5,
               bgcolor: currentTheme.card,
@@ -352,6 +355,7 @@ const PriorityQueuePage = () => {
         
         <Grid item xs={12} sm={6} md={3}>
           <Paper
+            elevation={0}
             sx={{
               p: 2.5,
               bgcolor: currentTheme.card,
@@ -386,6 +390,7 @@ const PriorityQueuePage = () => {
         
         <Grid item xs={12} sm={6} md={3}>
           <Paper
+            elevation={0}
             sx={{
               p: 2.5,
               bgcolor: currentTheme.card,
@@ -420,6 +425,7 @@ const PriorityQueuePage = () => {
         
         <Grid item xs={12} sm={6} md={3}>
           <Paper
+            elevation={0}
             sx={{
               p: 2.5,
               bgcolor: currentTheme.card,
@@ -454,6 +460,7 @@ const PriorityQueuePage = () => {
         
         <Grid item xs={12} sm={6} md={3}>
           <Paper
+            elevation={0}
             sx={{
               p: 2.5,
               bgcolor: currentTheme.card,
@@ -488,6 +495,7 @@ const PriorityQueuePage = () => {
         
         <Grid item xs={12} sm={6} md={3}>
           <Paper
+            elevation={0}
             sx={{
               p: 2.5,
               bgcolor: currentTheme.card,
@@ -599,6 +607,7 @@ const PriorityQueuePage = () => {
         {filteredDatasets.length === 0 ? (
           <Grid item xs={12}>
             <Paper
+              elevation={0}
               sx={{
                 p: 4,
                 textAlign: 'center',
@@ -616,6 +625,7 @@ const PriorityQueuePage = () => {
           filteredDatasets.map((dataset) => (
             <Grid item xs={12} sm={6} md={4} lg={3} key={dataset.id}>
               <Paper
+                elevation={0}
                 sx={{
                   p: 2.5,
                   height: '100%',
@@ -624,8 +634,6 @@ const PriorityQueuePage = () => {
                   borderRadius: 2,
                   transition: 'all 0.2s ease',
                   '&:hover': {
-                    transform: 'translateY(-2px)',
-                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
                     borderColor: '#37ABBF',
                   },
                 }}

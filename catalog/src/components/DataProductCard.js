@@ -239,8 +239,8 @@ const DataProductCard = ({ product, onClick, currentTheme }) => {
             <Typography 
               variant="caption" 
               sx={{ 
-                color: getQualityColor(product.qualityScore) === 'success' ? currentTheme.success : 
-                       getQualityColor(product.qualityScore) === 'warning' ? '#f59e0b' : 'error.main',
+                color: getQualityColor(product.qualityScore) === 'success' ? '#2ecc71' : 
+                       getQualityColor(product.qualityScore) === 'warning' ? '#f59e0b' : '#e74c3c',
                 fontSize: '0.7rem',
                 fontWeight: 600,
               }}
@@ -256,8 +256,8 @@ const DataProductCard = ({ product, onClick, currentTheme }) => {
               borderRadius: 3,
               backgroundColor: currentTheme.background,
               '& .MuiLinearProgress-bar': {
-                backgroundColor: getQualityColor(product.qualityScore) === 'success' ? currentTheme.success : 
-                                 getQualityColor(product.qualityScore) === 'warning' ? '#f59e0b' : 'error.main',
+                backgroundColor: getQualityColor(product.qualityScore) === 'success' ? '#2ecc71' : 
+                                 getQualityColor(product.qualityScore) === 'warning' ? '#f59e0b' : '#e74c3c',
               },
             }}
           />

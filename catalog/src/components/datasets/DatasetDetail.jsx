@@ -2,10 +2,10 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useDatasetSelection } from '../../hooks/useDatasetSelection'
 import { useDatasetUI } from '../../hooks/useDatasetUI'
-import { fetchDatasetById } from '../../services/api'
 import PipelineView from './pipelines/PipelineView'
 import { getPipelineName, initializePipelines } from '../../utils/pipelineUtils'
 import catalogIcon from '../../imgs/catalog.png'
+import datasetsData from '../../data/datasets.json'
 import './DatasetDetail.css'
 
 function DatasetDetail() {
@@ -39,14 +39,15 @@ function DatasetDetail() {
   
   // Initialize pipelines cache and load dataset
   useEffect(() => {
-    const loadData = async () => {
+    const loadData = () => {
       try {
         setIsLoading(true)
         // Initialize pipelines cache first so pipeline names are available
-        await initializePipelines()
+        initializePipelines()
         if (datasetId) {
-          const data = await fetchDatasetById(datasetId)
-          setDataset(data)
+          const datasetsArray = Array.isArray(datasetsData) ? datasetsData : []
+          const data = datasetsArray.find(d => d.id === datasetId)
+          setDataset(data || null)
         }
       } catch (error) {
         console.error('Error loading dataset:', error)

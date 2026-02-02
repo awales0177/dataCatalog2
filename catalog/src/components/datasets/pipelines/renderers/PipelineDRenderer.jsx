@@ -35,7 +35,7 @@ import {
   Close as CloseIcon,
 } from '@mui/icons-material';
 import { ThemeContext } from '../../../../contexts/ThemeContext';
-import { fetchData } from '../../../../services/api';
+import referenceDataJson from '../../../../data/reference.json';
 import ETLOverview from '../../ETLOverview';
 import ProcessStatus from '../../ProcessStatus';
 
@@ -60,11 +60,11 @@ const PipelineDRenderer = ({
 
   // Load reference data
   useEffect(() => {
-    const loadReferenceData = async () => {
+    const loadReferenceData = () => {
       try {
         setLoading(true);
-        const data = await fetchData('reference');
-        setReferenceData(data.items || []);
+        const items = referenceDataJson.items || [];
+        setReferenceData(items);
         setError(null);
       } catch (err) {
         console.error('Error loading reference data:', err);
@@ -248,7 +248,7 @@ const PipelineDRenderer = ({
                 },
               },
               font: {
-                color: 'white',
+                color: '#000000',
                 size: 16,
               },
               shape: 'dot',

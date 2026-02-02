@@ -7,7 +7,7 @@ WORKDIR /app
 COPY . .
 
 # Install dependencies
-RUN npm install
+RUN npm install --force
 
 # Expose port 3000
 EXPOSE 3000

@@ -20,7 +20,7 @@ import {
   Add as AddIcon,
 } from '@mui/icons-material';
 import { ThemeContext } from '../contexts/ThemeContext';
-import { fetchData } from '../services/api';
+import referenceData from '../data/reference.json';
 import ReferenceDataCard from '../components/ReferenceDataCard';
 import Pagination from '../components/Pagination';
 import { useNavigate } from 'react-router-dom';
@@ -39,11 +39,11 @@ const ReferenceDataPage = () => {
   const theme = useTheme();
 
   useEffect(() => {
-    const loadReferenceData = async () => {
+    const loadReferenceData = () => {
       try {
-        const data = await fetchData('reference');
-        setOriginalData(data.items || []);
-        setFilteredData(data.items || []);
+        const items = referenceData.items || [];
+        setOriginalData(items);
+        setFilteredData(items);
         setError(null);
       } catch (err) {
         setError('Failed to load reference data');

@@ -18,7 +18,8 @@ import {
   Visibility as VisibilityIcon,
 } from '@mui/icons-material';
 import { ThemeContext } from '../contexts/ThemeContext';
-import { fetchData, updateDataProduct } from '../services/api';
+import { updateDataProduct } from '../services/api';
+import dataProductsData from '../data/dataProducts.json';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkEmoji from 'remark-emoji';
@@ -37,10 +38,9 @@ const DataProductMarkdownPage = () => {
   const [showPreview, setShowPreview] = useState(false);
 
   useEffect(() => {
-    const loadProduct = async () => {
+    const loadProduct = () => {
       try {
-        const productsData = await fetchData('data-products');
-        const products = productsData.products || productsData.items || [];
+        const products = dataProductsData.products || dataProductsData.items || [];
         const foundProduct = products.find(p => p.id === id);
         
         if (foundProduct) {

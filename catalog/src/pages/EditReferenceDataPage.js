@@ -50,7 +50,8 @@ import {
 } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ThemeContext } from '../contexts/ThemeContext';
-import { fetchData, createReferenceItem, updateReferenceItem, deleteReferenceItem } from '../services/api';
+import { createReferenceItem, updateReferenceItem, deleteReferenceItem } from '../services/api';
+import referenceDataJson from '../data/reference.json';
 import cacheService from '../services/cache';
 
 const EditReferenceDataPage = () => {
@@ -151,8 +152,7 @@ const EditReferenceDataPage = () => {
       } else {
         // Load existing item
         try {
-          const data = await fetchData('reference');
-          const foundItem = data.items.find(item => item.id === id);
+          const foundItem = referenceDataJson.items.find(item => item.id === id);
           
           if (foundItem) {
             setReferenceItem(foundItem);
@@ -180,14 +180,10 @@ const EditReferenceDataPage = () => {
     loadReferenceItem();
   }, [id, isNewItem, navigate]);
 
-  const refreshReferenceData = async () => {
+  const refreshReferenceData = () => {
     try {
       if (!isNewItem) {
-        // Invalidate the reference data cache to ensure fresh data
-        cacheService.invalidateByPrefix('reference');
-        
-        const referenceData = await fetchData('reference', {}, { forceRefresh: true });
-        const foundItem = referenceData.items.find(item => item.id === id);
+        const foundItem = referenceDataJson.items.find(item => item.id === id);
         if (foundItem) {
           setReferenceItem(foundItem);
           setEditedItem(foundItem);

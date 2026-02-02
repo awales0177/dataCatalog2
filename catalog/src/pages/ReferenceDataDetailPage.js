@@ -35,7 +35,7 @@ import SecurityIcon from '@mui/icons-material/Security';
 import SourceIcon from '@mui/icons-material/Source';
 import ApiIcon from '@mui/icons-material/Api';
 import StorageIcon from '@mui/icons-material/Storage';
-import { fetchData } from '../services/api';
+import referenceData from '../data/reference.json';
 import { formatDate } from '../utils/themeUtils';
 
 const ReferenceDataDetailPage = ({ currentTheme }) => {
@@ -46,10 +46,9 @@ const ReferenceDataDetailPage = ({ currentTheme }) => {
   const [error, setError] = React.useState(null);
 
   React.useEffect(() => {
-    const loadReferenceItem = async () => {
+    const loadReferenceItem = () => {
       try {
-        const data = await fetchData('reference');
-        const found = (data.items || []).find(i => i.id === id);
+        const found = (referenceData.items || []).find(i => i.id === id);
         if (found) {
           setItem(found);
         } else {

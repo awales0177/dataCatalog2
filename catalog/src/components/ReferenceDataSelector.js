@@ -13,7 +13,7 @@ import {
 import {
   Add as AddIcon,
 } from '@mui/icons-material';
-import { fetchData } from '../services/api';
+import referenceDataJson from '../data/reference.json';
 
 const ReferenceDataSelector = ({ 
   selectedReferenceData = [], 
@@ -27,10 +27,9 @@ const ReferenceDataSelector = ({
   const [availableOptions, setAvailableOptions] = useState([]);
 
   useEffect(() => {
-    const loadReferenceData = async () => {
+    const loadReferenceData = () => {
       try {
-        const response = await fetchData('reference');
-        setReferenceData(response.items || []);
+        setReferenceData(referenceDataJson.items || []);
       } catch (error) {
         // Handle error silently or show user notification
       }

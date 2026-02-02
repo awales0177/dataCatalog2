@@ -33,7 +33,11 @@ import {
   Search as SearchIcon,
 } from '@mui/icons-material';
 import { ThemeContext } from '../contexts/ThemeContext';
-import { fetchData, fetchDatasets } from '../services/api';
+import datasetsData from '../data/datasets.json';
+import dataProductsData from '../data/dataProducts.json';
+import pipelinesData from '../data/pipelines.json';
+import modelsData from '../data/models.json';
+import dataAgreementsData from '../data/dataAgreements.json';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkEmoji from 'remark-emoji';
@@ -63,8 +67,7 @@ const DataProductDetailPage = () => {
     const loadProduct = async () => {
       try {
         setLoading(true);
-        const data = await fetchData('data-products');
-        const products = data.products || data.items || [];
+        const products = dataProductsData.products || dataProductsData.items || [];
         const foundProduct = products.find(p => p.id === id);
         
         if (!foundProduct) {
@@ -77,8 +80,7 @@ const DataProductDetailPage = () => {
         // Load linked agreement if agreementId exists
         if (foundProduct.agreementId) {
           try {
-            const agreementsData = await fetchData('dataAgreements');
-            const agreements = agreementsData.agreements || [];
+            const agreements = dataAgreementsData.agreements || dataAgreementsData || [];
             const foundAgreement = agreements.find(a => a.id === foundProduct.agreementId);
             if (foundAgreement) {
               setAgreement(foundAgreement);
@@ -92,8 +94,7 @@ const DataProductDetailPage = () => {
         // Load data models if dataSources exist
         if (foundProduct.dataSources && foundProduct.dataSources.length > 0) {
           try {
-            const modelsData = await fetchData('models');
-            const models = modelsData.models || [];
+            const models = Array.isArray(modelsData) ? modelsData : (modelsData.models || []);
             const matchedModels = foundProduct.dataSources
               .map(source => {
                 // Try to find model by shortName (case-insensitive)
@@ -113,7 +114,6 @@ const DataProductDetailPage = () => {
         // Load pipelines if pipelines field exists
         if (foundProduct.pipelines && foundProduct.pipelines.length > 0) {
           try {
-            const pipelinesData = await fetchData('pipelines');
             const allPipelines = Array.isArray(pipelinesData) ? pipelinesData : (pipelinesData.pipelines || []);
             const matchedPipelines = foundProduct.pipelines
               .map(pipelineUuid => {
@@ -131,8 +131,7 @@ const DataProductDetailPage = () => {
         // Load source datasets based on product type
         if (foundProduct.productType) {
           try {
-            const datasetsData = await fetchDatasets();
-            const allDatasets = Array.isArray(datasetsData) ? datasetsData : (datasetsData.datasets || []);
+            const allDatasets = Array.isArray(datasetsData) ? datasetsData : [];
             
             if (foundProduct.productType === 'Aggregate' && foundProduct.sourceDatasets) {
               // Multiple source datasets for Aggregate
@@ -170,8 +169,7 @@ const DataProductDetailPage = () => {
         // Load all derived products for search component
         if (foundProduct.productType === 'Derived') {
           try {
-            const productsData = await fetchData('data-products');
-            const allProducts = productsData.products || productsData.items || [];
+            const allProducts = dataProductsData.products || dataProductsData.items || [];
             const derivedProducts = allProducts.filter(p => 
               p.productType === 'Derived' && p.id !== foundProduct.id
             );
@@ -423,8 +421,8 @@ const DataProductDetailPage = () => {
                     <Typography
                       variant="body2"
                       sx={{
-                        color: getQualityColor(product.qualityScore) === 'success' ? currentTheme.success :
-                               getQualityColor(product.qualityScore) === 'warning' ? '#f59e0b' : 'error.main',
+                        color: getQualityColor(product.qualityScore) === 'success' ? '#2ecc71' :
+                               getQualityColor(product.qualityScore) === 'warning' ? '#f59e0b' : '#e74c3c',
                         fontWeight: 600,
                       }}
                     >
@@ -439,8 +437,8 @@ const DataProductDetailPage = () => {
                       borderRadius: 3,
                       backgroundColor: currentTheme.background,
                       '& .MuiLinearProgress-bar': {
-                        backgroundColor: getQualityColor(product.qualityScore) === 'success' ? currentTheme.success :
-                                         getQualityColor(product.qualityScore) === 'warning' ? '#f59e0b' : 'error.main',
+                        backgroundColor: getQualityColor(product.qualityScore) === 'success' ? '#2ecc71' :
+                                         getQualityColor(product.qualityScore) === 'warning' ? '#f59e0b' : '#e74c3c',
                         borderRadius: 3,
                       },
                     }}
@@ -621,8 +619,7 @@ const DataProductDetailPage = () => {
                           elevation={0}
                           onClick={async () => {
                             try {
-                              const datasetsData = await fetchDatasets();
-                              const datasets = Array.isArray(datasetsData) ? datasetsData : (datasetsData.datasets || []);
+                              const datasets = Array.isArray(datasetsData) ? datasetsData : [];
                               const dataset = datasets.find(d => d.systems && d.systems.includes(pipeline.uuid));
                               if (dataset) {
                                 navigate(`/pipelines/datasets/${dataset.id}?pipeline=${pipeline.uuid}`);
@@ -856,8 +853,7 @@ const DataProductDetailPage = () => {
                                       onClick={async () => {
                                         try {
                                           const pipelineUuid = derivedProduct.pipelines[0];
-                                          const datasetsData = await fetchDatasets();
-                                          const datasets = Array.isArray(datasetsData) ? datasetsData : (datasetsData.datasets || []);
+                                          const datasets = Array.isArray(datasetsData) ? datasetsData : [];
                                           const dataset = datasets.find(d => d.systems && d.systems.includes(pipelineUuid));
                                           if (dataset) {
                                             navigate(`/pipelines/datasets/${dataset.id}?pipeline=${pipelineUuid}`);
@@ -1055,8 +1051,7 @@ const DataProductDetailPage = () => {
                                         onClick={async () => {
                                           try {
                                             const pipelineUuid = derivedProduct.pipelines[0];
-                                            const datasetsData = await fetchDatasets();
-                                            const datasets = Array.isArray(datasetsData) ? datasetsData : (datasetsData.datasets || []);
+                                            const datasets = Array.isArray(datasetsData) ? datasetsData : [];
                                             const dataset = datasets.find(d => d.systems && d.systems.includes(pipelineUuid));
                                             if (dataset) {
                                               navigate(`/pipelines/datasets/${dataset.id}?pipeline=${pipelineUuid}`);

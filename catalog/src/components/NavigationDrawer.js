@@ -197,8 +197,8 @@ const NavigationDrawer = ({
                     sx={{ 
                       my: 1, 
                       mx: isDrawerCollapsed ? 1 : 2, 
-                      borderColor: alpha(currentTheme.border, 0.5),
-                      opacity: 0.6
+                      borderColor: alpha(currentTheme.border, 0.8),
+                      opacity: 0.9
                     }} 
                   />
                   {/* Priority Queue Button */}
@@ -252,8 +252,8 @@ const NavigationDrawer = ({
                       <Divider 
                         orientation="horizontal" 
                         sx={{ 
-                          borderColor: alpha(currentTheme.border, 0.3),
-                          opacity: 0.4,
+                          borderColor: alpha(currentTheme.border, 0.7),
+                          opacity: 0.8,
                           mt: 1,
                           mx: 0.5,
                         }} 
@@ -263,8 +263,8 @@ const NavigationDrawer = ({
                       <Divider 
                         orientation="horizontal" 
                         sx={{ 
-                          borderColor: alpha(currentTheme.border, 0.3),
-                          opacity: 0.4,
+                          borderColor: alpha(currentTheme.border, 0.7),
+                          opacity: 0.8,
                           mt: 1,
                           mx: 0.5,
                         }} 
@@ -286,8 +286,8 @@ const NavigationDrawer = ({
                         orientation="vertical" 
                         flexItem
                         sx={{ 
-                          borderColor: alpha(currentTheme.border, 0.3),
-                          opacity: 0.4,
+                          borderColor: alpha(currentTheme.border, 0.7),
+                          opacity: 0.8,
                           my: 0.5,
                         }} 
                       />
@@ -297,8 +297,8 @@ const NavigationDrawer = ({
                         orientation="horizontal" 
                         flexItem
                         sx={{ 
-                          borderColor: alpha(currentTheme.border, 0.3),
-                          opacity: 0.4,
+                          borderColor: alpha(currentTheme.border, 0.7),
+                          opacity: 0.8,
                           mx: 0.5,
                         }} 
                       />
@@ -309,8 +309,8 @@ const NavigationDrawer = ({
                     sx={{ 
                       my: 1, 
                       mx: isDrawerCollapsed ? 1 : 2, 
-                      borderColor: alpha(currentTheme.border, 0.5),
-                      opacity: 0.6
+                      borderColor: alpha(currentTheme.border, 0.8),
+                      opacity: 0.9
                     }} 
                   />
                 </React.Fragment>

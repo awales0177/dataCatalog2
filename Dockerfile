@@ -9,7 +9,7 @@ COPY catalog/package*.json ./catalog/
 
 # Install dependencies
 WORKDIR /app/catalog
-RUN npm install
+RUN npm install --force
 
 # Copy source code
 WORKDIR /app
