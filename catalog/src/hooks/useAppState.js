@@ -13,6 +13,10 @@ export const useAppState = () => {
   const [userManuallyCollapsed, setUserManuallyCollapsed] = useState(() => {
     return localStorage.getItem('drawerManuallyCollapsed') === 'true';
   });
+  const [sidebarVisibilityMode, setSidebarVisibilityMode] = useState(() => {
+    const saved = localStorage.getItem('sidebarVisibilityMode');
+    return saved || 'auto'; // 'auto', 'always-visible', 'always-hidden'
+  });
   const [anchorEl, setAnchorEl] = useState(null);
   const [notificationsAnchorEl, setNotificationsAnchorEl] = useState(null);
   const [infoSidebarOpen, setInfoSidebarOpen] = useState(false);
@@ -245,8 +249,18 @@ export const useAppState = () => {
   }, [fetchDataModels]);
 
   // Add effect to handle sidebar collapse on detail pages, 2-level navigation and edit mode
-  // Only auto-collapse if user hasn't manually set a preference
+  // Only auto-collapse if user hasn't manually set a preference and visibility mode is 'auto'
   useEffect(() => {
+    // If visibility mode is set to always visible or always hidden, respect that
+    if (sidebarVisibilityMode === 'always-visible') {
+      setIsDrawerCollapsed(false);
+      return;
+    }
+    if (sidebarVisibilityMode === 'always-hidden') {
+      setIsDrawerCollapsed(true);
+      return;
+    }
+
     // If user manually collapsed, respect that preference and don't auto-collapse
     if (userManuallyCollapsed) {
       return;
@@ -270,7 +284,7 @@ export const useAppState = () => {
     } else {
       setIsDrawerCollapsed(false);
     }
-  }, [location.pathname, userManuallyCollapsed]);
+  }, [location.pathname, userManuallyCollapsed, sidebarVisibilityMode]);
 
   // Event handlers
   const handleDrawerToggle = () => {
@@ -297,6 +311,11 @@ export const useAppState = () => {
   };
 
   const handleDrawerCollapse = () => {
+    // If in always-visible or always-hidden mode, don't allow manual collapse
+    if (sidebarVisibilityMode === 'always-visible' || sidebarVisibilityMode === 'always-hidden') {
+      return;
+    }
+    
     const newCollapsedState = !isDrawerCollapsed;
     setIsDrawerCollapsed(newCollapsedState);
     // Save to localStorage
@@ -311,6 +330,30 @@ export const useAppState = () => {
       setUserManuallyCollapsed(false);
       localStorage.setItem('drawerManuallyCollapsed', 'false');
     }
+  };
+
+  const handleSidebarVisibilityToggle = () => {
+    let newMode;
+    if (sidebarVisibilityMode === 'auto') {
+      newMode = 'always-visible';
+    } else if (sidebarVisibilityMode === 'always-visible') {
+      newMode = 'always-hidden';
+    } else {
+      newMode = 'auto';
+    }
+    
+    setSidebarVisibilityMode(newMode);
+    localStorage.setItem('sidebarVisibilityMode', newMode);
+    
+    // Apply the new mode immediately
+    if (newMode === 'always-visible') {
+      setIsDrawerCollapsed(false);
+      setUserManuallyCollapsed(false);
+    } else if (newMode === 'always-hidden') {
+      setIsDrawerCollapsed(true);
+      setUserManuallyCollapsed(false);
+    }
+    // If switching back to 'auto', let the useEffect handle the state
   };
 
   const handleInfoSidebarToggle = () => {
@@ -336,6 +379,7 @@ export const useAppState = () => {
     error,
     dataModels,
     currentTheme,
+    sidebarVisibilityMode,
     
     // Handlers
     handleDrawerToggle,
@@ -345,5 +389,6 @@ export const useAppState = () => {
     handleThemeToggle,
     handleDrawerCollapse,
     handleInfoSidebarToggle,
+    handleSidebarVisibilityToggle,
   };
 };

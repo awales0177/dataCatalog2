@@ -23,6 +23,8 @@ import {
   Diamond as CrownIcon,
   SwapHoriz as SwapHorizIcon,
   Timer as TimerIcon,
+  VisibilityOff as VisibilityOffIcon,
+  UnfoldMoreDouble as UnfoldMoreDoubleIcon,
 } from '@mui/icons-material';
 import { drawerWidth, collapsedDrawerWidth } from '../constants/navigation';
 import { useAuth } from '../contexts/AuthContext';
@@ -34,7 +36,9 @@ const NavigationDrawer = ({
   mobileOpen, 
   onDrawerToggle,
   menuData,
-  avatarColor 
+  avatarColor,
+  sidebarVisibilityMode,
+  onSidebarVisibilityToggle,
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -197,8 +201,7 @@ const NavigationDrawer = ({
                     sx={{ 
                       my: 1, 
                       mx: isDrawerCollapsed ? 1 : 2, 
-                      borderColor: alpha(currentTheme.border, 0.8),
-                      opacity: 0.9
+                      borderColor: currentTheme.darkMode ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.12)',
                     }} 
                   />
                   {/* Priority Queue Button */}
@@ -252,8 +255,7 @@ const NavigationDrawer = ({
                       <Divider 
                         orientation="horizontal" 
                         sx={{ 
-                          borderColor: alpha(currentTheme.border, 0.7),
-                          opacity: 0.8,
+                          borderColor: currentTheme.darkMode ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.12)',
                           mt: 1,
                           mx: 0.5,
                         }} 
@@ -263,8 +265,7 @@ const NavigationDrawer = ({
                       <Divider 
                         orientation="horizontal" 
                         sx={{ 
-                          borderColor: alpha(currentTheme.border, 0.7),
-                          opacity: 0.8,
+                          borderColor: currentTheme.darkMode ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.12)',
                           mt: 1,
                           mx: 0.5,
                         }} 
@@ -286,8 +287,7 @@ const NavigationDrawer = ({
                         orientation="vertical" 
                         flexItem
                         sx={{ 
-                          borderColor: alpha(currentTheme.border, 0.7),
-                          opacity: 0.8,
+                          borderColor: currentTheme.darkMode ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.12)',
                           my: 0.5,
                         }} 
                       />
@@ -297,8 +297,7 @@ const NavigationDrawer = ({
                         orientation="horizontal" 
                         flexItem
                         sx={{ 
-                          borderColor: alpha(currentTheme.border, 0.7),
-                          opacity: 0.8,
+                          borderColor: currentTheme.darkMode ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.12)',
                           mx: 0.5,
                         }} 
                       />
@@ -309,8 +308,7 @@ const NavigationDrawer = ({
                     sx={{ 
                       my: 1, 
                       mx: isDrawerCollapsed ? 1 : 2, 
-                      borderColor: alpha(currentTheme.border, 0.8),
-                      opacity: 0.9
+                      borderColor: currentTheme.darkMode ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.12)',
                     }} 
                   />
                 </React.Fragment>
@@ -458,33 +456,86 @@ const NavigationDrawer = ({
         transition: 'width 0.2s ease-in-out',
       }}
     >
-      {/* Floating collapse button */}
+      {/* Floating collapse button and visibility toggle */}
       <Box
         sx={{
           position: 'absolute',
           right: '-14px',
           top: '20px',
           zIndex: (theme) => theme.zIndex.drawer + 1,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 1,
         }}
       >
-        <IconButton 
-          onClick={onDrawerCollapse}
-          sx={{ 
-            color: currentTheme.text,
-            bgcolor: currentTheme.card,
-            border: `1px solid ${currentTheme.border}`,
-            width: '28px',
-            height: '28px',
-            '&:hover': {
-              bgcolor: `${currentTheme.primary}10`,
-            },
-            '& .MuiSvgIcon-root': {
-              fontSize: '32px',
-            },
-          }}
+        {/* Visibility Toggle Button */}
+        <Tooltip
+          title={
+            sidebarVisibilityMode === 'auto' 
+              ? 'Sidebar auto-collapses on detail pages' 
+              : sidebarVisibilityMode === 'always-visible' 
+              ? 'Sidebar is always visible' 
+              : 'Sidebar is always hidden'
+          }
+          placement="left"
+          arrow
         >
-          {isDrawerCollapsed ? <FiChevronRight /> : <FiChevronLeft />}
-        </IconButton>
+          <IconButton 
+            onClick={onSidebarVisibilityToggle}
+            sx={{ 
+              color: sidebarVisibilityMode === 'always-visible' ? '#37ABBF' : sidebarVisibilityMode === 'always-hidden' ? '#f44336' : currentTheme.text,
+              bgcolor: currentTheme.card,
+              border: `1px solid ${currentTheme.border}`,
+              width: '28px',
+              height: '28px',
+              '&:hover': {
+                bgcolor: `${currentTheme.primary}10`,
+              },
+            }}
+          >
+            {sidebarVisibilityMode === 'always-visible' ? (
+              <EyeIcon sx={{ fontSize: '18px' }} />
+            ) : sidebarVisibilityMode === 'always-hidden' ? (
+              <VisibilityOffIcon sx={{ fontSize: '18px' }} />
+            ) : (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}>
+                <FiChevronLeft style={{ fontSize: '14px' }} />
+                <FiChevronRight style={{ fontSize: '14px' }} />
+              </Box>
+            )}
+          </IconButton>
+        </Tooltip>
+        
+        {/* Collapse Button */}
+        <Tooltip
+          title={isDrawerCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          placement="left"
+          arrow
+        >
+          <IconButton 
+            onClick={onDrawerCollapse}
+            disabled={sidebarVisibilityMode === 'always-visible' || sidebarVisibilityMode === 'always-hidden'}
+            sx={{ 
+              color: currentTheme.text,
+              bgcolor: currentTheme.card,
+              border: `1px solid ${currentTheme.border}`,
+              width: '28px',
+              height: '28px',
+              '&:hover': {
+                bgcolor: `${currentTheme.primary}10`,
+              },
+              '&:disabled': {
+                opacity: 0.5,
+                cursor: 'not-allowed',
+              },
+              '& .MuiSvgIcon-root': {
+                fontSize: '32px',
+              },
+            }}
+          >
+            {isDrawerCollapsed ? <FiChevronRight /> : <FiChevronLeft />}
+          </IconButton>
+        </Tooltip>
       </Box>
 
       <Drawer

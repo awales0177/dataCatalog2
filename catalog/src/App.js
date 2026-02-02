@@ -14,6 +14,7 @@ import DataModelsPage from './pages/DataModelsPage';
 import ProductAgreementsPage from './pages/ProductAgreementsPage';
 import DataDomainsPage from './pages/DataDomainsPage';
 import SplashPage from './pages/SplashPage';
+import HomePage from './pages/HomePage';
 import ApplicationsPage from './pages/ApplicationsPage';
 import EditApplicationPage from './pages/EditApplicationPage';
 import ReferenceDataPage from './pages/ReferenceDataPage';
@@ -75,19 +76,21 @@ function AppContent() {
     menuData,
     loading,
     currentTheme,
+    sidebarVisibilityMode,
     handleDrawerToggle,
     handleMenuClose,
     handleThemeToggle,
     handleDrawerCollapse,
     handleInfoSidebarToggle,
+    handleSidebarVisibilityToggle,
   } = useAppState();
   
   const [searchOpen, setSearchOpen] = React.useState(false);
 
   const [avatarColor] = React.useState(getRandomColor());
 
-  // Check if we're on the splash page
-  const isSplashPage = window.location.pathname === '/';
+  // Check if we're on the splash page (deprecated - keeping for backward compatibility)
+  const isSplashPage = false;
 
   // Keyboard shortcut for search (Ctrl+K or Cmd+K)
   React.useEffect(() => {
@@ -170,6 +173,8 @@ function AppContent() {
             onDrawerToggle={handleDrawerToggle}
             menuData={menuData}
             avatarColor={avatarColor}
+            sidebarVisibilityMode={sidebarVisibilityMode}
+            onSidebarVisibilityToggle={handleSidebarVisibilityToggle}
           />
         )}
 
@@ -226,11 +231,15 @@ function AppContent() {
               }}
             >
               <Routes>
-            <Route path="/" element={<SplashPage />} />
             <Route path="/role" element={<RolePage />} />
             <Route path="/unauthorized" element={<UnauthorizedPage />} />
             
             {/* Protected routes - require authentication */}
+            <Route path="/" element={
+              <ProtectedRoute>
+                <HomePage />
+              </ProtectedRoute>
+            } />
             <Route path="/models" element={
               <ProtectedRoute>
                 <DataModelsPage />
