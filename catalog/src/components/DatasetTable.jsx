@@ -13,14 +13,20 @@ import {
   Alert,
   Pagination,
   Grid,
+  Tabs,
+  Tab,
 } from '@mui/material';
 import {
   Search as SearchIcon,
+  ViewModule as CardViewIcon,
+  AccountTree as PipelineViewIcon,
 } from '@mui/icons-material';
 import { ThemeContext } from '../contexts/ThemeContext';
-import { fetchDatasets, fetchPipelines } from '../services/api';
+import datasetsData from '../data/datasets.json';
+import pipelinesData from '../data/pipelines.json';
 import { getPipelineName, initializePipelines } from '../utils/pipelineUtils';
 import DatasetCard from './DatasetCard';
+import PipelineView from './PipelineView';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -38,23 +44,23 @@ const DatasetTable = () => {
   const [sortColumn, setSortColumn] = useState('lastUpdated');
   const [sortDirection, setSortDirection] = useState('desc');
   const [pipelineNames, setPipelineNames] = useState({});
+  const [viewMode, setViewMode] = useState('cards'); // 'cards' or 'pipeline'
 
-  // Initialize pipelines and load datasets
+  // Initialize pipelines and load datasets from hardcoded data
   useEffect(() => {
-    const loadData = async () => {
+    const loadData = () => {
       try {
         setLoading(true);
-        await initializePipelines();
-        const [datasetsData, pipelinesData] = await Promise.all([
-          fetchDatasets(),
-          fetchPipelines(),
-        ]);
+        initializePipelines();
         
-        setDatasets(Array.isArray(datasetsData) ? datasetsData : []);
+        const datasetsArray = Array.isArray(datasetsData) ? datasetsData : [];
+        const pipelinesArray = Array.isArray(pipelinesData) ? pipelinesData : [];
+        
+        setDatasets(datasetsArray);
         
         // Build pipeline name map
         const nameMap = {};
-        pipelinesData.forEach(p => {
+        pipelinesArray.forEach(p => {
           nameMap[p.uuid] = p.name;
         });
         setPipelineNames(nameMap);
@@ -184,6 +190,88 @@ const DatasetTable = () => {
 
   return (
     <Box>
+      {/* View Mode Tabs - Filing Cabinet Style */}
+      <Box 
+        sx={{ 
+          mb: 3,
+          position: 'relative',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: '1px',
+            bgcolor: currentTheme.border,
+          }
+        }}
+      >
+        <Tabs
+          value={viewMode}
+          onChange={(e, newValue) => setViewMode(newValue)}
+          sx={{
+            minHeight: '48px',
+            '& .MuiTabs-flexContainer': {
+              gap: '4px',
+              paddingTop: '8px',
+            },
+            '& .MuiTab-root': {
+              minHeight: '40px',
+              padding: '8px 20px',
+              textTransform: 'none',
+              fontSize: '0.875rem',
+              fontWeight: 500,
+              color: currentTheme.textSecondary,
+              bgcolor: 'transparent',
+              borderRadius: '8px 8px 0 0',
+              border: `1px solid transparent`,
+              borderBottom: 'none',
+              position: 'relative',
+              zIndex: 1,
+              transition: 'all 0.2s ease',
+              '&:hover': {
+                bgcolor: currentTheme.background,
+                color: '#37ABBF',
+                borderColor: 'rgba(55, 171, 191, 0.3)',
+              },
+              '&.Mui-selected': {
+                color: '#37ABBF',
+                bgcolor: currentTheme.card,
+                border: `1px solid #37ABBF`,
+                borderBottom: 'none',
+                zIndex: 2,
+                boxShadow: `0 -2px 8px rgba(55, 171, 191, 0.15)`,
+                '&::after': {
+                  content: '""',
+                  position: 'absolute',
+                  bottom: '-1px',
+                  left: 0,
+                  right: 0,
+                  height: '1px',
+                  bgcolor: currentTheme.card,
+                },
+              },
+            },
+            '& .MuiTabs-indicator': {
+              display: 'none',
+            },
+          }}
+        >
+          <Tab
+            icon={<CardViewIcon sx={{ fontSize: '18px' }} />}
+            iconPosition="start"
+            label="Card View"
+            value="cards"
+          />
+          <Tab
+            icon={<PipelineViewIcon sx={{ fontSize: '18px' }} />}
+            iconPosition="start"
+            label="Pipeline View"
+            value="pipeline"
+          />
+        </Tabs>
+      </Box>
+
       {/* Filters */}
       <Box sx={{ mb: 3, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
         <TextField
@@ -207,12 +295,28 @@ const DatasetTable = () => {
               '& fieldset': {
                 borderColor: currentTheme.border,
               },
+              '&:hover fieldset': {
+                borderColor: '#37ABBF',
+              },
+              '&.Mui-focused fieldset': {
+                borderColor: '#37ABBF',
+                borderWidth: '2px',
+              },
             },
           }}
         />
         
         <FormControl size="small" sx={{ minWidth: 150 }}>
-          <InputLabel sx={{ color: currentTheme.textSecondary }}>Pipeline</InputLabel>
+          <InputLabel 
+            sx={{ 
+              color: currentTheme.textSecondary,
+              '&.Mui-focused': {
+                color: '#37ABBF',
+              },
+            }}
+          >
+            Pipeline
+          </InputLabel>
           <Select
             value={pipelineFilter}
             onChange={(e) => setPipelineFilter(e.target.value)}
@@ -222,6 +326,13 @@ const DatasetTable = () => {
               color: currentTheme.text,
               '& .MuiOutlinedInput-notchedOutline': {
                 borderColor: currentTheme.border,
+              },
+              '&:hover .MuiOutlinedInput-notchedOutline': {
+                borderColor: '#37ABBF',
+              },
+              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                borderColor: '#37ABBF',
+                borderWidth: '2px',
               },
             }}
           >
@@ -234,7 +345,16 @@ const DatasetTable = () => {
         </FormControl>
 
         <FormControl size="small" sx={{ minWidth: 120 }}>
-          <InputLabel sx={{ color: currentTheme.textSecondary }}>Status</InputLabel>
+          <InputLabel 
+            sx={{ 
+              color: currentTheme.textSecondary,
+              '&.Mui-focused': {
+                color: '#37ABBF',
+              },
+            }}
+          >
+            Status
+          </InputLabel>
           <Select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
@@ -244,6 +364,13 @@ const DatasetTable = () => {
               color: currentTheme.text,
               '& .MuiOutlinedInput-notchedOutline': {
                 borderColor: currentTheme.border,
+              },
+              '&:hover .MuiOutlinedInput-notchedOutline': {
+                borderColor: '#37ABBF',
+              },
+              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                borderColor: '#37ABBF',
+                borderWidth: '2px',
               },
             }}
           >
@@ -257,14 +384,25 @@ const DatasetTable = () => {
       </Box>
 
       {/* Results count */}
-      {filteredDatasets.length > 0 && (
+      {filteredDatasets.length > 0 && viewMode === 'cards' && (
         <Typography variant="body2" sx={{ mb: 2, color: currentTheme.textSecondary }}>
           Showing {paginatedDatasets.length} of {filteredDatasets.length} datasets
         </Typography>
       )}
 
+      {/* Pipeline View */}
+      {viewMode === 'pipeline' && (
+        <Box sx={{ mb: 3 }}>
+          <PipelineView
+            datasets={filteredDatasets}
+            pipelineNames={pipelineNames}
+            onDatasetClick={(dataset) => navigate(`/pipelines/datasets/${dataset.id}`)}
+          />
+        </Box>
+      )}
+
       {/* Cards Grid */}
-      {paginatedDatasets.length === 0 ? (
+      {viewMode === 'cards' && (paginatedDatasets.length === 0 ? (
         <Box
           sx={{
             p: 4,
@@ -292,10 +430,10 @@ const DatasetTable = () => {
             </Grid>
           ))}
         </Grid>
-      )}
+      ))}
 
       {/* Pagination */}
-      {totalPages > 1 && (
+      {viewMode === 'cards' && totalPages > 1 && (
         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
           <Pagination
             count={totalPages}

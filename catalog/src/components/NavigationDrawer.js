@@ -22,6 +22,7 @@ import {
   Edit as EditIcon,
   Diamond as CrownIcon,
   SwapHoriz as SwapHorizIcon,
+  Timer as TimerIcon,
 } from '@mui/icons-material';
 import { drawerWidth, collapsedDrawerWidth } from '../constants/navigation';
 import { useAuth } from '../contexts/AuthContext';
@@ -123,6 +124,7 @@ const NavigationDrawer = ({
                   sx={{
                     position: 'relative',
                     mx: isDrawerCollapsed ? 0.5 : isCompact ? 0.5 : 1,
+                    my: isSelected ? 0.25 : 0,
                     flex: isCompact && !isDrawerCollapsed ? 1 : 'none',
                   }}
                 >
@@ -188,9 +190,9 @@ const NavigationDrawer = ({
           filteredItems.forEach((item, index) => {
             // Handle Pipelines and Data Products together on the same line
             if (hasPipelinesAndProducts && item.id === 'pipelines') {
-              // Insert divider before Pipelines/Products combo
+              // Insert divider and Priority Queue button before Pipelines/Products combo
               menuItems.push(
-                <React.Fragment key="pipelines-products-group">
+                <React.Fragment key="priority-queue-pipelines-products-group">
                   <Divider 
                     sx={{ 
                       my: 1, 
@@ -199,6 +201,76 @@ const NavigationDrawer = ({
                       opacity: 0.6
                     }} 
                   />
+                  {/* Priority Queue Button */}
+                  <Box
+                    sx={{
+                      mx: isDrawerCollapsed ? 0.5 : 1,
+                      mb: isDrawerCollapsed ? 0 : 1,
+                    }}
+                  >
+                    <Tooltip
+                      title="Priority Queue"
+                      placement="right"
+                      arrow
+                      sx={{
+                        display: isDrawerCollapsed ? 'block' : 'none'
+                      }}
+                    >
+                      <Button
+                        fullWidth={!isDrawerCollapsed}
+                        startIcon={<TimerIcon />}
+                        onClick={() => navigate('/priority-queue')}
+                        sx={{
+                          color: location.pathname === '/priority-queue' ? '#37ABBF' : currentTheme.text,
+                          py: 1.25,
+                          px: isDrawerCollapsed ? 1 : 1.5,
+                          justifyContent: isDrawerCollapsed ? 'center' : 'flex-start',
+                          borderRadius: '8px',
+                          fontSize: '0.875rem',
+                          fontWeight: 500,
+                          minWidth: isDrawerCollapsed ? 'auto' : '100%',
+                          width: isDrawerCollapsed ? '100%' : 'auto',
+                          display: 'flex',
+                          bgcolor: location.pathname === '/priority-queue' ? 'rgba(55, 171, 191, 0.2)' : 'transparent',
+                          '&:hover': {
+                            bgcolor: location.pathname === '/priority-queue' ? 'rgba(55, 171, 191, 0.3)' : `${currentTheme.primary}10`,
+                          },
+                          '& .MuiButton-startIcon': {
+                            marginRight: isDrawerCollapsed ? 0 : 1,
+                            marginLeft: isDrawerCollapsed ? 0 : 0,
+                            '& svg': {
+                              width: '1.35rem',
+                              height: '1.35rem',
+                            },
+                          },
+                        }}
+                      >
+                        {!isDrawerCollapsed && 'Priority Queue'}
+                      </Button>
+                    </Tooltip>
+                    {isDrawerCollapsed && (
+                      <Divider 
+                        orientation="horizontal" 
+                        sx={{ 
+                          borderColor: alpha(currentTheme.border, 0.3),
+                          opacity: 0.4,
+                          mt: 1,
+                          mx: 0.5,
+                        }} 
+                      />
+                    )}
+                    {!isDrawerCollapsed && (
+                      <Divider 
+                        orientation="horizontal" 
+                        sx={{ 
+                          borderColor: alpha(currentTheme.border, 0.3),
+                          opacity: 0.4,
+                          mt: 1,
+                          mx: 0.5,
+                        }} 
+                      />
+                    )}
+                  </Box>
                   <Box
                     sx={{
                       display: 'flex',

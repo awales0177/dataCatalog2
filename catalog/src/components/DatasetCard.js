@@ -249,12 +249,7 @@ const DatasetCard = ({ dataset, onClick, currentTheme, pipelineNames }) => {
                             width: 6,
                             height: 6,
                             borderRadius: '50%',
-                            backgroundColor: 
-                              statusColor === 'success' ? '#4caf50' :
-                              statusColor === 'warning' ? '#ff9800' :
-                              statusColor === 'error' ? '#f44336' :
-                              statusColor === 'info' ? '#2196f3' :
-                              '#9e9e9e',
+                            backgroundColor: statusColor,
                             flexShrink: 0,
                           }}
                         />

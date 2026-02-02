@@ -1,15 +1,6 @@
 {
   "terms": [
     {
-      "id": "glossary-003",
-      "term": "Data Lineage",
-      "definition": "The tracking of data from its source through various transformations and processes to its final destination. Data lineage helps understand data flow and dependencies.",
-      "category": "Data Governance",
-      "documentation": "https://docs.example.com/data-lineage",
-      "lastUpdated": "2025-12-06",
-      "markdown": "## hi"
-    },
-    {
       "id": "glossary-002",
       "term": "Data Product",
       "definition": "A reusable data asset that is packaged, documented, and made available for consumption by data consumers. Data products typically include datasets, APIs, or analytical models.",
@@ -48,6 +39,24 @@
       "link": "https://example.com/data-catalog",
       "lastUpdated": "2025-12-10",
       "markdown": "Hi"
+    },
+    {
+      "id": "glossary-003",
+      "term": "Data Lineage",
+      "definition": "The tracking of data from its source through various transformations and processes to its final destination. Data lineage helps understand data flow and dependencies.",
+      "category": "Data Governance",
+      "documentation": "https://docs.example.com/data-lineage",
+      "lastUpdated": "2026-02-01",
+      "markdown": "# 🚙 Vehicle Inventory Data Product (inventory.csv)\n\n## Overview\n\n`inventory.csv` is a governed **data product** representing the current and historical inventory of vehicles available for sale.  \nIt provides a consistent, queryable view of vehicle availability, condition, and pricing readiness across sellers.\n\nThis dataset is designed to act as a **source of truth for inventory state**, supporting analytics, reporting, and downstream sales pipelines.\n\n---\n\n## Product Details\n\nProduct Name: Vehicle Inventory  \nFile Name: inventory.csv  \nProduct Type: Analytical / Operational Dataset  \nData Domain: Automotive / Inventory  \nFormat: CSV  \nGranularity: One row per vehicle  \nUpdate Frequency: Batch / Near-Real-Time  \nOwner: Data Engineering  \nStatus: Active  \n\n---\n\n## Schema\n\n| Column Name | Type | Description |\n|------------|------|-------------|\n| Inventory_ID | String | Unique identifier for the inventory record |\n| Car_Name | String | Vehicle make and model |\n| Year | Integer | Year of manufacture |\n| Listed_Price | Float | Current listed price |\n| Condition | String | New, Used, Certified |\n| Fuel_Type | String | Petrol, Diesel, CNG, Electric |\n| Transmission | String | Manual or Automatic |\n| Mileage_Kms | Integer | Total kilometers driven |\n| Availability_Status | String | Available, Reserved, Sold |\n| Last_Updated | Timestamp | Last inventory update time |\n\n---\n\n## Intended Use Cases\n\n- Inventory availability tracking\n- Pricing and markdown analysis\n- Vehicle lifecycle monitoring\n- Supply and demand analytics\n- Operational dashboards\n\n---\n\n## Data Quality Notes\n\n- `Inventory_ID` is unique and non-null.\n- `Availability_Status` reflects the latest known state.\n- Mileage values are non-negative.\n- Late updates may occur for sold or reserved vehicles.\n\n---\n\n## Governance and Contracts\n\n- This dataset follows schema-on-write principles.\n- All schema changes require versioning.\n- Downstream consumers must not infer fields beyond those documented.\n- Time fields are standardized to UTC.\n\n---\n\n## Lineage and Relationships\n\n```mermaid\nflowchart LR\n    A[Source Dealership Systems] --> B[inventory.csv]\n    B --> C[Sales Transactions]\n    B --> D[Pricing Analytics]\n    B --> E[Inventory Dashboards]\n"
+    },
+    {
+      "id": "glossary-006",
+      "term": "aggregate",
+      "definition": "aggregate",
+      "category": "",
+      "taggedModels": [],
+      "documentation": "",
+      "lastUpdated": "2026-02-02"
     }
   ]
 }

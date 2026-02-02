@@ -1,10 +1,12 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Paper,
   Typography,
   Chip,
   LinearProgress,
+  Tooltip,
 } from '@mui/material';
 import {
   Analytics as AnalyticsIcon,
@@ -15,9 +17,13 @@ import {
   Support as SupportIcon,
   Inventory as InventoryIcon,
   VerifiedUser as QualityIcon,
+  MergeType as AggregateIcon,
+  Transform as DerivedIcon,
+  SubdirectoryArrowRight as ChildIcon,
 } from '@mui/icons-material';
 
 const DataProductCard = ({ product, onClick, currentTheme }) => {
+  const navigate = useNavigate();
   const getCategoryIcon = (category) => {
     switch (category?.toLowerCase()) {
       case 'analytics':
@@ -60,6 +66,33 @@ const DataProductCard = ({ product, onClick, currentTheme }) => {
     return 'error';
   };
 
+  const getProductTypeIcon = (productType) => {
+    switch (productType?.toLowerCase()) {
+      case 'aggregate':
+        return <AggregateIcon sx={{ fontSize: 20, color: '#37ABBF' }} />;
+      case 'derived':
+        return <DerivedIcon sx={{ fontSize: 20, color: '#ff9800' }} />;
+      case 'child':
+        return <ChildIcon sx={{ fontSize: 20, color: '#4caf50' }} />;
+      default:
+        return null;
+    }
+  };
+
+  const getProductTypeTooltip = (productType) => {
+    switch (productType?.toLowerCase()) {
+      case 'aggregate':
+        return 'Aggregate Product';
+      case 'derived':
+        return 'Derived Product';
+      case 'child':
+        return 'Child Product';
+      default:
+        return '';
+    }
+  };
+
+
   return (
     <Paper
       elevation={0}
@@ -77,6 +110,7 @@ const DataProductCard = ({ product, onClick, currentTheme }) => {
         flexDirection: 'column',
         boxSizing: 'border-box',
         overflow: 'hidden',
+        position: 'relative',
         '&:hover': {
           transform: 'translateY(-2px)',
           boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
@@ -84,9 +118,59 @@ const DataProductCard = ({ product, onClick, currentTheme }) => {
         },
       }}
     >
+      {/* Top Right Corner Icons */}
+      <Box
+        sx={{
+          position: 'absolute',
+          top: 12,
+          right: 12,
+          display: 'flex',
+          flexDirection: 'row',
+          gap: 0.5,
+          alignItems: 'center',
+          zIndex: 1,
+        }}
+      >
+        {/* Product Type Icon */}
+        {product.productType && (
+          <Tooltip 
+            title={`${getProductTypeTooltip(product.productType)} - Click to view definition`}
+            arrow
+            placement="top"
+          >
+            <Box
+              onClick={(e) => {
+                e.stopPropagation(); // Prevent card click
+                const searchTerm = product.productType.toLowerCase();
+                navigate(`/glossary?search=${encodeURIComponent(searchTerm)}`);
+              }}
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 32,
+                height: 32,
+                borderRadius: '50%',
+                bgcolor: currentTheme.background,
+                border: `1px solid ${currentTheme.border}`,
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                '&:hover': {
+                  bgcolor: currentTheme.darkMode ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.08)',
+                  borderColor: '#37ABBF',
+                  transform: 'scale(1.1)',
+                },
+              }}
+            >
+              {getProductTypeIcon(product.productType)}
+            </Box>
+          </Tooltip>
+        )}
+      </Box>
+
       {/* Header */}
       <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5, mb: 1.5 }}>
-        <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Box sx={{ flex: 1, minWidth: 0, pr: product.productType ? 4 : 0 }}>
           <Typography 
             variant="h6" 
             sx={{ 
@@ -150,7 +234,7 @@ const DataProductCard = ({ product, onClick, currentTheme }) => {
         <Box sx={{ mb: 1 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
             <Typography variant="caption" sx={{ color: currentTheme.textSecondary, fontSize: '0.7rem' }}>
-              Quality Score
+              {product.productType === 'Derived' ? 'Avg Quality Score' : 'Quality Score'}
             </Typography>
             <Typography 
               variant="caption" 
@@ -187,7 +271,7 @@ const DataProductCard = ({ product, onClick, currentTheme }) => {
           <Box sx={{ mb: 2 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
               <Typography variant="caption" sx={{ color: currentTheme.textSecondary, fontSize: '0.7rem' }}>
-                Data Freshness:
+                {product.productType === 'Derived' ? 'Avg Data Freshness:' : 'Data Freshness:'}
               </Typography>
               <Typography variant="caption" sx={{ color: currentTheme.text, fontSize: '0.7rem', fontWeight: 500 }}>
                 {(() => {

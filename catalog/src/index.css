@@ -146,7 +146,16 @@ html.dark-mode {
 }
 
 .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
-  border-color: #3498db !important;
+  border-color: #37ABBF !important;
+}
+
+.MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: #37ABBF !important;
+  border-width: 2px !important;
+}
+
+.MuiInputLabel-root.Mui-focused {
+  color: #37ABBF !important;
 }
 
 /* Avatar styling */

@@ -23,6 +23,7 @@ import { fetchData, updateGlossaryTerm } from '../services/api';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkEmoji from 'remark-emoji';
+import MermaidDiagram from '../components/MermaidDiagram';
 
 const GlossaryMarkdownPage = () => {
   const { id } = useParams();
@@ -288,7 +289,35 @@ const GlossaryMarkdownPage = () => {
               },
             }}
           >
-            <ReactMarkdown remarkPlugins={[remarkGfm, remarkEmoji]}>{markdown || '*No content yet*'}</ReactMarkdown>
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm, remarkEmoji]}
+              components={{
+                code({ node, inline, className, children, ...props }) {
+                  const match = /language-(\w+)/.exec(className || '');
+                  const isMermaid = match && match[1] === 'mermaid';
+                  
+                  if (isMermaid && !inline) {
+                    // Convert children to string properly
+                    const codeContent = Array.isArray(children)
+                      ? children.join('')
+                      : String(children);
+                    return (
+                      <MermaidDiagram className={className}>
+                        {codeContent}
+                      </MermaidDiagram>
+                    );
+                  }
+                  
+                  return (
+                    <code className={className} {...props}>
+                      {children}
+                    </code>
+                  );
+                },
+              }}
+            >
+              {markdown || '*No content yet*'}
+            </ReactMarkdown>
           </Box>
         ) : (
           <TextField

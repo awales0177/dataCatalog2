@@ -1,0 +1,28 @@
+.pipeline-svg-container {
+  position: relative;
+  overflow: visible;
+}
+
+.pipeline-svg-container svg {
+  width: 100%;
+  height: auto;
+  max-height: 500px;
+}
+
+.pipeline-station-hover {
+  transition: all 0.2s ease;
+}
+
+.pipeline-station-label {
+  pointer-events: none;
+  user-select: none;
+}
+
+.pipeline-station-count {
+  pointer-events: none;
+  user-select: none;
+}
+
+.pipeline-line {
+  transition: all 0.2s ease;
+}

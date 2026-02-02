@@ -42,7 +42,7 @@ const ProcessStatus = ({ pipeline, currentStep: baseStep, processSteps: datasetP
   return (
     <div className="progress-tracker">
       <h2 className="section-title">Process Status</h2>
-      <div className="progress-steps">
+      <div className="progress-steps" style={{ '--step-count': processSteps.length }}>
         {processSteps.map((step, index) => {
           const isCompleted = step.id < currentStep
           const isCurrent = step.id === currentStep

@@ -20,6 +20,7 @@ import ReferenceDataPage from './pages/ReferenceDataPage';
 import EditReferenceDataPage from './pages/EditReferenceDataPage';
 import PipelinesPage from './pages/PipelinesPage';
 import DataProductsPage from './pages/DataProductsPage';
+import PriorityQueuePage from './pages/PriorityQueuePage';
 import DataProductDetailPage from './pages/DataProductDetailPage';
 import DatasetDetail from './components/datasets/DatasetDetail';
 import DataModelDetailPage from './pages/DataModelDetailPage';
@@ -263,6 +264,11 @@ function AppContent() {
             <Route path="/reference" element={
               <ProtectedRoute>
                 <ReferenceDataPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/priority-queue" element={
+              <ProtectedRoute>
+                <PriorityQueuePage />
               </ProtectedRoute>
             } />
             <Route path="/pipelines" element={

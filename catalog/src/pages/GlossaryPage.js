@@ -1,4 +1,5 @@
 import React, { useState, useContext, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   Box,
   TextField,
@@ -43,13 +44,15 @@ import { useAuth } from '../contexts/AuthContext';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkEmoji from 'remark-emoji';
+import MermaidDiagram from '../components/MermaidDiagram';
 import GlossaryCard from '../components/GlossaryCard';
 
 const GlossaryPage = () => {
   const { currentTheme, darkMode } = useContext(ThemeContext);
   const { canCreate } = useAuth();
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
   const [originalData, setOriginalData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -87,6 +90,14 @@ const GlossaryPage = () => {
     loadGlossary();
     loadModels();
   }, []);
+
+  // Update search query when URL parameter changes
+  useEffect(() => {
+    const urlSearch = searchParams.get('search');
+    if (urlSearch && urlSearch !== searchQuery) {
+      setSearchQuery(urlSearch);
+    }
+  }, [searchParams, searchQuery]);
 
   // Get unique categories
   const availableCategories = useMemo(() => {
@@ -702,7 +713,35 @@ const GlossaryPage = () => {
                 }}
               >
                 {selectedTerm.markdown ? (
-                  <ReactMarkdown remarkPlugins={[remarkGfm, remarkEmoji]}>{selectedTerm.markdown}</ReactMarkdown>
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm, remarkEmoji]}
+                    components={{
+                      code({ node, inline, className, children, ...props }) {
+                        const match = /language-(\w+)/.exec(className || '');
+                        const isMermaid = match && match[1] === 'mermaid';
+                        
+                        if (isMermaid && !inline) {
+                          // Convert children to string properly
+                          const codeContent = Array.isArray(children)
+                            ? children.join('')
+                            : String(children);
+                          return (
+                            <MermaidDiagram className={className}>
+                              {codeContent}
+                            </MermaidDiagram>
+                          );
+                        }
+                        
+                        return (
+                          <code className={className} {...props}>
+                            {children}
+                          </code>
+                        );
+                      },
+                    }}
+                  >
+                    {selectedTerm.markdown}
+                  </ReactMarkdown>
                 ) : (
                   <Typography variant="body2" sx={{ color: currentTheme.textSecondary, fontStyle: 'italic' }}>
                     No markdown content available for this term. Click the code icon to add markdown.

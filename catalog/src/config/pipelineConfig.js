@@ -18,11 +18,38 @@ import { getPipelineByName } from '../utils/pipelineUtils'
 // import PipeBView from '../components/pipelines/PipeBView'
 // import PipeCView from '../components/pipelines/PipeCView'
 
+// Import custom renderers from renderers folder
+import PipelineARenderer from '../components/datasets/pipelines/renderers/PipelineARenderer'
+import PipelineBRenderer from '../components/datasets/pipelines/renderers/PipelineBRenderer'
+import PipelineCRenderer from '../components/datasets/pipelines/renderers/PipelineCRenderer'
+import PipelineDRenderer from '../components/datasets/pipelines/renderers/PipelineDRenderer'
+
+/**
+ * Pipeline Renderer Registry
+ * 
+ * This registry makes it easy to add custom renderers for each pipeline.
+ * Simply import your renderer component and add it to this object.
+ * 
+ * To add a new custom renderer:
+ * 1. Create your renderer component in components/datasets/pipelines/renderers/
+ * 2. Import it at the top of this file
+ * 3. Add it to PIPELINE_RENDERERS with the pipeline UUID as the key
+ * 4. Set viewComponent in the pipeline config to use the renderer
+ */
+export const PIPELINE_RENDERERS = {
+  '550e8400-e29b-41d4-a716-446655440000': PipelineARenderer, // Pipe A
+  '550e8400-e29b-41d4-a716-446655440001': PipelineBRenderer, // Pipe B
+  '550e8400-e29b-41d4-a716-446655440002': PipelineCRenderer, // Pipe C
+  '550e8400-e29b-41d4-a716-446655440003': PipelineDRenderer, // Pipe D
+  // Add more custom renderers here:
+  // '550e8400-e29b-41d4-a716-446655440004': YourCustomRenderer,
+}
+
 // Pipeline configurations keyed by UUID
 export const PIPELINE_CONFIG = {
   '550e8400-e29b-41d4-a716-446655440000': { // Pipe A
-    // Component-based approach: Use a dedicated view component
-    viewComponent: null, // null = use default layout, or import PipeAView
+    // Use custom renderer from registry
+    viewComponent: PIPELINE_RENDERERS['550e8400-e29b-41d4-a716-446655440000'],
     
     // Layout configuration
     layout: {
@@ -63,7 +90,8 @@ export const PIPELINE_CONFIG = {
   },
   
   '550e8400-e29b-41d4-a716-446655440001': { // Pipe B
-    viewComponent: null, // Could be PipeBView for completely custom layout
+    // Use custom renderer from registry
+    viewComponent: PIPELINE_RENDERERS['550e8400-e29b-41d4-a716-446655440001'],
     
     layout: {
       type: 'table-based',
@@ -98,7 +126,8 @@ export const PIPELINE_CONFIG = {
   },
   
   '550e8400-e29b-41d4-a716-446655440002': { // Pipe C - Zip file based
-    viewComponent: null,
+    // Use custom renderer from registry
+    viewComponent: PIPELINE_RENDERERS['550e8400-e29b-41d4-a716-446655440002'],
     
     layout: {
       type: 'zip-based', // Zip file-based pipeline
@@ -133,6 +162,43 @@ export const PIPELINE_CONFIG = {
       updateModal: true,
       zipExtraction: true, // Pipeline-specific feature for zip handling
     }
+  },
+  
+  '550e8400-e29b-41d4-a716-446655440003': { // Pipe D - Reference Data Tracking
+    // Use custom renderer from registry
+    viewComponent: PIPELINE_RENDERERS['550e8400-e29b-41d4-a716-446655440003'],
+    
+    layout: {
+      type: 'reference-data',
+      showFileSelector: false,
+      showTableSelector: false,
+      showZipSelector: false,
+      showProcessStatus: true,
+      showDataProducts: true,
+    },
+    
+    tabs: {
+      defaultTab: 'overview',
+      available: [
+        { id: 'overview', label: 'Reference Data Overview' },
+        { id: 'lineage', label: 'Data Lineage' },
+        { id: 'sources', label: 'Source Datasets' },
+      ]
+    },
+    
+    dataRequirements: {
+      requiresFiles: false,
+      requiresTables: false,
+      requiresModels: false,
+      requiresReferenceData: true, // Specifically requires reference data
+    },
+    
+    features: {
+      feedbackEnabled: true,
+      versionTracking: true,
+      updateModal: false,
+      referenceDataTracking: true, // Pipeline-specific feature for reference data
+    }
   }
 }
 
@@ -154,6 +220,35 @@ export const getPipelineConfig = (pipelineIdentifier) => {
   
   // Fallback to Pipe A
   return PIPELINE_CONFIG['550e8400-e29b-41d4-a716-446655440000']
+}
+
+/**
+ * Helper function to get a custom renderer for a pipeline
+ * This makes it easy to retrieve custom renderers from the registry
+ */
+export const getPipelineRenderer = (pipelineIdentifier) => {
+  const config = getPipelineConfig(pipelineIdentifier)
+  
+  // If viewComponent is set and it's a function/component, return it
+  if (config.viewComponent && typeof config.viewComponent === 'function') {
+    return config.viewComponent
+  }
+  
+  // Otherwise, try to get from registry by UUID
+  if (typeof pipelineIdentifier === 'string') {
+    // Try direct UUID lookup
+    if (PIPELINE_RENDERERS[pipelineIdentifier]) {
+      return PIPELINE_RENDERERS[pipelineIdentifier]
+    }
+    
+    // Try to find by name and get UUID
+    const pipeline = getPipelineByName(pipelineIdentifier)
+    if (pipeline && PIPELINE_RENDERERS[pipeline.uuid]) {
+      return PIPELINE_RENDERERS[pipeline.uuid]
+    }
+  }
+  
+  return null
 }
 
 /**

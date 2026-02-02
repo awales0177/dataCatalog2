@@ -13,17 +13,35 @@ import {
   Tooltip,
   LinearProgress,
   alpha,
+  TextField,
+  InputAdornment,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
 } from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
   Code as CodeIcon,
+  Search as SearchIcon,
 } from '@mui/icons-material';
 import { ThemeContext } from '../contexts/ThemeContext';
 import { fetchData, fetchDatasets } from '../services/api';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkEmoji from 'remark-emoji';
+import MermaidDiagram from '../components/MermaidDiagram';
 import ProductAgreementCard from '../components/ProductAgreementCard';
+import catalogImage from '../imgs/catalog.png';
+import org1Image from '../imgs/org1.png';
+import org2Image from '../imgs/org2.png';
 
 const DataProductDetailPage = () => {
   const { id } = useParams();
@@ -37,6 +55,9 @@ const DataProductDetailPage = () => {
   const [pipelines, setPipelines] = useState([]);
   const [sourceDatasets, setSourceDatasets] = useState([]);
   const [childDatasets, setChildDatasets] = useState([]);
+  const [allDerivedProducts, setAllDerivedProducts] = useState([]);
+  const [derivedSearchQuery, setDerivedSearchQuery] = useState('');
+  const [derivedProductsModalOpen, setDerivedProductsModalOpen] = useState(false);
 
   useEffect(() => {
     const loadProduct = async () => {
@@ -143,6 +164,20 @@ const DataProductDetailPage = () => {
           } catch (err) {
             console.error('Error loading source datasets:', err);
             // Don't fail the whole page if datasets can't be loaded
+          }
+        }
+
+        // Load all derived products for search component
+        if (foundProduct.productType === 'Derived') {
+          try {
+            const productsData = await fetchData('data-products');
+            const allProducts = productsData.products || productsData.items || [];
+            const derivedProducts = allProducts.filter(p => 
+              p.productType === 'Derived' && p.id !== foundProduct.id
+            );
+            setAllDerivedProducts(derivedProducts);
+          } catch (err) {
+            console.error('Error loading derived products:', err);
           }
         }
         
@@ -273,9 +308,52 @@ const DataProductDetailPage = () => {
           <ArrowBackIcon />
         </IconButton>
         <Box sx={{ flex: 1 }}>
-          <Typography variant="h4" sx={{ color: currentTheme.text, fontWeight: 600, mb: 1 }}>
-            {product.name}
-          </Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+            <Typography variant="h4" sx={{ color: currentTheme.text, fontWeight: 600, flex: 1 }}>
+              {product.name}
+            </Typography>
+            {(() => {
+              const getOrgImage = (org) => {
+                if (!org) return null;
+                const orgLower = String(org).toLowerCase().trim();
+                if (orgLower === 'org1' || orgLower === 'organization1' || orgLower === '1') {
+                  return org1Image;
+                }
+                if (orgLower === 'org2' || orgLower === 'organization2' || orgLower === '2') {
+                  return org2Image;
+                }
+                return null;
+              };
+              const orgImage = getOrgImage(product.organization || product.org);
+              return orgImage ? (
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: 56,
+                    height: 56,
+                    borderRadius: 2,
+                    bgcolor: currentTheme.background,
+                    border: `1px solid ${currentTheme.border}`,
+                    overflow: 'hidden',
+                    ml: 2,
+                    flexShrink: 0,
+                  }}
+                >
+                  <img
+                    src={orgImage}
+                    alt={product.organization || product.org || 'Organization'}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                    }}
+                  />
+                </Box>
+              ) : null;
+            })()}
+          </Box>
           <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
             <Chip
               label={product.status || 'unknown'}
@@ -530,8 +608,8 @@ const DataProductDetailPage = () => {
                 </Box>
               )}
 
-              {/* Pipelines */}
-              {pipelines.length > 0 && (
+              {/* Pipelines - Hidden for Derived products since they have pipeline buttons in cards */}
+              {pipelines.length > 0 && product?.productType !== 'Derived' && (
                 <Box>
                   <Typography variant="caption" sx={{ color: currentTheme.textSecondary, display: 'block', mb: 1 }}>
                     Pipelines
@@ -621,8 +699,8 @@ const DataProductDetailPage = () => {
                 </Box>
               )}
 
-              {/* Source Datasets */}
-              {sourceDatasets.length > 0 && (
+              {/* Source Datasets - Hidden for Derived products */}
+              {sourceDatasets.length > 0 && product?.productType !== 'Derived' && (
                 <Box>
                   <Typography variant="caption" sx={{ color: currentTheme.textSecondary, display: 'block', mb: 1 }}>
                     {product.productType === 'Aggregate' ? 'Source Datasets' : 'Source Dataset'}
@@ -698,6 +776,399 @@ const DataProductDetailPage = () => {
                   </Box>
                 </Box>
               )}
+
+              {/* Derived Products Preview - Only for Derived products */}
+              {product.productType === 'Derived' && allDerivedProducts.length > 0 && (
+                <Box sx={{ mt: 3 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                    <Typography variant="h6" sx={{ color: currentTheme.text }}>
+                      Derived Products
+                    </Typography>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      onClick={() => setDerivedProductsModalOpen(true)}
+                      sx={{
+                        borderColor: currentTheme.border,
+                        color: currentTheme.text,
+                        '&:hover': {
+                          borderColor: '#37ABBF',
+                          bgcolor: '#37ABBF20',
+                        },
+                      }}
+                    >
+                      See All ({allDerivedProducts.length})
+                    </Button>
+                  </Box>
+                  <TableContainer>
+                    <Table>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell sx={{ color: currentTheme.text, fontWeight: 600, borderColor: currentTheme.border }}>
+                            Dataset Name
+                          </TableCell>
+                          <TableCell sx={{ color: currentTheme.text, fontWeight: 600, borderColor: currentTheme.border }}>
+                            Category
+                          </TableCell>
+                          <TableCell sx={{ color: currentTheme.text, fontWeight: 600, borderColor: currentTheme.border }}>
+                            Status
+                          </TableCell>
+                          <TableCell sx={{ color: currentTheme.text, fontWeight: 600, borderColor: currentTheme.border, textAlign: 'center' }}>
+                            Actions
+                          </TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {allDerivedProducts.slice(0, 6).map((derivedProduct) => (
+                          <TableRow
+                            key={derivedProduct.id}
+                            sx={{
+                              '&:hover': {
+                                bgcolor: currentTheme.background,
+                              },
+                            }}
+                          >
+                            <TableCell sx={{ color: currentTheme.text, borderColor: currentTheme.border }}>
+                              <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                                {derivedProduct.name}
+                              </Typography>
+                            </TableCell>
+                            <TableCell sx={{ color: currentTheme.textSecondary, borderColor: currentTheme.border }}>
+                              {derivedProduct.category || 'N/A'}
+                            </TableCell>
+                            <TableCell sx={{ borderColor: currentTheme.border }}>
+                              <Chip
+                                label={derivedProduct.status || 'unknown'}
+                                size="small"
+                                color={derivedProduct.status?.toLowerCase() === 'active' ? 'success' : 'default'}
+                                sx={{
+                                  fontSize: '0.7rem',
+                                  height: 22,
+                                }}
+                              />
+                            </TableCell>
+                            <TableCell sx={{ borderColor: currentTheme.border }}>
+                              <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center' }}>
+                                {derivedProduct.pipelines && derivedProduct.pipelines.length > 0 && (
+                                  <Tooltip title="View Dataset" arrow placement="top">
+                                    <IconButton
+                                      size="small"
+                                      onClick={async () => {
+                                        try {
+                                          const pipelineUuid = derivedProduct.pipelines[0];
+                                          const datasetsData = await fetchDatasets();
+                                          const datasets = Array.isArray(datasetsData) ? datasetsData : (datasetsData.datasets || []);
+                                          const dataset = datasets.find(d => d.systems && d.systems.includes(pipelineUuid));
+                                          if (dataset) {
+                                            navigate(`/pipelines/datasets/${dataset.id}?pipeline=${pipelineUuid}`);
+                                          } else {
+                                            navigate(`/pipelines?pipeline=${pipelineUuid}`);
+                                          }
+                                        } catch (err) {
+                                          console.error('Error finding dataset for pipeline:', err);
+                                          const pipelineUuid = derivedProduct.pipelines[0];
+                                          navigate(`/pipelines?pipeline=${pipelineUuid}`);
+                                        }
+                                      }}
+                                      sx={{
+                                        width: 32,
+                                        height: 32,
+                                        bgcolor: currentTheme.background,
+                                        border: `1px solid ${currentTheme.border}`,
+                                        borderRadius: '50%',
+                                        '&:hover': {
+                                          borderColor: '#37ABBF',
+                                          bgcolor: '#37ABBF20',
+                                          transform: 'scale(1.1)',
+                                        },
+                                        transition: 'all 0.2s ease',
+                                      }}
+                                    >
+                                      <img
+                                        src="/pipe-svgrepo-com.svg"
+                                        alt="Pipeline"
+                                        style={{
+                                          width: 18,
+                                          height: 18,
+                                          filter: currentTheme.darkMode ? 'invert(1)' : 'none',
+                                        }}
+                                      />
+                                    </IconButton>
+                                  </Tooltip>
+                                )}
+                                <Tooltip title="View in Catalog" arrow placement="top">
+                                  <IconButton
+                                    size="small"
+                                    onClick={() => {
+                                      navigate(`/data-products/${derivedProduct.id}`);
+                                    }}
+                                    sx={{
+                                      width: 32,
+                                      height: 32,
+                                      bgcolor: currentTheme.background,
+                                      border: `1px solid ${currentTheme.border}`,
+                                      borderRadius: '50%',
+                                      '&:hover': {
+                                        borderColor: '#37ABBF',
+                                        bgcolor: '#37ABBF20',
+                                        transform: 'scale(1.1)',
+                                      },
+                                      transition: 'all 0.2s ease',
+                                    }}
+                                  >
+                                    <img
+                                      src={catalogImage}
+                                      alt="Catalog"
+                                      style={{
+                                        width: 18,
+                                        height: 18,
+                                      }}
+                                    />
+                                  </IconButton>
+                                </Tooltip>
+                              </Box>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </Box>
+              )}
+
+              {/* Derived Products Modal */}
+              <Dialog
+                open={derivedProductsModalOpen}
+                onClose={() => setDerivedProductsModalOpen(false)}
+                maxWidth="lg"
+                fullWidth
+                PaperProps={{
+                  sx: {
+                    bgcolor: currentTheme.card,
+                    border: `1px solid ${currentTheme.border}`,
+                    maxHeight: '90vh',
+                  },
+                }}
+              >
+                <DialogTitle sx={{ color: currentTheme.text, pb: 1 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Typography variant="h6">Derived Products</Typography>
+                    <Typography variant="body2" sx={{ color: currentTheme.textSecondary }}>
+                      {allDerivedProducts.length} products
+                    </Typography>
+                  </Box>
+                </DialogTitle>
+                <DialogContent sx={{ overflowY: 'auto', p: 3 }}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    placeholder="Search for derived products..."
+                    value={derivedSearchQuery}
+                    onChange={(e) => setDerivedSearchQuery(e.target.value)}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <SearchIcon sx={{ color: currentTheme.textSecondary }} />
+                        </InputAdornment>
+                      ),
+                    }}
+                    sx={{
+                      mb: 3,
+                      '& .MuiOutlinedInput-root': {
+                        backgroundColor: currentTheme.background,
+                        '& fieldset': {
+                          borderColor: currentTheme.border,
+                        },
+                        '&:hover fieldset': {
+                          borderColor: '#37ABBF',
+                        },
+                        '&.Mui-focused fieldset': {
+                          borderColor: '#37ABBF',
+                          borderWidth: '2px',
+                        },
+                      },
+                    }}
+                  />
+                  <TableContainer>
+                    <Table>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell sx={{ color: currentTheme.text, fontWeight: 600, borderColor: currentTheme.border }}>
+                            Dataset Name
+                          </TableCell>
+                          <TableCell sx={{ color: currentTheme.text, fontWeight: 600, borderColor: currentTheme.border }}>
+                            Category
+                          </TableCell>
+                          <TableCell sx={{ color: currentTheme.text, fontWeight: 600, borderColor: currentTheme.border }}>
+                            Status
+                          </TableCell>
+                          <TableCell sx={{ color: currentTheme.text, fontWeight: 600, borderColor: currentTheme.border, textAlign: 'center' }}>
+                            Actions
+                          </TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {allDerivedProducts
+                          .filter(derivedProduct => {
+                            if (!derivedSearchQuery.trim()) return true;
+                            const query = derivedSearchQuery.toLowerCase();
+                            return (
+                              derivedProduct.name?.toLowerCase().includes(query) ||
+                              derivedProduct.description?.toLowerCase().includes(query) ||
+                              derivedProduct.category?.toLowerCase().includes(query)
+                            );
+                          })
+                          .map((derivedProduct) => (
+                            <TableRow
+                              key={derivedProduct.id}
+                              sx={{
+                                '&:hover': {
+                                  bgcolor: currentTheme.background,
+                                },
+                              }}
+                            >
+                              <TableCell sx={{ color: currentTheme.text, borderColor: currentTheme.border }}>
+                                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                                  {derivedProduct.name}
+                                </Typography>
+                              </TableCell>
+                              <TableCell sx={{ color: currentTheme.textSecondary, borderColor: currentTheme.border }}>
+                                {derivedProduct.category || 'N/A'}
+                              </TableCell>
+                              <TableCell sx={{ borderColor: currentTheme.border }}>
+                                <Chip
+                                  label={derivedProduct.status || 'unknown'}
+                                  size="small"
+                                  color={derivedProduct.status?.toLowerCase() === 'active' ? 'success' : 'default'}
+                                  sx={{
+                                    fontSize: '0.7rem',
+                                    height: 22,
+                                  }}
+                                />
+                              </TableCell>
+                              <TableCell sx={{ borderColor: currentTheme.border }}>
+                                <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center' }}>
+                                  {derivedProduct.pipelines && derivedProduct.pipelines.length > 0 && (
+                                    <Tooltip title="View Dataset" arrow placement="top">
+                                      <IconButton
+                                        size="small"
+                                        onClick={async () => {
+                                          try {
+                                            const pipelineUuid = derivedProduct.pipelines[0];
+                                            const datasetsData = await fetchDatasets();
+                                            const datasets = Array.isArray(datasetsData) ? datasetsData : (datasetsData.datasets || []);
+                                            const dataset = datasets.find(d => d.systems && d.systems.includes(pipelineUuid));
+                                            if (dataset) {
+                                              navigate(`/pipelines/datasets/${dataset.id}?pipeline=${pipelineUuid}`);
+                                            } else {
+                                              navigate(`/pipelines?pipeline=${pipelineUuid}`);
+                                            }
+                                            setDerivedProductsModalOpen(false);
+                                          } catch (err) {
+                                            console.error('Error finding dataset for pipeline:', err);
+                                            const pipelineUuid = derivedProduct.pipelines[0];
+                                            navigate(`/pipelines?pipeline=${pipelineUuid}`);
+                                            setDerivedProductsModalOpen(false);
+                                          }
+                                        }}
+                                        sx={{
+                                          width: 32,
+                                          height: 32,
+                                          bgcolor: currentTheme.background,
+                                          border: `1px solid ${currentTheme.border}`,
+                                          borderRadius: '50%',
+                                          '&:hover': {
+                                            borderColor: '#37ABBF',
+                                            bgcolor: '#37ABBF20',
+                                            transform: 'scale(1.1)',
+                                          },
+                                          transition: 'all 0.2s ease',
+                                        }}
+                                      >
+                                        <img
+                                          src="/pipe-svgrepo-com.svg"
+                                          alt="Pipeline"
+                                          style={{
+                                            width: 18,
+                                            height: 18,
+                                            filter: currentTheme.darkMode ? 'invert(1)' : 'none',
+                                          }}
+                                        />
+                                      </IconButton>
+                                    </Tooltip>
+                                  )}
+                                  <Tooltip title="View in Catalog" arrow placement="top">
+                                    <IconButton
+                                      size="small"
+                                      onClick={() => {
+                                        navigate(`/data-products/${derivedProduct.id}`);
+                                        setDerivedProductsModalOpen(false);
+                                      }}
+                                      sx={{
+                                        width: 32,
+                                        height: 32,
+                                        bgcolor: currentTheme.background,
+                                        border: `1px solid ${currentTheme.border}`,
+                                        borderRadius: '50%',
+                                        '&:hover': {
+                                          borderColor: '#37ABBF',
+                                          bgcolor: '#37ABBF20',
+                                          transform: 'scale(1.1)',
+                                        },
+                                        transition: 'all 0.2s ease',
+                                      }}
+                                    >
+                                      <img
+                                        src={catalogImage}
+                                        alt="Catalog"
+                                        style={{
+                                          width: 18,
+                                          height: 18,
+                                        }}
+                                      />
+                                    </IconButton>
+                                  </Tooltip>
+                                </Box>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        {allDerivedProducts.filter(derivedProduct => {
+                          if (!derivedSearchQuery.trim()) return true;
+                          const query = derivedSearchQuery.toLowerCase();
+                          return (
+                            derivedProduct.name?.toLowerCase().includes(query) ||
+                            derivedProduct.description?.toLowerCase().includes(query) ||
+                            derivedProduct.category?.toLowerCase().includes(query)
+                          );
+                        }).length === 0 && (
+                          <TableRow>
+                            <TableCell colSpan={4} sx={{ textAlign: 'center', borderColor: currentTheme.border, py: 3 }}>
+                              <Typography variant="body2" sx={{ color: currentTheme.textSecondary }}>
+                                {derivedSearchQuery
+                                  ? 'No derived products found matching your search'
+                                  : 'No derived products available'}
+                              </Typography>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </DialogContent>
+                <DialogActions sx={{ p: 2, borderTop: `1px solid ${currentTheme.border}` }}>
+                  <Button
+                    onClick={() => setDerivedProductsModalOpen(false)}
+                    sx={{
+                      color: currentTheme.text,
+                      '&:hover': {
+                        bgcolor: currentTheme.background,
+                      },
+                    }}
+                  >
+                    Close
+                  </Button>
+                </DialogActions>
+              </Dialog>
 
               {/* Child Datasets */}
               {childDatasets.length > 0 && (
@@ -1015,6 +1486,30 @@ const DataProductDetailPage = () => {
                 }}>
                   <ReactMarkdown
                     remarkPlugins={[remarkGfm, remarkEmoji]}
+                    components={{
+                      code({ node, inline, className, children, ...props }) {
+                        const match = /language-(\w+)/.exec(className || '');
+                        const isMermaid = match && match[1] === 'mermaid';
+                        
+                        if (isMermaid && !inline) {
+                          // Convert children to string properly
+                          const codeContent = Array.isArray(children)
+                            ? children.join('')
+                            : String(children);
+                          return (
+                            <MermaidDiagram className={className}>
+                              {codeContent}
+                            </MermaidDiagram>
+                          );
+                        }
+                        
+                        return (
+                          <code className={className} {...props}>
+                            {children}
+                          </code>
+                        );
+                      },
+                    }}
                   >
                     {product.readme}
                   </ReactMarkdown>

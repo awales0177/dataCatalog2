@@ -15,7 +15,7 @@ import {
   Add as AddIcon,
 } from '@mui/icons-material';
 import { ThemeContext } from '../contexts/ThemeContext';
-import { fetchData } from '../services/api';
+import dataProductsData from '../data/dataProducts.json';
 import Pagination from '../components/Pagination';
 import DataProductCard from '../components/DataProductCard';
 import { useNavigate } from 'react-router-dom';
@@ -35,11 +35,11 @@ const DataProductsPage = () => {
   const [page, setPage] = useState(1);
 
   useEffect(() => {
-    const loadDataProducts = async () => {
+    const loadDataProducts = () => {
       try {
-        const data = await fetchData('data-products');
-        setOriginalData(data.products || data.items || []);
-        setFilteredData(data.products || data.items || []);
+        const products = dataProductsData.products || dataProductsData.items || [];
+        setOriginalData(products);
+        setFilteredData(products);
         setError(null);
       } catch (err) {
         setError('Failed to load data products');
