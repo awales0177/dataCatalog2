@@ -148,7 +148,8 @@ const TabsSection = React.memo(({ pipeline, currentFile, dataset, selectedTable 
   // Cache model version lookups
   const modelVersionCache = useMemo(() => {
     const cache = new Map()
-    modelsData.forEach(model => {
+    const models = Array.isArray(modelsData) ? modelsData : (modelsData.models || [])
+    models.forEach(model => {
       const key = model.name
       if (!cache.has(key)) {
         cache.set(key, [])

@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useContext, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -31,6 +31,7 @@ import {
   ArrowBack as ArrowBackIcon,
   Code as CodeIcon,
   Search as SearchIcon,
+  ContentCopy as ContentCopyIcon,
 } from '@mui/icons-material';
 import { ThemeContext } from '../contexts/ThemeContext';
 import datasetsData from '../data/datasets.json';
@@ -43,9 +44,19 @@ import remarkGfm from 'remark-gfm';
 import remarkEmoji from 'remark-emoji';
 import MermaidDiagram from '../components/MermaidDiagram';
 import ProductAgreementCard from '../components/ProductAgreementCard';
+import DatasetSelector from '../components/datasets/DatasetSelector';
 import catalogImage from '../imgs/catalog.png';
 import org1Image from '../imgs/org1.png';
 import org2Image from '../imgs/org2.png';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as RechartsTooltip,
+  ResponsiveContainer,
+} from 'recharts';
 
 const DataProductDetailPage = () => {
   const { id } = useParams();
@@ -55,6 +66,7 @@ const DataProductDetailPage = () => {
   const [error, setError] = useState(null);
   const [product, setProduct] = useState(null);
   const [agreement, setAgreement] = useState(null);
+  const [copied, setCopied] = useState(false);
   const [dataModels, setDataModels] = useState([]);
   const [pipelines, setPipelines] = useState([]);
   const [sourceDatasets, setSourceDatasets] = useState([]);
@@ -62,6 +74,152 @@ const DataProductDetailPage = () => {
   const [allDerivedProducts, setAllDerivedProducts] = useState([]);
   const [derivedSearchQuery, setDerivedSearchQuery] = useState('');
   const [derivedProductsModalOpen, setDerivedProductsModalOpen] = useState(false);
+  const [selectedDataset, setSelectedDataset] = useState(null);
+
+  // Get the selected dataset object
+  const selectedDatasetObj = useMemo(() => {
+    if (!selectedDataset || !sourceDatasets.length) return null;
+    return sourceDatasets.find(d => d.id === selectedDataset) || null;
+  }, [selectedDataset, sourceDatasets]);
+
+  // Use selected dataset data for metrics if available, otherwise use product data
+  const metricsData = useMemo(() => {
+    if (!product) {
+      return {
+        qualityScore: 0,
+        lastUpdated: null,
+        s3Location: null,
+        dataFreshness: null,
+        records: null,
+        periodicity: null,
+        readme: null,
+      };
+    }
+    
+    if (selectedDatasetObj && product.productType === 'Derived') {
+      // Get the first table's data quality if available, or use dataset-level quality
+      const table = selectedDatasetObj.tables && selectedDatasetObj.tables.length > 0 
+        ? selectedDatasetObj.tables[0] 
+        : null;
+      
+      // Check localStorage for saved readme first, then dataset readme, then generate from metadata
+      const datasetId = selectedDatasetObj.id;
+      const savedReadme = localStorage.getItem(`dataset_readme_${datasetId}`);
+      let datasetReadme = savedReadme || selectedDatasetObj.readme;
+      if (!datasetReadme && selectedDatasetObj) {
+        const lines = [];
+        lines.push(`# ${selectedDatasetObj.name || 'Dataset'}`);
+        lines.push('');
+        if (selectedDatasetObj.description) {
+          lines.push(selectedDatasetObj.description);
+          lines.push('');
+        }
+        
+        if (selectedDatasetObj.shortId) {
+          lines.push(`**Dataset ID:** ${selectedDatasetObj.shortId}`);
+        }
+        if (selectedDatasetObj.records) {
+          lines.push(`**Records:** ${selectedDatasetObj.records.toLocaleString()}`);
+        }
+        if (selectedDatasetObj.lastUpdated) {
+          lines.push(`**Last Updated:** ${selectedDatasetObj.lastUpdated}`);
+        }
+        if (selectedDatasetObj.periodicity) {
+          lines.push(`**Update Frequency:** ${selectedDatasetObj.periodicity}`);
+        }
+        if (selectedDatasetObj.size) {
+          lines.push(`**Size:** ${selectedDatasetObj.size}`);
+        }
+        if (selectedDatasetObj.complexity) {
+          lines.push(`**Complexity:** ${selectedDatasetObj.complexity}`);
+        }
+        if (selectedDatasetObj.gigabytesProcessed) {
+          lines.push(`**Data Processed:** ${selectedDatasetObj.gigabytesProcessed} GB`);
+        }
+        lines.push('');
+        
+        if (table) {
+          lines.push('## Table Information');
+          lines.push('');
+          lines.push(`**Table Name:** ${table.name || 'N/A'}`);
+          if (table.rowCount) {
+            lines.push(`**Row Count:** ${table.rowCount.toLocaleString()}`);
+          }
+          if (table.columnCount) {
+            lines.push(`**Column Count:** ${table.columnCount}`);
+          }
+          if (table.dataQuality) {
+            lines.push(`**Data Quality:** ${table.dataQuality}%`);
+          }
+          if (table.dataFreshness !== undefined) {
+            lines.push(`**Data Freshness:** ${table.dataFreshness} hours`);
+          }
+          lines.push('');
+          
+          if (table.columns && table.columns.length > 0) {
+            lines.push('### Columns');
+            lines.push('');
+            lines.push('| Column Name |');
+            lines.push('|------------|');
+            table.columns.forEach(col => {
+              lines.push(`| ${col} |`);
+            });
+            lines.push('');
+          }
+        }
+        
+        if (selectedDatasetObj.etlOverview) {
+          lines.push('## ETL Overview');
+          lines.push('');
+          if (selectedDatasetObj.etlOverview.poc) {
+            lines.push(`**POC:** ${selectedDatasetObj.etlOverview.poc}`);
+          }
+          if (selectedDatasetObj.etlOverview.org) {
+            lines.push(`**Organization:** ${selectedDatasetObj.etlOverview.org}`);
+          }
+          if (selectedDatasetObj.etlOverview.platform) {
+            lines.push(`**Platform:** ${selectedDatasetObj.etlOverview.platform}`);
+          }
+          if (selectedDatasetObj.etlOverview.schedule) {
+            lines.push(`**Schedule:** ${selectedDatasetObj.etlOverview.schedule}`);
+          }
+          if (selectedDatasetObj.etlOverview.githubLink) {
+            lines.push(`**GitHub:** ${selectedDatasetObj.etlOverview.githubLink}`);
+          }
+          lines.push('');
+        }
+        
+        if (selectedDatasetObj.s3Location || selectedDatasetObj.s3BasePath) {
+          lines.push('## Storage');
+          lines.push('');
+          lines.push(`**S3 Location:** \`${selectedDatasetObj.s3Location || selectedDatasetObj.s3BasePath}\``);
+          lines.push('');
+        }
+        
+        datasetReadme = lines.join('\n');
+      }
+      
+      return {
+        qualityScore: table?.dataQuality || selectedDatasetObj.dataQuality || product.qualityScore || 0,
+        lastUpdated: selectedDatasetObj.lastUpdated || product.lastUpdated,
+        s3Location: table?.s3Location || selectedDatasetObj.s3Location || selectedDatasetObj.s3BasePath || product.s3Location,
+        dataFreshness: table?.dataFreshness || selectedDatasetObj.dataFreshness,
+        records: selectedDatasetObj.records || table?.rowCount,
+        periodicity: selectedDatasetObj.periodicity || product.periodicity,
+        readme: datasetReadme || product.readme,
+      };
+    }
+    // For derived products, don't show product readme - only dataset readmes
+    return {
+      qualityScore: product.qualityScore || 0,
+      lastUpdated: product.lastUpdated,
+      s3Location: product.s3Location || product.s3_location || product.storageLocation,
+      dataFreshness: null,
+      records: null,
+      periodicity: product.periodicity || product.updateFrequency,
+      readme: product.productType === 'Derived' ? null : product.readme,
+    };
+  }, [selectedDatasetObj, product]);
 
   useEffect(() => {
     const loadProduct = async () => {
@@ -142,11 +300,31 @@ const DataProductDetailPage = () => {
                 })
                 .filter(Boolean);
               setSourceDatasets(matchedDatasets);
-            } else if (foundProduct.productType === 'Derived' && foundProduct.sourceDataset) {
-              // Single source dataset for Derived
-              const dataset = allDatasets.find(d => d.id === foundProduct.sourceDataset);
-              if (dataset) {
-                setSourceDatasets([dataset]);
+            } else if (foundProduct.productType === 'Derived') {
+              // Source datasets for Derived (can be single or multiple)
+              if (foundProduct.sourceDatasets && Array.isArray(foundProduct.sourceDatasets)) {
+                // Multiple source datasets
+                const matchedDatasets = foundProduct.sourceDatasets
+                  .map(datasetId => {
+                    const dataset = allDatasets.find(d => d.id === datasetId);
+                    return dataset || null;
+                  })
+                  .filter(Boolean);
+                setSourceDatasets(matchedDatasets);
+                // Set first dataset as selected by default
+                if (matchedDatasets.length > 0 && !selectedDataset) {
+                  setSelectedDataset(matchedDatasets[0].id);
+                }
+              } else if (foundProduct.sourceDataset) {
+                // Single source dataset (backward compatibility)
+                const dataset = allDatasets.find(d => d.id === foundProduct.sourceDataset);
+                if (dataset) {
+                  setSourceDatasets([dataset]);
+                  // Set as selected by default
+                  if (!selectedDataset) {
+                    setSelectedDataset(dataset.id);
+                  }
+                }
               }
             }
 
@@ -213,11 +391,12 @@ const DataProductDetailPage = () => {
   };
 
   const calculateFreshness = () => {
-    if (!product?.lastUpdated) return null;
+    const lastUpdated = metricsData?.lastUpdated;
+    if (!lastUpdated) return null;
     try {
-      const lastUpdated = new Date(product.lastUpdated);
+      const lastUpdatedDate = new Date(lastUpdated);
       const now = new Date();
-      const diffMs = now - lastUpdated;
+      const diffMs = now - lastUpdatedDate;
       const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
       const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
       const diffMinutes = Math.floor(diffMs / (1000 * 60));
@@ -232,16 +411,29 @@ const DataProductDetailPage = () => {
         return 'Just now';
       }
     } catch (e) {
-      return product.lastUpdated;
+      return lastUpdated;
     }
   };
 
   const getFreshnessPercent = () => {
-    if (!product?.lastUpdated) return 0;
+    const lastUpdated = metricsData?.lastUpdated;
+    if (!lastUpdated) return 0;
+    
+    // If dataset has dataFreshness field (in hours), use that
+    if (metricsData?.dataFreshness !== undefined && metricsData.dataFreshness !== null) {
+      const hours = metricsData.dataFreshness;
+      if (hours <= 1) return 100;
+      if (hours <= 6) return 90;
+      if (hours <= 12) return 80;
+      if (hours <= 24) return 70;
+      if (hours <= 48) return 50;
+      return 30;
+    }
+    
     try {
-      const lastUpdated = new Date(product.lastUpdated);
+      const lastUpdatedDate = new Date(lastUpdated);
       const now = new Date();
-      const diffMs = now - lastUpdated;
+      const diffMs = now - lastUpdatedDate;
       const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
       
       if (diffDays === 0) return 100;
@@ -255,11 +447,21 @@ const DataProductDetailPage = () => {
   };
 
   const getFreshnessColor = () => {
-    if (!product?.lastUpdated) return '#9e9e9e';
+    const lastUpdated = metricsData?.lastUpdated;
+    if (!lastUpdated) return '#9e9e9e';
+    
+    // If dataset has dataFreshness field (in hours), use that
+    if (metricsData?.dataFreshness !== undefined && metricsData.dataFreshness !== null) {
+      const hours = metricsData.dataFreshness;
+      if (hours <= 1) return '#4caf50';
+      if (hours <= 24) return '#ff9800';
+      return '#f44336';
+    }
+    
     try {
-      const lastUpdated = new Date(product.lastUpdated);
+      const lastUpdatedDate = new Date(lastUpdated);
       const now = new Date();
-      const diffMs = now - lastUpdated;
+      const diffMs = now - lastUpdatedDate;
       const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
       
       if (diffDays <= 1) return '#4caf50';
@@ -268,6 +470,53 @@ const DataProductDetailPage = () => {
     } catch (e) {
       return '#9e9e9e';
     }
+  };
+
+  const calculateValidation = () => {
+    const validationScore = metricsData?.qualityScore ?? 0;
+    if (validationScore >= 95) return 'Excellent';
+    if (validationScore >= 85) return 'Good';
+    if (validationScore >= 70) return 'Fair';
+    return 'Needs Attention';
+  };
+
+  const getValidationPercent = () => {
+    const validationScore = metricsData?.qualityScore ?? 0;
+    return Math.max(0, Math.min(100, validationScore));
+  };
+
+  const getValidationColor = () => {
+    const validationScore = product?.validationScore ?? product?.qualityScore ?? 0;
+    if (validationScore >= 95) return '#4caf50';
+    if (validationScore >= 85) return '#ff9800';
+    if (validationScore >= 70) return '#ffc107';
+    return '#f44336';
+  };
+
+  // Generate sample data volume data for the last 30 days
+  const generateVolumeData = () => {
+    const data = [];
+    const today = new Date();
+    // Use dataset gigabytesProcessed if available, otherwise use product size or default
+    const baseVolume = selectedDatasetObj?.gigabytesProcessed 
+      ? selectedDatasetObj.gigabytesProcessed 
+      : (product?.size ? parseFloat(product.size) || 100 : 100);
+    
+    for (let i = 29; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+      
+      // Generate realistic volume data with some variation
+      const variation = (Math.random() - 0.5) * 0.3; // ±15% variation
+      const volume = baseVolume * (1 + variation);
+      
+      data.push({
+        date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        volume: Math.round(volume * 100) / 100, // Round to 2 decimal places
+      });
+    }
+    
+    return data;
   };
 
   if (loading) {
@@ -353,18 +602,14 @@ const DataProductDetailPage = () => {
             })()}
           </Box>
           <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
-            <Chip
-              label={product.status || 'unknown'}
-              color={getStatusColor(product.status)}
-              size="small"
-            />
             {product.category && (
               <Chip
                 label={product.category}
                 size="small"
                 sx={{
-                  backgroundColor: currentTheme.background,
-                  color: currentTheme.text,
+                  backgroundColor: alpha(currentTheme.primary, 0.15),
+                  color: currentTheme.primary,
+                  fontWeight: 500,
                 }}
               />
             )}
@@ -392,6 +637,17 @@ const DataProductDetailPage = () => {
         </Box>
       </Box>
 
+      {/* Dataset Selector - Only for Derived products */}
+      {product.productType === 'Derived' && sourceDatasets.length > 0 && (
+        <Box sx={{ mb: 3 }}>
+          <DatasetSelector
+            datasets={sourceDatasets}
+            selectedDataset={selectedDataset}
+            onDatasetSelect={setSelectedDataset}
+          />
+        </Box>
+      )}
+
       {/* Two Column Layout */}
       <Grid container spacing={3}>
         {/* Left Column: Metrics */}
@@ -412,7 +668,7 @@ const DataProductDetailPage = () => {
 
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
               {/* Quality Score */}
-              {product.qualityScore !== undefined && (
+              {metricsData.qualityScore !== undefined && (
                 <Box>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
                     <Typography variant="body2" sx={{ color: currentTheme.textSecondary }}>
@@ -421,24 +677,24 @@ const DataProductDetailPage = () => {
                     <Typography
                       variant="body2"
                       sx={{
-                        color: getQualityColor(product.qualityScore) === 'success' ? '#2ecc71' :
-                               getQualityColor(product.qualityScore) === 'warning' ? '#f59e0b' : '#e74c3c',
+                        color: getQualityColor(metricsData.qualityScore) === 'success' ? '#2ecc71' :
+                               getQualityColor(metricsData.qualityScore) === 'warning' ? '#f59e0b' : '#e74c3c',
                         fontWeight: 600,
                       }}
                     >
-                      {product.qualityScore}%
+                      {metricsData.qualityScore.toFixed(1)}%
                     </Typography>
                   </Box>
                   <LinearProgress
                     variant="determinate"
-                    value={product.qualityScore}
+                    value={metricsData.qualityScore}
                     sx={{
                       height: 6,
                       borderRadius: 3,
                       backgroundColor: currentTheme.background,
                       '& .MuiLinearProgress-bar': {
-                        backgroundColor: getQualityColor(product.qualityScore) === 'success' ? '#2ecc71' :
-                                         getQualityColor(product.qualityScore) === 'warning' ? '#f59e0b' : '#e74c3c',
+                        backgroundColor: getQualityColor(metricsData.qualityScore) === 'success' ? '#2ecc71' :
+                                         getQualityColor(metricsData.qualityScore) === 'warning' ? '#f59e0b' : '#e74c3c',
                         borderRadius: 3,
                       },
                     }}
@@ -447,7 +703,7 @@ const DataProductDetailPage = () => {
               )}
 
               {/* Data Freshness */}
-              {product.lastUpdated && (
+              {metricsData.lastUpdated && (
                 <Box>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
                     <Typography variant="body2" sx={{ color: currentTheme.textSecondary }}>
@@ -473,40 +729,247 @@ const DataProductDetailPage = () => {
                 </Box>
               )}
 
-              {/* Owner */}
-              {product.owner && (
-                <Box>
-                  <Typography variant="caption" sx={{ color: currentTheme.textSecondary, display: 'block', mb: 0.5 }}>
-                    Producer
+              {/* Data Validation */}
+              <Box sx={{ mt: 2 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                  <Typography variant="body2" sx={{ color: currentTheme.textSecondary }}>
+                    Data Validation
                   </Typography>
                   <Typography variant="body2" sx={{ color: currentTheme.text, fontWeight: 500 }}>
-                    {product.owner}
+                    {calculateValidation()}
                   </Typography>
                 </Box>
-              )}
+                <LinearProgress
+                  variant="determinate"
+                  value={getValidationPercent()}
+                  sx={{
+                    height: 6,
+                    borderRadius: 3,
+                    backgroundColor: currentTheme.background,
+                    '& .MuiLinearProgress-bar': {
+                      backgroundColor: getValidationColor(),
+                      borderRadius: 3,
+                    },
+                  }}
+                />
+              </Box>
 
-              {/* Consumers */}
-              {product.consumers && product.consumers.length > 0 && (
-                <Box>
-                  <Typography variant="caption" sx={{ color: currentTheme.textSecondary, display: 'block', mb: 1 }}>
-                    Consumers
-                  </Typography>
-                  <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-                    {product.consumers.map((consumer, idx) => (
-                      <Chip
-                        key={idx}
-                        label={consumer}
+              {/* S3 Location */}
+              {metricsData.s3Location && (
+                <Box sx={{ mt: 2 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                    <Typography variant="body2" sx={{ color: currentTheme.textSecondary }}>
+                      S3 Location
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        flex: 1,
+                        color: darkMode ? '#ff9800' : currentTheme.text,
+                        fontFamily: 'monospace',
+                        fontSize: '0.75rem',
+                        wordBreak: 'break-all',
+                        bgcolor: currentTheme.background,
+                        p: 1,
+                        borderRadius: 1,
+                        border: `1px solid ${currentTheme.border}`,
+                      }}
+                    >
+                      {metricsData.s3Location}
+                    </Typography>
+                    <Tooltip title={copied ? 'Copied!' : 'Copy to clipboard'}>
+                      <IconButton
                         size="small"
-                        sx={{
-                          backgroundColor: currentTheme.primary + '20',
-                          color: currentTheme.primary,
-                          fontSize: '0.75rem',
+                        onClick={() => {
+                          navigator.clipboard.writeText(metricsData.s3Location);
+                          setCopied(true);
+                          setTimeout(() => setCopied(false), 2000);
                         }}
-                      />
-                    ))}
+                        sx={{
+                          color: darkMode ? '#ff9800' : currentTheme.textSecondary,
+                          '&:hover': {
+                            color: darkMode ? '#ffb74d' : currentTheme.primary,
+                            bgcolor: alpha(darkMode ? '#ff9800' : currentTheme.primary, 0.1),
+                          }
+                        }}
+                      >
+                        <ContentCopyIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
                   </Box>
                 </Box>
               )}
+
+              {/* Data Volume Graph */}
+              <Box sx={{ mt: 3 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                  <Typography variant="body2" sx={{ color: currentTheme.textSecondary }}>
+                    Data Volume (Last 30 Days)
+                  </Typography>
+                  {metricsData.periodicity && (
+                    <Chip
+                      label={metricsData.periodicity}
+                      sx={{
+                        borderRadius: 1,
+                        bgcolor: currentTheme.primary + '20',
+                        color: currentTheme.primary,
+                        fontWeight: 600,
+                        fontSize: '0.75rem',
+                        height: 28,
+                      }}
+                    />
+                  )}
+                </Box>
+                <Box sx={{ width: '100%', height: 200 }}>
+                  <ResponsiveContainer>
+                    <LineChart
+                      data={generateVolumeData()}
+                      margin={{ top: 5, right: 5, left: 0, bottom: 5 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke={currentTheme.border} />
+                      <XAxis 
+                        dataKey="date" 
+                        stroke={currentTheme.textSecondary}
+                        style={{ fontSize: '0.75rem' }}
+                      />
+                      <YAxis 
+                        stroke={currentTheme.textSecondary}
+                        style={{ fontSize: '0.75rem' }}
+                        label={{ value: 'GB', angle: -90, position: 'insideLeft', style: { fontSize: '0.75rem', fill: currentTheme.textSecondary } }}
+                      />
+                      <RechartsTooltip
+                        contentStyle={{
+                          backgroundColor: currentTheme.card,
+                          border: `1px solid ${currentTheme.border}`,
+                          color: currentTheme.text,
+                          borderRadius: 4,
+                        }}
+                        labelStyle={{ color: currentTheme.textSecondary }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="volume"
+                        stroke="#37ABBF"
+                        strokeWidth={2}
+                        dot={{ fill: '#37ABBF', r: 3 }}
+                        activeDot={{ r: 5 }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </Box>
+              </Box>
+
+              {/* Producer, Consumers, and Agreement */}
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6}>
+                  <Box>
+                    {/* Owner */}
+                    {product.owner && (
+                      <Box sx={{ mb: 2 }}>
+                        <Typography variant="caption" sx={{ color: currentTheme.textSecondary, display: 'block', mb: 0.5 }}>
+                          Producer
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: currentTheme.text, fontWeight: 500 }}>
+                          {product.owner}
+                        </Typography>
+                      </Box>
+                    )}
+
+                    {/* Consumers */}
+                    {product.consumers && product.consumers.length > 0 && (
+                      <Box>
+                        <Typography variant="caption" sx={{ color: currentTheme.textSecondary, display: 'block', mb: 1 }}>
+                          Consumers
+                        </Typography>
+                        <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
+                          {product.consumers.map((consumer, idx) => (
+                            <Chip
+                              key={idx}
+                              label={consumer}
+                              size="small"
+                              sx={{
+                                backgroundColor: currentTheme.primary + '20',
+                                color: currentTheme.primary,
+                                fontSize: '0.75rem',
+                              }}
+                            />
+                          ))}
+                        </Box>
+                      </Box>
+                    )}
+                  </Box>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  {/* Data Product Agreement */}
+                  {agreement && (
+                    <Box>
+                      <Typography variant="caption" sx={{ color: currentTheme.textSecondary, display: 'block', mb: 1 }}>
+                        Agreement
+                      </Typography>
+                      <Paper
+                        elevation={0}
+                        onClick={() => navigate(`/agreements/${agreement.id}`)}
+                        sx={{
+                          p: 1.5,
+                          borderRadius: 2,
+                          bgcolor: currentTheme.card,
+                          border: `1px solid ${currentTheme.border}`,
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease-in-out',
+                          '&:hover': {
+                            borderColor: '#37ABBF',
+                            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+                          },
+                        }}
+                      >
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            color: currentTheme.text,
+                            fontWeight: 600,
+                            mb: 0.5,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            fontSize: '0.8rem',
+                          }}
+                        >
+                          {agreement.name}
+                        </Typography>
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              color: currentTheme.textSecondary,
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              display: '-webkit-box',
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: 'vertical',
+                              fontSize: '0.7rem',
+                            }}
+                          >
+                            {agreement.description || 'No description'}
+                          </Typography>
+                          <Chip
+                            label={agreement.status || 'unknown'}
+                            size="small"
+                            sx={{
+                              width: 'fit-content',
+                              height: 18,
+                              fontSize: '0.65rem',
+                              bgcolor: agreement.status === 'active' ? '#4caf50' + '20' : currentTheme.background,
+                              color: agreement.status === 'active' ? '#4caf50' : currentTheme.textSecondary,
+                            }}
+                          />
+                        </Box>
+                      </Paper>
+                    </Box>
+                  )}
+                </Grid>
+              </Grid>
 
               {/* Data Models */}
               {dataModels.length > 0 && (
@@ -774,397 +1237,6 @@ const DataProductDetailPage = () => {
                 </Box>
               )}
 
-              {/* Derived Products Preview - Only for Derived products */}
-              {product.productType === 'Derived' && allDerivedProducts.length > 0 && (
-                <Box sx={{ mt: 3 }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                    <Typography variant="h6" sx={{ color: currentTheme.text }}>
-                      Derived Products
-                    </Typography>
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      onClick={() => setDerivedProductsModalOpen(true)}
-                      sx={{
-                        borderColor: currentTheme.border,
-                        color: currentTheme.text,
-                        '&:hover': {
-                          borderColor: '#37ABBF',
-                          bgcolor: '#37ABBF20',
-                        },
-                      }}
-                    >
-                      See All ({allDerivedProducts.length})
-                    </Button>
-                  </Box>
-                  <TableContainer>
-                    <Table>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell sx={{ color: currentTheme.text, fontWeight: 600, borderColor: currentTheme.border }}>
-                            Dataset Name
-                          </TableCell>
-                          <TableCell sx={{ color: currentTheme.text, fontWeight: 600, borderColor: currentTheme.border }}>
-                            Category
-                          </TableCell>
-                          <TableCell sx={{ color: currentTheme.text, fontWeight: 600, borderColor: currentTheme.border }}>
-                            Status
-                          </TableCell>
-                          <TableCell sx={{ color: currentTheme.text, fontWeight: 600, borderColor: currentTheme.border, textAlign: 'center' }}>
-                            Actions
-                          </TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {allDerivedProducts.slice(0, 6).map((derivedProduct) => (
-                          <TableRow
-                            key={derivedProduct.id}
-                            sx={{
-                              '&:hover': {
-                                bgcolor: currentTheme.background,
-                              },
-                            }}
-                          >
-                            <TableCell sx={{ color: currentTheme.text, borderColor: currentTheme.border }}>
-                              <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                                {derivedProduct.name}
-                              </Typography>
-                            </TableCell>
-                            <TableCell sx={{ color: currentTheme.textSecondary, borderColor: currentTheme.border }}>
-                              {derivedProduct.category || 'N/A'}
-                            </TableCell>
-                            <TableCell sx={{ borderColor: currentTheme.border }}>
-                              <Chip
-                                label={derivedProduct.status || 'unknown'}
-                                size="small"
-                                color={derivedProduct.status?.toLowerCase() === 'active' ? 'success' : 'default'}
-                                sx={{
-                                  fontSize: '0.7rem',
-                                  height: 22,
-                                }}
-                              />
-                            </TableCell>
-                            <TableCell sx={{ borderColor: currentTheme.border }}>
-                              <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center' }}>
-                                {derivedProduct.pipelines && derivedProduct.pipelines.length > 0 && (
-                                  <Tooltip title="View Dataset" arrow placement="top">
-                                    <IconButton
-                                      size="small"
-                                      onClick={async () => {
-                                        try {
-                                          const pipelineUuid = derivedProduct.pipelines[0];
-                                          const datasets = Array.isArray(datasetsData) ? datasetsData : [];
-                                          const dataset = datasets.find(d => d.systems && d.systems.includes(pipelineUuid));
-                                          if (dataset) {
-                                            navigate(`/pipelines/datasets/${dataset.id}?pipeline=${pipelineUuid}`);
-                                          } else {
-                                            navigate(`/pipelines?pipeline=${pipelineUuid}`);
-                                          }
-                                        } catch (err) {
-                                          console.error('Error finding dataset for pipeline:', err);
-                                          const pipelineUuid = derivedProduct.pipelines[0];
-                                          navigate(`/pipelines?pipeline=${pipelineUuid}`);
-                                        }
-                                      }}
-                                      sx={{
-                                        width: 32,
-                                        height: 32,
-                                        bgcolor: currentTheme.background,
-                                        border: `1px solid ${currentTheme.border}`,
-                                        borderRadius: '50%',
-                                        '&:hover': {
-                                          borderColor: '#37ABBF',
-                                          bgcolor: '#37ABBF20',
-                                          transform: 'scale(1.1)',
-                                        },
-                                        transition: 'all 0.2s ease',
-                                      }}
-                                    >
-                                      <img
-                                        src="/pipe-svgrepo-com.svg"
-                                        alt="Pipeline"
-                                        style={{
-                                          width: 18,
-                                          height: 18,
-                                          filter: currentTheme.darkMode ? 'invert(1)' : 'none',
-                                        }}
-                                      />
-                                    </IconButton>
-                                  </Tooltip>
-                                )}
-                                <Tooltip title="View in Catalog" arrow placement="top">
-                                  <IconButton
-                                    size="small"
-                                    onClick={() => {
-                                      navigate(`/data-products/${derivedProduct.id}`);
-                                    }}
-                                    sx={{
-                                      width: 32,
-                                      height: 32,
-                                      bgcolor: currentTheme.background,
-                                      border: `1px solid ${currentTheme.border}`,
-                                      borderRadius: '50%',
-                                      '&:hover': {
-                                        borderColor: '#37ABBF',
-                                        bgcolor: '#37ABBF20',
-                                        transform: 'scale(1.1)',
-                                      },
-                                      transition: 'all 0.2s ease',
-                                    }}
-                                  >
-                                    <img
-                                      src={catalogImage}
-                                      alt="Catalog"
-                                      style={{
-                                        width: 18,
-                                        height: 18,
-                                      }}
-                                    />
-                                  </IconButton>
-                                </Tooltip>
-                              </Box>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </Box>
-              )}
-
-              {/* Derived Products Modal */}
-              <Dialog
-                open={derivedProductsModalOpen}
-                onClose={() => setDerivedProductsModalOpen(false)}
-                maxWidth="lg"
-                fullWidth
-                PaperProps={{
-                  sx: {
-                    bgcolor: currentTheme.card,
-                    border: `1px solid ${currentTheme.border}`,
-                    maxHeight: '90vh',
-                  },
-                }}
-              >
-                <DialogTitle sx={{ color: currentTheme.text, pb: 1 }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Typography variant="h6">Derived Products</Typography>
-                    <Typography variant="body2" sx={{ color: currentTheme.textSecondary }}>
-                      {allDerivedProducts.length} products
-                    </Typography>
-                  </Box>
-                </DialogTitle>
-                <DialogContent sx={{ overflowY: 'auto', p: 3 }}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    placeholder="Search for derived products..."
-                    value={derivedSearchQuery}
-                    onChange={(e) => setDerivedSearchQuery(e.target.value)}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <SearchIcon sx={{ color: currentTheme.textSecondary }} />
-                        </InputAdornment>
-                      ),
-                    }}
-                    sx={{
-                      mb: 3,
-                      '& .MuiOutlinedInput-root': {
-                        backgroundColor: currentTheme.background,
-                        '& fieldset': {
-                          borderColor: currentTheme.border,
-                        },
-                        '&:hover fieldset': {
-                          borderColor: '#37ABBF',
-                        },
-                        '&.Mui-focused fieldset': {
-                          borderColor: '#37ABBF',
-                          borderWidth: '2px',
-                        },
-                      },
-                    }}
-                  />
-                  <TableContainer>
-                    <Table>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell sx={{ color: currentTheme.text, fontWeight: 600, borderColor: currentTheme.border }}>
-                            Dataset Name
-                          </TableCell>
-                          <TableCell sx={{ color: currentTheme.text, fontWeight: 600, borderColor: currentTheme.border }}>
-                            Category
-                          </TableCell>
-                          <TableCell sx={{ color: currentTheme.text, fontWeight: 600, borderColor: currentTheme.border }}>
-                            Status
-                          </TableCell>
-                          <TableCell sx={{ color: currentTheme.text, fontWeight: 600, borderColor: currentTheme.border, textAlign: 'center' }}>
-                            Actions
-                          </TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {allDerivedProducts
-                          .filter(derivedProduct => {
-                            if (!derivedSearchQuery.trim()) return true;
-                            const query = derivedSearchQuery.toLowerCase();
-                            return (
-                              derivedProduct.name?.toLowerCase().includes(query) ||
-                              derivedProduct.description?.toLowerCase().includes(query) ||
-                              derivedProduct.category?.toLowerCase().includes(query)
-                            );
-                          })
-                          .map((derivedProduct) => (
-                            <TableRow
-                              key={derivedProduct.id}
-                              sx={{
-                                '&:hover': {
-                                  bgcolor: currentTheme.background,
-                                },
-                              }}
-                            >
-                              <TableCell sx={{ color: currentTheme.text, borderColor: currentTheme.border }}>
-                                <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                                  {derivedProduct.name}
-                                </Typography>
-                              </TableCell>
-                              <TableCell sx={{ color: currentTheme.textSecondary, borderColor: currentTheme.border }}>
-                                {derivedProduct.category || 'N/A'}
-                              </TableCell>
-                              <TableCell sx={{ borderColor: currentTheme.border }}>
-                                <Chip
-                                  label={derivedProduct.status || 'unknown'}
-                                  size="small"
-                                  color={derivedProduct.status?.toLowerCase() === 'active' ? 'success' : 'default'}
-                                  sx={{
-                                    fontSize: '0.7rem',
-                                    height: 22,
-                                  }}
-                                />
-                              </TableCell>
-                              <TableCell sx={{ borderColor: currentTheme.border }}>
-                                <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center' }}>
-                                  {derivedProduct.pipelines && derivedProduct.pipelines.length > 0 && (
-                                    <Tooltip title="View Dataset" arrow placement="top">
-                                      <IconButton
-                                        size="small"
-                                        onClick={async () => {
-                                          try {
-                                            const pipelineUuid = derivedProduct.pipelines[0];
-                                            const datasets = Array.isArray(datasetsData) ? datasetsData : [];
-                                            const dataset = datasets.find(d => d.systems && d.systems.includes(pipelineUuid));
-                                            if (dataset) {
-                                              navigate(`/pipelines/datasets/${dataset.id}?pipeline=${pipelineUuid}`);
-                                            } else {
-                                              navigate(`/pipelines?pipeline=${pipelineUuid}`);
-                                            }
-                                            setDerivedProductsModalOpen(false);
-                                          } catch (err) {
-                                            console.error('Error finding dataset for pipeline:', err);
-                                            const pipelineUuid = derivedProduct.pipelines[0];
-                                            navigate(`/pipelines?pipeline=${pipelineUuid}`);
-                                            setDerivedProductsModalOpen(false);
-                                          }
-                                        }}
-                                        sx={{
-                                          width: 32,
-                                          height: 32,
-                                          bgcolor: currentTheme.background,
-                                          border: `1px solid ${currentTheme.border}`,
-                                          borderRadius: '50%',
-                                          '&:hover': {
-                                            borderColor: '#37ABBF',
-                                            bgcolor: '#37ABBF20',
-                                            transform: 'scale(1.1)',
-                                          },
-                                          transition: 'all 0.2s ease',
-                                        }}
-                                      >
-                                        <img
-                                          src="/pipe-svgrepo-com.svg"
-                                          alt="Pipeline"
-                                          style={{
-                                            width: 18,
-                                            height: 18,
-                                            filter: currentTheme.darkMode ? 'invert(1)' : 'none',
-                                          }}
-                                        />
-                                      </IconButton>
-                                    </Tooltip>
-                                  )}
-                                  <Tooltip title="View in Catalog" arrow placement="top">
-                                    <IconButton
-                                      size="small"
-                                      onClick={() => {
-                                        navigate(`/data-products/${derivedProduct.id}`);
-                                        setDerivedProductsModalOpen(false);
-                                      }}
-                                      sx={{
-                                        width: 32,
-                                        height: 32,
-                                        bgcolor: currentTheme.background,
-                                        border: `1px solid ${currentTheme.border}`,
-                                        borderRadius: '50%',
-                                        '&:hover': {
-                                          borderColor: '#37ABBF',
-                                          bgcolor: '#37ABBF20',
-                                          transform: 'scale(1.1)',
-                                        },
-                                        transition: 'all 0.2s ease',
-                                      }}
-                                    >
-                                      <img
-                                        src={catalogImage}
-                                        alt="Catalog"
-                                        style={{
-                                          width: 18,
-                                          height: 18,
-                                        }}
-                                      />
-                                    </IconButton>
-                                  </Tooltip>
-                                </Box>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        {allDerivedProducts.filter(derivedProduct => {
-                          if (!derivedSearchQuery.trim()) return true;
-                          const query = derivedSearchQuery.toLowerCase();
-                          return (
-                            derivedProduct.name?.toLowerCase().includes(query) ||
-                            derivedProduct.description?.toLowerCase().includes(query) ||
-                            derivedProduct.category?.toLowerCase().includes(query)
-                          );
-                        }).length === 0 && (
-                          <TableRow>
-                            <TableCell colSpan={4} sx={{ textAlign: 'center', borderColor: currentTheme.border, py: 3 }}>
-                              <Typography variant="body2" sx={{ color: currentTheme.textSecondary }}>
-                                {derivedSearchQuery
-                                  ? 'No derived products found matching your search'
-                                  : 'No derived products available'}
-                              </Typography>
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </DialogContent>
-                <DialogActions sx={{ p: 2, borderTop: `1px solid ${currentTheme.border}` }}>
-                  <Button
-                    onClick={() => setDerivedProductsModalOpen(false)}
-                    sx={{
-                      color: currentTheme.text,
-                      '&:hover': {
-                        bgcolor: currentTheme.background,
-                      },
-                    }}
-                  >
-                    Close
-                  </Button>
-                </DialogActions>
-              </Dialog>
-
               {/* Child Datasets */}
               {childDatasets.length > 0 && (
                 <Box>
@@ -1243,107 +1315,17 @@ const DataProductDetailPage = () => {
                 </Box>
               )}
 
-              {/* SLA */}
-              {product.sla && (
+              {/* Domains */}
+              {((product.domain && product.domain.length > 0) || (product.domains && product.domains.length > 0)) && (
                 <Box>
                   <Typography variant="caption" sx={{ color: currentTheme.textSecondary, display: 'block', mb: 1 }}>
-                    SLA
-                  </Typography>
-                  {product.sla.availability && (
-                    <Typography variant="body2" sx={{ color: currentTheme.text, mb: 0.5 }}>
-                      Availability: {product.sla.availability}
-                    </Typography>
-                  )}
-                  {product.sla.latency && (
-                    <Typography variant="body2" sx={{ color: currentTheme.text }}>
-                      Latency: {product.sla.latency}
-                    </Typography>
-                  )}
-                </Box>
-              )}
-
-              {/* Data Product Agreement */}
-              {agreement && (
-                <Box>
-                  <Typography variant="caption" sx={{ color: currentTheme.textSecondary, display: 'block', mb: 1 }}>
-                    Agreement
-                  </Typography>
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                    <Paper
-                      elevation={0}
-                      onClick={() => navigate(`/agreements/${agreement.id}`)}
-                      sx={{
-                        p: 1.5,
-                        borderRadius: 2,
-                        bgcolor: currentTheme.card,
-                        border: `1px solid ${currentTheme.border}`,
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease-in-out',
-                        flex: '1 1 calc(50% - 8px)',
-                        minWidth: 0,
-                        '&:hover': {
-                          borderColor: '#37ABBF',
-                          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-                        },
-                      }}
-                    >
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        color: currentTheme.text,
-                        fontWeight: 600,
-                        mb: 0.5,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        fontSize: '0.8rem',
-                      }}
-                    >
-                      {agreement.name}
-                    </Typography>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          color: currentTheme.textSecondary,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          display: '-webkit-box',
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: 'vertical',
-                          fontSize: '0.7rem',
-                        }}
-                      >
-                        {agreement.description || 'No description'}
-                      </Typography>
-                      <Chip
-                        label={agreement.status || 'unknown'}
-                        size="small"
-                        sx={{
-                          width: 'fit-content',
-                          height: 18,
-                          fontSize: '0.65rem',
-                          bgcolor: agreement.status === 'active' ? '#4caf50' + '20' : currentTheme.background,
-                          color: agreement.status === 'active' ? '#4caf50' : currentTheme.textSecondary,
-                        }}
-                      />
-                    </Box>
-                  </Paper>
-                  </Box>
-                </Box>
-              )}
-
-              {/* Tags */}
-              {product.tags && product.tags.length > 0 && (
-                <Box>
-                  <Typography variant="caption" sx={{ color: currentTheme.textSecondary, display: 'block', mb: 1 }}>
-                    Tags
+                    Domains
                   </Typography>
                   <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-                    {product.tags.map((tag, idx) => (
+                    {(product.domains || (product.domain ? [product.domain] : [])).map((domain, idx) => (
                       <Chip
                         key={idx}
-                        label={tag}
+                        label={domain}
                         size="small"
                         sx={{
                           backgroundColor: currentTheme.background,
@@ -1377,20 +1359,28 @@ const DataProductDetailPage = () => {
               <Typography variant="h6" sx={{ color: currentTheme.text }}>
                 README
               </Typography>
-              <Tooltip title="Edit Markdown">
-                <IconButton
-                  size="small"
-                  onClick={() => navigate(`/data-products/${product.id}/markdown`)}
-                  sx={{
-                    color: currentTheme.textSecondary,
-                    '&:hover': {
-                      color: currentTheme.primary,
-                    }
-                  }}
-                >
-                  <CodeIcon />
-                </IconButton>
-              </Tooltip>
+              {(product.productType !== 'Derived' || (product.productType === 'Derived' && selectedDatasetObj)) && (
+                <Tooltip title={product.productType === 'Derived' ? "Edit Dataset README" : "Edit Markdown"}>
+                  <IconButton
+                    size="small"
+                    onClick={() => {
+                      if (product.productType === 'Derived' && selectedDatasetObj) {
+                        navigate(`/datasets/${selectedDatasetObj.id}/markdown`);
+                      } else {
+                        navigate(`/data-products/${product.id}/markdown`);
+                      }
+                    }}
+                    sx={{
+                      color: currentTheme.textSecondary,
+                      '&:hover': {
+                        color: currentTheme.primary,
+                      }
+                    }}
+                  >
+                    <CodeIcon />
+                  </IconButton>
+                </Tooltip>
+              )}
             </Box>
             <Box sx={{
               p: 3,
@@ -1410,7 +1400,7 @@ const DataProductDetailPage = () => {
                 },
               },
             }}>
-              {product.readme ? (
+              {metricsData.readme ? (
                 <Box sx={{
                   '& h1, & h2, & h3, & h4, & h5, & h6': {
                     color: currentTheme.text,
@@ -1449,6 +1439,25 @@ const DataProductDetailPage = () => {
                   '& li': {
                     mb: 0.5,
                   },
+                  '& table': {
+                    width: '100%',
+                    borderCollapse: 'collapse',
+                    marginBottom: '1.5rem',
+                    '& th, & td': {
+                      border: `1px solid ${currentTheme.border}`,
+                      padding: '8px 12px',
+                      textAlign: 'left',
+                      color: currentTheme.text,
+                    },
+                    '& th': {
+                      backgroundColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
+                      fontWeight: 600,
+                      color: currentTheme.text,
+                    },
+                    '& tr:nth-of-type(even)': {
+                      backgroundColor: darkMode ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.02)',
+                    },
+                  },
                   '& a': {
                     color: currentTheme.primary,
                     textDecoration: 'none',
@@ -1472,11 +1481,15 @@ const DataProductDetailPage = () => {
                     border: `1px solid ${currentTheme.border}`,
                     padding: 1,
                     textAlign: 'left',
+                    color: currentTheme.text,
                   },
                   '& th': {
-                    backgroundColor: currentTheme.background,
+                    backgroundColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
                     color: currentTheme.text,
                     fontWeight: 600,
+                  },
+                  '& tr:nth-of-type(even)': {
+                    backgroundColor: darkMode ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.02)',
                   },
                 }}>
                   <ReactMarkdown
@@ -1506,12 +1519,12 @@ const DataProductDetailPage = () => {
                       },
                     }}
                   >
-                    {product.readme}
+                    {metricsData.readme}
                   </ReactMarkdown>
                 </Box>
               ) : (
                 <Typography variant="body2" sx={{ color: currentTheme.textSecondary, fontStyle: 'italic' }}>
-                  No README available for this data product.
+                  No README available{selectedDatasetObj ? ' for this dataset' : ' for this data product'}.
                 </Typography>
               )}
             </Box>

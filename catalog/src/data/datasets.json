@@ -9093,5 +9093,129 @@
         "systemUrl": "https://system.example.com/pipelines/Pipe%20D"
       }
     ]
+  },
+  {
+    "id": 391748,
+    "shortId": "ORD",
+    "name": "Order Fulfillment Dataset",
+    "description": "Order fulfillment and shipping information for processing and logistics",
+    "datasetType": "File-based",
+    "records": 8750,
+    "lastUpdated": "2024-01-16",
+    "status": "running",
+    "pipeline": "Production",
+    "periodicity": "feed",
+    "systems": [
+      "550e8400-e29b-41d4-a716-446655440001"
+    ],
+    "pipelineStatuses": {
+      "550e8400-e29b-41d4-a716-446655440001": "running"
+    },
+    "consumers": [
+      "Fulfillment",
+      "Logistics",
+      "Customer Service"
+    ],
+    "size": "Medium",
+    "complexity": "Medium",
+    "gigabytesProcessed": 32.5,
+    "notifications": [],
+    "catalogUrl": "https://catalog.example.com/datasets/391748",
+    "dataLakeUrl": "https://datalake.example.com/datasets/391748",
+    "s3BasePath": "s3://tracer-prod",
+    "dataFolder": "data/orders",
+    "s3Location": "s3://tracer-prod/orders/fulfillment",
+    "etlOverview": {
+      "poc": "Operations Team",
+      "org": "Data Platform",
+      "platform": "AWS EMR",
+      "avgRunTime": "45m",
+      "schedule": "Hourly at :00",
+      "githubLink": "https://github.com/company/tracer-pipelines"
+    },
+    "processSteps": [
+      {
+        "id": 1,
+        "name": "Order Collection",
+        "description": "Gathering order data from fulfillment systems",
+        "duration": "15m"
+      },
+      {
+        "id": 2,
+        "name": "Order Validation",
+        "description": "Validating order completeness and accuracy",
+        "duration": "10m"
+      },
+      {
+        "id": 3,
+        "name": "Shipping Processing",
+        "description": "Processing shipping and logistics data",
+        "duration": "15m"
+      },
+      {
+        "id": 4,
+        "name": "Data Storage",
+        "description": "Storing processed order data",
+        "duration": "5m"
+      }
+    ],
+    "agreements": [
+      {
+        "pipeline": "550e8400-e29b-41d4-a716-446655440001",
+        "status": "Active",
+        "version": "v1.0",
+        "producer": "Operations",
+        "consumer": "Fulfillment",
+        "product": "Order Processing",
+        "s3Location": "s3://tracer-pipe-b/datasets/391748",
+        "systemUrl": "https://system.example.com/pipelines/Pipe%20B"
+      }
+    ],
+    "tables": [
+      {
+        "name": "orders.fulfillment",
+        "s3Location": "s3://tracer-prod/orders/fulfillment",
+        "lastProcessed": "2024-01-16",
+        "tableType": "Iceberg Table",
+        "rowCount": 8750,
+        "columnCount": 8,
+        "dataFreshness": 1,
+        "dataQuality": 97.2,
+        "columns": [
+          "order_id",
+          "customer_id",
+          "order_date",
+          "shipping_address",
+          "shipping_status",
+          "tracking_number",
+          "estimated_delivery",
+          "fulfillment_center"
+        ],
+        "sampleData": {
+          "columns": [
+            "order_id",
+            "customer_id",
+            "order_date",
+            "shipping_address",
+            "shipping_status",
+            "tracking_number",
+            "estimated_delivery",
+            "fulfillment_center"
+          ],
+          "rows": [
+            {
+              "order_id": 5001,
+              "customer_id": 1001,
+              "order_date": "2024-01-16",
+              "shipping_address": "123 Main St, City, State 12345",
+              "shipping_status": "shipped",
+              "tracking_number": "TRK123456789",
+              "estimated_delivery": "2024-01-18",
+              "fulfillment_center": "FC-East"
+            }
+          ]
+        }
+      }
+    ]
   }
 ]

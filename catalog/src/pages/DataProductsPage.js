@@ -9,6 +9,10 @@ import {
   CircularProgress,
   Alert,
   Fab,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -33,6 +37,7 @@ const DataProductsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
+  const [sortByDomain, setSortByDomain] = useState('');
 
   useEffect(() => {
     const loadDataProducts = () => {
@@ -55,19 +60,35 @@ const DataProductsPage = () => {
   }, []);
 
   useEffect(() => {
+    let filtered = [...originalData];
+    
+    // Apply search filter
     if (searchQuery) {
       const searchLower = searchQuery.toLowerCase();
-      const filtered = originalData.filter(item =>
+      filtered = filtered.filter(item =>
         (item.name && item.name.toLowerCase().includes(searchLower)) ||
         (item.description && item.description.toLowerCase().includes(searchLower)) ||
         (item.id && item.id.toString().toLowerCase().includes(searchLower))
       );
-      setFilteredData(filtered);
-    } else {
-      setFilteredData(originalData);
     }
+    
+    // Apply domain sorting
+    if (sortByDomain) {
+      filtered.sort((a, b) => {
+        const domainA = (a.domain || '').toLowerCase();
+        const domainB = (b.domain || '').toLowerCase();
+        
+        if (sortByDomain === 'asc') {
+          return domainA.localeCompare(domainB);
+        } else {
+          return domainB.localeCompare(domainA);
+        }
+      });
+    }
+    
+    setFilteredData(filtered);
     setPage(1); // Reset to first page when filters change
-  }, [searchQuery, originalData]);
+  }, [searchQuery, originalData, sortByDomain]);
 
   const handlePageChange = (event, value) => {
     setPage(value);
@@ -106,7 +127,7 @@ const DataProductsPage = () => {
         Discover and manage data products. Browse curated data assets that are ready for consumption across your organization.
       </Typography>
 
-      <Box sx={{ mb: 4 }}>
+      <Box sx={{ mb: 4, display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
         <TextField
           fullWidth
           variant="outlined"
@@ -121,6 +142,8 @@ const DataProductsPage = () => {
             ),
           }}
           sx={{
+            flex: 1,
+            minWidth: 200,
             '& .MuiOutlinedInput-root': {
               backgroundColor: currentTheme.card,
               '& fieldset': {
@@ -138,6 +161,34 @@ const DataProductsPage = () => {
             },
           }}
         />
+        <FormControl sx={{ minWidth: 200 }}>
+          <InputLabel sx={{ color: currentTheme.textSecondary }}>Sort by Domain</InputLabel>
+          <Select
+            value={sortByDomain}
+            onChange={(e) => setSortByDomain(e.target.value)}
+            label="Sort by Domain"
+            sx={{
+              backgroundColor: currentTheme.card,
+              color: currentTheme.text,
+              '& .MuiOutlinedInput-notchedOutline': {
+                borderColor: currentTheme.border,
+              },
+              '&:hover .MuiOutlinedInput-notchedOutline': {
+                borderColor: currentTheme.primary,
+              },
+              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                borderColor: currentTheme.primary,
+              },
+              '& .MuiSvgIcon-root': {
+                color: currentTheme.textSecondary,
+              },
+            }}
+          >
+            <MenuItem value="">None</MenuItem>
+            <MenuItem value="asc">Domain (A-Z)</MenuItem>
+            <MenuItem value="desc">Domain (Z-A)</MenuItem>
+          </Select>
+        </FormControl>
       </Box>
 
       {error && (

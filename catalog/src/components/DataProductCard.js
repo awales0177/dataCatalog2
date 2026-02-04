@@ -187,12 +187,6 @@ const DataProductCard = ({ product, onClick, currentTheme }) => {
             {product.name}
           </Typography>
           <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', alignItems: 'center' }}>
-            <Chip
-              label={product.status || 'unknown'}
-              color={getStatusColor(product.status)}
-              size="small"
-              sx={{ fontSize: '0.7rem', height: '20px' }}
-            />
             {product.category && (
               <Chip
                 label={product.category}

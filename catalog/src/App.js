@@ -29,12 +29,17 @@ import GlossaryPage from './pages/GlossaryPage';
 import EditGlossaryPage from './pages/EditGlossaryPage';
 import GlossaryMarkdownPage from './pages/GlossaryMarkdownPage';
 import DataProductMarkdownPage from './pages/DataProductMarkdownPage';
+import DatasetMarkdownPage from './pages/DatasetMarkdownPage';
+import ToolkitTechnologyMarkdownPage from './pages/ToolkitTechnologyMarkdownPage';
+import EditToolkitTechnologyPage from './pages/EditToolkitTechnologyPage';
+import EditToolkitPage from './pages/EditToolkitPage';
 import EditDataModelDetailPage from './pages/EditDataModelDetailPage';
 import ProductAgreementDetailPage from './pages/ProductAgreementDetailPage';
 import EditAgreementPage from './pages/EditAgreementPage';
 import ReferenceDataDetailPage from './pages/ReferenceDataDetailPage';
 import ToolkitPage from './pages/ToolkitPage';
 import ToolkitFunctionDetailPage from './pages/ToolkitFunctionDetailPage';
+import ToolkitDetailPage from './pages/ToolkitDetailPage';
 import ToolkitPackageDetailPage from './pages/ToolkitPackageDetailPage';
 import ToolkitContainerDetailPage from './pages/ToolkitContainerDetailPage';
 import ToolkitInfrastructureDetailPage from './pages/ToolkitInfrastructureDetailPage';
@@ -344,6 +349,21 @@ function AppContent() {
                 <ToolkitFunctionDetailPage />
               </ProtectedRoute>
             } />
+            <Route path="/toolkit/create" element={
+              <ProtectedRoute requiredRole="editor">
+                <EditToolkitPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/toolkit/toolkit/:toolkitId" element={
+              <ProtectedRoute>
+                <ToolkitDetailPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/toolkit/toolkit/:toolkitId/edit" element={
+              <ProtectedRoute requiredRole="editor">
+                <EditToolkitPage />
+              </ProtectedRoute>
+            } />
             <Route path="/toolkit/package/new" element={
               <ProtectedRoute requiredRole="editor">
                 <EditToolkitPackagePage />
@@ -432,6 +452,26 @@ function AppContent() {
             <Route path="/data-products/:id/markdown" element={
               <ProtectedRoute>
                 <DataProductMarkdownPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/datasets/:id/markdown" element={
+              <ProtectedRoute>
+                <DatasetMarkdownPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/toolkit/toolkit/:toolkitId/technology/:technologyId/readme/:readmeType" element={
+              <ProtectedRoute requiredRole="editor">
+                <ToolkitTechnologyMarkdownPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/toolkit/toolkit/:toolkitId/technology/:technologyId" element={
+              <ProtectedRoute requiredRole="editor">
+                <EditToolkitTechnologyPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/toolkit/toolkit/:toolkitId/technology/create" element={
+              <ProtectedRoute requiredRole="editor">
+                <EditToolkitTechnologyPage />
               </ProtectedRoute>
             } />
             <Route path="/reference/:id" element={
