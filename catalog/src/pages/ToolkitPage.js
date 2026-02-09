@@ -98,14 +98,14 @@ const ToolkitPage = () => {
     if (!searchTerm.trim()) {
       return toolkits;
     }
-    
+
       const searchLower = searchTerm.toLowerCase();
     return toolkits.filter(toolkit =>
       (toolkit.displayName && toolkit.displayName.toLowerCase().includes(searchLower)) ||
       (toolkit.name && toolkit.name.toLowerCase().includes(searchLower)) ||
       (toolkit.description && toolkit.description.toLowerCase().includes(searchLower)) ||
       (toolkit.tags && toolkit.tags.some(tag => tag.toLowerCase().includes(searchLower)))
-    );
+        );
   };
 
   const filteredToolkits = getFilteredToolkits();

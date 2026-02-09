@@ -159,12 +159,12 @@ const PipelineDRenderer = ({
       {/* Header Section */}
       <Box sx={{ mb: 4 }}>
         <Box sx={{ mb: 2 }}>
-          <Typography variant="h4" sx={{ color: currentTheme.text, fontWeight: 600 }}>
-            Reference Data Tracking
-          </Typography>
-          <Typography variant="body2" sx={{ color: currentTheme.textSecondary, mt: 0.5 }}>
-            Monitor and manage standardized codes, values, and classifications
-          </Typography>
+            <Typography variant="h4" sx={{ color: currentTheme.text, fontWeight: 600 }}>
+              Reference Data Tracking
+            </Typography>
+            <Typography variant="body2" sx={{ color: currentTheme.textSecondary, mt: 0.5 }}>
+              Monitor and manage standardized codes, values, and classifications
+            </Typography>
         </Box>
       </Box>
 
@@ -190,10 +190,10 @@ const PipelineDRenderer = ({
 
       {/* Graph Database Chart */}
       <Paper
-        sx={{
+              sx={{
           p: 4,
-          bgcolor: currentTheme.card,
-          border: `1px solid ${currentTheme.border}`,
+                bgcolor: currentTheme.card,
+                border: `1px solid ${currentTheme.border}`,
           borderRadius: 2,
           mb: 4,
         }}
@@ -304,7 +304,7 @@ const PipelineDRenderer = ({
               selectConnectedEdges: false,
             },
             nodes: {
-              borderWidth: 2,
+                  borderWidth: 2,
               shadow: {
                 enabled: true,
                 color: 'rgba(0,0,0,0.2)',
@@ -332,7 +332,7 @@ const PipelineDRenderer = ({
           return (
             <Box sx={{ width: '100%', height: '500px', border: `1px solid ${currentTheme.border}`, borderRadius: 1 }}>
               <Graph graph={graph} options={options} events={events} style={{ width: '100%', height: '100%' }} />
-            </Box>
+                  </Box>
           );
         })()}
         
@@ -340,7 +340,7 @@ const PipelineDRenderer = ({
         <Box sx={{ display: 'flex', justifyContent: 'center', gap: 4, mt: 3, pt: 3, borderTop: `1px solid ${currentTheme.border}` }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Box
-              sx={{
+                      sx={{
                 width: 24,
                 height: 24,
                 borderRadius: '50%',
@@ -348,11 +348,11 @@ const PipelineDRenderer = ({
                 border: `2px solid ${currentTheme.border}`,
               }}
             />
-            <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
+                      <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
               Source Datasets
-            </Typography>
-          </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Box
               sx={{
                 width: 32,
@@ -362,11 +362,11 @@ const PipelineDRenderer = ({
                 border: `3px solid #37ABBF`,
               }}
             />
-            <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
+                      <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
               Reference Data Product
-            </Typography>
-          </Box>
-        </Box>
+                      </Typography>
+                    </Box>
+                    </Box>
       </Paper>
 
       {/* Selected Reference Item Details - Simplified */}
@@ -381,8 +381,8 @@ const PipelineDRenderer = ({
         >
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
             <Typography variant="h5" sx={{ color: currentTheme.text, fontWeight: 600 }}>
-              {selectedReferenceItem.name} - Details
-            </Typography>
+            {selectedReferenceItem.name} - Details
+          </Typography>
             <IconButton
               onClick={() => setSelectedReferenceItem(null)}
               sx={{

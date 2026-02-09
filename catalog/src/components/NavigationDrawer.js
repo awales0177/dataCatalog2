@@ -258,8 +258,8 @@ const NavigationDrawer = ({
                           borderColor: currentTheme.darkMode ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.12)',
                           mt: 1,
                           mx: 0.5,
-                        }} 
-                      />
+                    }} 
+                  />
                     )}
                     {!isDrawerCollapsed && (
                       <Divider 
@@ -511,30 +511,30 @@ const NavigationDrawer = ({
           title={isDrawerCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           placement="left"
           arrow
-        >
-          <IconButton 
-            onClick={onDrawerCollapse}
+      >
+        <IconButton 
+          onClick={onDrawerCollapse}
             disabled={sidebarVisibilityMode === 'always-visible' || sidebarVisibilityMode === 'always-hidden'}
-            sx={{ 
-              color: currentTheme.text,
-              bgcolor: currentTheme.card,
-              border: `1px solid ${currentTheme.border}`,
-              width: '28px',
-              height: '28px',
-              '&:hover': {
-                bgcolor: `${currentTheme.primary}10`,
-              },
+          sx={{ 
+            color: currentTheme.text,
+            bgcolor: currentTheme.card,
+            border: `1px solid ${currentTheme.border}`,
+            width: '28px',
+            height: '28px',
+            '&:hover': {
+              bgcolor: `${currentTheme.primary}10`,
+            },
               '&:disabled': {
                 opacity: 0.5,
                 cursor: 'not-allowed',
               },
-              '& .MuiSvgIcon-root': {
-                fontSize: '32px',
-              },
-            }}
-          >
-            {isDrawerCollapsed ? <FiChevronRight /> : <FiChevronLeft />}
-          </IconButton>
+            '& .MuiSvgIcon-root': {
+              fontSize: '32px',
+            },
+          }}
+        >
+          {isDrawerCollapsed ? <FiChevronRight /> : <FiChevronLeft />}
+        </IconButton>
         </Tooltip>
       </Box>
 

@@ -80,7 +80,7 @@ const DataProductsPage = () => {
         
         if (sortByDomain === 'asc') {
           return domainA.localeCompare(domainB);
-        } else {
+    } else {
           return domainB.localeCompare(domainA);
         }
       });

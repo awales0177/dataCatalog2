@@ -26,12 +26,15 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  Avatar,
 } from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
   Code as CodeIcon,
   Search as SearchIcon,
   ContentCopy as ContentCopyIcon,
+  Warning as WarningIcon,
+  Block as BlockIcon,
 } from '@mui/icons-material';
 import { ThemeContext } from '../contexts/ThemeContext';
 import datasetsData from '../data/datasets.json';
@@ -57,6 +60,146 @@ import {
   Tooltip as RechartsTooltip,
   ResponsiveContainer,
 } from 'recharts';
+import {
+  ComposableMap,
+  Geographies,
+  Geography
+} from 'react-simple-maps';
+import ReactCountryFlag from 'react-country-flag';
+
+// Helper function to convert country code to flag emoji
+const getCountryFlag = (countryCode) => {
+  if (!countryCode || typeof countryCode !== 'string') return '';
+  const code = countryCode.toUpperCase();
+  // Convert country code to flag emoji (e.g., "US" -> "🇺🇸")
+  // Unicode flag emojis are formed by combining regional indicator symbols
+  const codePoints = code
+    .split('')
+    .map(char => 127397 + char.charCodeAt(0))
+    .map(codePoint => String.fromCodePoint(codePoint));
+  return codePoints.join('');
+};
+
+// Country code to country name mapping
+const countryCodeToName = {
+  'US': 'United States',
+  'CA': 'Canada',
+  'GB': 'United Kingdom',
+  'FR': 'France',
+  'DE': 'Germany',
+  'IT': 'Italy',
+  'ES': 'Spain',
+  'NL': 'Netherlands',
+  'BE': 'Belgium',
+  'CH': 'Switzerland',
+  'AT': 'Austria',
+  'SE': 'Sweden',
+  'NO': 'Norway',
+  'DK': 'Denmark',
+  'FI': 'Finland',
+  'PL': 'Poland',
+  'IE': 'Ireland',
+  'PT': 'Portugal',
+  'GR': 'Greece',
+  'CZ': 'Czechia',
+  'HU': 'Hungary',
+  'RO': 'Romania',
+  'BG': 'Bulgaria',
+  'HR': 'Croatia',
+  'SK': 'Slovakia',
+  'SI': 'Slovenia',
+  'LT': 'Lithuania',
+  'LV': 'Latvia',
+  'EE': 'Estonia',
+  'LU': 'Luxembourg',
+  'MT': 'Malta',
+  'CY': 'Cyprus',
+  'JP': 'Japan',
+  'CN': 'China',
+  'KR': 'South Korea',
+  'IN': 'India',
+  'AU': 'Australia',
+  'NZ': 'New Zealand',
+  'BR': 'Brazil',
+  'MX': 'Mexico',
+  'AR': 'Argentina',
+  'CL': 'Chile',
+  'CO': 'Colombia',
+  'PE': 'Peru',
+  'ZA': 'South Africa',
+  'EG': 'Egypt',
+  'NG': 'Nigeria',
+  'KE': 'Kenya',
+  'AE': 'United Arab Emirates',
+  'SA': 'Saudi Arabia',
+  'IL': 'Israel',
+  'TR': 'Turkey',
+  'RU': 'Russia',
+  'UA': 'Ukraine',
+  'BY': 'Belarus',
+  'KZ': 'Kazakhstan',
+  'TH': 'Thailand',
+  'VN': 'Vietnam',
+  'PH': 'Philippines',
+  'ID': 'Indonesia',
+  'MY': 'Malaysia',
+  'SG': 'Singapore',
+  'HK': 'Hong Kong',
+  'TW': 'Taiwan',
+};
+
+// Normalize country names - map variations to standard names
+const normalizeCountryName = (name) => {
+  if (!name) return name;
+  
+  const normalized = name.trim();
+  const nameMap = {
+    'United States of America': 'United States',
+    'USA': 'United States',
+    'US': 'United States',
+    'U.S.A.': 'United States',
+    'U.S.': 'United States',
+    'South Korea': 'South Korea',
+    'Korea, South': 'South Korea',
+    'Republic of Korea': 'South Korea',
+    'United Arab Emirates': 'United Arab Emirates',
+    'UAE': 'United Arab Emirates',
+    'United Kingdom': 'United Kingdom',
+    'UK': 'United Kingdom',
+    'U.K.': 'United Kingdom',
+    'Great Britain': 'United Kingdom',
+    'Russia': 'Russia',
+    'Russian Federation': 'Russia',
+    'Czech Republic': 'Czechia',
+    'Czechia': 'Czechia',
+    'Myanmar': 'Myanmar',
+    'Burma': 'Myanmar',
+    'Macedonia': 'North Macedonia',
+    'North Macedonia': 'North Macedonia',
+    'Ivory Coast': 'Côte d\'Ivoire',
+    'Côte d\'Ivoire': 'Côte d\'Ivoire',
+    'Cote d\'Ivoire': 'Côte d\'Ivoire',
+  };
+  
+  // Check exact match first
+  if (nameMap[normalized]) {
+    return nameMap[normalized];
+  }
+  
+  // Check case-insensitive match
+  const lowerNormalized = normalized.toLowerCase();
+  for (const [key, value] of Object.entries(nameMap)) {
+    if (key.toLowerCase() === lowerNormalized) {
+      return value;
+    }
+  }
+  
+  // Return original name if no mapping found
+  return normalized;
+};
+
+// World map topojson URL
+const geoUrl = "/world-countries.json";
 
 const DataProductDetailPage = () => {
   const { id } = useParams();
@@ -75,6 +218,32 @@ const DataProductDetailPage = () => {
   const [derivedSearchQuery, setDerivedSearchQuery] = useState('');
   const [derivedProductsModalOpen, setDerivedProductsModalOpen] = useState(false);
   const [selectedDataset, setSelectedDataset] = useState(null);
+  const [mapTooltip, setMapTooltip] = useState({ open: false, country: '', x: 0, y: 0 });
+  const [hoveredCountry, setHoveredCountry] = useState(null); // Track hovered country for bidirectional highlighting
+
+  // Convert country codes to country names for map highlighting
+  const countryNames = useMemo(() => {
+    if (!product?.countries || product.countries.length === 0) return new Set();
+    const names = new Set();
+    product.countries.forEach(country => {
+      if (typeof country === 'string') {
+        // Check if it's a country code (2-3 letters) or a name
+        if (country.length <= 3 && countryCodeToName[country.toUpperCase()]) {
+          names.add(normalizeCountryName(countryCodeToName[country.toUpperCase()]));
+        } else {
+          names.add(normalizeCountryName(country));
+        }
+      } else if (country.code) {
+        const name = countryCodeToName[country.code.toUpperCase()] || country.name;
+        if (name) {
+          names.add(normalizeCountryName(name));
+        }
+      } else if (country.name) {
+        names.add(normalizeCountryName(country.name));
+      }
+    });
+    return names;
+  }, [product?.countries]);
 
   // Get the selected dataset object
   const selectedDatasetObj = useMemo(() => {
@@ -317,9 +486,9 @@ const DataProductDetailPage = () => {
                 }
               } else if (foundProduct.sourceDataset) {
                 // Single source dataset (backward compatibility)
-                const dataset = allDatasets.find(d => d.id === foundProduct.sourceDataset);
-                if (dataset) {
-                  setSourceDatasets([dataset]);
+              const dataset = allDatasets.find(d => d.id === foundProduct.sourceDataset);
+              if (dataset) {
+                setSourceDatasets([dataset]);
                   // Set as selected by default
                   if (!selectedDataset) {
                     setSelectedDataset(dataset.id);
@@ -557,8 +726,8 @@ const DataProductDetailPage = () => {
         <Box sx={{ flex: 1 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
             <Typography variant="h4" sx={{ color: currentTheme.text, fontWeight: 600, flex: 1 }}>
-              {product.name}
-            </Typography>
+            {product.name}
+          </Typography>
             {(() => {
               const getOrgImage = (org) => {
                 if (!org) return null;
@@ -601,21 +770,53 @@ const DataProductDetailPage = () => {
               ) : null;
             })()}
           </Box>
-          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
+        </Box>
+      </Box>
+
+      {/* Product Information, Classification & Geography */}
+      {(product.category || product.version || product.productType || product.pii || product.nsfw || (product.countries && product.countries.length > 0)) && (
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2,
+            mb: 3,
+            borderRadius: 2,
+            bgcolor: currentTheme.card,
+            border: `1px solid ${currentTheme.border}`,
+          }}
+        >
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            {/* Product Information */}
+            {(product.category || product.version || product.productType) && (
+              <Box>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: currentTheme.textSecondary,
+                    fontWeight: 600,
+                    textTransform: 'uppercase',
+                    letterSpacing: 0.5,
+                    mb: 1,
+                    display: 'block',
+                  }}
+                >
+                  Product Information
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
             {product.category && (
               <Chip
                 label={product.category}
                 size="small"
                 sx={{
-                  backgroundColor: alpha(currentTheme.primary, 0.15),
-                  color: currentTheme.primary,
-                  fontWeight: 500,
+                        backgroundColor: alpha(currentTheme.primary, 0.15),
+                        color: currentTheme.primary,
+                        fontWeight: 500,
                 }}
               />
             )}
             {product.version && (
               <Chip
-                label={`v${product.version}`}
+                      label={`Version ${product.version}`}
                 size="small"
                 sx={{
                   backgroundColor: currentTheme.background,
@@ -635,7 +836,11 @@ const DataProductDetailPage = () => {
             )}
           </Box>
         </Box>
+            )}
+
       </Box>
+        </Paper>
+      )}
 
       {/* Dataset Selector - Only for Derived products */}
       {product.productType === 'Derived' && sourceDatasets.length > 0 && (
@@ -861,44 +1066,348 @@ const DataProductDetailPage = () => {
                 </Box>
               </Box>
 
+              {/* Geographic Coverage Map */}
+              {product.countries && product.countries.length > 0 && (
+                <Box sx={{ mt: 3 }}>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: currentTheme.textSecondary,
+                      fontWeight: 600,
+                      textTransform: 'uppercase',
+                      letterSpacing: 0.5,
+                      mb: 1,
+                      display: 'block',
+                    }}
+                  >
+                    Geographic Coverage
+                  </Typography>
+                  <Box 
+                    sx={{ 
+                      width: '100%', 
+                      height: '310px', 
+                      position: 'relative', 
+                      bgcolor: darkMode ? '#1a1a1a' : '#ffffff',
+                      borderRadius: 1,
+                      overflow: 'hidden',
+                      border: `1px solid ${currentTheme.border}`,
+                      '& svg': {
+                        marginTop: '-20px',
+                        marginLeft: '-15px',
+                        marginBottom: '-140px',
+                        height: 'calc(100% + 220px)',
+                      }
+                    }}
+                  >
+                    <ComposableMap
+                      projectionConfig={{
+                        scale: 210,
+                        center: [0, 20]
+                      }}
+                      style={{ width: '100%', height: '100%' }}
+                    >
+                      <Geographies geography={geoUrl}>
+                        {({ geographies }) => {
+                          if (!geographies || geographies.length === 0) {
+                            return null;
+                          }
+                          
+                          return geographies.map((geo) => {
+                            const countryName = geo.properties.name || geo.properties.NAME || geo.properties.NAME_LONG || '';
+                            const normalizedCountry = normalizeCountryName(countryName);
+                            const isHighlighted = countryNames.has(normalizedCountry);
+                            const isHovered = hoveredCountry === normalizedCountry;
+                            
+                            const getHeatMapColor = () => {
+                              if (isHovered && isHighlighted) {
+                                return darkMode ? '#f5f5f5' : '#001f3f';
+                              }
+                              if (isHighlighted) {
+                                const primaryHex = currentTheme.primary || '#2196f3';
+                                const r = parseInt(primaryHex.slice(1, 3), 16);
+                                const g = parseInt(primaryHex.slice(3, 5), 16);
+                                const b = parseInt(primaryHex.slice(5, 7), 16);
+                                return darkMode 
+                                  ? `rgba(${r}, ${g}, ${b}, 0.8)` 
+                                  : `rgba(${r}, ${g}, ${b}, 0.6)`;
+                              }
+                              return darkMode ? 'rgba(200, 200, 200, 0.3)' : 'rgba(200, 200, 200, 0.4)';
+                            };
+
+                            return (
+                              <Geography
+                                key={geo.rsmKey}
+                                geography={geo}
+                                onMouseEnter={(e) => {
+                                  if (normalizedCountry) {
+                                    setHoveredCountry(normalizedCountry);
+                                    const rect = e.currentTarget.closest('svg')?.getBoundingClientRect();
+                                    if (rect) {
+                                      setMapTooltip({
+                                        open: true,
+                                        country: normalizedCountry,
+                                        x: e.clientX - rect.left,
+                                        y: e.clientY - rect.top,
+                                      });
+                                    }
+                                  }
+                                }}
+                                onMouseMove={(e) => {
+                                  if (normalizedCountry && mapTooltip.open) {
+                                    const rect = e.currentTarget.closest('svg')?.getBoundingClientRect();
+                                    if (rect) {
+                                      setMapTooltip(prev => ({
+                                        ...prev,
+                                        x: e.clientX - rect.left,
+                                        y: e.clientY - rect.top
+                                      }));
+                                    }
+                                  }
+                                }}
+                                onMouseLeave={() => {
+                                  setHoveredCountry(null);
+                                  setMapTooltip({ open: false, country: '', x: 0, y: 0 });
+                                }}
+                                style={{
+                                  default: {
+                                    fill: getHeatMapColor(),
+                                    stroke: (isHovered && isHighlighted) || isHighlighted
+                                      ? (isHovered && isHighlighted ? (darkMode ? '#f5f5f5' : '#001f3f') : currentTheme.primary)
+                                      : darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+                                    strokeWidth: (isHovered || isHighlighted) ? 2 : 0.5,
+                                    outline: 'none',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s'
+                                  },
+                                  hover: {
+                                    fill: (isHovered && isHighlighted) || isHighlighted
+                                      ? (darkMode ? '#f5f5f5' : '#001f3f')
+                                      : darkMode ? 'rgba(150, 150, 150, 0.5)' : 'rgba(150, 150, 150, 0.6)',
+                                    stroke: (isHovered && isHighlighted) || isHighlighted
+                                      ? (darkMode ? '#f5f5f5' : '#001f3f')
+                                      : darkMode ? 'rgba(150, 150, 150, 0.7)' : 'rgba(150, 150, 150, 0.8)',
+                                    strokeWidth: 2,
+                                    outline: 'none',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s'
+                                  },
+                                  pressed: {
+                                    fill: isHovered || isHighlighted ? currentTheme.primary : darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
+                                    stroke: (isHovered || isHighlighted) ? currentTheme.primary : darkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)',
+                                    strokeWidth: 2,
+                                    outline: 'none'
+                                  }
+                                }}
+                              />
+                            );
+                          });
+                        }}
+                      </Geographies>
+                    </ComposableMap>
+                    {/* Tooltip for country names */}
+                    {mapTooltip.open && (
+                      <Box
+                        sx={{
+                          position: 'absolute',
+                          left: mapTooltip.x + 10,
+                          top: mapTooltip.y - 10,
+                          bgcolor: currentTheme.card,
+                          color: currentTheme.text,
+                          border: `1px solid ${currentTheme.border}`,
+                          borderRadius: 1,
+                          p: 1,
+                          pointerEvents: 'none',
+                          zIndex: 1000,
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                          maxWidth: 200
+                        }}
+                      >
+                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                          {mapTooltip.country}
+                        </Typography>
+                        {countryNames.has(normalizeCountryName(mapTooltip.country)) && (
+                          <Typography variant="caption" sx={{ color: currentTheme.primary, mt: 0.5, display: 'block' }}>
+                            Included in coverage
+                          </Typography>
+                        )}
+                      </Box>
+                    )}
+                  </Box>
+                </Box>
+              )}
+
+              {/* Country Flags */}
+              {product.countries && product.countries.length > 0 && (
+                <Paper
+                  elevation={0}
+                  sx={{
+                    p: 2,
+                    mb: 3,
+                    borderRadius: 2,
+                    bgcolor: currentTheme.card,
+                    border: `1px solid ${currentTheme.border}`,
+                  }}
+                >
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: currentTheme.textSecondary,
+                      fontWeight: 600,
+                      textTransform: 'uppercase',
+                      letterSpacing: 0.5,
+                      mb: 1.5,
+                      display: 'block',
+                    }}
+                  >
+                    Countries
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, alignItems: 'center' }}>
+                    {product.countries.map((country, index) => {
+                      const countryCode = typeof country === 'string' ? country : country.code;
+                      const countryName = typeof country === 'string' 
+                        ? (countryCodeToName[countryCode?.toUpperCase()] || country)
+                        : (country.name || countryCodeToName[countryCode?.toUpperCase()] || country.code);
+                      const normalizedCountryName = normalizeCountryName(countryName);
+                      const isFlagHovered = hoveredCountry === normalizedCountryName;
+                      
+                      return (
+                        <Tooltip key={index} title={countryName} arrow>
+                          <Box
+                            onMouseEnter={() => {
+                              if (normalizedCountryName) {
+                                setHoveredCountry(normalizedCountryName);
+                              }
+                            }}
+                            onMouseLeave={() => {
+                              setHoveredCountry(null);
+                            }}
+                            sx={{
+                              borderRadius: '4px',
+                              overflow: 'hidden',
+                              display: 'inline-block',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s',
+                              transform: isFlagHovered ? 'scale(1.1)' : 'scale(1)',
+                              boxShadow: isFlagHovered ? `0 0 8px ${currentTheme.primary}40` : 'none',
+                            }}
+                          >
+                            {countryCode && (
+                              <ReactCountryFlag
+                                countryCode={countryCode.toUpperCase()}
+                                svg
+                                style={{
+                                  width: '2em',
+                                  height: '1.5em',
+                                  borderRadius: '4px',
+                                  opacity: isFlagHovered ? 1 : 0.8,
+                                }}
+                              />
+                            )}
+                          </Box>
+                        </Tooltip>
+                      );
+                    })}
+                  </Box>
+                </Paper>
+              )}
+
               {/* Producer, Consumers, and Agreement */}
               <Grid container spacing={2}>
                 <Grid item xs={12} sm={6}>
                   <Box>
-                    {/* Owner */}
-                    {product.owner && (
+              {/* Owner */}
+              {product.owner && (
                       <Box sx={{ mb: 2 }}>
-                        <Typography variant="caption" sx={{ color: currentTheme.textSecondary, display: 'block', mb: 0.5 }}>
-                          Producer
-                        </Typography>
-                        <Typography variant="body2" sx={{ color: currentTheme.text, fontWeight: 500 }}>
-                          {product.owner}
-                        </Typography>
-                      </Box>
-                    )}
-
-                    {/* Consumers */}
-                    {product.consumers && product.consumers.length > 0 && (
-                      <Box>
                         <Typography variant="caption" sx={{ color: currentTheme.textSecondary, display: 'block', mb: 1 }}>
-                          Consumers
-                        </Typography>
-                        <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-                          {product.consumers.map((consumer, idx) => (
-                            <Chip
-                              key={idx}
-                              label={consumer}
-                              size="small"
-                              sx={{
-                                backgroundColor: currentTheme.primary + '20',
-                                color: currentTheme.primary,
-                                fontSize: '0.75rem',
-                              }}
-                            />
-                          ))}
+                    Producer
+                  </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                          <Avatar
+                            src={(() => {
+                              const ownerLower = product.owner.toLowerCase();
+                              if (ownerLower.includes('analytics') || ownerLower.includes('org1')) {
+                                return org1Image;
+                              }
+                              if (ownerLower.includes('operations') || ownerLower.includes('org2')) {
+                                return org2Image;
+                              }
+                              return null;
+                            })()}
+                            sx={{
+                              width: 40,
+                              height: 40,
+                              bgcolor: currentTheme.primary + '20',
+                              color: currentTheme.primary,
+                              fontSize: '0.875rem',
+                              fontWeight: 600,
+                            }}
+                          >
+                            {(() => {
+                              const ownerLower = product.owner.toLowerCase();
+                              if (ownerLower.includes('analytics') || ownerLower.includes('org1')) {
+                                return null;
+                              }
+                              if (ownerLower.includes('operations') || ownerLower.includes('org2')) {
+                                return null;
+                              }
+                              return product.owner.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+                            })()}
+                          </Avatar>
+                  <Typography variant="body2" sx={{ color: currentTheme.text, fontWeight: 500 }}>
+                    {product.owner}
+                  </Typography>
                         </Box>
-                      </Box>
-                    )}
+                </Box>
+              )}
+
+              {/* Consumers */}
+              {product.consumers && product.consumers.length > 0 && (
+                <Box>
+                  <Typography variant="caption" sx={{ color: currentTheme.textSecondary, display: 'block', mb: 1 }}>
+                    Consumers
+                  </Typography>
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                    {product.consumers.map((consumer, idx) => (
+                            <Box key={idx} sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                              <Avatar
+                                src={(() => {
+                                  const consumerLower = consumer.toLowerCase();
+                                  if (consumerLower.includes('marketing') || consumerLower.includes('sales') || consumerLower.includes('org1')) {
+                                    return org1Image;
+                                  }
+                                  if (consumerLower.includes('fulfillment') || consumerLower.includes('logistics') || consumerLower.includes('org2')) {
+                                    return org2Image;
+                                  }
+                                  return null;
+                                })()}
+                        sx={{
+                                  width: 32,
+                                  height: 32,
+                                  bgcolor: currentTheme.primary + '20',
+                          color: currentTheme.primary,
+                          fontSize: '0.75rem',
+                                  fontWeight: 600,
+                                }}
+                              >
+                                {(() => {
+                                  const consumerLower = consumer.toLowerCase();
+                                  if (consumerLower.includes('marketing') || consumerLower.includes('sales') || consumerLower.includes('org1')) {
+                                    return null;
+                                  }
+                                  if (consumerLower.includes('fulfillment') || consumerLower.includes('logistics') || consumerLower.includes('org2')) {
+                                    return null;
+                                  }
+                                  return consumer.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+                                })()}
+                              </Avatar>
+                              <Typography variant="body2" sx={{ color: currentTheme.text, fontSize: '0.875rem' }}>
+                                {consumer}
+                              </Typography>
+                            </Box>
+                    ))}
+                  </Box>
+                </Box>
+              )}
                   </Box>
                 </Grid>
                 <Grid item xs={12} sm={6}>
@@ -1361,8 +1870,8 @@ const DataProductDetailPage = () => {
               </Typography>
               {(product.productType !== 'Derived' || (product.productType === 'Derived' && selectedDatasetObj)) && (
                 <Tooltip title={product.productType === 'Derived' ? "Edit Dataset README" : "Edit Markdown"}>
-                  <IconButton
-                    size="small"
+                <IconButton
+                  size="small"
                     onClick={() => {
                       if (product.productType === 'Derived' && selectedDatasetObj) {
                         navigate(`/datasets/${selectedDatasetObj.id}/markdown`);
@@ -1370,16 +1879,16 @@ const DataProductDetailPage = () => {
                         navigate(`/data-products/${product.id}/markdown`);
                       }
                     }}
-                    sx={{
-                      color: currentTheme.textSecondary,
-                      '&:hover': {
-                        color: currentTheme.primary,
-                      }
-                    }}
-                  >
-                    <CodeIcon />
-                  </IconButton>
-                </Tooltip>
+                  sx={{
+                    color: currentTheme.textSecondary,
+                    '&:hover': {
+                      color: currentTheme.primary,
+                    }
+                  }}
+                >
+                  <CodeIcon />
+                </IconButton>
+              </Tooltip>
               )}
             </Box>
             <Box sx={{
