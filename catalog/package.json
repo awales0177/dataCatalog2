@@ -23,6 +23,7 @@
     "react-scripts": "^5.0.1",
     "react-simple-maps": "^3.0.0",
     "react-syntax-highlighter": "^15.6.6",
+    "react-world-flags": "^1.6.0",
     "recharts": "^3.5.1",
     "remark-emoji": "^5.0.2",
     "remark-gfm": "^4.0.1",

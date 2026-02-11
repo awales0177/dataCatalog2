@@ -65,7 +65,7 @@ import {
   Geographies,
   Geography
 } from 'react-simple-maps';
-import ReactCountryFlag from 'react-country-flag';
+import Flag from 'react-world-flags';
 
 // Helper function to convert country code to flag emoji
 const getCountryFlag = (countryCode) => {
@@ -1292,14 +1292,14 @@ const DataProductDetailPage = () => {
                             }}
                           >
                             {countryCode && (
-                              <ReactCountryFlag
-                                countryCode={countryCode.toUpperCase()}
-                                svg
+                              <Flag
+                                code={countryCode.toUpperCase()}
                                 style={{
                                   width: '2em',
                                   height: '1.5em',
                                   borderRadius: '4px',
                                   opacity: isFlagHovered ? 1 : 0.8,
+                                  objectFit: 'cover',
                                 }}
                               />
                             )}
