@@ -25,7 +25,7 @@
       "meta": {
         "tier": "gold",
         "verified": false,
-        "clickCount": 8
+        "clickCount": 9
       },
       "changelog": [
         {
@@ -188,7 +188,7 @@
       "meta": {
         "tier": "silver",
         "verified": false,
-        "clickCount": 13
+        "clickCount": 14
       },
       "changelog": [
         {
@@ -555,7 +555,7 @@
       "meta": {
         "tier": "gold",
         "verified": true,
-        "clickCount": 1
+        "clickCount": 2
       },
       "resources": {
         "code": "https://github.com/org/financial-transaction-model",

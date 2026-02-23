@@ -22,5 +22,17 @@
     "name": "Pipe D",
     "type": "reference-data",
     "description": "Reference data tracking pipeline for monitoring and managing standardized codes, values, and classifications"
+  },
+  {
+    "uuid": "550e8400-e29b-41d4-a716-446655440004",
+    "name": "Torch",
+    "type": "ml-based",
+    "description": "Machine learning pipeline for training and deploying models with PyTorch"
+  },
+  {
+    "uuid": "550e8400-e29b-41d4-a716-446655440005",
+    "name": "House",
+    "type": "data-warehouse",
+    "description": "Data warehouse pipeline for storing and querying large-scale structured data"
   }
 ]

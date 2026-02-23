@@ -58,8 +58,213 @@ const ToolkitDetailPage = () => {
   const [technologies, setTechnologies] = useState([]);
   const [selectedTech, setSelectedTech] = useState(null);
   const [techReactions, setTechReactions] = useState({});
-  const [readmeTab, setReadmeTab] = useState(0); // 0 = Evaluation, 1 = Installation, 2 = Usage
+  const [readmeTab, setReadmeTab] = useState(0); // 0 = Installation, 1 = Usage, 2 = Requirements, 3 = Evaluation
   const [rankChangeDialog, setRankChangeDialog] = useState({ open: false, techId: null, direction: null, techName: null });
+
+  // Helper function to convert icon filename to readable label
+  const getIconLabel = (filename) => {
+    // Remove extension and convert kebab-case to Title Case
+    const name = filename.replace(/\.[^/.]+$/, ''); // Remove extension
+    return name
+      .split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
+  // All available icons categorized by type
+  const allIcons = {
+    pros: [
+      { icon: '/eval_icons/low-cost.png', label: 'Low Cost' },
+      { icon: '/eval_icons/cncf.png', label: 'CNCF' },
+      { icon: '/eval_icons/containerized.png', label: 'Containerized' },
+      { icon: '/eval_icons/fast.png', label: 'Fast' },
+      { icon: '/eval_icons/modular.png', label: 'Modular' },
+      { icon: '/eval_icons/quality.png', label: 'High Quality' },
+      { icon: '/eval_icons/scalable.png', label: 'Scalable', invert: true, size: 'large' },
+      { icon: '/eval_icons/secure.png', label: 'Secure' },
+      { icon: '/eval_icons/supports-many.png', label: 'Supports Many' },
+      { icon: '/eval_icons/tested.png', label: 'Tested' },
+    ],
+    cons: [
+      { icon: '/eval_icons/high-cost.png', label: 'High Cost' },
+      { icon: '/eval_icons/not-scalable.png', label: 'Not Scalable',invert: true },
+      { icon: '/eval_icons/not-secure.png', label: 'Not Secure' },
+      { icon: '/eval_icons/poor-quality.png', label: 'Poor Quality' },
+      { icon: '/eval_icons/slow.webp', label: 'Slow' },
+      { icon: '/eval_icons/supports-one.png', label: 'Supports One' },
+    ],
+  };
+
+  // Get pros and cons icons for a specific technology
+  const getTechIcons = (tech) => {
+    if (!tech) return { pros: [], cons: [] };
+
+    // Check if technology has custom pros/cons icons stored
+    const storageKey = `toolkit_${toolkitId}_tech_${tech.id}_icons`;
+    const savedIcons = localStorage.getItem(storageKey);
+    
+    if (savedIcons) {
+      try {
+        const parsed = JSON.parse(savedIcons);
+        return {
+          pros: parsed.pros || [],
+          cons: parsed.cons || [],
+        };
+      } catch (e) {
+        console.error('Error parsing saved icons:', e);
+      }
+    }
+
+    // Default: use technology's pros/cons arrays to map to icons
+    // Map pros/cons text to icon filenames
+    const techPros = tech.pros || [];
+    const techCons = tech.cons || [];
+
+    const prosIcons = [];
+    const consIcons = [];
+
+    // Enhanced mapping for pros - check multiple keywords
+    techPros.forEach(pro => {
+      const proLower = pro.toLowerCase();
+      
+      // Fast / Performance
+      if (proLower.includes('fast') || proLower.includes('speed') || proLower.includes('performance') || 
+          proLower.includes('quick') || proLower.includes('rapid') || proLower.includes('efficient')) {
+        prosIcons.push(allIcons.pros.find(i => i.label === 'Fast'));
+      }
+      
+      // Low Cost / Free / Cost-effective
+      if (proLower.includes('cheap') || proLower.includes('free') || proLower.includes('cost-effective') ||
+          proLower.includes('affordable') || proLower.includes('low cost') || proLower.includes('inexpensive') ||
+          proLower.includes('open-source') || proLower.includes('open source')) {
+        prosIcons.push(allIcons.pros.find(i => i.label === 'Low Cost'));
+      }
+      
+      // Secure / Security
+      if (proLower.includes('secure') || proLower.includes('security') || proLower.includes('safe') ||
+          proLower.includes('encrypted') || proLower.includes('protected') || proLower.includes('authentication')) {
+        prosIcons.push(allIcons.pros.find(i => i.label === 'Secure'));
+      }
+      
+      // Scalable
+      if (proLower.includes('scalable') || proLower.includes('scale') || proLower.includes('scaling') ||
+          proLower.includes('elastic') || proLower.includes('grows') || proLower.includes('expandable')) {
+        prosIcons.push(allIcons.pros.find(i => i.label === 'Scalable'));
+      }
+      
+      // Quality
+      if (proLower.includes('quality') || proLower.includes('reliable') || proLower.includes('robust') ||
+          proLower.includes('well-documented') || proLower.includes('well documented') || proLower.includes('accurate')) {
+        prosIcons.push(allIcons.pros.find(i => i.label === 'Quality'));
+      }
+      
+      // Modular
+      if (proLower.includes('modular') || proLower.includes('modularity') || proLower.includes('composable') ||
+          proLower.includes('flexible') || proLower.includes('extensible')) {
+        prosIcons.push(allIcons.pros.find(i => i.label === 'Modular'));
+      }
+      
+      // Containerized / Docker
+      if (proLower.includes('container') || proLower.includes('docker') || proLower.includes('kubernetes') ||
+          proLower.includes('k8s') || proLower.includes('containerized')) {
+        prosIcons.push(allIcons.pros.find(i => i.label === 'Containerized'));
+      }
+      
+      // CNCF
+      if (proLower.includes('cncf') || proLower.includes('cloud native')) {
+        prosIcons.push(allIcons.pros.find(i => i.label === 'CNCF'));
+      }
+      
+      // Supports Many
+      if (proLower.includes('multi') || proLower.includes('many') || proLower.includes('multiple') ||
+          proLower.includes('various') || proLower.includes('wide') || proLower.includes('extensive')) {
+        prosIcons.push(allIcons.pros.find(i => i.label === 'Supports Many'));
+      }
+      
+      // Tested
+      if (proLower.includes('tested') || proLower.includes('testing') || proLower.includes('test') ||
+          proLower.includes('validated') || proLower.includes('verified')) {
+        prosIcons.push(allIcons.pros.find(i => i.label === 'Tested'));
+      }
+    });
+
+    // Enhanced mapping for cons - check multiple keywords
+    techCons.forEach(con => {
+      const conLower = con.toLowerCase();
+      
+      // Slow / Performance issues
+      if (conLower.includes('slow') || conLower.includes('slower') || conLower.includes('performance') ||
+          conLower.includes('lag') || conLower.includes('bottleneck') || conLower.includes('inefficient')) {
+        consIcons.push(allIcons.cons.find(i => i.label === 'Slow'));
+      }
+      
+      // High Cost / Expensive
+      if (conLower.includes('expensive') || conLower.includes('cost') || conLower.includes('pricey') ||
+          conLower.includes('high cost') || conLower.includes('premium') || conLower.includes('paid')) {
+        consIcons.push(allIcons.cons.find(i => i.label === 'High Cost'));
+      }
+      
+      // Not Secure
+      if (conLower.includes('not secure') || conLower.includes('insecurity') || conLower.includes('vulnerable') ||
+          conLower.includes('security risk') || conLower.includes('unsafe')) {
+        consIcons.push(allIcons.cons.find(i => i.label === 'Not Secure'));
+      }
+      
+      // Not Scalable
+      if (conLower.includes('not scalable') || conLower.includes('doesn\'t scale') || conLower.includes('scaling issues') ||
+          conLower.includes('limited scale') || conLower.includes('hard to scale')) {
+        consIcons.push(allIcons.cons.find(i => i.label === 'Not Scalable'));
+      }
+      
+      // Poor Quality
+      if (conLower.includes('poor quality') || conLower.includes('low quality') || conLower.includes('unreliable') ||
+          conLower.includes('inaccurate') || conLower.includes('buggy') || conLower.includes('issues')) {
+        consIcons.push(allIcons.cons.find(i => i.label === 'Poor Quality'));
+      }
+      
+      // Supports One
+      if (conLower.includes('single') || conLower.includes('one') || conLower.includes('limited') ||
+          conLower.includes('narrow') || conLower.includes('restricted')) {
+        consIcons.push(allIcons.cons.find(i => i.label === 'Supports One'));
+      }
+    });
+
+    // Remove duplicates and nulls
+    const uniquePros = prosIcons.filter((icon, index, self) => icon && self.findIndex(i => i?.icon === icon.icon) === index);
+    const uniqueCons = consIcons.filter((icon, index, self) => icon && self.findIndex(i => i?.icon === icon.icon) === index);
+
+    // If no icons found from pros/cons text, show default examples
+    if (uniquePros.length === 0 && uniqueCons.length === 0) {
+      // Default examples - show all available icons
+      return {
+        pros: [
+          allIcons.pros.find(i => i.label === 'Low Cost'),
+          allIcons.pros.find(i => i.label === 'CNCF'),
+          allIcons.pros.find(i => i.label === 'Containerized'),
+          allIcons.pros.find(i => i.label === 'Fast'),
+          allIcons.pros.find(i => i.label === 'Modular'),
+          allIcons.pros.find(i => i.label === 'Quality'),
+          allIcons.pros.find(i => i.label === 'Scalable'),
+          allIcons.pros.find(i => i.label === 'Secure'),
+          allIcons.pros.find(i => i.label === 'Supports Many'),
+          allIcons.pros.find(i => i.label === 'Tested'),
+        ].filter(Boolean),
+        cons: [
+          allIcons.cons.find(i => i.label === 'High Cost'),
+          allIcons.cons.find(i => i.label === 'Not Scalable'),
+          allIcons.cons.find(i => i.label === 'Not Secure'),
+          allIcons.cons.find(i => i.label === 'Poor Quality'),
+          allIcons.cons.find(i => i.label === 'Slow'),
+          allIcons.cons.find(i => i.label === 'Supports One'),
+        ].filter(Boolean),
+      };
+    }
+
+    return {
+      pros: uniquePros,
+      cons: uniqueCons,
+    };
+  };
 
   useEffect(() => {
     const loadToolkitData = async () => {
@@ -144,14 +349,26 @@ const ToolkitDetailPage = () => {
   const handleRankChange = (techId, direction) => {
     if (!canEdit()) return;
     
-    const tech = technologies.find(t => t.id === techId);
+    // Helper function to determine if tech is evaluated
+    const isEvaluated = (tech) => {
+      const storageKey = `toolkit_${toolkitId}_tech_${tech.id}_evaluation`;
+      const hasEvaluation = localStorage.getItem(storageKey) || tech.evaluation;
+      return hasEvaluation || tech.status === 'evaluated' || tech.status === 'evaluation';
+    };
+
+    // Create globally sorted list: Production first, then Evaluated
+    const productionTechs = technologies.filter(tech => !isEvaluated(tech)).sort((a, b) => a.rank - b.rank);
+    const evaluatedTechs = technologies.filter(isEvaluated).sort((a, b) => a.rank - b.rank);
+    const globalSortedTechs = [...productionTechs, ...evaluatedTechs];
+
+    const tech = globalSortedTechs.find(t => t.id === techId);
     if (!tech) return;
 
-    const currentIndex = technologies.findIndex(t => t.id === techId);
+    const currentIndex = globalSortedTechs.findIndex(t => t.id === techId);
     if (currentIndex === -1) return;
 
     const newIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
-    if (newIndex < 0 || newIndex >= technologies.length) return;
+    if (newIndex < 0 || newIndex >= globalSortedTechs.length) return;
 
     // Show confirmation dialog
     setRankChangeDialog({
@@ -167,18 +384,58 @@ const ToolkitDetailPage = () => {
   const confirmRankChange = () => {
     const { techId, direction, currentIndex, newIndex } = rankChangeDialog;
 
-    const newTechnologies = [...technologies];
-    const [moved] = newTechnologies.splice(currentIndex, 1);
-    newTechnologies.splice(newIndex, 0, moved);
+    // Helper function to determine if tech is evaluated
+    const isEvaluated = (tech) => {
+      const storageKey = `toolkit_${toolkitId}_tech_${tech.id}_evaluation`;
+      const hasEvaluation = localStorage.getItem(storageKey) || tech.evaluation;
+      return hasEvaluation || tech.status === 'evaluated' || tech.status === 'evaluation';
+    };
 
-    // Update ranks
-    newTechnologies.forEach((tech, index) => {
+    // Create globally sorted list: Production first, then Evaluated
+    const productionTechs = technologies.filter(tech => !isEvaluated(tech)).sort((a, b) => a.rank - b.rank);
+    const evaluatedTechs = technologies.filter(isEvaluated).sort((a, b) => a.rank - b.rank);
+    const globalSortedTechs = [...productionTechs, ...evaluatedTechs];
+
+    const tech = globalSortedTechs[currentIndex];
+    const targetTech = globalSortedTechs[newIndex];
+    
+    // Check if we're crossing the boundary
+    const wasInProduction = currentIndex < productionTechs.length;
+    const willBeInProduction = newIndex < productionTechs.length;
+    const crossingBoundary = wasInProduction !== willBeInProduction;
+
+    // Move in global list
+    const newGlobalTechs = [...globalSortedTechs];
+    const [moved] = newGlobalTechs.splice(currentIndex, 1);
+    newGlobalTechs.splice(newIndex, 0, moved);
+
+    // If crossing boundary, update evaluation status
+    if (crossingBoundary) {
+      if (willBeInProduction) {
+        // Moving to Production - remove evaluation
+        const storageKey = `toolkit_${toolkitId}_tech_${techId}_evaluation`;
+        localStorage.removeItem(storageKey);
+        moved.evaluation = null;
+        moved.status = 'production';
+      } else {
+        // Moving to Evaluated - add evaluation if it doesn't exist
+        const storageKey = `toolkit_${toolkitId}_tech_${techId}_evaluation`;
+        if (!localStorage.getItem(storageKey) && !moved.evaluation) {
+          const defaultEvaluation = `# Evaluation for ${moved.name}\n\nThis technology has been evaluated.`;
+          localStorage.setItem(storageKey, defaultEvaluation);
+          moved.evaluation = defaultEvaluation;
+        }
+        moved.status = 'evaluated';
+      }
+    }
+
+    // Update ranks globally (1 to N)
+    newGlobalTechs.forEach((tech, index) => {
       tech.rank = index + 1;
     });
 
-    setTechnologies(newTechnologies);
+    setTechnologies(newGlobalTechs);
     setRankChangeDialog({ open: false, techId: null, direction: null, techName: null });
-    // TODO: Save to backend
   };
 
   const cancelRankChange = () => {
@@ -363,14 +620,47 @@ const ToolkitDetailPage = () => {
                   No technologies available
                 </Typography>
               ) : (
+                (() => {
+                  // Helper function to determine if tech is evaluated or production
+                  const isEvaluated = (tech) => {
+                    const storageKey = `toolkit_${toolkitId}_tech_${tech.id}_evaluation`;
+                    const hasEvaluation = localStorage.getItem(storageKey) || tech.evaluation;
+                    return hasEvaluation || tech.status === 'evaluated' || tech.status === 'evaluation';
+                  };
+
+                  // Create globally sorted list: Production first, then Evaluated
+                  const productionTechs = technologies.filter(tech => !isEvaluated(tech)).sort((a, b) => a.rank - b.rank);
+                  const evaluatedTechs = technologies.filter(isEvaluated).sort((a, b) => a.rank - b.rank);
+                  const globalSortedTechs = [...productionTechs, ...evaluatedTechs];
+
+                  const renderTechList = (techList, sectionTitle, sectionColor) => {
+                    if (techList.length === 0) return null;
+
+                    return (
+                      <Box sx={{ mb: 3 }}>
+                        <Typography 
+                          variant="subtitle2" 
+                          sx={{ 
+                            color: currentTheme.text, 
+                            fontWeight: 600, 
+                            mb: 1,
+                            px: 1,
+                            pb: 0.5,
+                            borderBottom: `2px solid ${sectionColor || currentTheme.primary}`,
+                          }}
+                        >
+                          {sectionTitle}
+                        </Typography>
                 <List sx={{ p: 0 }}>
-                  {technologies.map((tech, index) => (
+                          {techList.map((tech, index) => {
+                            const globalIndex = globalSortedTechs.findIndex(t => t.id === tech.id);
+                            return (
                     <React.Fragment key={tech.id}>
                       <ListItem
                         button
                         onClick={() => {
                           setSelectedTech(tech);
-                          setReadmeTab(0); // Reset to first tab when selecting new tech
+                                    setReadmeTab(0);
                         }}
                         selected={selectedTech?.id === tech.id}
                         sx={{
@@ -414,10 +704,42 @@ const ToolkitDetailPage = () => {
                         </ListItemIcon>
                         <ListItemText
                           primary={
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
                               <Typography variant="body1" sx={{ color: currentTheme.text, fontWeight: 500 }}>
                                 {tech.name}
                               </Typography>
+                              {(() => {
+                                const techIcons = getTechIcons(tech);
+                                if (techIcons.pros.length > 0) {
+                                  return (
+                                    <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center', ml: 0.5 }}>
+                                      {techIcons.pros.slice(0, 5).map((iconData, iconIndex) => (
+                                        <Box
+                                          key={`list-pros-${tech.id}-${iconIndex}`}
+                                          component="img"
+                                          src={iconData.icon}
+                                          alt={iconData.label}
+                                          sx={{
+                                            width: iconData.size === 'large' ? 24 : 20,
+                                            height: iconData.size === 'large' ? 24 : 20,
+                                            objectFit: 'contain',
+                                            filter: iconData.invert && darkMode ? 'invert(1)' : 'none',
+                                          }}
+                                          onError={(e) => {
+                                            e.target.style.display = 'none';
+                                          }}
+                                        />
+                                      ))}
+                                      {techIcons.pros.length > 5 && (
+                                        <Typography variant="caption" sx={{ color: currentTheme.textSecondary, ml: 0.5 }}>
+                                          +{techIcons.pros.length - 5}
+                                        </Typography>
+                                      )}
+                                    </Box>
+                                  );
+                                }
+                                return null;
+                              })()}
                             </Box>
                           }
                           secondary={
@@ -444,7 +766,7 @@ const ToolkitDetailPage = () => {
                                 e.stopPropagation();
                                 handleRankChange(tech.id, 'up');
                               }}
-                              disabled={index === 0}
+                                        disabled={globalIndex === 0}
                               sx={{
                                 color: currentTheme.textSecondary,
                                 '&:hover': { color: currentTheme.primary },
@@ -460,7 +782,7 @@ const ToolkitDetailPage = () => {
                                 e.stopPropagation();
                                 handleRankChange(tech.id, 'down');
                               }}
-                              disabled={index === technologies.length - 1}
+                                        disabled={globalIndex === globalSortedTechs.length - 1}
                               sx={{
                                 color: currentTheme.textSecondary,
                                 '&:hover': { color: currentTheme.primary },
@@ -473,12 +795,24 @@ const ToolkitDetailPage = () => {
                           </Box>
                         )}
                       </ListItem>
-                      {index < technologies.length - 1 && (
+                                {index < techList.length - 1 && (
                         <Divider sx={{ mx: 1, borderColor: currentTheme.border }} />
                       )}
                     </React.Fragment>
-                  ))}
+                            );
+                          })}
                 </List>
+                      </Box>
+                    );
+                  };
+
+                  return (
+                    <>
+                      {renderTechList(productionTechs, 'Production', '#2196f3')}
+                      {renderTechList(evaluatedTechs, 'Evaluated', '#4caf50')}
+                    </>
+                  );
+                })()
               )}
             </Box>
           </Paper>
@@ -518,8 +852,213 @@ const ToolkitDetailPage = () => {
                     {selectedTech.description}
                   </Typography>
 
+                  {/* Eval Icons - Pros and Cons with Roles */}
+                  <Box sx={{ mb: 2, display: 'flex', gap: 2, alignItems: 'flex-start' }}>
+                    {/* Pros and Cons Section */}
+                    {(() => {
+                      const techIcons = getTechIcons(selectedTech);
+                      return (
+                        <Box sx={{ flex: 1 }}>
+                          {/* Pros Row */}
+                          {techIcons.pros.length > 0 && (
+                            <Box sx={{ mb: 1.5 }}>
+                              <Typography variant="caption" sx={{ color: currentTheme.textSecondary, mb: 0.5, display: 'block', fontWeight: 700 }}>
+                                Pros
+                              </Typography>
+                              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                                {techIcons.pros.map((iconData, iconIndex) => (
+                                  <Box
+                                    key={`pros-${iconIndex}`}
+                                    sx={{
+                                      display: 'flex',
+                                      flexDirection: 'column',
+                                      alignItems: 'center',
+                                      gap: 0.5,
+                                    }}
+                                  >
+                                    <Box
+                                      sx={{
+                                        width: 40,
+                                        height: 40,
+                                        borderRadius: 1,
+                                        bgcolor: currentTheme.card,
+                                        p: 0.5,
+                                        border: `1px solid ${currentTheme.border}`,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        transition: 'all 0.2s ease',
+                                        '&:hover': {
+                                          transform: 'scale(1.1)',
+                                          boxShadow: `0 2px 8px ${currentTheme.shadow}`,
+                                        },
+                                      }}
+                                    >
+                                      <Box
+                                        component="img"
+                                        src={iconData.icon}
+                                        alt={iconData.label}
+                                        sx={{
+                                          width: iconData.size === 'large' ? 50 : '100%',
+                                          height: iconData.size === 'large' ? 50 : '100%',
+                                          objectFit: 'contain',
+                                          filter: iconData.invert && darkMode ? 'invert(1)' : 'none',
+                                        }}
+                                        onError={(e) => {
+                                          // Hide if image doesn't load
+                                          e.target.style.display = 'none';
+                                        }}
+                                      />
+                                    </Box>
+                                    <Typography 
+                                      variant="caption" 
+                                      sx={{ 
+                                        color: currentTheme.textSecondary,
+                                        fontSize: '0.65rem',
+                                        textAlign: 'center',
+                                      }}
+                                    >
+                                      {iconData.label}
+                                    </Typography>
+                                  </Box>
+                                ))}
+                              </Box>
+                            </Box>
+                          )}
+
+                          {/* Cons Row */}
+                          {techIcons.cons.length > 0 && (
+                            <Box>
+                              <Typography variant="caption" sx={{ color: currentTheme.textSecondary, mb: 0.5, display: 'block', fontWeight: 700 }}>
+                                Cons
+                              </Typography>
+                              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                                {techIcons.cons.map((iconData, iconIndex) => (
+                                  <Box
+                                    key={`cons-${iconIndex}`}
+                                    sx={{
+                                      display: 'flex',
+                                      flexDirection: 'column',
+                                      alignItems: 'center',
+                                      gap: 0.5,
+                                    }}
+                                  >
+                                    <Box
+                                      sx={{
+                                        width: 40,
+                                        height: 40,
+                                        borderRadius: 1,
+                                        bgcolor: currentTheme.card,
+                                        p: 0.5,
+                                        border: `1px solid ${currentTheme.border}`,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        transition: 'all 0.2s ease',
+                                        '&:hover': {
+                                          transform: 'scale(1.1)',
+                                          boxShadow: `0 2px 8px ${currentTheme.shadow}`,
+                                        },
+                                      }}
+                                    >
+                                      <Box
+                                        component="img"
+                                        src={iconData.icon}
+                                        alt={iconData.label}
+                                        sx={{
+                                          width: iconData.size === 'large' ? 50 : '100%',
+                                          height: iconData.size === 'large' ? 50 : '100%',
+                                          objectFit: 'contain',
+                                          filter: iconData.invert && darkMode ? 'invert(1)' : 'none',
+                                        }}
+                                        onError={(e) => {
+                                          // Hide if image doesn't load
+                                          e.target.style.display = 'none';
+                                        }}
+                                      />
+                                    </Box>
+                                    <Typography 
+                                      variant="caption" 
+                                      sx={{ 
+                                        color: currentTheme.textSecondary,
+                                        fontSize: '0.65rem',
+                                        textAlign: 'center',
+                                      }}
+                                    >
+                                      {iconData.label}
+                                    </Typography>
+                                  </Box>
+                                ))}
+                              </Box>
+                            </Box>
+                          )}
+                        </Box>
+                      );
+                    })()}
+
+                    {/* Divider */}
+                    <Divider 
+                      orientation="vertical" 
+                      flexItem 
+                      sx={{ 
+                        borderColor: currentTheme.border,
+                        opacity: 0.3,
+                        height: 'auto',
+                        alignSelf: 'stretch',
+                      }} 
+                    />
+
+                    {/* Roles Section */}
+                    <Box sx={{ flex: 1, minWidth: 200 }}>
+                      <Typography variant="caption" sx={{ color: currentTheme.textSecondary, mb: 1, display: 'block', fontWeight: 700 }}>
+                        Roles
+                      </Typography>
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                        {/* Maintainer */}
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <Typography variant="caption" sx={{ color: currentTheme.textSecondary, fontWeight: 500 }}>
+                            Maintainer:
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: currentTheme.text }}>
+                            {selectedTech.maintainer || selectedTech.author || 'N/A'}
+                          </Typography>
+                        </Box>
+                        
+                        {/* Deployed to */}
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <Typography variant="caption" sx={{ color: currentTheme.textSecondary, fontWeight: 500 }}>
+                            Deployed to:
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: currentTheme.text }}>
+                            {selectedTech.deployedTo || selectedTech.deployment || 'N/A'}
+                          </Typography>
+                        </Box>
+                        
+                        {/* Last Updated */}
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <Typography variant="caption" sx={{ color: currentTheme.textSecondary, fontWeight: 500 }}>
+                            Last updated:
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: currentTheme.text }}>
+                            {selectedTech.lastUpdated || selectedTech.lastModified || 'N/A'}
+                          </Typography>
+                        </Box>
+                        
+                        {/* Version */}
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <Typography variant="caption" sx={{ color: currentTheme.textSecondary, fontWeight: 500 }}>
+                            Version:
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: currentTheme.text }}>
+                            {selectedTech.version || 'N/A'}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </Box>
+                  </Box>
+
                   {/* Like/Dislike Buttons */}
-                  <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                  <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', justifyContent: 'flex-end' }}>
                     <Tooltip title="Like this technology">
                       <IconButton
                         onClick={() => handleReaction(selectedTech.id, 'like')}
@@ -578,16 +1117,17 @@ const ToolkitDetailPage = () => {
                         },
                       }}
                     >
-                      <Tab label="Evaluation" />
                       <Tab label="Installation" />
                       <Tab label="Usage" />
+                      <Tab label="Requirements" />
+                      <Tab label="Evaluation" />
                     </Tabs>
                     {canEdit() && (
                       <Tooltip title="Edit Markdown">
                         <IconButton
                           size="small"
                           onClick={() => {
-                            const readmeTypes = ['evaluation', 'installation', 'usage'];
+                            const readmeTypes = ['installation', 'usage', 'requirements', 'evaluation'];
                             const readmeType = readmeTypes[readmeTab];
                             navigate(`/toolkit/toolkit/${toolkitId}/technology/${selectedTech.id}/readme/${readmeType}`);
                           }}
@@ -607,7 +1147,7 @@ const ToolkitDetailPage = () => {
                   {/* README Content */}
                   <Box sx={{ flex: 1, overflowY: 'auto', p: 3, minHeight: 0 }}>
                     {(() => {
-                      const readmeTypes = ['evaluation', 'installation', 'usage'];
+                      const readmeTypes = ['installation', 'usage', 'requirements', 'evaluation'];
                       const currentReadmeType = readmeTypes[readmeTab];
                       // Check localStorage first, then use technology readme or empty
                       const storageKey = `toolkit_${toolkitId}_tech_${selectedTech.id}_${currentReadmeType}`;

@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import {
   Box,
   Typography,
@@ -7,9 +7,16 @@ import {
 } from '@mui/material';
 import { ThemeContext } from '../contexts/ThemeContext';
 import DatasetTable from '../components/DatasetTable';
+import PipelineSelectorCarousel from '../components/PipelineSelectorCarousel';
 
 const PipelinesPage = () => {
   const { currentTheme } = useContext(ThemeContext);
+  const [selectedPipeline, setSelectedPipeline] = useState(null);
+
+  const handlePipelineSelect = (pipeline) => {
+    setSelectedPipeline(pipeline);
+    // You can add additional logic here, like filtering the dataset table
+  };
 
   return (
     <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
@@ -20,7 +27,12 @@ const PipelinesPage = () => {
         Manage and monitor datasets across data pipelines. Track pipeline execution, dependencies, and data flow across your organization.
       </Typography>
 
-      <DatasetTable />
+      <PipelineSelectorCarousel
+        onPipelineSelect={handlePipelineSelect}
+        selectedPipeline={selectedPipeline}
+      />
+
+      <DatasetTable selectedPipeline={selectedPipeline} />
     </Container>
   );
 };

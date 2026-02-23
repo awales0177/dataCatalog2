@@ -30,7 +30,7 @@ import PipelineView from './PipelineView';
 
 const ITEMS_PER_PAGE = 10;
 
-const DatasetTable = () => {
+const DatasetTable = ({ selectedPipeline }) => {
   const { currentTheme } = useContext(ThemeContext);
   const navigate = useNavigate();
   const [datasets, setDatasets] = useState([]);
@@ -97,6 +97,15 @@ const DatasetTable = () => {
       statuses: ['All', ...Array.from(statuses).sort()],
     };
   }, [datasets]);
+
+  // Update pipeline filter when selected pipeline changes
+  useEffect(() => {
+    if (selectedPipeline?.uuid) {
+      setPipelineFilter(selectedPipeline.uuid);
+    } else {
+      setPipelineFilter('All');
+    }
+  }, [selectedPipeline]);
 
   // Filter and sort datasets
   useEffect(() => {
