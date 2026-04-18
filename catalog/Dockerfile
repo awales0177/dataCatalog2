@@ -13,4 +13,4 @@ RUN npm install --force
 EXPOSE 3000
 
 # Default command (override with `docker run`)
-CMD ["npm", "run", "start"]
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "3000"]

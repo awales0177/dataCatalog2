@@ -25,7 +25,7 @@
       "meta": {
         "tier": "gold",
         "verified": false,
-        "clickCount": 9
+        "clickCount": 10
       },
       "changelog": [
         {
@@ -753,7 +753,8 @@
       ],
       "meta": {
         "tier": "silver",
-        "verified": true
+        "verified": true,
+        "clickCount": 1
       },
       "resources": {
         "code": "https://github.com/org/cultural-programs",
@@ -823,7 +824,8 @@
       ],
       "meta": {
         "tier": "bronze",
-        "verified": false
+        "verified": false,
+        "clickCount": 1
       },
       "resources": {
         "code": "https://github.com/org/agricultural-programs",

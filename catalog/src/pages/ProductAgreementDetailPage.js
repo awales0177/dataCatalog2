@@ -1645,7 +1645,7 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
 
             <Box sx={{ mb: 2 }}>
               <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary, mb: 1 }}>
-                Data Policies
+                Data Standards
               </Typography>
               {agreement.dataPolicies && agreement.dataPolicies.length > 0 ? (
                 <List dense sx={{ bgcolor: 'transparent', borderRadius: 1, p: 0.5, pl: 0, ml: '-12px' }}>
@@ -1659,7 +1659,7 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
                         <ListItemText
                           primary={
                             <Typography sx={{ color: currentTheme.text }}>
-                              {policy ? policy.name : `Policy ${index + 1}`}
+                              {policy ? policy.name : `Standard ${index + 1}`}
                             </Typography>
                           }
                           secondary={
@@ -1674,7 +1674,7 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
                 </List>
               ) : (
                 <Typography variant="body2" sx={{ color: currentTheme.textSecondary, fontStyle: 'italic' }}>
-                  No data policies associated with this agreement
+                  No data standards associated with this agreement
                 </Typography>
               )}
             </Box>

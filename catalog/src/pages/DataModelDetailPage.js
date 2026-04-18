@@ -43,6 +43,8 @@ import { formatDate } from '../utils/themeUtils';
 import { calculateModelScore, getModelQualityColor } from '../utils/modelScoreUtils';
 import verifiedLogo from '../imgs/verified.svg';
 import { fetchData, fetchAgreementsByModel, getRuleCountForModel } from '../services/api';
+import { useWorkbenchModals } from '../contexts/WorkbenchModalsContext';
+import { RULE_BUILDER_MODEL_SHORT_NAME_KEY } from '../constants/workbenchPaths';
 import ProductAgreementCard from '../components/ProductAgreementCard';
 import { GoVerified } from "react-icons/go";
 import { modelFieldsConfig } from '../config/modelFields';
@@ -50,6 +52,7 @@ import { modelFieldsConfig } from '../config/modelFields';
 const DataModelDetailPage = ({ currentTheme }) => {
   const { shortName } = useParams();
   const navigate = useNavigate();
+  const { openRuleBuilder } = useWorkbenchModals();
   const [model, setModel] = React.useState(null);
   const [agreements, setAgreements] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
@@ -745,7 +748,10 @@ const DataModelDetailPage = ({ currentTheme }) => {
                 component="button"
                 onClick={(e) => {
                   e.preventDefault();
-                  navigate(`/rules?model=${model.shortName}`);
+                  navigate('/rules', {
+                    state: { [RULE_BUILDER_MODEL_SHORT_NAME_KEY]: model.shortName },
+                  });
+                  openRuleBuilder();
                 }}
                 sx={{
                   color: currentTheme.text,

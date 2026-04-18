@@ -33,7 +33,7 @@ const RoleSelector = ({
     { value: 'data_producer', label: 'Data Producer', description: 'Teams that create and maintain data', icon: FactoryIcon },
     { value: 'data_consumer', label: 'Data Consumer', description: 'Teams that use data for business operations', icon: ShoppingBasketIcon },
     { value: 'application', label: 'Application', description: 'Application development teams', icon: CodeIcon },
-    { value: 'data_governance', label: 'Data Governance', description: 'Teams responsible for data policies and compliance', icon: SecurityIcon },
+    { value: 'data_governance', label: 'Data Governance', description: 'Teams responsible for data standards and compliance', icon: SecurityIcon },
     { value: 'data_manager', label: 'Data Manager', description: 'Teams that manage data infrastructure and processes', icon: SettingsIcon },
   ];
 

@@ -22,12 +22,12 @@ import {
   Edit as EditIcon,
   Diamond as CrownIcon,
   SwapHoriz as SwapHorizIcon,
-  Timer as TimerIcon,
   VisibilityOff as VisibilityOffIcon,
   UnfoldMoreDouble as UnfoldMoreDoubleIcon,
 } from '@mui/icons-material';
 import { drawerWidth, collapsedDrawerWidth } from '../constants/navigation';
 import { useAuth } from '../contexts/AuthContext';
+import packageJson from '../../package.json';
 
 const NavigationDrawer = ({ 
   currentTheme, 
@@ -102,12 +102,6 @@ const NavigationDrawer = ({
             return true;
           });
 
-          // Find Pipelines and Data Products items
-          const pipelinesItem = filteredItems.find(item => item.id === 'pipelines');
-          const productsItem = filteredItems.find(item => item.id === 'data-products');
-          const hasPipelinesAndProducts = pipelinesItem && productsItem;
-
-          // Helper function to render a menu item
           const renderMenuItem = (item, isCompact = false) => {
             // Check if this item should be highlighted
             const isSelected = item.path === '/' 
@@ -189,146 +183,11 @@ const NavigationDrawer = ({
             );
           };
 
-          // Build the menu items array
-          const menuItems = [];
-          filteredItems.forEach((item, index) => {
-            // Handle Pipelines and Data Products together on the same line
-            if (hasPipelinesAndProducts && item.id === 'pipelines') {
-              // Insert divider and Priority Queue button before Pipelines/Products combo
-              menuItems.push(
-                <React.Fragment key="priority-queue-pipelines-products-group">
-                  <Divider 
-                    sx={{ 
-                      my: 1, 
-                      mx: isDrawerCollapsed ? 1 : 2, 
-                      borderColor: currentTheme.darkMode ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.12)',
-                    }} 
-                  />
-                  {/* Priority Queue Button */}
-                  <Box
-                    sx={{
-                      mx: isDrawerCollapsed ? 0.5 : 1,
-                      mb: isDrawerCollapsed ? 0 : 1,
-                    }}
-                  >
-                    <Tooltip
-                      title="Priority Queue"
-                      placement="right"
-                      arrow
-                      sx={{
-                        display: isDrawerCollapsed ? 'block' : 'none'
-                      }}
-                    >
-                      <Button
-                        fullWidth={!isDrawerCollapsed}
-                        startIcon={<TimerIcon />}
-                        onClick={() => navigate('/priority-queue')}
-                        sx={{
-                          color: location.pathname === '/priority-queue' ? '#37ABBF' : currentTheme.text,
-                          py: 1.25,
-                          px: isDrawerCollapsed ? 1 : 1.5,
-                          justifyContent: isDrawerCollapsed ? 'center' : 'flex-start',
-                          borderRadius: '8px',
-                          fontSize: '0.875rem',
-                          fontWeight: 500,
-                          minWidth: isDrawerCollapsed ? 'auto' : '100%',
-                          width: isDrawerCollapsed ? '100%' : 'auto',
-                          display: 'flex',
-                          bgcolor: location.pathname === '/priority-queue' ? 'rgba(55, 171, 191, 0.2)' : 'transparent',
-                          '&:hover': {
-                            bgcolor: location.pathname === '/priority-queue' ? 'rgba(55, 171, 191, 0.3)' : `${currentTheme.primary}10`,
-                          },
-                          '& .MuiButton-startIcon': {
-                            marginRight: isDrawerCollapsed ? 0 : 1,
-                            marginLeft: isDrawerCollapsed ? 0 : 0,
-                            '& svg': {
-                              width: '1.35rem',
-                              height: '1.35rem',
-                            },
-                          },
-                        }}
-                      >
-                        {!isDrawerCollapsed && 'Priority Queue'}
-                      </Button>
-                    </Tooltip>
-                    {isDrawerCollapsed && (
-                      <Divider 
-                        orientation="horizontal" 
-                        sx={{ 
-                          borderColor: currentTheme.darkMode ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.12)',
-                          mt: 1,
-                          mx: 0.5,
-                    }} 
-                  />
-                    )}
-                    {!isDrawerCollapsed && (
-                      <Divider 
-                        orientation="horizontal" 
-                        sx={{ 
-                          borderColor: currentTheme.darkMode ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.12)',
-                          mt: 1,
-                          mx: 0.5,
-                        }} 
-                      />
-                    )}
-                  </Box>
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      flexDirection: isDrawerCollapsed ? 'column' : 'row',
-                      gap: 0.5,
-                      mx: isDrawerCollapsed ? 0.5 : 1,
-                      alignItems: 'stretch',
-                    }}
-                  >
-                    {renderMenuItem(pipelinesItem, true)}
-                    {!isDrawerCollapsed && (
-                      <Divider 
-                        orientation="vertical" 
-                        flexItem
-                        sx={{ 
-                          borderColor: currentTheme.darkMode ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.12)',
-                          my: 0.5,
-                        }} 
-                      />
-                    )}
-                    {isDrawerCollapsed && (
-                      <Divider 
-                        orientation="horizontal" 
-                        flexItem
-                        sx={{ 
-                          borderColor: currentTheme.darkMode ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.12)',
-                          mx: 0.5,
-                        }} 
-                      />
-                    )}
-                    {renderMenuItem(productsItem, true)}
-                  </Box>
-                  <Divider 
-                    sx={{ 
-                      my: 1, 
-                      mx: isDrawerCollapsed ? 1 : 2, 
-                      borderColor: currentTheme.darkMode ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.12)',
-                    }} 
-                  />
-                </React.Fragment>
-              );
-              return; // Skip rendering pipelines individually
-            }
-            
-            // Skip data-products - it's rendered with pipelines above
-            if (hasPipelinesAndProducts && item.id === 'data-products') {
-              return;
-            }
-            
-            menuItems.push(
-              <React.Fragment key={item.path}>
-                {renderMenuItem(item)}
-              </React.Fragment>
-            );
-          });
-
-          return menuItems;
+          return filteredItems.map((item) => (
+            <React.Fragment key={item.path}>
+              {renderMenuItem(item)}
+            </React.Fragment>
+          ));
         })()}
       </List>
 
@@ -355,13 +214,13 @@ const NavigationDrawer = ({
           <Box
             sx={{
               display: 'flex',
-              alignItems: 'center',
+              alignItems: 'flex-start',
               gap: 2,
               justifyContent: isDrawerCollapsed ? 'center' : 'space-between',
             }}
           >
             {!isDrawerCollapsed && (
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, flex: 1, minWidth: 0 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
                   <Typography
                     variant="subtitle2"
@@ -392,50 +251,100 @@ const NavigationDrawer = ({
                 height: 32,
                 bgcolor: avatarColor,
                 fontSize: '0.875rem',
+                flexShrink: 0,
               }}
             >
               {(user?.full_name || user?.username || 'U').charAt(0).toUpperCase()}
             </Avatar>
           </Box>
-          
+
           {!isDrawerCollapsed && user && (
-            <Button
-              size="small"
-              startIcon={<SwapHorizIcon />}
-              onClick={handleChangeRole}
+            <Box
               sx={{
-                alignSelf: 'flex-start',
-                fontSize: '0.75rem',
-                minWidth: 'auto',
-                px: 1,
-                py: 0.5,
-                color: currentTheme.textSecondary,
-                '&:hover': {
-                  bgcolor: currentTheme.background,
-                  color: currentTheme.text,
-                },
+                display: 'flex',
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 1,
+                width: '100%',
               }}
             >
-              Change Role
-            </Button>
-          )}
-          
-          {isDrawerCollapsed && user && (
-            <Tooltip title={`Current Role: ${(currentRole || 'reader').charAt(0).toUpperCase() + (currentRole || 'reader').slice(1)} - Click to change`} placement="right">
-              <IconButton
-                onClick={handleChangeRole}
+              <Button
                 size="small"
+                startIcon={<SwapHorizIcon />}
+                onClick={handleChangeRole}
                 sx={{
+                  fontSize: '0.75rem',
+                  minWidth: 'auto',
+                  px: 1,
+                  py: 0.5,
                   color: currentTheme.textSecondary,
+                  flexShrink: 0,
                   '&:hover': {
                     bgcolor: currentTheme.background,
                     color: currentTheme.text,
                   },
                 }}
               >
-                {getRoleIcon(currentRole || 'reader')}
-              </IconButton>
-            </Tooltip>
+                Change Role
+              </Button>
+              <Typography
+                component="div"
+                variant="caption"
+                sx={{
+                  color: currentTheme.textSecondary,
+                  fontSize: '0.65rem',
+                  lineHeight: 1.2,
+                  textAlign: 'center',
+                  opacity: 0.85,
+                  width: 32,
+                  flexShrink: 0,
+                }}
+              >
+                v{packageJson.version}
+              </Typography>
+            </Box>
+          )}
+
+          {isDrawerCollapsed && user && (
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 1,
+                width: '100%',
+              }}
+            >
+              <Tooltip title={`Current Role: ${(currentRole || 'reader').charAt(0).toUpperCase() + (currentRole || 'reader').slice(1)} - Click to change`} placement="right">
+                <IconButton
+                  onClick={handleChangeRole}
+                  size="small"
+                  sx={{
+                    color: currentTheme.textSecondary,
+                    '&:hover': {
+                      bgcolor: currentTheme.background,
+                      color: currentTheme.text,
+                    },
+                  }}
+                >
+                  {getRoleIcon(currentRole || 'reader')}
+                </IconButton>
+              </Tooltip>
+              <Typography
+                component="div"
+                variant="caption"
+                sx={{
+                  color: currentTheme.textSecondary,
+                  fontSize: '0.65rem',
+                  lineHeight: 1.2,
+                  opacity: 0.85,
+                }}
+              >
+                v{packageJson.version}
+              </Typography>
+            </Box>
           )}
         </Box>
       </Box>

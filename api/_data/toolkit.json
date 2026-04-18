@@ -7,7 +7,12 @@
         "displayName": "OCR (Optical Character Recognition)",
         "description": "A collection of OCR technologies and libraries for extracting text from images and documents. Compare and rank different OCR solutions based on accuracy, speed, and use case.",
         "category": "text-extraction",
-        "tags": ["ocr", "text-extraction", "image-processing", "document-processing"],
+        "tags": [
+          "ocr",
+          "text-extraction",
+          "image-processing",
+          "document-processing"
+        ],
         "technologies": [
           {
             "id": "tech-tesseract",
@@ -15,12 +20,25 @@
             "description": "Open-source OCR engine developed by Google. Highly accurate for printed text, supports 100+ languages.",
             "rank": 1,
             "rating": 4.5,
-        "language": "python",
+            "language": "python",
             "package": "pytesseract",
             "pipInstall": "pip install pytesseract",
-            "pros": ["Free and open-source", "100+ language support", "Good accuracy for printed text", "Well-documented"],
-            "cons": ["Slower than cloud solutions", "Requires image preprocessing", "Less accurate for handwritten text"],
-            "useCases": ["Printed documents", "Multi-language text", "Offline processing"],
+            "pros": [
+              "Free and open-source",
+              "100+ language support",
+              "Good accuracy for printed text",
+              "Well-documented"
+            ],
+            "cons": [
+              "Slower than cloud solutions",
+              "Requires image preprocessing",
+              "Less accurate for handwritten text"
+            ],
+            "useCases": [
+              "Printed documents",
+              "Multi-language text",
+              "Offline processing"
+            ],
             "documentation": "https://github.com/tesseract-ocr/tesseract",
             "githubRepo": "https://github.com/tesseract-ocr/tesseract",
             "readme": "# Tesseract OCR\n\nTesseract is an open-source OCR engine developed by Google. It's one of the most popular OCR solutions for extracting text from images.\n\n## Installation\n\n```bash\npip install pytesseract\n```\n\n## Basic Usage\n\n```python\nimport pytesseract\nfrom PIL import Image\n\n# Open image\nimg = Image.open('document.png')\n\n# Extract text\ntext = pytesseract.image_to_string(img)\nprint(text)\n```\n\n## Features\n\n- Supports 100+ languages\n- Good accuracy for printed text\n- Free and open-source\n- Well-documented\n\n## Limitations\n\n- Slower than cloud-based solutions\n- Requires image preprocessing for best results\n- Less accurate for handwritten text",
@@ -34,12 +52,25 @@
             "description": "OCR toolkit powered by PaddlePaddle. Excellent for Chinese, English, and multilingual text recognition with high accuracy.",
             "rank": 2,
             "rating": 4.7,
-        "language": "python",
+            "language": "python",
             "package": "paddleocr",
             "pipInstall": "pip install paddleocr",
-            "pros": ["Excellent for Chinese text", "High accuracy", "Fast inference", "Supports multiple languages"],
-            "cons": ["Larger model size", "Requires more memory", "Primarily optimized for Asian languages"],
-            "useCases": ["Chinese/Japanese/Korean text", "Multilingual documents", "Real-time OCR"],
+            "pros": [
+              "Excellent for Chinese text",
+              "High accuracy",
+              "Fast inference",
+              "Supports multiple languages"
+            ],
+            "cons": [
+              "Larger model size",
+              "Requires more memory",
+              "Primarily optimized for Asian languages"
+            ],
+            "useCases": [
+              "Chinese/Japanese/Korean text",
+              "Multilingual documents",
+              "Real-time OCR"
+            ],
             "documentation": "https://github.com/PaddlePaddle/PaddleOCR",
             "githubRepo": "https://github.com/PaddlePaddle/PaddleOCR",
             "readme": "# PaddleOCR\n\nPaddleOCR is an OCR toolkit powered by PaddlePaddle, designed for multilingual text recognition with excellent performance on Asian languages.\n\n## Installation\n\n```bash\npip install paddleocr\n```\n\n## Basic Usage\n\n```python\nfrom paddleocr import PaddleOCR\n\n# Initialize OCR\nocr = PaddleOCR(use_angle_cls=True, lang='ch')\n\n# Perform OCR\nresult = ocr.ocr('image.jpg', cls=True)\n\n# Extract text\nfor line in result:\n    print(line[1][0])\n```\n\n## Features\n\n- Excellent for Chinese, Japanese, and Korean text\n- High accuracy\n- Fast inference speed\n- Supports multiple languages\n\n## Best For\n\n- Asian language documents\n- Multilingual text recognition\n- Real-time OCR applications",
@@ -53,12 +84,25 @@
             "description": "Ready-to-use OCR with 80+ languages support. Easy to use with minimal configuration.",
             "rank": 3,
             "rating": 4.3,
-        "language": "python",
+            "language": "python",
             "package": "easyocr",
             "pipInstall": "pip install easyocr",
-            "pros": ["Easy to use", "80+ languages", "No preprocessing needed", "Good for beginners"],
-            "cons": ["Slower than specialized solutions", "Higher memory usage", "Less accurate for complex layouts"],
-            "useCases": ["Quick prototyping", "Multi-language support", "Simple documents"],
+            "pros": [
+              "Easy to use",
+              "80+ languages",
+              "No preprocessing needed",
+              "Good for beginners"
+            ],
+            "cons": [
+              "Slower than specialized solutions",
+              "Higher memory usage",
+              "Less accurate for complex layouts"
+            ],
+            "useCases": [
+              "Quick prototyping",
+              "Multi-language support",
+              "Simple documents"
+            ],
             "documentation": "https://github.com/JaidedAI/EasyOCR",
             "githubRepo": "https://github.com/JaidedAI/EasyOCR",
             "readme": "# EasyOCR\n\nEasyOCR is a ready-to-use OCR library that supports 80+ languages with minimal configuration.\n\n## Installation\n\n```bash\npip install easyocr\n```\n\n## Basic Usage\n\n```python\nimport easyocr\n\n# Initialize reader\nreader = easyocr.Reader(['en', 'fr', 'es'])\n\n# Read text from image\nresult = reader.readtext('image.jpg')\n\n# Print results\nfor detection in result:\n    print(detection[1])\n```\n\n## Features\n\n- Supports 80+ languages\n- No preprocessing required\n- Easy to use API\n- Good for beginners\n\n## Best For\n\n- Quick prototyping\n- Multi-language documents\n- Simple text extraction tasks",
@@ -72,12 +116,26 @@
             "description": "Cloud-based OCR service from AWS. High accuracy with built-in document understanding capabilities.",
             "rank": 4,
             "rating": 4.6,
-        "language": "python",
+            "language": "python",
             "package": "boto3",
             "pipInstall": "pip install boto3",
-            "pros": ["Very high accuracy", "Document understanding", "No setup required", "Scalable"],
-            "cons": ["Requires AWS account", "Cost per page", "Internet connection needed", "Vendor lock-in"],
-            "useCases": ["Production systems", "Large-scale processing", "Complex documents"],
+            "pros": [
+              "Very high accuracy",
+              "Document understanding",
+              "No setup required",
+              "Scalable"
+            ],
+            "cons": [
+              "Requires AWS account",
+              "Cost per page",
+              "Internet connection needed",
+              "Vendor lock-in"
+            ],
+            "useCases": [
+              "Production systems",
+              "Large-scale processing",
+              "Complex documents"
+            ],
             "documentation": "https://aws.amazon.com/textract/",
             "githubRepo": "",
             "readme": "# AWS Textract\n\nAWS Textract is a cloud-based OCR service that uses machine learning to extract text and data from documents.\n\n## Installation\n\n```bash\npip install boto3\n```\n\n## Setup\n\nConfigure AWS credentials:\n```bash\naws configure\n```\n\n## Basic Usage\n\n```python\nimport boto3\n\n# Initialize client\ntextract = boto3.client('textract', region_name='us-east-1')\n\n# Analyze document\nwith open('document.pdf', 'rb') as document:\n    response = textract.detect_document_text(\n        Document={'Bytes': document.read()}\n    )\n\n# Extract text\nfor item in response['Blocks']:\n    if item['BlockType'] == 'LINE':\n        print(item['Text'])\n```\n\n## Features\n\n- Very high accuracy\n- Document understanding capabilities\n- No setup or maintenance required\n- Highly scalable\n\n## Best For\n\n- Production systems\n- Large-scale document processing\n- Complex document layouts",
@@ -96,7 +154,12 @@
         "displayName": "PDF Parser",
         "description": "Comprehensive collection of PDF parsing libraries and tools. Compare different approaches for extracting text, tables, and metadata from PDF documents.",
         "category": "document-processing",
-        "tags": ["pdf", "parsing", "text-extraction", "document-processing"],
+        "tags": [
+          "pdf",
+          "parsing",
+          "text-extraction",
+          "document-processing"
+        ],
         "technologies": [
           {
             "id": "tech-pypdf2",
@@ -104,12 +167,26 @@
             "description": "Pure Python PDF library. Simple and lightweight for basic PDF operations.",
             "rank": 1,
             "rating": 3.8,
-        "language": "python",
+            "language": "python",
             "package": "PyPDF2",
             "pipInstall": "pip install PyPDF2",
-            "pros": ["Lightweight", "Pure Python", "No dependencies", "Simple API"],
-            "cons": ["Limited features", "No table extraction", "Basic text extraction only", "No PDF/A support"],
-            "useCases": ["Simple text extraction", "PDF merging/splitting", "Metadata extraction"],
+            "pros": [
+              "Lightweight",
+              "Pure Python",
+              "No dependencies",
+              "Simple API"
+            ],
+            "cons": [
+              "Limited features",
+              "No table extraction",
+              "Basic text extraction only",
+              "No PDF/A support"
+            ],
+            "useCases": [
+              "Simple text extraction",
+              "PDF merging/splitting",
+              "Metadata extraction"
+            ],
             "documentation": "https://pypdf2.readthedocs.io/",
             "githubRepo": "https://github.com/py-pdf/pypdf",
             "readme": "# PyPDF2\n\nPyPDF2 is a pure Python library for working with PDF files. It's lightweight and simple to use.\n\n## Installation\n\n```bash\npip install PyPDF2\n```\n\n## Basic Usage\n\n```python\nimport PyPDF2\n\n# Open PDF file\nwith open('document.pdf', 'rb') as file:\n    reader = PyPDF2.PdfReader(file)\n    \n    # Extract text from all pages\n    text = ''\n    for page in reader.pages:\n        text += page.extract_text()\n    \n    print(text)\n```\n\n## Features\n\n- Pure Python implementation\n- Lightweight and fast\n- Simple API\n- No external dependencies\n\n## Limitations\n\n- Basic text extraction only\n- No table extraction\n- Limited PDF/A support",
@@ -123,12 +200,25 @@
             "description": "Extract text, tables, and visual elements from PDFs. Excellent for structured data extraction.",
             "rank": 2,
             "rating": 4.6,
-        "language": "python",
+            "language": "python",
             "package": "pdfplumber",
             "pipInstall": "pip install pdfplumber",
-            "pros": ["Table extraction", "Layout preservation", "Good for structured PDFs", "Active development"],
-            "cons": ["Slower for large files", "Memory intensive", "Requires proper PDF structure"],
-            "useCases": ["Table extraction", "Structured documents", "Form data extraction"],
+            "pros": [
+              "Table extraction",
+              "Layout preservation",
+              "Good for structured PDFs",
+              "Active development"
+            ],
+            "cons": [
+              "Slower for large files",
+              "Memory intensive",
+              "Requires proper PDF structure"
+            ],
+            "useCases": [
+              "Table extraction",
+              "Structured documents",
+              "Form data extraction"
+            ],
             "documentation": "https://github.com/jsvine/pdfplumber",
             "githubRepo": "https://github.com/jsvine/pdfplumber",
             "readme": "# pdfplumber\n\npdfplumber is a Python library for extracting text, tables, and visual elements from PDF files with excellent layout preservation.\n\n## Installation\n\n```bash\npip install pdfplumber\n```\n\n## Basic Usage\n\n```python\nimport pdfplumber\n\n# Open PDF\nwith pdfplumber.open('document.pdf') as pdf:\n    # Extract text from first page\n    first_page = pdf.pages[0]\n    text = first_page.extract_text()\n    print(text)\n    \n    # Extract tables\n    tables = first_page.extract_tables()\n    for table in tables:\n        print(table)\n```\n\n## Features\n\n- Excellent table extraction\n- Preserves document layout\n- Good for structured PDFs\n- Actively maintained\n\n## Best For\n\n- Table extraction\n- Structured documents\n- Form data extraction",
@@ -142,12 +232,25 @@
             "description": "Modern fork of PyPDF2 with improved features and active maintenance.",
             "rank": 3,
             "rating": 4.2,
-        "language": "python",
+            "language": "python",
             "package": "pypdf",
             "pipInstall": "pip install pypdf",
-            "pros": ["Active maintenance", "Improved features", "Better error handling", "PDF/A support"],
-            "cons": ["Still limited features", "No table extraction", "Basic text extraction"],
-            "useCases": ["Text extraction", "PDF manipulation", "Metadata operations"],
+            "pros": [
+              "Active maintenance",
+              "Improved features",
+              "Better error handling",
+              "PDF/A support"
+            ],
+            "cons": [
+              "Still limited features",
+              "No table extraction",
+              "Basic text extraction"
+            ],
+            "useCases": [
+              "Text extraction",
+              "PDF manipulation",
+              "Metadata operations"
+            ],
             "documentation": "https://pypdf.readthedocs.io/",
             "githubRepo": "https://github.com/py-pdf/pypdf",
             "readme": "# pypdf\n\npypdf is a modern fork of PyPDF2 with improved features and active maintenance.\n\n## Installation\n\n```bash\npip install pypdf\n```\n\n## Basic Usage\n\n```python\nfrom pypdf import PdfReader\n\n# Open PDF file\nreader = PdfReader('document.pdf')\n\n# Extract text\nfor page in reader.pages:\n    text = page.extract_text()\n    print(text)\n```\n\n## Features\n\n- Active maintenance\n- Improved error handling\n- PDF/A support\n- Better performance than PyPDF2\n\n## Best For\n\n- Text extraction\n- PDF manipulation\n- Metadata operations",
@@ -161,12 +264,26 @@
             "description": "Extract tables from PDFs. Specialized tool for table extraction with high accuracy.",
             "rank": 4,
             "rating": 4.4,
-        "language": "python",
+            "language": "python",
             "package": "camelot-py",
             "pipInstall": "pip install camelot-py[cv]",
-            "pros": ["Excellent table extraction", "Multiple extraction methods", "High accuracy", "Preserves table structure"],
-            "cons": ["Requires Ghostscript", "Slower processing", "Only for tables", "Complex setup"],
-            "useCases": ["Table extraction", "Structured data", "Financial reports"],
+            "pros": [
+              "Excellent table extraction",
+              "Multiple extraction methods",
+              "High accuracy",
+              "Preserves table structure"
+            ],
+            "cons": [
+              "Requires Ghostscript",
+              "Slower processing",
+              "Only for tables",
+              "Complex setup"
+            ],
+            "useCases": [
+              "Table extraction",
+              "Structured data",
+              "Financial reports"
+            ],
             "documentation": "https://camelot-py.readthedocs.io/",
             "githubRepo": "https://github.com/camelot-dev/camelot",
             "readme": "# Camelot\n\nCamelot is a specialized Python library for extracting tables from PDF files with high accuracy.\n\n## Installation\n\n```bash\npip install camelot-py[cv]\n```\n\nNote: Requires Ghostscript to be installed separately.\n\n## Basic Usage\n\n```python\nimport camelot\n\n# Extract tables from PDF\ntables = camelot.read_pdf('document.pdf', pages='1')\n\n# Access first table\nfirst_table = tables[0]\n\n# Convert to DataFrame\nprint(first_table.df)\n\n# Export to CSV\nfirst_table.to_csv('table.csv')\n```\n\n## Features\n\n- Excellent table extraction accuracy\n- Multiple extraction methods (lattice, stream)\n- Preserves table structure\n- Export to various formats\n\n## Best For\n\n- Table extraction from PDFs\n- Structured data extraction\n- Financial reports and forms",
@@ -177,7 +294,10 @@
         ],
         "author": "Data Team",
         "version": "1.0.0",
-        "lastUpdated": "2025-01-15"
+        "lastUpdated": "2026-04-18T12:59:41.428193",
+        "cardImage": "data:image/png;base64,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",
+        "rankingDisabled": false,
+        "multipleTechnologies": true
       }
     ]
   },

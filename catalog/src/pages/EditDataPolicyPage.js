@@ -89,13 +89,13 @@ const EditDataPolicyPage = () => {
             setOriginalPolicy({ ...policyWithArrayOwner });
           } else {
 
-            setSnackbar({ open: true, message: `Policy with ID ${id} not found`, severity: 'error' });
+            setSnackbar({ open: true, message: `Standard with ID ${id} not found`, severity: 'error' });
             navigate('/policies');
           }
         }
       } catch (error) {
 
-        setSnackbar({ open: true, message: 'Error loading policy', severity: 'error' });
+        setSnackbar({ open: true, message: 'Error loading standard', severity: 'error' });
       } finally {
         setLoading(false);
       }
@@ -126,15 +126,15 @@ const EditDataPolicyPage = () => {
     try {
       if (isNewPolicy) {
         await createDataPolicy(editedPolicy);
-        setSnackbar({ open: true, message: 'Policy created successfully', severity: 'success' });
+        setSnackbar({ open: true, message: 'Standard created successfully', severity: 'success' });
       } else {
         await updateDataPolicy(editedPolicy.id, editedPolicy);
-        setSnackbar({ open: true, message: 'Policy updated successfully', severity: 'success' });
+        setSnackbar({ open: true, message: 'Standard updated successfully', severity: 'success' });
       }
       navigate('/policies');
     } catch (error) {
 
-      setSnackbar({ open: true, message: 'Error saving policy', severity: 'error' });
+      setSnackbar({ open: true, message: 'Error saving standard', severity: 'error' });
     } finally {
       setSaving(false);
     }
@@ -144,11 +144,11 @@ const EditDataPolicyPage = () => {
     setDeleting(true);
     try {
       await deleteDataPolicy(editedPolicy.id);
-      setSnackbar({ open: true, message: 'Policy deleted successfully', severity: 'success' });
+      setSnackbar({ open: true, message: 'Standard deleted successfully', severity: 'success' });
       navigate('/policies');
     } catch (error) {
 
-      setSnackbar({ open: true, message: 'Error deleting policy', severity: 'error' });
+      setSnackbar({ open: true, message: 'Error deleting standard', severity: 'error' });
     } finally {
       setDeleting(false);
       setShowDeleteModal(false);
@@ -192,16 +192,16 @@ const EditDataPolicyPage = () => {
               }
             }}
           >
-            Back to Policies
+            Back to Data Standards
           </Button>
         </Box>
         
         <Box>
           <Typography variant="h4" sx={{ color: currentTheme.text, fontWeight: 600, mb: 1 }}>
-            {isNewPolicy ? 'Create Data Policy' : 'Edit Data Policy'}
+            {isNewPolicy ? 'Create Data Standard' : 'Edit Data Standard'}
           </Typography>
           <Typography variant="body1" sx={{ color: currentTheme.textSecondary }}>
-            {isNewPolicy ? 'Define a new data governance policy' : 'Modify policy settings'}
+            {isNewPolicy ? 'Define a new data standard' : 'Modify standard details'}
           </Typography>
         </Box>
       </Box>
@@ -211,14 +211,14 @@ const EditDataPolicyPage = () => {
         <Grid item xs={12}>
           <Paper elevation={0} sx={{ p: 3, bgcolor: currentTheme.card, border: `1px solid ${currentTheme.border}`, borderRadius: 2, mb: 3 }}>
             <Typography variant="h6" sx={{ color: currentTheme.text, mb: 3 }}>
-              Policy Information
+              Standard details
             </Typography>
             
             <Grid container spacing={3}>
               <Grid item xs={12} sm={6}>
                 <TextField
                   fullWidth
-                  label="Policy Name *"
+                  label="Standard name *"
                   value={editedPolicy?.name || ''}
                   onChange={(e) => handleFieldChange('name', e.target.value)}
                   sx={{
@@ -285,7 +285,7 @@ const EditDataPolicyPage = () => {
                   selectedTeams={editedPolicy?.owner || []}
                   onTeamsChange={(teams) => handleFieldChange('owner', teams)}
                   currentTheme={currentTheme}
-                  label="Policy Owner"
+                  label="Standard owner"
                   maxSelections={1}
                   placeholder="No team selected"
                 />
@@ -297,7 +297,7 @@ const EditDataPolicyPage = () => {
                   label="External Link"
                   value={editedPolicy?.externalLink || ''}
                   onChange={(e) => handleFieldChange('externalLink', e.target.value)}
-                  placeholder="https://company.com/policies/..."
+                  placeholder="https://company.com/standards/..."
                   sx={{
                     '& .MuiInputLabel-root': { color: currentTheme.textSecondary },
                     '& .MuiInputLabel-root.Mui-focused': { color: currentTheme.primary },
@@ -383,7 +383,7 @@ const EditDataPolicyPage = () => {
                 }
               }}
             >
-              Delete Policy
+              Delete standard
             </Button>
           )}
         </Box>
@@ -419,7 +419,7 @@ const EditDataPolicyPage = () => {
               }
             }}
           >
-            {saving ? 'Saving...' : (isNewPolicy ? 'Create Policy' : 'Save Changes')}
+            {saving ? 'Saving...' : (isNewPolicy ? 'Create standard' : 'Save changes')}
           </Button>
         </Box>
       </Box>
@@ -429,13 +429,13 @@ const EditDataPolicyPage = () => {
         open={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
         onConfirm={handleDelete}
-        title="Delete Data Policy"
+        title="Delete data standard"
         itemName={editedPolicy?.name}
-        itemType="data policy"
+        itemType="data standard"
         theme={currentTheme}
       >
         <Typography variant="body2" sx={{ color: currentTheme.textSecondary }}>
-          This will permanently delete the policy. This action cannot be undone.
+          This will permanently delete the standard. This action cannot be undone.
         </Typography>
       </DeleteModal>
 

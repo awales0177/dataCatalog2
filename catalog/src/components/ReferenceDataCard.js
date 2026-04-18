@@ -12,16 +12,15 @@ import {
 } from '@mui/material';
 import {
   DataObject as DataObjectIcon,
-  Storage as StorageIcon,
   Link as LinkIcon,
-  Schedule as ScheduleIcon,
 } from '@mui/icons-material';
-import { formatDate } from '../utils/themeUtils';
 import { useNavigate } from 'react-router-dom';
 import { generateUsageData, getUsageColor } from '../data/graphData';
+import { datasetOriginMeta } from '../utils/referenceDataOrigin';
 
 const ReferenceDataCard = ({ item, currentTheme }) => {
   const navigate = useNavigate();
+  const originMeta = datasetOriginMeta(item);
 
   // Generate usage data using imported graph data
   const usageDataResult = generateUsageData(item);
@@ -67,18 +66,21 @@ const ReferenceDataCard = ({ item, currentTheme }) => {
               {item.domain && item.domain.length > 0 ? item.domain.join(' • ') : 'No domains assigned'}
             </Typography>
           </Box>
-          <Box
-            sx={{
-              p: 1,
-              borderRadius: 1,
-              bgcolor: alpha(currentTheme.primary, 0.1),
-              color: currentTheme.primary,
-              display: 'flex',
-              alignItems: 'center'
-            }}
-          >
-            <StorageIcon sx={{ fontSize: 20 }} />
-          </Box>
+          <Tooltip title={originMeta.tooltip}>
+            <Box
+              component="img"
+              src={originMeta.src}
+              alt=""
+              onClick={(e) => e.stopPropagation()}
+              sx={{
+                width: originMeta.origin === 'herd' ? 40 : 32,
+                height: originMeta.origin === 'herd' ? 40 : 32,
+                flexShrink: 0,
+                borderRadius: 1,
+                display: 'block',
+              }}
+            />
+          </Tooltip>
         </Box>
 
         <Typography variant="body2" sx={{ color: currentTheme.textSecondary, mb: 2 }}>

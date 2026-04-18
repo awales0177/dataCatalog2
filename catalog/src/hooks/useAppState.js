@@ -1,6 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
-import { fetchTheme, fetchItemCount, trackPageView, trackSiteVisit } from '../services/api';
+import {
+  fetchTheme,
+  fetchItemCount,
+  trackPageView,
+  trackSiteVisit,
+  fetchModels,
+} from '../services/api';
 import { menuItems } from '../constants/navigation';
 
 export const useAppState = () => {
@@ -43,6 +49,7 @@ export const useAppState = () => {
   // Map route to page name for tracking
   const getPageName = (path) => {
     if (path === '/') return 'home';
+    if (path === '/workspaces') return 'workspaces';
     if (path === '/models' || path.startsWith('/models/')) return 'models';
     if (path === '/agreements' || path.startsWith('/agreements/')) return 'agreements';
     if (path === '/domains') return 'domains';
@@ -50,10 +57,10 @@ export const useAppState = () => {
     if (path === '/toolkit' || path.startsWith('/toolkit/')) return 'toolkit';
     if (path === '/policies' || path.startsWith('/policies/')) return 'policies';
     if (path === '/reference' || path.startsWith('/reference/')) return 'reference';
-    if (path === '/pipelines' || path.startsWith('/pipelines/')) return 'pipelines';
-    if (path === '/data-products' || path.startsWith('/data-products/')) return 'data-products';
     if (path === '/glossary' || path.startsWith('/glossary/')) return 'glossary';
+    if (path === '/rules' || path.startsWith('/rules/')) return 'rules';
     if (path === '/statistics') return 'statistics';
+    if (path === '/settings') return 'settings';
     if (path === '/users') return 'users';
     return 'other';
   };
@@ -65,6 +72,8 @@ export const useAppState = () => {
     
     if (path === '/') {
       title = 'Home';
+    } else if (path === '/workspaces') {
+      title = 'Workspaces';
     } else if (path === '/models') {
       title = 'Data Models';
     } else if (path === '/agreements') {
@@ -74,17 +83,17 @@ export const useAppState = () => {
     } else if (path === '/applications') {
       title = 'Data Applications';
     } else if (path === '/toolkit') {
-      title = 'Developer Toolkit';
+      title = 'Toolkit';
     } else if (path.startsWith('/toolkit/function/')) {
       title = 'Function Details';
     } else if (path === '/policies') {
-      title = 'Data Policies';
+      title = 'Data Standards';
     } else if (path === '/reference') {
       title = 'Reference Data';
-    } else if (path === '/pipelines') {
-      title = 'Pipelines';
-    } else if (path === '/data-products') {
-      title = 'Data Products';
+    } else if (path === '/settings') {
+      title = 'Settings';
+    } else if (path === '/rules') {
+      title = 'Data Rules';
     } else if (path.startsWith('/models/')) {
       const shortName = path.split('/').pop().toUpperCase();
       title = shortName;
@@ -146,32 +155,39 @@ export const useAppState = () => {
 
   useEffect(() => {
     const loadData = async () => {
+      const fallbackTheme = {
+        light: {
+          background: '#f5f5f5',
+          text: '#000000',
+          primary: '#1976d2',
+          card: '#ffffff',
+          border: '#e0e0e0',
+          textSecondary: '#757575',
+        },
+        dark: {
+          background: '#121212',
+          text: '#ffffff',
+          primary: '#90caf9',
+          card: '#1e1e1e',
+          border: '#333333',
+          textSecondary: '#b0b0b0',
+        },
+      };
+      const themeTimeoutMs = 12_000;
       try {
-        const theme = await fetchTheme();
+        const theme = await Promise.race([
+          fetchTheme(),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('theme fetch timeout')), themeTimeoutMs),
+          ),
+        ]);
         setThemeData(theme);
-        safeSetMenuData({ items: menuItems }); // Use local menuItems directly
+        safeSetMenuData({ items: menuItems });
       } catch (error) {
         setError('Failed to load initial data');
-        // Set default values if API is down
-        setThemeData({ 
-          light: { 
-            background: '#f5f5f5', 
-            text: '#000000', 
-            primary: '#1976d2', 
-            card: '#ffffff', 
-            border: '#e0e0e0', 
-            textSecondary: '#757575' 
-          }, 
-          dark: { 
-            background: '#121212', 
-            text: '#ffffff', 
-            primary: '#90caf9', 
-            card: '#1e1e1e', 
-            border: '#333333', 
-            textSecondary: '#b0b0b0' 
-          } 
-        });
-        safeSetMenuData({ items: menuItems }); // Use local menuItems even if API fails
+        setThemeData(fallbackTheme);
+        safeSetMenuData({ items: menuItems });
+        console.warn('Theme load failed; using defaults:', error);
       } finally {
         setLoading(false);
       }
@@ -187,15 +203,13 @@ export const useAppState = () => {
       try {
         const itemsWithCounts = await Promise.allSettled(
           menuItems.map(async (item) => {
-            if (item.id === 'home') return item;
+            if (item.id === 'home' || item.id === 'workspaces' || item.id === 'settings') return item;
             try {
               let endpoint = item.id;
               if (item.id === 'agreements') {
                 endpoint = 'dataAgreements';
               } else if (item.id === 'models') {
                 endpoint = 'models';
-              } else if (item.id === 'data-products') {
-                endpoint = 'data-products';
               }
               const count = await fetchItemCount(endpoint);
               return { ...item, count };
@@ -231,16 +245,12 @@ export const useAppState = () => {
 
   const fetchDataModels = useCallback(async () => {
     try {
-      const response = await fetch('/api/data/models');
-      if (!response.ok) {
-        throw new Error('Failed to fetch data models');
-      }
-      const data = await response.json();
-      setDataModels(data);
-      setLoading(false);
+      const data = await fetchModels();
+      const models = data?.models ?? (Array.isArray(data) ? data : []);
+      setDataModels(models);
     } catch (err) {
-      setError(err.message);
-      setLoading(false);
+      setDataModels([]);
+      console.warn('Failed to load data models list:', err);
     }
   }, []);
 
@@ -275,6 +285,8 @@ export const useAppState = () => {
         (pathSegments.length === 3 && pathSegments[2] === 'edit') ||
         (pathSegments.length === 3 && pathSegments[1] === 'edit') ||
         (pathSegments.length === 3 && pathSegments[1] === 'function') ||
+        (pathSegments.length === 3 && pathSegments[1] === 'sop') ||
+        (pathSegments.length === 3 && pathSegments[1] === 'package') ||
         (pathSegments.length === 3 && pathSegments[1] === 'container') ||
         (pathSegments.length === 3 && pathSegments[1] === 'infrastructure') ||
         (pathSegments.length === 4 && pathSegments[1] === 'container' && pathSegments[3] === 'edit') ||

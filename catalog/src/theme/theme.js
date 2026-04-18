@@ -1,9 +1,16 @@
 import { createTheme } from '@mui/material';
 
+/** Monospace stack for code / readme tabs (Toolkit detail matches UUX dh). */
+export const fontStackMono =
+  'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, "Courier New", monospace';
+
+/** Sans stack (data models table / dh parity). */
+export const fontStackSans = '"Inter", "Helvetica", "Arial", sans-serif';
+
 // Create theme with Inter font
 export const theme = createTheme({
   typography: {
-    fontFamily: '"Inter", "Helvetica", "Arial", sans-serif',
+    fontFamily: fontStackSans,
     h1: {
       fontWeight: 600,
     },

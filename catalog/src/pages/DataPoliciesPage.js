@@ -58,7 +58,7 @@ const DataPoliciesPage = () => {
         setPolicies(data.policies || []);
         setError(null);
       } catch (err) {
-        setError('Failed to load policies');
+        setError('Failed to load data standards');
         // Handle error silently
       } finally {
         setLoading(false);
@@ -189,7 +189,7 @@ const DataPoliciesPage = () => {
             transition: 'opacity 0.2s ease-in-out',
           }}
         >
-          <Tooltip title="Edit Policy">
+          <Tooltip title="Edit standard">
             <IconButton
               size="small"
               onClick={(e) => {
@@ -320,7 +320,7 @@ const DataPoliciesPage = () => {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
         <Typography variant="h6" sx={{ color: currentTheme.text }}>
-          Loading policies...
+          Loading data standards...
         </Typography>
       </Box>
     );
@@ -341,10 +341,10 @@ const DataPoliciesPage = () => {
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
       <Typography variant="h4" sx={{ mb: 1, color: currentTheme.text }}>
-        Data Policies
+        Data Standards
       </Typography>
       <Typography variant="body1" sx={{ mb: 4, color: currentTheme.textSecondary }}>
-        Manage and monitor data governance policies including retention, quality, access control, and compliance requirements.
+        Manage and monitor data standards including retention, quality, access control, and compliance requirements.
       </Typography>
 
       {/* Search */}
@@ -352,7 +352,7 @@ const DataPoliciesPage = () => {
         <TextField
           fullWidth
           variant="outlined"
-          placeholder="Search policies by name, description, type, or tags..."
+          placeholder="Search standards by name, description, type, or tags..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           InputProps={{
@@ -384,7 +384,7 @@ const DataPoliciesPage = () => {
 
 
 
-      {/* Policies Grid */}
+      {/* Standards grid */}
       <Grid container spacing={3}>
         {filteredPolicies.map(policy => (
           <Grid item xs={12} sm={6} md={4} lg={3} key={policy.id}>
@@ -401,18 +401,18 @@ const DataPoliciesPage = () => {
         }}>
           <PolicyIcon sx={{ fontSize: 64, mb: 2, opacity: 0.5 }} />
           <Typography variant="h6" sx={{ mb: 1 }}>
-            No policies found
+            No data standards found
           </Typography>
           <Typography variant="body2">
-            {searchTerm ? 'Try adjusting your search terms' : 'Create your first policy to get started'}
+            {searchTerm ? 'Try adjusting your search terms' : 'Create your first standard to get started'}
           </Typography>
         </Box>
       )}
 
-      {/* Floating Action Button for creating new policies */}
+      {/* Floating action button for creating a new standard */}
       <Fab
         color="primary"
-        aria-label="add new policy"
+        aria-label="add new data standard"
         onClick={() => navigate('/policies/create')}
         sx={{
           position: 'fixed',

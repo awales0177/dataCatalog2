@@ -1803,7 +1803,7 @@ const EditAgreementPage = () => {
           <Grid item xs={12}>
             <FormControl fullWidth sx={{ mb: 2 }}>
               <InputLabel sx={{ color: currentTheme.textSecondary }}>
-                Data Policies
+                Data Standards
               </InputLabel>
               <Select
                 multiple
@@ -1816,7 +1816,7 @@ const EditAgreementPage = () => {
                     dataPolicies: selected
                   }));
                 }}
-                label="Data Policies"
+                label="Data Standards"
                 sx={{
                   color: currentTheme.text,
                   '& .MuiOutlinedInput-notchedOutline': { borderColor: currentTheme.border },
@@ -1872,7 +1872,7 @@ const EditAgreementPage = () => {
                   .length === 0 ? (
                     <MenuItem disabled>
                       <Typography sx={{ color: currentTheme.textSecondary, fontStyle: 'italic' }}>
-                        All available policies have been selected
+                        All available standards have been selected
                       </Typography>
                     </MenuItem>
                   ) : (

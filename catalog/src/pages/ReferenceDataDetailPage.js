@@ -37,6 +37,7 @@ import ApiIcon from '@mui/icons-material/Api';
 import StorageIcon from '@mui/icons-material/Storage';
 import referenceData from '../data/reference.json';
 import { formatDate } from '../utils/themeUtils';
+import { datasetOriginMeta } from '../utils/referenceDataOrigin';
 
 const ReferenceDataDetailPage = ({ currentTheme }) => {
   const { id } = useParams();
@@ -102,6 +103,8 @@ const ReferenceDataDetailPage = ({ currentTheme }) => {
 
   if (!item) return null;
 
+  const originMeta = datasetOriginMeta(item);
+
   return (
     <Box sx={{ p: 3, maxWidth: 1200, margin: '0 auto' }}>
       {/* Header */}
@@ -150,6 +153,30 @@ const ReferenceDataDetailPage = ({ currentTheme }) => {
               }} 
             />
           )}
+          <Tooltip title={originMeta.tooltip}>
+            <Chip
+              icon={
+                <Box
+                  component="img"
+                  src={originMeta.src}
+                  alt=""
+                  sx={{
+                    width: originMeta.origin === 'herd' ? 22 : 18,
+                    height: originMeta.origin === 'herd' ? 22 : 18,
+                    ml: 0.5,
+                  }}
+                />
+              }
+              label={originMeta.label}
+              sx={{
+                fontWeight: 700,
+                border: `1px solid ${alpha(currentTheme?.border || '#ccc', 0.8)}`,
+                bgcolor: alpha(currentTheme?.primary || '#000', 0.06),
+                color: currentTheme?.text,
+                '& .MuiChip-icon': { ml: '6px' },
+              }}
+            />
+          </Tooltip>
         </Box>
         <Tooltip title="Edit Reference Data">
           <IconButton

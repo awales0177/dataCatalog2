@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import {
   Box,
   CssBaseline,
@@ -15,21 +15,15 @@ import ProductAgreementsPage from './pages/ProductAgreementsPage';
 import DataDomainsPage from './pages/DataDomainsPage';
 import SplashPage from './pages/SplashPage';
 import HomePage from './pages/HomePage';
+import WorkspacesPage from './pages/WorkspacesPage';
 import ApplicationsPage from './pages/ApplicationsPage';
 import EditApplicationPage from './pages/EditApplicationPage';
 import ReferenceDataPage from './pages/ReferenceDataPage';
 import EditReferenceDataPage from './pages/EditReferenceDataPage';
-import PipelinesPage from './pages/PipelinesPage';
-import DataProductsPage from './pages/DataProductsPage';
-import PriorityQueuePage from './pages/PriorityQueuePage';
-import DataProductDetailPage from './pages/DataProductDetailPage';
-import DatasetDetail from './components/datasets/DatasetDetail';
 import DataModelDetailPage from './pages/DataModelDetailPage';
 import GlossaryPage from './pages/GlossaryPage';
 import EditGlossaryPage from './pages/EditGlossaryPage';
 import GlossaryMarkdownPage from './pages/GlossaryMarkdownPage';
-import DataProductMarkdownPage from './pages/DataProductMarkdownPage';
-import DatasetMarkdownPage from './pages/DatasetMarkdownPage';
 import ToolkitTechnologyMarkdownPage from './pages/ToolkitTechnologyMarkdownPage';
 import EditToolkitTechnologyPage from './pages/EditToolkitTechnologyPage';
 import EditToolkitPage from './pages/EditToolkitPage';
@@ -39,6 +33,7 @@ import EditAgreementPage from './pages/EditAgreementPage';
 import ReferenceDataDetailPage from './pages/ReferenceDataDetailPage';
 import ToolkitPage from './pages/ToolkitPage';
 import ToolkitFunctionDetailPage from './pages/ToolkitFunctionDetailPage';
+import ToolkitSopDetailPage from './pages/ToolkitSopDetailPage';
 import ToolkitDetailPage from './pages/ToolkitDetailPage';
 import ToolkitPackageDetailPage from './pages/ToolkitPackageDetailPage';
 import ToolkitContainerDetailPage from './pages/ToolkitContainerDetailPage';
@@ -54,6 +49,7 @@ import RolePage from './pages/RolePage';
 import UnauthorizedPage from './pages/UnauthorizedPage';
 import UserManagementPage from './pages/UserManagementPage';
 import StatisticsPage from './pages/StatisticsPage';
+import SettingsPage from './pages/SettingsPage';
 import RuleBuilderPage from './pages/RuleBuilderPage';
 import InfoSidebar from './components/InfoSidebar';
 import AppHeader from './components/AppHeader';
@@ -68,6 +64,8 @@ import { getRandomColor } from './utils/common';
 import { drawerWidth, collapsedDrawerWidth } from './constants/navigation';
 import { ThemeContext } from './contexts/ThemeContext';
 import { AuthProvider } from './contexts/AuthContext';
+import { WorkbenchModalsProvider } from './contexts/WorkbenchModalsContext';
+import { CatalogPreferencesProvider } from './contexts/CatalogPreferencesContext';
 
 function AppContent() {
   const {
@@ -126,6 +124,8 @@ function AppContent() {
 
     return (
     <ThemeContext.Provider value={{ currentTheme, darkMode, setDarkMode: () => {} }}>
+      <CatalogPreferencesProvider>
+      <WorkbenchModalsProvider currentTheme={currentTheme} darkMode={darkMode}>
       <Box sx={{ 
         display: 'flex', 
         flexDirection: 'column', 
@@ -245,6 +245,11 @@ function AppContent() {
                 <HomePage />
               </ProtectedRoute>
             } />
+            <Route path="/workspaces" element={
+              <ProtectedRoute>
+                <WorkspacesPage />
+              </ProtectedRoute>
+            } />
             <Route path="/models" element={
               <ProtectedRoute>
                 <DataModelsPage />
@@ -280,31 +285,11 @@ function AppContent() {
                 <ReferenceDataPage />
               </ProtectedRoute>
             } />
-            <Route path="/priority-queue" element={
-              <ProtectedRoute>
-                <PriorityQueuePage />
-              </ProtectedRoute>
-            } />
-            <Route path="/pipelines" element={
-              <ProtectedRoute>
-                <PipelinesPage />
-              </ProtectedRoute>
-            } />
-            <Route path="/pipelines/datasets/:id" element={
-              <ProtectedRoute>
-                <DatasetDetail />
-              </ProtectedRoute>
-            } />
-            <Route path="/data-products" element={
-              <ProtectedRoute>
-                <DataProductsPage />
-              </ProtectedRoute>
-            } />
-            <Route path="/data-products/:id" element={
-              <ProtectedRoute>
-                <DataProductDetailPage />
-              </ProtectedRoute>
-            } />
+            <Route path="/priority-queue" element={<ProtectedRoute><Navigate to="/" replace /></ProtectedRoute>} />
+            <Route path="/pipelines" element={<ProtectedRoute><Navigate to="/" replace /></ProtectedRoute>} />
+            <Route path="/pipelines/datasets/:id" element={<ProtectedRoute><Navigate to="/" replace /></ProtectedRoute>} />
+            <Route path="/data-products" element={<ProtectedRoute><Navigate to="/" replace /></ProtectedRoute>} />
+            <Route path="/data-products/:id" element={<ProtectedRoute><Navigate to="/" replace /></ProtectedRoute>} />
             <Route path="/glossary" element={
               <ProtectedRoute>
                 <GlossaryPage />
@@ -320,6 +305,11 @@ function AppContent() {
             <Route path="/statistics" element={
               <ProtectedRoute requiredRole="admin">
                 <StatisticsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/settings" element={
+              <ProtectedRoute>
+                <SettingsPage />
               </ProtectedRoute>
             } />
             
@@ -347,6 +337,11 @@ function AppContent() {
             <Route path="/toolkit/function/:functionId" element={
               <ProtectedRoute>
                 <ToolkitFunctionDetailPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/toolkit/sop/:sopId" element={
+              <ProtectedRoute>
+                <ToolkitSopDetailPage />
               </ProtectedRoute>
             } />
             <Route path="/toolkit/create" element={
@@ -449,16 +444,8 @@ function AppContent() {
                 <GlossaryMarkdownPage />
               </ProtectedRoute>
             } />
-            <Route path="/data-products/:id/markdown" element={
-              <ProtectedRoute>
-                <DataProductMarkdownPage />
-              </ProtectedRoute>
-            } />
-            <Route path="/datasets/:id/markdown" element={
-              <ProtectedRoute>
-                <DatasetMarkdownPage />
-              </ProtectedRoute>
-            } />
+            <Route path="/data-products/:id/markdown" element={<ProtectedRoute><Navigate to="/" replace /></ProtectedRoute>} />
+            <Route path="/datasets/:id/markdown" element={<ProtectedRoute><Navigate to="/" replace /></ProtectedRoute>} />
             <Route path="/toolkit/toolkit/:toolkitId/technology/:technologyId/readme/:readmeType" element={
               <ProtectedRoute requiredRole="editor">
                 <ToolkitTechnologyMarkdownPage />
@@ -587,6 +574,8 @@ function AppContent() {
           onClose={() => setSearchOpen(false)} 
         />
       </Box>
+      </WorkbenchModalsProvider>
+      </CatalogPreferencesProvider>
     </ThemeContext.Provider>
   );
 }

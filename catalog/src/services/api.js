@@ -1,30 +1,53 @@
 import cacheService from './cache';
 
-const determineApiUrl = async () => {
-  if (window.location.hostname === 'localhost') {
-    return 'http://localhost:8000/api';
-  }
-
-  // Try api.domainname first
-  const apiDomainUrl = `${window.location.protocol}//api.${window.location.hostname.replace(/^api\./, '')}`;
-  try {
-    const response = await fetch(apiDomainUrl);
-    if (response.status !== 200) {
-      throw new Error('API domain returned non-200 status');
-    }
-    return apiDomainUrl;
-  } catch (error) {
-    // API domain not available, fall back to domain/api
-  }
-
-  // Fall back to domainname/api
-  const fallbackUrl = `${window.location.origin}/api`;
-  return fallbackUrl;
+/** Explicit base from build env (no trailing slash), e.g. VITE_API_URL=https://api.example.com/api */
+const envApiBase = () => {
+  const raw = import.meta.env?.VITE_API_URL;
+  if (raw == null || String(raw).trim() === '') return null;
+  return String(raw).replace(/\/$/, '');
 };
 
-let API_URL = 'http://localhost:8000/api'; // Default value
-determineApiUrl().then(url => {
-  API_URL = url;
+/**
+ * API base path without trailing slash. In the browser, prefer same-origin `/api` so Vite `server.proxy`
+ * (or prod nginx) forwards to FastAPI — avoids CORS and wrong-port requests.
+ */
+const getSyncApiUrl = () => {
+  const fromEnv = envApiBase();
+  if (fromEnv) return fromEnv;
+  if (typeof window === 'undefined') return 'http://127.0.0.1:8000/api';
+  return '/api';
+};
+
+const determineApiUrl = async () => {
+  const fromEnv = envApiBase();
+  if (fromEnv) return fromEnv;
+  if (typeof window === 'undefined') return 'http://127.0.0.1:8000/api';
+
+  const h = window.location.hostname;
+  // Dedicated API host: routes in this repo are always under `/api/...`
+  const subRoot = `${window.location.protocol}//api.${h.replace(/^api\./, '')}`.replace(/\/$/, '');
+  const subWithApi = `${subRoot}/api`;
+  try {
+    const response = await fetch(`${subWithApi}/theme`, {
+      headers: { Accept: 'application/json' },
+    });
+    if (response.ok) {
+      const ct = response.headers.get('content-type') || '';
+      if (ct.includes('application/json')) return subWithApi;
+    }
+  } catch (error) {
+    // fall through to same-origin /api
+  }
+
+  return '/api';
+};
+
+let API_URL = getSyncApiUrl();
+determineApiUrl().then((url) => {
+  if (url !== API_URL) {
+    cacheService.clear();
+    API_URL = url;
+  }
 });
 
 const getAuthHeaders = () => {
@@ -35,6 +58,10 @@ const getAuthHeaders = () => {
 const fetchWithCache = async (endpoint, params = {}, options = {}) => {
   const { forceRefresh = false, ttl } = options;
   const cacheKey = cacheService.generateKey(endpoint, params);
+
+  if (endpoint === 'teams') {
+    return { data_teams: [] };
+  }
 
   // Return cached data if available and not forcing refresh
   if (!forceRefresh) {
@@ -71,6 +98,13 @@ const fetchWithCache = async (endpoint, params = {}, options = {}) => {
 
 export const fetchData = (endpoint, options = {}) => 
   fetchWithCache(endpoint, {}, options);
+
+/** Catalog datasets from GET /api/datasets (Postgres `catalog_datasets`), list shape for workbench modals. */
+export const fetchCatalogDatasets = async (options = {}) => {
+  const data = await fetchData('datasets', options);
+  const list = data?.datasets;
+  return Array.isArray(list) ? list : [];
+};
 
 export const fetchItemCount = async (endpoint, options = {}) => {
   try {
@@ -713,7 +747,7 @@ export const trackToolkitPackageClick = async (packageName) => {
   }
 };
 
-// Data Policy Management Functions
+// Data standards (API: /policies)
 export const createDataPolicy = async (policyData) => {
   try {
     const response = await fetch(`${API_URL}/policies`, {
@@ -957,6 +991,54 @@ export const importFunctionsFromLibrary = async (packageName, modulePath = null,
 };
 
 // Rules Management Functions
+/** Master list: all model rules (library + per-model), same shape as catalog `rules`. */
+export const getAllModelRules = async (options = {}) => {
+  try {
+    const cacheKey = cacheService.generateKey('rules', {});
+    if (!options.forceRefresh) {
+      const cached = cacheService.get(cacheKey);
+      if (cached) return cached;
+    }
+    const response = await fetch(`${API_URL}/rules`, { headers: { ...getAuthHeaders() } });
+    if (!response.ok) {
+      let errorMessage = `HTTP error! status: ${response.status}`;
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.detail || errorMessage;
+      } catch (e) {
+        errorMessage = response.statusText || errorMessage;
+      }
+      throw new Error(errorMessage);
+    }
+    const data = await response.json();
+    cacheService.set(cacheKey, data, options.ttl);
+    return data;
+  } catch (error) {
+    console.error('Error fetching all model rules:', error);
+    throw error;
+  }
+};
+
+/** Clone a rule onto a model — POST /rules/assign. */
+export const assignRuleToModel = async (libraryRuleId, modelShortName) => {
+  try {
+    const response = await fetch(`${API_URL}/rules/assign`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+      body: JSON.stringify({ libraryRuleId, modelShortName }),
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+    }
+    const result = await response.json();
+    cacheService.invalidateByPrefix('rules');
+    return result;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const getRulesForModel = async (modelShortName, options = {}) => {
   try {
     const response = await fetch(`${API_URL}/rules/${modelShortName}`, {
@@ -1258,6 +1340,59 @@ export const fetchPipelines = async (options = {}) => {
     console.error('Error fetching pipelines:', error);
     throw error;
   }
+};
+
+/** POST /api/feedback — optional backend; used by reference hub / catalog shell. */
+export const submitFeedback = async ({ userId, feedbackText }) => {
+  const response = await fetch(`${API_URL}/feedback`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders(),
+    },
+    body: JSON.stringify({
+      ...(userId ? { userId: String(userId) } : {}),
+      feedbackText: String(feedbackText ?? ''),
+    }),
+  });
+  let data = {};
+  try {
+    data = await response.json();
+  } catch {
+    /* non-JSON body */
+  }
+  if (!response.ok) {
+    let msg = data.detail ?? `HTTP ${response.status}`;
+    if (Array.isArray(msg)) {
+      msg = msg
+        .map((x) => (typeof x === 'string' ? x : x.msg || JSON.stringify(x)))
+        .join('; ');
+    }
+    throw new Error(typeof msg === 'string' ? msg : JSON.stringify(msg));
+  }
+  return data;
+};
+
+/**
+ * Natural language → SQL for Agora. Backend may omit /agora/nl-query; caller can fall back client-side.
+ */
+export const fetchNaturalLanguageQuery = async (question, tableName, schema, model) => {
+  const body = { question, tableName, schema };
+  if (model) body.model = model;
+  const response = await fetch(`${API_URL}/agora/nl-query`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders(),
+    },
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.detail || err.message || `HTTP ${response.status}`);
+  }
+  const data = await response.json();
+  return data.sql != null ? data : { sql: data };
 };
 
 // Export cache service for direct access when needed

@@ -2044,13 +2044,49 @@ async def create_toolkit_component(component: Dict[str, Any], current_user: dict
         
         # Determine component type and generate ID
         component_type = component.get('type', 'functions')
-        if component_type not in ['functions', 'containers', 'terraform']:
+        if component_type not in ['functions', 'containers', 'terraform', 'toolkits']:
             raise HTTPException(status_code=400, detail="Invalid component type")
         
         # Initialize component type array if it doesn't exist
         if component_type not in toolkit_data['toolkit']:
             toolkit_data['toolkit'][component_type] = []
         
+        # Workbench toolkits (technologies hub + optional cardImage as data URL)
+        if component_type == 'toolkits':
+            if not (component.get('name') or '').strip():
+                raise HTTPException(status_code=400, detail="Toolkit name is required")
+            new_id = str(uuid.uuid4())
+            technologies = component.get('technologies', [])
+            if not isinstance(technologies, list):
+                technologies = []
+            new_component = {
+                "id": new_id,
+                "name": component.get('name', ''),
+                "displayName": component.get('displayName', component.get('name', '')),
+                "description": component.get('description', ''),
+                "category": component.get('category', ''),
+                "tags": component.get('tags', []),
+                "technologies": technologies,
+                "rankingDisabled": bool(component.get('rankingDisabled', False)),
+                "multipleTechnologies": component.get('multipleTechnologies', True) is not False,
+                "author": component.get('author', ''),
+                "version": component.get('version', '1.0.0'),
+                "lastUpdated": datetime.now().isoformat(),
+                "clickCount": 0,
+            }
+            ci = component.get('cardImage')
+            if ci is not None and ci != "":
+                new_component["cardImage"] = ci
+            toolkit_data["toolkit"][component_type].append(new_component)
+            local_file_path = JSON_FILES["toolkit"]
+            write_json_file(local_file_path, toolkit_data)
+            logger.info(f"Toolkit workbench created in local file {local_file_path}: {new_id}")
+            return {
+                "message": "Toolkit component created successfully",
+                "id": new_id,
+                "component": new_component,
+            }
+
         # For functions, generate a UUID as the ID
         if component_type == 'functions':
             function_name = component.get('name', '')
@@ -2065,7 +2101,7 @@ async def create_toolkit_component(component: Dict[str, Any], current_user: dict
             # Generate UUID for function ID
             new_id = str(uuid.uuid4())
         else:
-            # Generate new ID based on type for other component types
+            # Generate new ID for containers / terraform only
             existing_ids = [item.get('id', '') for item in toolkit_data['toolkit'][component_type] if item.get('id')]
             if component_type == 'containers':
                 prefix = 'cont_'
@@ -2300,10 +2336,12 @@ async def update_toolkit_component(component_type: str, component_id: str, compo
     try:
         logger.info(f"Update request for toolkit component: {component_id}")
         
-        if component_type not in ['functions', 'containers', 'terraform']:
+        if component_type not in ['functions', 'containers', 'terraform', 'toolkits']:
             raise HTTPException(status_code=400, detail="Invalid component type")
         
         toolkit_data = read_json_file(JSON_FILES['toolkit'])
+        if 'toolkit' not in toolkit_data or component_type not in toolkit_data['toolkit']:
+            raise HTTPException(status_code=404, detail="Toolkit data not found")
         
         # Find the component to update
         comp_to_update = None
@@ -2317,6 +2355,32 @@ async def update_toolkit_component(component_type: str, component_id: str, compo
         
         # Update the component
         existing_component = toolkit_data['toolkit'][component_type][comp_to_update]
+
+        # Workbench toolkits: merge whitelisted fields (supports cardImage data URLs + technologies)
+        if component_type == 'toolkits':
+            updated_component = {**existing_component}
+            merge_keys = (
+                'name', 'displayName', 'description', 'category', 'tags', 'cardImage',
+                'rankingDisabled', 'multipleTechnologies', 'technologies', 'author', 'version',
+                'itemId', 'item_id',
+            )
+            for key in merge_keys:
+                if key in component:
+                    updated_component[key] = component[key]
+            updated_component['id'] = existing_component['id']
+            updated_component['lastUpdated'] = datetime.now().isoformat()
+            if 'clickCount' in existing_component:
+                updated_component['clickCount'] = existing_component['clickCount']
+            toolkit_data['toolkit'][component_type][comp_to_update] = updated_component
+            local_file_path = JSON_FILES['toolkit']
+            write_json_file(local_file_path, toolkit_data)
+            logger.info(f"Toolkit workbench updated: {component_id}")
+            return {
+                "message": "Toolkit component updated successfully",
+                "id": component_id,
+                "component": updated_component,
+            }
+
         updated_component = {
             **existing_component,
             "name": component.get('name', ''),
@@ -2513,10 +2577,12 @@ async def delete_toolkit_component(component_type: str, component_id: str, curre
     try:
         logger.info(f"Delete request for toolkit component: {component_id}")
         
-        if component_type not in ['functions', 'containers', 'terraform']:
+        if component_type not in ['functions', 'containers', 'terraform', 'toolkits']:
             raise HTTPException(status_code=400, detail="Invalid component type")
         
         toolkit_data = read_json_file(JSON_FILES['toolkit'])
+        if 'toolkit' not in toolkit_data or component_type not in toolkit_data['toolkit']:
+            raise HTTPException(status_code=404, detail="Toolkit data not found")
         
         comp_to_delete = None
         for comp in toolkit_data['toolkit'][component_type]:

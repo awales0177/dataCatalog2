@@ -4,6 +4,7 @@
       "id": "ref-001",
       "name": "Country Codes",
       "category": "Geography",
+      "dataOrigin": "machine",
       "description": "Standard ISO country codes and names",
       "lastUpdated": "2025-08-16 22:07:18",
       "version": "1.0.0",
@@ -206,7 +207,8 @@
     {
       "name": "Product agreement for product data",
       "category": "ask",
-      "description": "please ask before changing",
+      "dataOrigin": "herd",
+      "description": "Human-maintained HERD dataset. Coordinate changes with the data owner before editing.",
       "version": "1.0.2",
       "status": "active",
       "sensitivityLevel": "public",

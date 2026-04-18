@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useContext, useEffect, useRef, useMemo } from 'react';
 import {
   Box,
   Container,
@@ -32,20 +32,35 @@ import {
   ArrowBack as ArrowBackIcon,
   ArrowUpward as ArrowUpwardIcon,
   ArrowDownward as ArrowDownwardIcon,
-  ExpandMore as ExpandMoreIcon,
   Edit as EditIcon,
-  Code as CodeIcon,
   ThumbUp as ThumbUpIcon,
   ThumbDown as ThumbDownIcon,
-  Add as AddIcon,
 } from '@mui/icons-material';
 import { ThemeContext } from '../contexts/ThemeContext';
-import { fetchData } from '../services/api';
+import { fetchData, updateToolkitComponent } from '../services/api';
+import {
+  looksLikeDatabaseToolkitId,
+  normalizeTechnologyStatus,
+  technologyToApiPayload,
+} from '../utils/toolkitDbPayload';
+import {
+  findWorkbenchToolkit,
+  workbenchPath,
+  workbenchEditPath,
+  workbenchTechnologyReadmePath,
+} from '../utils/toolkitWorkbench';
 import { useAuth } from '../contexts/AuthContext';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkEmoji from 'remark-emoji';
 import MermaidDiagram from '../components/MermaidDiagram';
+import { TOOLKIT_EVAL_ICONS, TOOLKIT_LANGUAGE_OPTIONS } from '../data/toolkitEvalIcons';
+import {
+  getEffectiveMarkdownTabs,
+  mergeMarkdownTabStateFromTech,
+  tabLabelForTab,
+} from '../utils/toolkitMarkdownTabs';
+import { fontStackMono } from '../theme/theme';
 
 const ToolkitDetailPage = () => {
   const { currentTheme, darkMode } = useContext(ThemeContext);
@@ -60,6 +75,48 @@ const ToolkitDetailPage = () => {
   const [techReactions, setTechReactions] = useState({});
   const [readmeTab, setReadmeTab] = useState(0); // 0 = Installation, 1 = Usage, 2 = Requirements, 3 = Evaluation
   const [rankChangeDialog, setRankChangeDialog] = useState({ open: false, techId: null, direction: null, techName: null });
+  const [canonicalToolkitId, setCanonicalToolkitId] = useState(null);
+  const [dataTeams, setDataTeams] = useState([]);
+  const reactionSaveTimer = useRef(null);
+  const technologiesRef = useRef([]);
+  const rankingDisabled = Boolean(toolkitData?.rankingDisabled);
+  const multipleTechnologies = toolkitData?.multipleTechnologies !== false;
+
+  const readmeTabs = useMemo(
+    () => getEffectiveMarkdownTabs(selectedTech),
+    [selectedTech],
+  );
+  const readmeTabList = readmeTabs.markdownTabs;
+  const readmeTabSlots = readmeTabs.slots;
+
+  useEffect(() => {
+    if (!selectedTech) return;
+    const { slots } = getEffectiveMarkdownTabs(selectedTech);
+    if (slots.length === 0) {
+      setReadmeTab(0);
+      return;
+    }
+    setReadmeTab((prev) => (prev >= slots.length ? 0 : prev));
+  }, [selectedTech]);
+
+  useEffect(() => {
+    technologiesRef.current = technologies;
+  }, [technologies]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const response = await fetchData('teams');
+        if (!cancelled) setDataTeams(response.data_teams || []);
+      } catch (e) {
+        console.error('Error loading data teams:', e);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Helper function to convert icon filename to readable label
   const getIconLabel = (filename) => {
@@ -71,47 +128,44 @@ const ToolkitDetailPage = () => {
       .join(' ');
   };
 
-  // All available icons categorized by type
-  const allIcons = {
-    pros: [
-      { icon: '/eval_icons/low-cost.png', label: 'Low Cost' },
-      { icon: '/eval_icons/cncf.png', label: 'CNCF' },
-      { icon: '/eval_icons/containerized.png', label: 'Containerized' },
-      { icon: '/eval_icons/fast.png', label: 'Fast' },
-      { icon: '/eval_icons/modular.png', label: 'Modular' },
-      { icon: '/eval_icons/quality.png', label: 'High Quality' },
-      { icon: '/eval_icons/scalable.png', label: 'Scalable', invert: true, size: 'large' },
-      { icon: '/eval_icons/secure.png', label: 'Secure' },
-      { icon: '/eval_icons/supports-many.png', label: 'Supports Many' },
-      { icon: '/eval_icons/tested.png', label: 'Tested' },
-    ],
-    cons: [
-      { icon: '/eval_icons/high-cost.png', label: 'High Cost' },
-      { icon: '/eval_icons/not-scalable.png', label: 'Not Scalable',invert: true },
-      { icon: '/eval_icons/not-secure.png', label: 'Not Secure' },
-      { icon: '/eval_icons/poor-quality.png', label: 'Poor Quality' },
-      { icon: '/eval_icons/slow.webp', label: 'Slow' },
-      { icon: '/eval_icons/supports-one.png', label: 'Supports One' },
-    ],
+  const allIcons = TOOLKIT_EVAL_ICONS;
+
+  const mapLangLabels = (labels) => {
+    if (!Array.isArray(labels)) return [];
+    return labels
+      .map((label) => {
+        const lc = String(label).trim().toLowerCase();
+        return TOOLKIT_LANGUAGE_OPTIONS.find((o) => o.label.toLowerCase() === lc);
+      })
+      .filter(Boolean);
   };
 
-  // Get pros and cons icons for a specific technology
+  // Get pros, cons, and language icons for a specific technology
   const getTechIcons = (tech) => {
-    if (!tech) return { pros: [], cons: [] };
+    if (!tech) return { pros: [], cons: [], languages: [] };
 
-    // Check if technology has custom pros/cons icons stored
-    const storageKey = `toolkit_${toolkitId}_tech_${tech.id}_icons`;
-    const savedIcons = localStorage.getItem(storageKey);
-    
-    if (savedIcons) {
-      try {
-        const parsed = JSON.parse(savedIcons);
-        return {
-          pros: parsed.pros || [],
-          cons: parsed.cons || [],
-        };
-      } catch (e) {
-        console.error('Error parsing saved icons:', e);
+    const io = tech.iconOverrides;
+    if (io && typeof io === 'object') {
+      const resolveList = (savedList, options) => {
+        if (!Array.isArray(savedList)) return [];
+        const out = [];
+        for (const entry of savedList) {
+          const s = String(entry);
+          const hit = options.find(
+            (o) =>
+              o.icon === s ||
+              s.endsWith(o.icon.replace(/^.*\//, '')) ||
+              o.icon.endsWith(s.replace(/^.*\//, '')),
+          );
+          if (hit) out.push(hit);
+        }
+        return out.filter((icon, i, self) => icon && self.findIndex((x) => x?.icon === icon.icon) === i);
+      };
+      const prosIcons = resolveList(io.pros, allIcons.pros);
+      const consIcons = resolveList(io.cons, allIcons.cons);
+      const langIcons = mapLangLabels(tech.languages);
+      if (prosIcons.length || consIcons.length) {
+        return { pros: prosIcons, cons: consIcons, languages: langIcons };
       }
     }
 
@@ -232,10 +286,13 @@ const ToolkitDetailPage = () => {
     // Remove duplicates and nulls
     const uniquePros = prosIcons.filter((icon, index, self) => icon && self.findIndex(i => i?.icon === icon.icon) === index);
     const uniqueCons = consIcons.filter((icon, index, self) => icon && self.findIndex(i => i?.icon === icon.icon) === index);
+    const langIcons = mapLangLabels(tech.languages);
 
-    // If no icons found from pros/cons text, show default examples
+    // If no icons found from pros/cons text, show default examples (unless languages are set)
     if (uniquePros.length === 0 && uniqueCons.length === 0) {
-      // Default examples - show all available icons
+      if (langIcons.length > 0) {
+        return { pros: [], cons: [], languages: langIcons };
+      }
       return {
         pros: [
           allIcons.pros.find(i => i.label === 'Low Cost'),
@@ -257,12 +314,14 @@ const ToolkitDetailPage = () => {
           allIcons.cons.find(i => i.label === 'Slow'),
           allIcons.cons.find(i => i.label === 'Supports One'),
         ].filter(Boolean),
+        languages: [],
       };
     }
 
     return {
       pros: uniquePros,
       cons: uniqueCons,
+      languages: langIcons,
     };
   };
 
@@ -271,66 +330,44 @@ const ToolkitDetailPage = () => {
       try {
         const data = await fetchData('toolkit');
         const toolkits = data.toolkit?.toolkits || [];
-        const foundToolkit = toolkits.find(t => t.id === toolkitId);
-        
+        const resolved = findWorkbenchToolkit(toolkits, toolkitId);
+        if (resolved && resolved.canonicalId !== String(toolkitId)) {
+          navigate(workbenchPath(resolved.canonicalId), { replace: true });
+          return;
+        }
+        const foundToolkit = resolved?.toolkit ?? null;
+
         if (foundToolkit) {
           setToolkitData(foundToolkit);
-          // Load technologies and merge with localStorage data
+          setCanonicalToolkitId(resolved.canonicalId);
           const baseTechs = foundToolkit.technologies || [];
-          const mergedTechs = baseTechs.map(tech => {
-            // Check if there's a saved version in localStorage
-            const storageKey = `toolkit_${toolkitId}_tech_${tech.id}`;
-            const savedTech = localStorage.getItem(storageKey);
-            if (savedTech) {
-              const savedTechData = JSON.parse(savedTech);
-              // Merge with base tech, prioritizing saved data
-              return { ...tech, ...savedTechData };
-            }
-            return tech;
-          });
-          
-          // Also check for newly created technologies in localStorage
-          const allStorageKeys = Object.keys(localStorage);
-          const newTechKeys = allStorageKeys.filter(key => 
-            key.startsWith(`toolkit_${toolkitId}_tech_`) && 
-            !key.includes('_evaluation') && 
-            !key.includes('_installation') && 
-            !key.includes('_usage')
-          );
-          
-          newTechKeys.forEach(key => {
-            const techId = key.replace(`toolkit_${toolkitId}_tech_`, '');
-            if (!mergedTechs.find(t => t.id === techId)) {
-              const newTech = JSON.parse(localStorage.getItem(key));
-              mergedTechs.push(newTech);
-            }
-          });
-          
-          // Sort technologies by rank
-          const sortedTechs = mergedTechs.sort((a, b) => a.rank - b.rank);
+          const sortedTechs = [...baseTechs]
+            .map((t) => ({
+              ...t,
+              ...mergeMarkdownTabStateFromTech(t),
+              status: normalizeTechnologyStatus(t?.status),
+              languages: Array.isArray(t.languages)
+                ? t.languages
+                : Array.isArray(t.details?.languages)
+                  ? [...t.details.languages]
+                  : [],
+            }))
+            .sort((a, b) => a.rank - b.rank);
           setTechnologies(sortedTechs);
-          // Set first technology as selected by default
           if (sortedTechs.length > 0) {
             setSelectedTech(sortedTechs[0]);
-            setReadmeTab(0); // Reset to first tab when selecting new tech
+            setReadmeTab(0);
           }
-          // Initialize reactions from localStorage
-          const savedReactions = localStorage.getItem(`toolkit-reactions-${toolkitId}`);
-          if (savedReactions) {
-            setTechReactions(JSON.parse(savedReactions));
-          } else {
-            // Initialize from data
-            const initialReactions = {};
-            sortedTechs.forEach(tech => {
-              initialReactions[tech.id] = {
-                likes: tech.likes || 0,
-                dislikes: tech.dislikes || 0,
-                userLiked: false,
-                userDisliked: false,
-              };
-            });
-            setTechReactions(initialReactions);
-          }
+          const initialReactions = {};
+          sortedTechs.forEach((tech) => {
+            initialReactions[tech.id] = {
+              likes: tech.likes || 0,
+              dislikes: tech.dislikes || 0,
+              userLiked: false,
+              userDisliked: false,
+            };
+          });
+          setTechReactions(initialReactions);
         } else {
           setError('Toolkit not found');
         }
@@ -344,33 +381,60 @@ const ToolkitDetailPage = () => {
     if (toolkitId) {
       loadToolkitData();
     }
-  }, [toolkitId]);
+  }, [toolkitId, navigate]);
+
+  const isEvaluatedTech = (tech) =>
+    normalizeTechnologyStatus(tech?.status) === 'evaluated';
+
+  const isDevelopmentTech = (tech) =>
+    normalizeTechnologyStatus(tech?.status) === 'development';
+
+  const maintainerDisplayForTech = (tech) => {
+    if (!tech) return 'N/A';
+    const mid =
+      tech.maintainerTeamId != null && String(tech.maintainerTeamId).trim() !== ''
+        ? String(tech.maintainerTeamId).trim()
+        : '';
+    if (mid) {
+      const team = dataTeams.find((t) => String(t.id) === mid);
+      if (team?.name) return team.name;
+    }
+    const legacy = tech.maintainer || tech.author;
+    if (legacy) return legacy;
+    if (mid) return mid;
+    return 'N/A';
+  };
 
   const handleRankChange = (techId, direction) => {
-    if (!canEdit()) return;
-    
-    // Helper function to determine if tech is evaluated
-    const isEvaluated = (tech) => {
-      const storageKey = `toolkit_${toolkitId}_tech_${tech.id}_evaluation`;
-      const hasEvaluation = localStorage.getItem(storageKey) || tech.evaluation;
-      return hasEvaluation || tech.status === 'evaluated' || tech.status === 'evaluation';
-    };
+    if (rankingDisabled || !canEdit()) return;
 
-    // Create globally sorted list: Production first, then Evaluated
-    const productionTechs = technologies.filter(tech => !isEvaluated(tech)).sort((a, b) => a.rank - b.rank);
-    const evaluatedTechs = technologies.filter(isEvaluated).sort((a, b) => a.rank - b.rank);
-    const globalSortedTechs = [...productionTechs, ...evaluatedTechs];
+    const nonEvaluatedTechs = technologies
+      .filter((tech) => !isEvaluatedTech(tech))
+      .sort((a, b) => a.rank - b.rank);
+    const evaluatedTechs = technologies
+      .filter(isEvaluatedTech)
+      .sort((a, b) => a.rank - b.rank);
+    const globalSortedTechs = [...nonEvaluatedTechs, ...evaluatedTechs];
 
-    const tech = globalSortedTechs.find(t => t.id === techId);
+    const tech = globalSortedTechs.find((t) => t.id === techId);
     if (!tech) return;
 
-    const currentIndex = globalSortedTechs.findIndex(t => t.id === techId);
+    const currentIndex = globalSortedTechs.findIndex((t) => t.id === techId);
     if (currentIndex === -1) return;
 
-    const newIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
-    if (newIndex < 0 || newIndex >= globalSortedTechs.length) return;
+    const nonEvalLen = nonEvaluatedTechs.length;
+    let newIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+    if (
+      direction === 'down' &&
+      evaluatedTechs.length === 0 &&
+      nonEvalLen > 0 &&
+      currentIndex === nonEvalLen - 1
+    ) {
+      newIndex = nonEvalLen;
+    }
+    if (newIndex < 0) return;
+    if (newIndex > globalSortedTechs.length) return;
 
-    // Show confirmation dialog
     setRankChangeDialog({
       open: true,
       techId,
@@ -381,61 +445,67 @@ const ToolkitDetailPage = () => {
     });
   };
 
-  const confirmRankChange = () => {
-    const { techId, direction, currentIndex, newIndex } = rankChangeDialog;
+  const confirmRankChange = async () => {
+    const { techId, currentIndex, newIndex } = rankChangeDialog;
 
-    // Helper function to determine if tech is evaluated
-    const isEvaluated = (tech) => {
-      const storageKey = `toolkit_${toolkitId}_tech_${tech.id}_evaluation`;
-      const hasEvaluation = localStorage.getItem(storageKey) || tech.evaluation;
-      return hasEvaluation || tech.status === 'evaluated' || tech.status === 'evaluation';
-    };
+    const nonEvaluatedTechs = technologies
+      .filter((t) => !isEvaluatedTech(t))
+      .sort((a, b) => a.rank - b.rank);
+    const evaluatedTechs = technologies
+      .filter(isEvaluatedTech)
+      .sort((a, b) => a.rank - b.rank);
+    const globalSortedTechs = [...nonEvaluatedTechs, ...evaluatedTechs];
 
-    // Create globally sorted list: Production first, then Evaluated
-    const productionTechs = technologies.filter(tech => !isEvaluated(tech)).sort((a, b) => a.rank - b.rank);
-    const evaluatedTechs = technologies.filter(isEvaluated).sort((a, b) => a.rank - b.rank);
-    const globalSortedTechs = [...productionTechs, ...evaluatedTechs];
+    const nonEvaluatedLen = nonEvaluatedTechs.length;
 
-    const tech = globalSortedTechs[currentIndex];
-    const targetTech = globalSortedTechs[newIndex];
-    
-    // Check if we're crossing the boundary
-    const wasInProduction = currentIndex < productionTechs.length;
-    const willBeInProduction = newIndex < productionTechs.length;
-    const crossingBoundary = wasInProduction !== willBeInProduction;
-
-    // Move in global list
     const newGlobalTechs = [...globalSortedTechs];
     const [moved] = newGlobalTechs.splice(currentIndex, 1);
-    newGlobalTechs.splice(newIndex, 0, moved);
+    if (newIndex >= newGlobalTechs.length) {
+      newGlobalTechs.push(moved);
+    } else {
+      newGlobalTechs.splice(newIndex, 0, moved);
+    }
 
-    // If crossing boundary, update evaluation status
+    const wasInProduction = currentIndex < nonEvaluatedLen;
+    const willBeInProduction = newIndex < nonEvaluatedLen;
+    const crossingBoundary = wasInProduction !== willBeInProduction;
+
     if (crossingBoundary) {
       if (willBeInProduction) {
-        // Moving to Production - remove evaluation
-        const storageKey = `toolkit_${toolkitId}_tech_${techId}_evaluation`;
-        localStorage.removeItem(storageKey);
         moved.evaluation = null;
         moved.status = 'production';
       } else {
-        // Moving to Evaluated - add evaluation if it doesn't exist
-        const storageKey = `toolkit_${toolkitId}_tech_${techId}_evaluation`;
-        if (!localStorage.getItem(storageKey) && !moved.evaluation) {
-          const defaultEvaluation = `# Evaluation for ${moved.name}\n\nThis technology has been evaluated.`;
-          localStorage.setItem(storageKey, defaultEvaluation);
-          moved.evaluation = defaultEvaluation;
+        if (!moved.evaluation) {
+          moved.evaluation = `# Evaluation for ${moved.name}\n\nThis technology has been evaluated.`;
         }
         moved.status = 'evaluated';
       }
     }
 
-    // Update ranks globally (1 to N)
-    newGlobalTechs.forEach((tech, index) => {
-      tech.rank = index + 1;
+    newGlobalTechs.forEach((t, index) => {
+      t.rank = index + 1;
     });
 
     setTechnologies(newGlobalTechs);
     setRankChangeDialog({ open: false, techId: null, direction: null, techName: null });
+
+    const cid = canonicalToolkitId;
+    if (!looksLikeDatabaseToolkitId(cid)) return;
+    try {
+      await updateToolkitComponent('toolkits', cid, {
+        ...(typeof toolkitData.rankingDisabled === 'boolean'
+          ? { rankingDisabled: toolkitData.rankingDisabled }
+          : {}),
+        ...(typeof toolkitData.multipleTechnologies === 'boolean'
+          ? { multipleTechnologies: toolkitData.multipleTechnologies }
+          : {}),
+        technologies: newGlobalTechs.map(technologyToApiPayload),
+      });
+      await fetchData('toolkit', { forceRefresh: true });
+    } catch (e) {
+      console.error('Failed to save technology order', e);
+      setError(e.message || 'Failed to save rank change');
+    }
   };
 
   const cancelRankChange = () => {
@@ -477,7 +547,35 @@ const ToolkitDetailPage = () => {
     }
 
     setTechReactions(reactions);
-    localStorage.setItem(`toolkit-reactions-${toolkitId}`, JSON.stringify(reactions));
+
+    const cid = canonicalToolkitId;
+    if (!looksLikeDatabaseToolkitId(cid)) return;
+    if (reactionSaveTimer.current) clearTimeout(reactionSaveTimer.current);
+    reactionSaveTimer.current = setTimeout(async () => {
+      try {
+        const techs = technologiesRef.current;
+        const mergedTechs = techs.map((t) => {
+          const r = reactions[t.id];
+          return {
+            ...t,
+            likes: r ? r.likes : t.likes || 0,
+            dislikes: r ? r.dislikes : t.dislikes || 0,
+          };
+        });
+        await updateToolkitComponent('toolkits', cid, {
+          ...(typeof toolkitData.rankingDisabled === 'boolean'
+            ? { rankingDisabled: toolkitData.rankingDisabled }
+            : {}),
+          ...(typeof toolkitData.multipleTechnologies === 'boolean'
+            ? { multipleTechnologies: toolkitData.multipleTechnologies }
+            : {}),
+          technologies: mergedTechs.map(technologyToApiPayload),
+        });
+        await fetchData('toolkit', { forceRefresh: true });
+      } catch (e) {
+        console.error('Failed to save reactions', e);
+      }
+    }, 450);
   };
 
 
@@ -521,49 +619,59 @@ const ToolkitDetailPage = () => {
         gap: 2,
       }}>
       {/* Header */}
-      <Box sx={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 2 }}>
-        <IconButton
-          onClick={() => navigate('/toolkit')}
-          sx={{
-            color: currentTheme.textSecondary,
-            '&:hover': {
-              color: currentTheme.primary,
-            },
-          }}
-        >
-          <ArrowBackIcon />
-        </IconButton>
-        <Box sx={{ flex: 1 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-            <Typography variant="h4" sx={{ color: currentTheme.text }}>
+      <Box
+        sx={{
+          flexShrink: 0,
+          display: 'flex',
+          alignItems: 'flex-start',
+          justifyContent: 'space-between',
+          gap: 2,
+          flexWrap: 'wrap',
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, minWidth: 0 }}>
+          <IconButton
+            onClick={() => navigate('/toolkit')}
+            sx={{
+              color: currentTheme.textSecondary,
+              '&:hover': {
+                color: currentTheme.primary,
+              },
+            }}
+          >
+            <ArrowBackIcon />
+          </IconButton>
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography variant="h4" sx={{ color: currentTheme.text, mb: 0.5 }}>
               {toolkitData.displayName || toolkitData.name}
             </Typography>
-            {canEdit() && (
-              <Tooltip title="Edit Toolkit">
-                <IconButton
-                  onClick={() => navigate(`/toolkit/${toolkitId}/edit`)}
-                  size="small"
-                  sx={{ 
-                    color: currentTheme.textSecondary,
-                    '&:hover': {
-                      color: currentTheme.primary,
-                    },
-                  }}
-                >
-                  <EditIcon />
-                </IconButton>
-              </Tooltip>
-            )}
+            <Typography variant="body2" sx={{ color: currentTheme.textSecondary }}>
+              {toolkitData.description}
+            </Typography>
           </Box>
-          <Typography variant="body2" sx={{ color: currentTheme.textSecondary }}>
-            {toolkitData.description}
-          </Typography>
         </Box>
+        {canEdit() && (
+          <Tooltip title="Edit toolkit">
+            <IconButton
+              onClick={() => navigate(workbenchEditPath(toolkitId))}
+              sx={{
+                color: currentTheme.primary,
+                bgcolor: alpha(currentTheme.primary, 0.1),
+                '&:hover': {
+                  bgcolor: alpha(currentTheme.primary, 0.2),
+                },
+                border: `1px solid ${alpha(currentTheme.primary, 0.3)}`,
+              }}
+            >
+              <EditIcon />
+            </IconButton>
+          </Tooltip>
+        )}
       </Box>
 
-      {/* Two Column Layout */}
+      {/* Two Column Layout (single-technology workbenches: no technologies sidebar) */}
       <Grid container spacing={2} sx={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
-        {/* Left Pane: Technologies List */}
+        {multipleTechnologies ? (
         <Grid item xs={12} md={5} sx={{ 
           display: 'flex',
           flexDirection: 'column',
@@ -577,41 +685,19 @@ const ToolkitDetailPage = () => {
               display: 'flex',
               flexDirection: 'column',
               borderRadius: 3,
-              bgcolor: currentTheme.card,
-              border: `1px solid ${currentTheme.border}`,
+              bgcolor: currentTheme.darkMode ? '#1E1E1E' : currentTheme.card,
+              border: `1px solid ${currentTheme.darkMode ? 'rgba(255, 255, 255, 0.1)' : currentTheme.border}`,
               boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
               overflow: 'hidden',
             }}
           >
             <Box sx={{ p: 2, borderBottom: `1px solid ${currentTheme.border}`, flexShrink: 0 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
-                <Box>
-                  <Typography variant="h6" sx={{ color: currentTheme.text, fontWeight: 600 }}>
-                    Technologies ({technologies.length})
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: currentTheme.textSecondary, mt: 0.5 }}>
-                    Ranked by effectiveness and suitability
-                  </Typography>
-                </Box>
-                {canEdit() && (
-                  <Tooltip title="Add Technology">
-                    <IconButton
-                      size="small"
-                      onClick={() => navigate(`/toolkit/toolkit/${toolkitId}/technology/create`)}
-                      sx={{
-                        color: currentTheme.primary,
-                        bgcolor: alpha(currentTheme.primary, 0.1),
-                        '&:hover': {
-                          bgcolor: alpha(currentTheme.primary, 0.2),
-                        },
-                        border: `1px solid ${alpha(currentTheme.primary, 0.3)}`,
-                      }}
-                    >
-                      <AddIcon />
-                    </IconButton>
-                  </Tooltip>
-                )}
-              </Box>
+              <Typography variant="h6" sx={{ color: currentTheme.text, fontWeight: 600 }}>
+                Technologies ({technologies.length})
+              </Typography>
+              <Typography variant="body2" sx={{ color: currentTheme.textSecondary, mt: 0.5 }}>
+                Development and production first (by rank); evaluated below. Edit the workbench to add technologies.
+              </Typography>
             </Box>
             
             <Box sx={{ flex: 1, overflowY: 'auto', p: 1 }}>
@@ -621,17 +707,16 @@ const ToolkitDetailPage = () => {
                 </Typography>
               ) : (
                 (() => {
-                  // Helper function to determine if tech is evaluated or production
-                  const isEvaluated = (tech) => {
-                    const storageKey = `toolkit_${toolkitId}_tech_${tech.id}_evaluation`;
-                    const hasEvaluation = localStorage.getItem(storageKey) || tech.evaluation;
-                    return hasEvaluation || tech.status === 'evaluated' || tech.status === 'evaluation';
-                  };
+                  const nonEvaluatedTechs = technologies
+                    .filter((tech) => !isEvaluatedTech(tech))
+                    .sort((a, b) => a.rank - b.rank);
+                  const evaluatedTechs = technologies
+                    .filter(isEvaluatedTech)
+                    .sort((a, b) => a.rank - b.rank);
+                  const globalSortedTechs = [...nonEvaluatedTechs, ...evaluatedTechs];
 
-                  // Create globally sorted list: Production first, then Evaluated
-                  const productionTechs = technologies.filter(tech => !isEvaluated(tech)).sort((a, b) => a.rank - b.rank);
-                  const evaluatedTechs = technologies.filter(isEvaluated).sort((a, b) => a.rank - b.rank);
-                  const globalSortedTechs = [...productionTechs, ...evaluatedTechs];
+                  const developmentTechs = nonEvaluatedTechs.filter(isDevelopmentTech);
+                  const productionTechs = nonEvaluatedTechs.filter((t) => !isDevelopmentTech(t));
 
                   const renderTechList = (techList, sectionTitle, sectionColor) => {
                     if (techList.length === 0) return null;
@@ -653,7 +738,12 @@ const ToolkitDetailPage = () => {
                         </Typography>
                 <List sx={{ p: 0 }}>
                           {techList.map((tech, index) => {
-                            const globalIndex = globalSortedTechs.findIndex(t => t.id === tech.id);
+                            const globalIndex = globalSortedTechs.findIndex((t) => t.id === tech.id);
+                            const canMoveDown =
+                              globalIndex < globalSortedTechs.length - 1 ||
+                              (evaluatedTechs.length === 0 &&
+                                globalIndex === nonEvaluatedTechs.length - 1 &&
+                                nonEvaluatedTechs.length > 0);
                             return (
                     <React.Fragment key={tech.id}>
                       <ListItem
@@ -699,7 +789,11 @@ const ToolkitDetailPage = () => {
                               fontSize: '0.875rem',
                             }}
                           >
-                            #{tech.rank}
+                            {rankingDisabled
+                              ? String(tech.name || '?')
+                                  .slice(0, 1)
+                                  .toUpperCase()
+                              : `#${tech.rank}`}
                           </Box>
                         </ListItemIcon>
                         <ListItemText
@@ -758,7 +852,7 @@ const ToolkitDetailPage = () => {
                             </Typography>
                           }
                         />
-                        {canEdit() && (
+                        {canEdit() && !rankingDisabled && (
                           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25, ml: 1 }}>
                             <IconButton
                               size="small"
@@ -782,7 +876,7 @@ const ToolkitDetailPage = () => {
                                 e.stopPropagation();
                                 handleRankChange(tech.id, 'down');
                               }}
-                                        disabled={globalIndex === globalSortedTechs.length - 1}
+                              disabled={!canMoveDown}
                               sx={{
                                 color: currentTheme.textSecondary,
                                 '&:hover': { color: currentTheme.primary },
@@ -808,7 +902,8 @@ const ToolkitDetailPage = () => {
 
                   return (
                     <>
-                      {renderTechList(productionTechs, 'Production', '#2196f3')}
+                      {renderTechList(developmentTechs, 'Development', '#ff9800')}
+                      {renderTechList(productionTechs, 'Production', currentTheme.primary)}
                       {renderTechList(evaluatedTechs, 'Evaluated', '#4caf50')}
                     </>
                   );
@@ -817,9 +912,10 @@ const ToolkitDetailPage = () => {
             </Box>
           </Paper>
         </Grid>
+        ) : null}
 
         {/* Right Pane: Selected Technology Details */}
-        <Grid item xs={12} md={7} sx={{ 
+        <Grid item xs={12} md={multipleTechnologies ? 7 : 12} sx={{ 
           display: 'flex',
           flexDirection: 'column',
           minHeight: 0,
@@ -832,8 +928,8 @@ const ToolkitDetailPage = () => {
               display: 'flex',
               flexDirection: 'column',
               borderRadius: 3,
-              bgcolor: currentTheme.card,
-              border: `1px solid ${currentTheme.border}`,
+              bgcolor: currentTheme.darkMode ? '#1E1E1E' : currentTheme.card,
+              border: `1px solid ${currentTheme.darkMode ? 'rgba(255, 255, 255, 0.1)' : currentTheme.border}`,
               boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
               overflow: 'hidden',
             }}
@@ -881,7 +977,7 @@ const ToolkitDetailPage = () => {
                                         width: 40,
                                         height: 40,
                                         borderRadius: 1,
-                                        bgcolor: currentTheme.card,
+                                        bgcolor: currentTheme.darkMode ? '#1E1E1E' : currentTheme.card,
                                         p: 0.5,
                                         border: `1px solid ${currentTheme.border}`,
                                         display: 'flex',
@@ -928,7 +1024,7 @@ const ToolkitDetailPage = () => {
 
                           {/* Cons Row */}
                           {techIcons.cons.length > 0 && (
-                            <Box>
+                            <Box sx={{ mb: techIcons.languages.length > 0 ? 1.5 : 0 }}>
                               <Typography variant="caption" sx={{ color: currentTheme.textSecondary, mb: 0.5, display: 'block', fontWeight: 700 }}>
                                 Cons
                               </Typography>
@@ -948,7 +1044,7 @@ const ToolkitDetailPage = () => {
                                         width: 40,
                                         height: 40,
                                         borderRadius: 1,
-                                        bgcolor: currentTheme.card,
+                                        bgcolor: currentTheme.darkMode ? '#1E1E1E' : currentTheme.card,
                                         p: 0.5,
                                         border: `1px solid ${currentTheme.border}`,
                                         display: 'flex',
@@ -973,6 +1069,72 @@ const ToolkitDetailPage = () => {
                                         }}
                                         onError={(e) => {
                                           // Hide if image doesn't load
+                                          e.target.style.display = 'none';
+                                        }}
+                                      />
+                                    </Box>
+                                    <Typography 
+                                      variant="caption" 
+                                      sx={{ 
+                                        color: currentTheme.textSecondary,
+                                        fontSize: '0.65rem',
+                                        textAlign: 'center',
+                                      }}
+                                    >
+                                      {iconData.label}
+                                    </Typography>
+                                  </Box>
+                                ))}
+                              </Box>
+                            </Box>
+                          )}
+
+                          {/* Languages row */}
+                          {techIcons.languages.length > 0 && (
+                            <Box>
+                              <Typography variant="caption" sx={{ color: currentTheme.textSecondary, mb: 0.5, display: 'block', fontWeight: 700 }}>
+                                Languages
+                              </Typography>
+                              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                                {techIcons.languages.map((iconData, iconIndex) => (
+                                  <Box
+                                    key={`lang-${iconIndex}-${iconData.label}`}
+                                    sx={{
+                                      display: 'flex',
+                                      flexDirection: 'column',
+                                      alignItems: 'center',
+                                      gap: 0.5,
+                                    }}
+                                  >
+                                    <Box
+                                      sx={{
+                                        width: 40,
+                                        height: 40,
+                                        borderRadius: 1,
+                                        bgcolor: currentTheme.darkMode ? '#1E1E1E' : currentTheme.card,
+                                        p: 0.5,
+                                        border: `1px solid ${currentTheme.border}`,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        transition: 'all 0.2s ease',
+                                        '&:hover': {
+                                          transform: 'scale(1.1)',
+                                          boxShadow: `0 2px 8px ${currentTheme.shadow}`,
+                                        },
+                                      }}
+                                    >
+                                      <Box
+                                        component="img"
+                                        src={iconData.icon}
+                                        alt={iconData.label}
+                                        sx={{
+                                          width: iconData.size === 'large' ? 50 : '100%',
+                                          height: iconData.size === 'large' ? 50 : '100%',
+                                          objectFit: 'contain',
+                                          filter: iconData.invert && darkMode ? 'invert(1)' : 'none',
+                                        }}
+                                        onError={(e) => {
                                           e.target.style.display = 'none';
                                         }}
                                       />
@@ -1020,7 +1182,7 @@ const ToolkitDetailPage = () => {
                             Maintainer:
                           </Typography>
                           <Typography variant="caption" sx={{ color: currentTheme.text }}>
-                            {selectedTech.maintainer || selectedTech.author || 'N/A'}
+                            {maintainerDisplayForTech(selectedTech)}
                           </Typography>
                         </Box>
                         
@@ -1063,10 +1225,10 @@ const ToolkitDetailPage = () => {
                       <IconButton
                         onClick={() => handleReaction(selectedTech.id, 'like')}
                         sx={{
-                          color: techReactions[selectedTech.id]?.userLiked ? '#37ABBF' : currentTheme.textSecondary,
-                          bgcolor: techReactions[selectedTech.id]?.userLiked ? alpha('#37ABBF', 0.1) : 'transparent',
+                          color: techReactions[selectedTech.id]?.userLiked ? currentTheme.primary : currentTheme.textSecondary,
+                          bgcolor: techReactions[selectedTech.id]?.userLiked ? alpha(currentTheme.primary, 0.1) : 'transparent',
                           '&:hover': {
-                            bgcolor: alpha('#37ABBF', 0.1),
+                            bgcolor: alpha(currentTheme.primary, 0.1),
                           },
                         }}
                       >
@@ -1099,37 +1261,49 @@ const ToolkitDetailPage = () => {
                 {/* README Tabs */}
                 <Box>
                   <Box sx={{ p: 2, borderBottom: `1px solid ${currentTheme.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
-                    <Tabs
-                      value={readmeTab}
-                      onChange={(e, newValue) => setReadmeTab(newValue)}
-                      sx={{
-                        '& .MuiTab-root': {
-                          color: currentTheme.textSecondary,
-                          textTransform: 'none',
-                          fontWeight: 500,
-                          minHeight: 48,
-                        },
-                        '& .Mui-selected': {
-                          color: currentTheme.primary,
-                        },
-                        '& .MuiTabs-indicator': {
-                          bgcolor: currentTheme.primary,
-                        },
-                      }}
-                    >
-                      <Tab label="Installation" />
-                      <Tab label="Usage" />
-                      <Tab label="Requirements" />
-                      <Tab label="Evaluation" />
-                    </Tabs>
-                    {canEdit() && (
-                      <Tooltip title="Edit Markdown">
+                    {readmeTabSlots.length > 0 ? (
+                      <Tabs
+                        value={readmeTab}
+                        onChange={(e, newValue) => setReadmeTab(newValue)}
+                        sx={{
+                          '& .MuiTab-root': {
+                            color: currentTheme.textSecondary,
+                            textTransform: 'none',
+                            fontWeight: 500,
+                            minHeight: 48,
+                          },
+                          '& .Mui-selected': {
+                            color: currentTheme.primary,
+                          },
+                          '& .MuiTabs-indicator': {
+                            bgcolor: currentTheme.primary,
+                          },
+                        }}
+                      >
+                        {readmeTabList.map((tab) => (
+                          <Tab key={tab.id} label={tabLabelForTab(tab)} />
+                        ))}
+                      </Tabs>
+                    ) : (
+                      <Typography variant="body2" sx={{ color: currentTheme.textSecondary, py: 0.5 }}>
+                        No documentation tabs
+                      </Typography>
+                    )}
+                    {canEdit() && readmeTabSlots.length > 0 && (
+                      <Tooltip title="Edit markdown">
                         <IconButton
                           size="small"
+                          aria-label="Edit markdown"
                           onClick={() => {
-                            const readmeTypes = ['installation', 'usage', 'requirements', 'evaluation'];
-                            const readmeType = readmeTypes[readmeTab];
-                            navigate(`/toolkit/toolkit/${toolkitId}/technology/${selectedTech.id}/readme/${readmeType}`);
+                            const readmeType = readmeTabSlots[readmeTab];
+                            if (!readmeType) return;
+                            navigate(
+                              workbenchTechnologyReadmePath(
+                                canonicalToolkitId || toolkitId,
+                                selectedTech.id,
+                                readmeType,
+                              ),
+                            );
                           }}
                           sx={{
                             color: currentTheme.textSecondary,
@@ -1138,7 +1312,7 @@ const ToolkitDetailPage = () => {
                             }
                           }}
                         >
-                          <CodeIcon />
+                          <EditIcon />
                         </IconButton>
                       </Tooltip>
                     )}
@@ -1147,12 +1321,15 @@ const ToolkitDetailPage = () => {
                   {/* README Content */}
                   <Box sx={{ flex: 1, overflowY: 'auto', p: 3, minHeight: 0 }}>
                     {(() => {
-                      const readmeTypes = ['installation', 'usage', 'requirements', 'evaluation'];
-                      const currentReadmeType = readmeTypes[readmeTab];
-                      // Check localStorage first, then use technology readme or empty
-                      const storageKey = `toolkit_${toolkitId}_tech_${selectedTech.id}_${currentReadmeType}`;
-                      const savedReadme = localStorage.getItem(storageKey);
-                      const readmeContent = savedReadme || selectedTech[currentReadmeType] || null;
+                      if (readmeTabSlots.length === 0) {
+                        return (
+                          <Typography variant="body2" sx={{ color: currentTheme.textSecondary, fontStyle: 'italic' }}>
+                            No documentation tabs for this technology. Editors can configure tabs on the toolkit edit page.
+                          </Typography>
+                        );
+                      }
+                      const currentReadmeType = readmeTabSlots[readmeTab];
+                      const readmeContent = currentReadmeType ? selectedTech[currentReadmeType] || null : null;
 
                       return readmeContent ? (
                         <Box
@@ -1162,7 +1339,7 @@ const ToolkitDetailPage = () => {
                               p: 2,
                               borderRadius: 1,
                               overflow: 'auto',
-                              fontFamily: 'monospace',
+                              fontFamily: fontStackMono,
                               fontSize: '0.875rem',
                             },
                             '& code': {
@@ -1170,7 +1347,7 @@ const ToolkitDetailPage = () => {
                               px: 0.5,
                               py: 0.25,
                               borderRadius: 0.5,
-                              fontFamily: 'monospace',
+                              fontFamily: fontStackMono,
                               fontSize: '0.875rem',
                             },
                             '& pre code': {
@@ -1247,7 +1424,15 @@ const ToolkitDetailPage = () => {
                         </Box>
                       ) : (
                         <Typography variant="body2" sx={{ color: currentTheme.textSecondary, fontStyle: 'italic' }}>
-                          No {currentReadmeType.charAt(0).toUpperCase() + currentReadmeType.slice(1)} README available. {canEdit() && 'Click Edit to add content.'}
+                          No{' '}
+                          {tabLabelForTab(
+                            readmeTabList.find((x) => x.id === currentReadmeType) || {
+                              id: currentReadmeType,
+                              title: currentReadmeType,
+                            },
+                          )}{' '}
+                          README available.{' '}
+                          {canEdit() && 'Click Edit to add content.'}
                         </Typography>
                       );
                     })()}
@@ -1263,7 +1448,9 @@ const ToolkitDetailPage = () => {
                 p: 3,
               }}>
                 <Typography variant="body1" sx={{ color: currentTheme.textSecondary, textAlign: 'center' }}>
-                  Select a technology from the list to view details
+                  {multipleTechnologies
+                    ? 'Select a technology from the list to view details'
+                    : 'No technology to show. Add one in Edit toolkit.'}
                 </Typography>
               </Box>
             )}
@@ -1278,9 +1465,9 @@ const ToolkitDetailPage = () => {
         onClose={cancelRankChange}
         PaperProps={{
           sx: {
-            bgcolor: currentTheme.card,
+            bgcolor: currentTheme.darkMode ? '#1E1E1E' : currentTheme.card,
             color: currentTheme.text,
-            border: `1px solid ${currentTheme.border}`
+            border: `1px solid ${currentTheme.darkMode ? 'rgba(255, 255, 255, 0.1)' : currentTheme.border}`
           }
         }}
       >

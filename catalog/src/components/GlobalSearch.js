@@ -92,7 +92,7 @@ const GlobalSearch = ({ open, onClose, currentTheme, darkMode }) => {
       'applications': 'Application',
       'reference': 'Reference Data',
       'toolkit': 'Toolkit',
-      'policies': 'Policy',
+      'policies': 'Data Standard',
       'lexicon': 'Lexicon',
       'glossary': 'Glossary'
     };

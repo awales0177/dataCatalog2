@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -11,78 +11,242 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemSecondaryAction,
   Paper,
-  Divider,
   Tooltip,
   Fab,
-  InputAdornment,
   FormControl,
   InputLabel,
+  InputAdornment,
   Select,
   MenuItem,
   Switch,
   CircularProgress,
-  Snackbar
+  Snackbar,
+  Checkbox,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
 } from '@mui/material';
 import {
   Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
   Save as SaveIcon,
-  Cancel as CancelIcon,
-  DataObject as DataObjectIcon,
-  ViewColumn as ViewColumnIcon,
+  ArrowBack as ArrowBackIcon,
+  LocalOffer as LocalOfferIcon,
+  AssignmentTurnedIn as AssignIcon,
   Search as SearchIcon,
-  Description as DescriptionIcon
 } from '@mui/icons-material';
 import { ThemeContext } from '../contexts/ThemeContext';
-import { 
-  getRulesForModel, 
-  createRule, 
-  updateRule, 
-  deleteRule, 
-  fetchData as fetchToolkit
+import {
+  getRulesForModel,
+  getAllModelRules,
+  assignRuleToModel,
+  createRule,
+  updateRule,
+  deleteRule,
 } from '../services/api';
+import { ruleTagsList, normalizeTagList } from '../utils/ruleTags';
+import { fontStackSans } from '../theme/theme';
+import ModelRulesTable from './ModelRulesTable';
 
-const ModelRuleBuilder = ({ selectedModel, onBack }) => {
+/** API may still return legacy types; UI only offers these two. */
+const RULE_TYPE_OPTIONS = [
+  { value: 'validation', label: 'Validation' },
+  { value: 'transformation', label: 'Transformation' },
+];
+
+const normalizeRuleType = (t) =>
+  RULE_TYPE_OPTIONS.some((o) => o.value === t) ? t : 'validation';
+
+/** Library rules have no data model (data_model_id NULL); API sets isLibrary or omits modelShortName. */
+function isLibraryRule(r) {
+  if (!r) return false;
+  if (r.isLibrary === true) return true;
+  if (r.isLibrary === false) return false;
+  return !r.modelShortName || String(r.modelShortName).trim() === '';
+}
+
+/** Stable lineage for duplicate detection: canonical library id, or source rule id if model-only. */
+function ruleLineageId(r) {
+  if (!r) return '';
+  const lr = r.libraryRuleId;
+  if (lr != null && String(lr).trim() !== '') return String(lr).trim().toLowerCase();
+  return String(r.id || '').trim().toLowerCase();
+}
+
+function descendantRuleIds(rootId, rulesList) {
+  const byParent = new Map();
+  for (const r of rulesList) {
+    const p = r.parentRuleId;
+    if (!p) continue;
+    const k = String(p);
+    if (!byParent.has(k)) byParent.set(k, []);
+    byParent.get(k).push(String(r.id));
+  }
+  const out = new Set();
+  const stack = [...(byParent.get(String(rootId)) || [])];
+  while (stack.length) {
+    const id = stack.pop();
+    if (out.has(id)) continue;
+    out.add(id);
+    for (const kid of byParent.get(id) || []) stack.push(kid);
+  }
+  return out;
+}
+
+/** Delete order: children before parents (all rules on this model sharing the lineage). */
+function orderRuleIdsToDeleteForLineage(rulesOnModel, lineageId) {
+  const lid = String(lineageId || '').trim().toLowerCase();
+  const subset = (rulesOnModel || []).filter((r) => ruleLineageId(r) === lid);
+  if (subset.length === 0) return [];
+  const remaining = new Set(subset.map((r) => String(r.id)));
+  const ordered = [];
+  while (remaining.size > 0) {
+    const leaves = [...remaining].filter(
+      (id) =>
+        !subset.some(
+          (r) =>
+            remaining.has(String(r.id)) &&
+            r.parentRuleId != null &&
+            String(r.parentRuleId) === String(id),
+        ),
+    );
+    if (leaves.length === 0) {
+      [...remaining].forEach((id) => ordered.push(id));
+      break;
+    }
+    leaves.forEach((id) => {
+      ordered.push(id);
+      remaining.delete(id);
+    });
+  }
+  return ordered;
+}
+
+const ModelRuleBuilder = ({
+  selectedModel,
+  onBack,
+  inModal = false,
+  /** Header modal: associate catalog rules to the model and set parent/child links — no create, delete, or full edit. */
+  associationOnly = false,
+  models,
+  onModelChange,
+  modelsLoading = false,
+}) => {
   const { currentTheme, darkMode } = useContext(ThemeContext);
+  const showModelSwitcher = Boolean(
+    inModal && typeof onModelChange === 'function' && Array.isArray(models) && models.length > 0
+  );
   
   const [rules, setRules] = useState([]);
-  const [filteredRules, setFilteredRules] = useState([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedObjectFilter, setSelectedObjectFilter] = useState(null);
-  const [selectedColumnFilter, setSelectedColumnFilter] = useState(null);
-  const [selectedFunctionFilter, setSelectedFunctionFilter] = useState(null);
   const [loading, setLoading] = useState(false);
   const [editingRule, setEditingRule] = useState(null);
   const [ruleDialogOpen, setRuleDialogOpen] = useState(false);
+  /** Full builder: open dialog with only parent/child fields (same as association-only modal). */
+  const [ruleDialogParentOnly, setRuleDialogParentOnly] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
-  const [availableFunctions, setAvailableFunctions] = useState([]);
-  
+  const [libraryAttachOpen, setLibraryAttachOpen] = useState(false);
+  const [libraryMasterRows, setLibraryMasterRows] = useState([]);
+  const [masterListSearch, setMasterListSearch] = useState('');
+  const [libraryLoading, setLibraryLoading] = useState(false);
+  /** Lineage ids selected in Associate to model dialog (rules not yet on this model). */
+  const [catalogAssocLineageIds, setCatalogAssocLineageIds] = useState(() => new Set());
+  /** Confirm removing catalog lineage from current model (uncheck "On model"). */
+  const [dissociateDialog, setDissociateDialog] = useState(null);
+
   // Rule form state
   const [ruleForm, setRuleForm] = useState({
     name: '',
     description: '',
     documentation: '',
     modelShortName: '',
-    taggedObjects: [],
-    taggedColumns: [],
-    taggedFunctions: [],
+    tags: [],
     ruleType: 'validation',
     enabled: true,
-    newObjectInput: '',
-    newColumnInput: ''
+    parentRuleId: '',
   });
+
+  const tagSuggestions = useMemo(() => {
+    const s = new Set();
+    rules.forEach((r) => {
+      if (editingRule && r.id === editingRule.id) return;
+      ruleTagsList(r).forEach((t) => s.add(t));
+    });
+    return Array.from(s).sort((a, b) => a.localeCompare(b));
+  }, [rules, editingRule]);
+
+  /** Lineage keys already present on the selected model (one row per model per lineage). */
+  const lineageIdsOnSelectedModel = useMemo(() => {
+    const s = new Set();
+    (rules || []).forEach((r) => s.add(ruleLineageId(r)));
+    return s;
+  }, [rules]);
+
+  /** One row per lineage in the associate modal; merges copies across models. */
+  const catalogLineageEntries = useMemo(() => {
+    const byLineage = new Map();
+    for (const r of libraryMasterRows) {
+      const lid = ruleLineageId(r);
+      if (!lid) continue;
+      if (!byLineage.has(lid)) byLineage.set(lid, { rules: [] });
+      byLineage.get(lid).rules.push(r);
+    }
+    const entries = [];
+    for (const [lineageId, { rules: groupRules }] of byLineage) {
+      const modelsSet = new Set();
+      let hasLibrary = false;
+      for (const r of groupRules) {
+        if (isLibraryRule(r)) hasLibrary = true;
+        else if (r.modelShortName) modelsSet.add(r.modelShortName);
+      }
+      const representative =
+        groupRules.find(isLibraryRule) ||
+        [...groupRules].sort((a, b) =>
+          (a.modelShortName || '').localeCompare(b.modelShortName || '', undefined, { sensitivity: 'base' }),
+        )[0];
+      entries.push({
+        lineageId,
+        representative,
+        modelsWithLineage: Array.from(modelsSet).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' })),
+        hasLibrary,
+      });
+    }
+    return entries;
+  }, [libraryMasterRows]);
+
+  const catalogEntryCanAssociate = (entry) => {
+    if (!selectedModel?.shortName || !entry) return false;
+    return !lineageIdsOnSelectedModel.has(entry.lineageId);
+  };
+
+  const catalogEntriesFilteredSorted = useMemo(() => {
+    const q = masterListSearch.trim().toLowerCase();
+    let list = catalogLineageEntries;
+    if (q) {
+      list = catalogLineageEntries.filter((e) => {
+        const r = e.representative;
+        if (r.name?.toLowerCase().includes(q)) return true;
+        if (r.description?.toLowerCase().includes(q)) return true;
+        if (r.ruleType?.toLowerCase().includes(q)) return true;
+        if (e.modelsWithLineage.some((m) => m.toLowerCase().includes(q))) return true;
+        if (e.hasLibrary && 'library'.includes(q)) return true;
+        return ruleTagsList(r).some((t) => t.toLowerCase().includes(q));
+      });
+    }
+    return [...list].sort((a, b) => {
+      const ma = (a.representative.modelShortName || '\u0000').toLowerCase();
+      const mb = (b.representative.modelShortName || '\u0000').toLowerCase();
+      if (ma !== mb) return ma.localeCompare(mb);
+      return (a.representative.name || '').localeCompare(b.representative.name || '', undefined, { sensitivity: 'base' });
+    });
+  }, [catalogLineageEntries, masterListSearch]);
 
   // Load rules when model is selected
   useEffect(() => {
     if (selectedModel) {
       loadRules();
-      loadAvailableOptions();
     }
   }, [selectedModel]);
 
@@ -92,233 +256,235 @@ const ModelRuleBuilder = ({ selectedModel, onBack }) => {
       setLoading(true);
       const data = await getRulesForModel(selectedModel.shortName);
       setRules(data.rules || []);
-      setFilteredRules(data.rules || []);
     } catch (error) {
       console.error('Error loading rules:', error);
       const errorMessage = error.message || 'Failed to load rules';
       setSnackbar({ open: true, message: errorMessage, severity: 'error' });
       setRules([]);
-      setFilteredRules([]);
     } finally {
       setLoading(false);
     }
   };
 
+  const masterById = useMemo(
+    () => Object.fromEntries(libraryMasterRows.map((r) => [r.id, r])),
+    [libraryMasterRows],
+  );
 
-  const loadAvailableOptions = async () => {
+  const parentLabelMaster = (rule) => {
+    const pid = rule.parentRuleId;
+    if (!pid) return '—';
+    const p = masterById[pid];
+    return p?.name || String(pid).slice(0, 8);
+  };
+
+  const openLibraryAttach = async () => {
+    setLibraryAttachOpen(true);
+    setMasterListSearch('');
+    setCatalogAssocLineageIds(new Set());
+    setLibraryLoading(true);
     try {
-      const toolkitData = await fetchToolkit('toolkit');
-      const functions = toolkitData?.toolkit?.functions || [];
-      setAvailableFunctions(functions.map(f => ({ id: f.id, name: f.displayName || f.name })));
+      const data = await getAllModelRules({ forceRefresh: true });
+      setLibraryMasterRows(Array.isArray(data.rules) ? data.rules : []);
     } catch (error) {
-      console.error('Error loading toolkit functions:', error);
-    }
-  };
-
-  // Get rules that match all OTHER filters (excluding the filter type being built)
-  const getRulesForFilterOptions = (excludeFilterType) => {
-    let filtered = [...rules];
-
-    // Apply search query
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase().trim();
-      filtered = filtered.filter(rule => {
-        if (rule.name?.toLowerCase().includes(query)) return true;
-        if (rule.description?.toLowerCase().includes(query)) return true;
-        if (rule.ruleType?.toLowerCase().includes(query)) return true;
-        if (rule.taggedObjects?.some(obj => obj.toLowerCase().includes(query))) return true;
-        if (rule.taggedColumns?.some(col => col.toLowerCase().includes(query))) return true;
-        if (rule.taggedFunctions?.some(funcId => {
-          const func = availableFunctions.find(f => f.id === funcId);
-          const funcName = func ? func.name : funcId;
-          return funcName.toLowerCase().includes(query);
-        })) return true;
-        return false;
+      console.error(error);
+      setSnackbar({
+        open: true,
+        message: error.message || 'Failed to load rule catalog',
+        severity: 'error',
       });
+      setLibraryMasterRows([]);
+    } finally {
+      setLibraryLoading(false);
     }
-
-    // Apply other filters (excluding the one we're building options for)
-    if (excludeFilterType !== 'object' && selectedObjectFilter) {
-      filtered = filtered.filter(rule => 
-        rule.taggedObjects?.includes(selectedObjectFilter)
-      );
-    }
-
-    if (excludeFilterType !== 'column' && selectedColumnFilter) {
-      filtered = filtered.filter(rule => 
-        rule.taggedColumns?.includes(selectedColumnFilter)
-      );
-    }
-
-    if (excludeFilterType !== 'function' && selectedFunctionFilter) {
-      filtered = filtered.filter(rule => 
-        rule.taggedFunctions?.includes(selectedFunctionFilter)
-      );
-    }
-
-    return filtered;
   };
 
-  // Get unique objects, columns, and functions from filtered rules for filter options
-  const getFilterOptions = () => {
-    const objects = new Set();
-    const columns = new Set();
-    const functions = new Set();
-
-    // Get rules matching all OTHER filters (not the current one)
-    const rulesForObjects = getRulesForFilterOptions('object');
-    const rulesForColumns = getRulesForFilterOptions('column');
-    const rulesForFunctions = getRulesForFilterOptions('function');
-
-    rulesForObjects.forEach(rule => {
-      rule.taggedObjects?.forEach(obj => objects.add(obj));
-    });
-
-    rulesForColumns.forEach(rule => {
-      rule.taggedColumns?.forEach(col => columns.add(col));
-    });
-
-    rulesForFunctions.forEach(rule => {
-      rule.taggedFunctions?.forEach(funcId => functions.add(funcId));
-    });
-
-    return {
-      objects: Array.from(objects).sort(),
-      columns: Array.from(columns).sort(),
-      functions: Array.from(functions).map(funcId => {
-        const func = availableFunctions.find(f => f.id === funcId);
-        return {
-          id: funcId,
-          name: func ? func.name : funcId
-        };
-      }).sort((a, b) => a.name.localeCompare(b.name))
-    };
+  const refreshCatalogRows = async () => {
+    try {
+      const data = await getAllModelRules({ forceRefresh: true });
+      setLibraryMasterRows(Array.isArray(data.rules) ? data.rules : []);
+    } catch (e) {
+      console.error(e);
+    }
   };
 
-  // Validate and clear invalid filters when other filters change
-  useEffect(() => {
-    const rulesForObjects = getRulesForFilterOptions('object');
-    const rulesForColumns = getRulesForFilterOptions('column');
-    const rulesForFunctions = getRulesForFilterOptions('function');
-
-    const availableObjects = new Set();
-    const availableColumns = new Set();
-    const availableFunctions = new Set();
-
-    rulesForObjects.forEach(rule => {
-      rule.taggedObjects?.forEach(obj => availableObjects.add(obj));
-    });
-
-    rulesForColumns.forEach(rule => {
-      rule.taggedColumns?.forEach(col => availableColumns.add(col));
-    });
-
-    rulesForFunctions.forEach(rule => {
-      rule.taggedFunctions?.forEach(funcId => availableFunctions.add(funcId));
-    });
-
-    // Clear filters that are no longer available
-    if (selectedObjectFilter && !availableObjects.has(selectedObjectFilter)) {
-      setSelectedObjectFilter(null);
-    }
-    
-    if (selectedColumnFilter && !availableColumns.has(selectedColumnFilter)) {
-      setSelectedColumnFilter(null);
-    }
-    
-    if (selectedFunctionFilter && !availableFunctions.has(selectedFunctionFilter)) {
-      setSelectedFunctionFilter(null);
-    }
-  }, [searchQuery, selectedObjectFilter, selectedColumnFilter, selectedFunctionFilter, rules, availableFunctions]);
-
-  // Filter rules based on search query and filters
-  useEffect(() => {
-    let filtered = [...rules];
-
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase().trim();
-      filtered = filtered.filter(rule => {
-        if (rule.name?.toLowerCase().includes(query)) return true;
-        if (rule.description?.toLowerCase().includes(query)) return true;
-        if (rule.ruleType?.toLowerCase().includes(query)) return true;
-        if (rule.taggedObjects?.some(obj => obj.toLowerCase().includes(query))) return true;
-        if (rule.taggedColumns?.some(col => col.toLowerCase().includes(query))) return true;
-        if (rule.taggedFunctions?.some(funcId => {
-          const func = availableFunctions.find(f => f.id === funcId);
-          const funcName = func ? func.name : funcId;
-          return funcName.toLowerCase().includes(query);
-        })) return true;
-        return false;
+  const handleAssociateFromMasterRow = async (ruleId) => {
+    if (!selectedModel?.shortName || !ruleId) return;
+    try {
+      setLibraryLoading(true);
+      await assignRuleToModel(ruleId, selectedModel.shortName);
+      setSnackbar({ open: true, message: 'Rule associated with this model', severity: 'success' });
+      setCatalogAssocLineageIds(new Set());
+      setLibraryAttachOpen(false);
+      loadRules();
+    } catch (error) {
+      console.error('Error assigning rule:', error);
+      setSnackbar({
+        open: true,
+        message: error.message || 'Failed to associate rule',
+        severity: 'error',
       });
+    } finally {
+      setLibraryLoading(false);
     }
-
-    if (selectedObjectFilter) {
-      filtered = filtered.filter(rule => 
-        rule.taggedObjects?.includes(selectedObjectFilter)
-      );
-    }
-
-    if (selectedColumnFilter) {
-      filtered = filtered.filter(rule => 
-        rule.taggedColumns?.includes(selectedColumnFilter)
-      );
-    }
-
-    if (selectedFunctionFilter) {
-      filtered = filtered.filter(rule => 
-        rule.taggedFunctions?.includes(selectedFunctionFilter)
-      );
-    }
-    
-    setFilteredRules(filtered);
-  }, [searchQuery, selectedObjectFilter, selectedColumnFilter, selectedFunctionFilter, rules, availableFunctions]);
-
-  const clearAllFilters = () => {
-    setSearchQuery('');
-    setSelectedObjectFilter(null);
-    setSelectedColumnFilter(null);
-    setSelectedFunctionFilter(null);
   };
 
-  const hasActiveFilters = searchQuery || selectedObjectFilter || selectedColumnFilter || selectedFunctionFilter;
+  const handleBatchAssociateFromCatalog = async () => {
+    if (!selectedModel?.shortName) return;
+    const entries = Array.from(catalogAssocLineageIds)
+      .map((lid) => catalogLineageEntries.find((e) => String(e.lineageId) === String(lid)))
+      .filter((e) => e && catalogEntryCanAssociate(e));
+    if (!entries.length) {
+      setSnackbar({
+        open: true,
+        message: 'Choose at least one rule that is not already on this model.',
+        severity: 'warning',
+      });
+      return;
+    }
+    setLibraryLoading(true);
+    let ok = 0;
+    const errors = [];
+    try {
+      for (const entry of entries) {
+        try {
+          await assignRuleToModel(entry.representative.id, selectedModel.shortName);
+          ok++;
+        } catch (err) {
+          console.error(err);
+          errors.push({
+            name: entry.representative?.name || entry.lineageId,
+            message: err.message || String(err),
+          });
+        }
+      }
+      setCatalogAssocLineageIds(new Set());
+      await loadRules();
+      if (libraryAttachOpen) await refreshCatalogRows();
+      if (errors.length === 0) {
+        setSnackbar({
+          open: true,
+          message: ok === 1 ? 'Rule associated with this model' : `${ok} rules associated with this model`,
+          severity: 'success',
+        });
+        setLibraryAttachOpen(false);
+      } else if (ok > 0) {
+        setSnackbar({
+          open: true,
+          message: `${ok} associated, ${errors.length} failed (${errors[0].message})`,
+          severity: 'warning',
+        });
+      } else {
+        setSnackbar({
+          open: true,
+          message: errors[0]?.message || 'Failed to associate rules',
+          severity: 'error',
+        });
+      }
+    } finally {
+      setLibraryLoading(false);
+    }
+  };
+
+  const handleConfirmDissociateFromCatalog = async () => {
+    if (!dissociateDialog?.orderedRuleIds?.length) {
+      setDissociateDialog(null);
+      return;
+    }
+    try {
+      setLibraryLoading(true);
+      for (const id of dissociateDialog.orderedRuleIds) {
+        await deleteRule(id);
+      }
+      setSnackbar({ open: true, message: 'Rule removed from this model', severity: 'success' });
+      setDissociateDialog(null);
+      await loadRules();
+      if (libraryAttachOpen) await refreshCatalogRows();
+    } catch (error) {
+      console.error('Error removing rule:', error);
+      setSnackbar({
+        open: true,
+        message: error.message || 'Failed to remove rule from model',
+        severity: 'error',
+      });
+    } finally {
+      setLibraryLoading(false);
+    }
+  };
+
+  const closeRuleDialog = () => {
+    setRuleDialogOpen(false);
+    setRuleDialogParentOnly(false);
+  };
 
   const handleCreateRule = () => {
+    if (associationOnly) return;
+    setRuleDialogParentOnly(false);
     setEditingRule(null);
     setRuleForm({
       name: '',
       description: '',
       documentation: '',
       modelShortName: selectedModel.shortName,
-      taggedObjects: [],
-      taggedColumns: [],
-      taggedFunctions: [],
+      tags: [],
       ruleType: 'validation',
       enabled: true,
-      newObjectInput: '',
-      newColumnInput: ''
+      parentRuleId: '',
     });
     setRuleDialogOpen(true);
   };
 
-  const handleEditRule = (rule) => {
+  const handleOpenParentOnlyRule = (rule) => {
+    if (associationOnly) return;
+    setRuleDialogParentOnly(true);
     setEditingRule(rule);
     setRuleForm({
       name: rule.name || '',
       description: rule.description || '',
       documentation: rule.documentation || '',
       modelShortName: rule.modelShortName || selectedModel.shortName,
-      taggedObjects: rule.taggedObjects || [],
-      taggedColumns: rule.taggedColumns || [],
-      taggedFunctions: rule.taggedFunctions || [],
-      ruleType: rule.ruleType || 'validation',
+      tags: ruleTagsList(rule),
+      ruleType: normalizeRuleType(rule.ruleType || 'validation'),
       enabled: rule.enabled !== undefined ? rule.enabled : true,
-      newObjectInput: '',
-      newColumnInput: ''
+      parentRuleId: rule.parentRuleId || '',
+    });
+    setRuleDialogOpen(true);
+  };
+
+  const handleEditRule = (rule) => {
+    if (associationOnly) {
+      setRuleDialogParentOnly(false);
+      setEditingRule(rule);
+      setRuleForm({
+        name: rule.name || '',
+        description: rule.description || '',
+        documentation: rule.documentation || '',
+        modelShortName: rule.modelShortName || selectedModel.shortName,
+        tags: ruleTagsList(rule),
+        ruleType: normalizeRuleType(rule.ruleType || 'validation'),
+        enabled: rule.enabled !== undefined ? rule.enabled : true,
+        parentRuleId: rule.parentRuleId || '',
+      });
+      setRuleDialogOpen(true);
+      return;
+    }
+    setRuleDialogParentOnly(false);
+    setEditingRule(rule);
+    setRuleForm({
+      name: rule.name || '',
+      description: rule.description || '',
+      documentation: rule.documentation || '',
+      modelShortName: rule.modelShortName || selectedModel.shortName,
+      tags: ruleTagsList(rule),
+      ruleType: normalizeRuleType(rule.ruleType || 'validation'),
+      enabled: rule.enabled !== undefined ? rule.enabled : true,
+      parentRuleId: rule.parentRuleId || '',
     });
     setRuleDialogOpen(true);
   };
 
   const handleDeleteRule = async (ruleId) => {
+    if (associationOnly) return;
     if (!window.confirm('Are you sure you want to delete this rule?')) return;
     
     try {
@@ -337,17 +503,28 @@ const ModelRuleBuilder = ({ selectedModel, onBack }) => {
   const handleSaveRule = async () => {
     try {
       setLoading(true);
-      
+
+      if ((associationOnly || ruleDialogParentOnly) && editingRule) {
+        await updateRule(editingRule.id, {
+          parentRuleId: ruleForm.parentRuleId ? ruleForm.parentRuleId : null,
+        });
+        setSnackbar({ open: true, message: 'Parent rule updated', severity: 'success' });
+        closeRuleDialog();
+        loadRules();
+        return;
+      }
+
       const ruleData = {
-        ...ruleForm,
-        taggedObjects: ruleForm.taggedObjects && ruleForm.taggedObjects.length > 0 
-          ? ruleForm.taggedObjects 
-          : ['all'],
-        taggedColumns: ruleForm.taggedColumns && ruleForm.taggedColumns.length > 0 
-          ? ruleForm.taggedColumns 
-          : ['all']
+        name: ruleForm.name,
+        description: ruleForm.description,
+        documentation: ruleForm.documentation || '',
+        modelShortName: ruleForm.modelShortName || selectedModel?.shortName,
+        ruleType: normalizeRuleType(ruleForm.ruleType),
+        enabled: ruleForm.enabled,
+        tags: normalizeTagList(ruleForm.tags),
+        parentRuleId: ruleForm.parentRuleId ? ruleForm.parentRuleId : null,
       };
-      
+
       if (editingRule) {
         await updateRule(editingRule.id, ruleData);
         setSnackbar({ open: true, message: 'Rule updated successfully', severity: 'success' });
@@ -355,7 +532,7 @@ const ModelRuleBuilder = ({ selectedModel, onBack }) => {
         await createRule(ruleData);
         setSnackbar({ open: true, message: 'Rule created successfully', severity: 'success' });
       }
-      setRuleDialogOpen(false);
+      closeRuleDialog();
       loadRules();
     } catch (error) {
       console.error('Error saving rule:', error);
@@ -365,6 +542,10 @@ const ModelRuleBuilder = ({ selectedModel, onBack }) => {
     }
   };
 
+  const showParentOnlyDialog = Boolean(
+    editingRule && (associationOnly || ruleDialogParentOnly),
+  );
+
   const getRuleTypeColor = (ruleType) => {
     const colorMap = {
       'validation': {
@@ -373,9 +554,9 @@ const ModelRuleBuilder = ({ selectedModel, onBack }) => {
         border: darkMode ? 'rgba(76, 175, 80, 0.5)' : '#4caf50'
       },
       'transformation': {
-        bgcolor: darkMode ? 'rgba(33, 150, 243, 0.2)' : 'rgba(33, 150, 243, 0.1)',
-        color: darkMode ? '#64b5f6' : '#1565c0',
-        border: darkMode ? 'rgba(33, 150, 243, 0.5)' : '#2196f3'
+        bgcolor: darkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(8, 145, 178, 0.1)',
+        color: darkMode ? (currentTheme?.primary || '#e5e5e5') : '#0891b2',
+        border: darkMode ? 'rgba(255, 255, 255, 0.35)' : '#0891b2'
       },
       'business': {
         bgcolor: darkMode ? 'rgba(156, 39, 176, 0.2)' : 'rgba(156, 39, 176, 0.1)',
@@ -396,8 +577,150 @@ const ModelRuleBuilder = ({ selectedModel, onBack }) => {
   };
 
   return (
-    <Box sx={{ p: 3 }}>
-      {/* Header */}
+    <Box
+      sx={
+        inModal
+          ? {
+              display: 'flex',
+              flexDirection: 'column',
+              flex: 1,
+              minHeight: 0,
+              height: '100%',
+              position: 'relative',
+            }
+          : { p: 3 }
+      }
+    >
+      {showModelSwitcher ? (
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1.5,
+            px: 2,
+            py: 1.5,
+            flexShrink: 0,
+            flexWrap: { xs: 'wrap', md: 'nowrap' },
+            rowGap: 1,
+            borderBottom: `1px solid ${currentTheme?.border}`,
+          }}
+        >
+          <Button
+            size="small"
+            startIcon={<ArrowBackIcon />}
+            onClick={onBack}
+            sx={{ color: currentTheme?.textSecondary, flexShrink: 0, whiteSpace: 'nowrap' }}
+          >
+            All models
+          </Button>
+          <Box
+            sx={{
+              flex: { xs: '1 1 100%', md: '1 1 auto' },
+              order: { xs: 3, md: 0 },
+              display: 'flex',
+              justifyContent: 'center',
+              minWidth: 0,
+              maxWidth: { xs: '100%', md: 440 },
+              mx: { xs: 0, md: 'auto' },
+            }}
+          >
+            <Autocomplete
+              size="small"
+              disabled={modelsLoading}
+              options={models}
+              value={selectedModel && models.some((x) => String(x.id) === String(selectedModel.id)) ? selectedModel : null}
+              onChange={(e, newValue) => {
+                if (newValue && onModelChange) onModelChange(newValue);
+              }}
+              isOptionEqualToValue={(a, b) => String(a?.id) === String(b?.id)}
+              getOptionLabel={(m) => {
+                if (!m) return '';
+                return m.shortName ? `${m.name} (${m.shortName})` : m.name || '';
+              }}
+              filterOptions={(options, state) => {
+                const q = state.inputValue.trim().toLowerCase();
+                if (!q) return options;
+                return options.filter((m) => {
+                  const name = (m.name || '').toLowerCase();
+                  const sn = (m.shortName || '').toLowerCase();
+                  return name.includes(q) || sn.includes(q);
+                });
+              }}
+              renderOption={(props, m) => (
+                <Box component="li" {...props} sx={{ textAlign: 'left' }}>
+                  <Typography variant="body2" sx={{ fontWeight: 600, color: currentTheme?.text }}>
+                    {m.name}
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: currentTheme?.textSecondary, fontFamily: fontStackSans }}>
+                    {m.shortName}
+                  </Typography>
+                </Box>
+              )}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Data model"
+                  InputLabelProps={{ ...params.InputLabelProps, shrink: true }}
+                  InputProps={{
+                    ...params.InputProps,
+                    startAdornment: (
+                      <>
+                        <InputAdornment position="start">
+                          <SearchIcon sx={{ color: currentTheme?.textSecondary, fontSize: 20 }} />
+                        </InputAdornment>
+                        {params.InputProps.startAdornment}
+                      </>
+                    ),
+                  }}
+                  sx={{
+                    width: '100%',
+                    minWidth: 0,
+                    maxWidth: 440,
+                    '& .MuiOutlinedInput-root': {
+                      color: currentTheme?.text,
+                      bgcolor: currentTheme?.card,
+                      '& fieldset': { borderColor: currentTheme?.border },
+                      '&:hover fieldset': { borderColor: currentTheme?.primary },
+                      '&.Mui-focused fieldset': { borderColor: currentTheme?.primary },
+                    },
+                    '& .MuiInputLabel-root': { color: currentTheme?.textSecondary },
+                  }}
+                />
+              )}
+              sx={{ width: '100%', minWidth: 0, maxWidth: 440 }}
+              componentsProps={{
+                paper: {
+                  sx: {
+                    bgcolor: currentTheme?.card,
+                    color: currentTheme?.text,
+                    border: `1px solid ${currentTheme?.border}`,
+                  },
+                },
+              }}
+            />
+          </Box>
+          <Chip
+            label={`${rules.length} rule${rules.length === 1 ? '' : 's'}`}
+            size="small"
+            variant="outlined"
+            sx={{
+              flexShrink: 0,
+              order: { xs: 2, md: 0 },
+              borderColor: currentTheme?.border,
+              color: currentTheme?.textSecondary,
+            }}
+          />
+        </Box>
+      ) : null}
+
+      <Box
+        sx={
+          inModal
+            ? { px: 3, pt: showModelSwitcher ? 2 : 3, flexShrink: 0 }
+            : {}
+        }
+      >
+      {!showModelSwitcher && (
       <Box sx={{ mb: 3 }}>
         <Button
           onClick={onBack}
@@ -408,466 +731,115 @@ const ModelRuleBuilder = ({ selectedModel, onBack }) => {
         <Typography variant="h4" sx={{ color: currentTheme?.text }}>
           Rule Builder: {selectedModel?.name}
         </Typography>
-        <Typography variant="body2" sx={{ color: currentTheme?.textSecondary }}>
+        <Typography variant="body2" sx={{ color: currentTheme?.textSecondary, fontFamily: fontStackSans }}>
           {selectedModel?.shortName}
         </Typography>
       </Box>
-
-      {/* Search and Filters */}
-      <Box sx={{ mb: 4 }}>
-        <TextField
-          fullWidth
-          variant="outlined"
-          placeholder="Search rules..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon sx={{ color: currentTheme?.textSecondary }} />
-              </InputAdornment>
-            ),
-            endAdornment: searchQuery && (
-              <InputAdornment position="end">
-                <IconButton
-                  size="small"
-                  onClick={() => setSearchQuery('')}
-                  sx={{ color: currentTheme?.textSecondary }}
-                >
-                  ×
-                </IconButton>
-              </InputAdornment>
-            )
-          }}
-          sx={{
-            mb: 2,
-            '& .MuiOutlinedInput-root': {
-              bgcolor: currentTheme?.card,
-              '& fieldset': {
-                borderColor: currentTheme?.border
-              },
-              '&:hover fieldset': {
-                borderColor: currentTheme?.primary
-              },
-              '&.Mui-focused fieldset': {
-                borderColor: currentTheme?.primary
-              }
-            },
-            '& .MuiInputBase-input': {
-              color: currentTheme?.text
-            },
-            '& .MuiInputBase-input::placeholder': {
-              color: currentTheme?.textSecondary,
-              opacity: 1
-            }
-          }}
-        />
-        
-        {/* Filter Controls */}
-        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-          <Autocomplete
-            options={getFilterOptions('object').objects}
-            value={selectedObjectFilter}
-            onChange={(event, newValue) => setSelectedObjectFilter(newValue)}
-            sx={{ minWidth: 200, flex: 1 }}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                placeholder="Filter by Object"
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    bgcolor: currentTheme?.card,
-                    '& fieldset': {
-                      borderColor: currentTheme?.border
-                    },
-                    '&:hover fieldset': {
-                      borderColor: currentTheme?.primary
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: currentTheme?.primary
-                    }
-                  },
-                  '& .MuiInputBase-input': {
-                    color: currentTheme?.text
-                  },
-                  '& .MuiInputBase-input::placeholder': {
-                    color: currentTheme?.textSecondary,
-                    opacity: 1
-                  }
-                }}
-              />
-            )}
-            renderOption={(props, option) => (
-              <Box component="li" {...props} sx={{ color: currentTheme?.text }}>
-                <DataObjectIcon sx={{ mr: 1, fontSize: 18, color: currentTheme?.textSecondary }} />
-                {option}
-              </Box>
-            )}
-            PaperComponent={({ children, ...other }) => (
-              <Paper {...other} elevation={0} sx={{ bgcolor: currentTheme?.card, border: `1px solid ${currentTheme?.border}` }}>
-                {children}
-              </Paper>
-            )}
-          />
-          <Autocomplete
-            options={getFilterOptions('column').columns}
-            value={selectedColumnFilter}
-            onChange={(event, newValue) => setSelectedColumnFilter(newValue)}
-            sx={{ minWidth: 200, flex: 1 }}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                placeholder="Filter by Column"
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    bgcolor: currentTheme?.card,
-                    '& fieldset': {
-                      borderColor: currentTheme?.border
-                    },
-                    '&:hover fieldset': {
-                      borderColor: currentTheme?.primary
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: currentTheme?.primary
-                    }
-                  },
-                  '& .MuiInputBase-input': {
-                    color: currentTheme?.text
-                  },
-                  '& .MuiInputBase-input::placeholder': {
-                    color: currentTheme?.textSecondary,
-                    opacity: 1
-                  }
-                }}
-              />
-            )}
-            renderOption={(props, option) => (
-              <Box component="li" {...props} sx={{ color: currentTheme?.text }}>
-                <ViewColumnIcon sx={{ mr: 1, fontSize: 18, color: currentTheme?.textSecondary }} />
-                {option}
-              </Box>
-            )}
-            PaperComponent={({ children, ...other }) => (
-              <Paper {...other} elevation={0} sx={{ bgcolor: currentTheme?.card, border: `1px solid ${currentTheme?.border}` }}>
-                {children}
-              </Paper>
-            )}
-          />
-          <Autocomplete
-            options={getFilterOptions('function').functions}
-            getOptionLabel={(option) => option.name}
-            value={selectedFunctionFilter ? getFilterOptions('function').functions.find(f => f.id === selectedFunctionFilter) : null}
-            onChange={(event, newValue) => setSelectedFunctionFilter(newValue ? newValue.id : null)}
-            sx={{ minWidth: 200, flex: 1 }}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                placeholder="Filter by Function"
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    bgcolor: currentTheme?.card,
-                    '& fieldset': {
-                      borderColor: currentTheme?.border
-                    },
-                    '&:hover fieldset': {
-                      borderColor: currentTheme?.primary
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: currentTheme?.primary
-                    }
-                  },
-                  '& .MuiInputBase-input': {
-                    color: currentTheme?.text
-                  },
-                  '& .MuiInputBase-input::placeholder': {
-                    color: currentTheme?.textSecondary,
-                    opacity: 1
-                  }
-                }}
-              />
-            )}
-            renderOption={(props, option) => (
-              <Box component="li" {...props} sx={{ color: currentTheme?.text, display: 'flex', alignItems: 'center' }}>
-                <img src="/python.svg" alt="Python" style={{ width: 18, height: 18, marginRight: 8 }} />
-                {option.name}
-              </Box>
-            )}
-            PaperComponent={({ children, ...other }) => (
-              <Paper {...other} elevation={0} sx={{ bgcolor: currentTheme?.card, border: `1px solid ${currentTheme?.border}` }}>
-                {children}
-              </Paper>
-            )}
-          />
-        </Box>
-
-        {/* Active Filter Chips */}
-        {hasActiveFilters && (
-          <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 1, alignItems: 'center', width: '100%' }}>
-            {selectedObjectFilter && (
-              <Chip
-                icon={<DataObjectIcon />}
-                label={`Object: ${selectedObjectFilter}`}
-                onDelete={() => setSelectedObjectFilter(null)}
-                sx={{
-                  bgcolor: darkMode ? 'rgba(76, 175, 80, 0.2)' : 'rgba(76, 175, 80, 0.1)',
-                  color: currentTheme?.text,
-                  '& .MuiChip-deleteIcon': {
-                    color: currentTheme?.textSecondary
-                  }
-                }}
-              />
-            )}
-            {selectedColumnFilter && (
-              <Chip
-                icon={<ViewColumnIcon />}
-                label={`Column: ${selectedColumnFilter}`}
-                onDelete={() => setSelectedColumnFilter(null)}
-                sx={{
-                  bgcolor: darkMode ? 'rgba(33, 150, 243, 0.2)' : 'rgba(33, 150, 243, 0.1)',
-                  color: currentTheme?.text,
-                  '& .MuiChip-deleteIcon': {
-                    color: currentTheme?.textSecondary
-                  }
-                }}
-              />
-            )}
-            {selectedFunctionFilter && (
-              <Chip
-                icon={<img src="/python.svg" alt="Python" style={{ width: 16, height: 16 }} />}
-                label={`Function: ${getFilterOptions().functions.find(f => f.id === selectedFunctionFilter)?.name || selectedFunctionFilter}`}
-                onDelete={() => setSelectedFunctionFilter(null)}
-                sx={{
-                  bgcolor: darkMode ? 'rgba(156, 39, 176, 0.2)' : 'rgba(156, 39, 176, 0.1)',
-                  color: currentTheme?.text,
-                  '& .MuiChip-deleteIcon': {
-                    color: currentTheme?.textSecondary
-                  }
-                }}
-              />
-            )}
-            <Button
-              size="small"
-              onClick={clearAllFilters}
-              sx={{ color: currentTheme?.textSecondary }}
-            >
-              Clear All
-            </Button>
-          </Box>
-        )}
+      )}
       </Box>
 
       {/* Rules List */}
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h6" sx={{ mb: 2, color: currentTheme?.text }}>
-          Rules ({filteredRules.length})
-        </Typography>
-        {loading && filteredRules.length === 0 ? (
+      <Box
+        sx={
+          inModal
+            ? {
+                flex: 1,
+                minHeight: 0,
+                overflow: 'auto',
+                position: 'relative',
+                px: 3,
+                pb: 10,
+              }
+            : {}
+        }
+      >
+      <Box sx={{ mb: inModal ? 2 : 3 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'baseline',
+            justifyContent: 'space-between',
+            gap: 1,
+            flexWrap: 'wrap',
+            mb: 2,
+          }}
+        >
+          <Typography
+            variant={inModal ? 'subtitle1' : 'h6'}
+            sx={{ fontWeight: 600, color: currentTheme?.text }}
+          >
+            {inModal ? 'Rules' : `Rules (${rules.length})`}
+          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={openLibraryAttach}
+              disabled={loading}
+              sx={{
+                textTransform: 'none',
+                borderColor: currentTheme?.border,
+                color: currentTheme?.text,
+              }}
+            >
+              Associate to model
+            </Button>
+            <Typography variant="caption" sx={{ color: currentTheme?.textSecondary }}>
+              {rules.length} rule{rules.length === 1 ? '' : 's'}
+            </Typography>
+          </Box>
+        </Box>
+        {loading && rules.length === 0 ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
             <CircularProgress />
           </Box>
-        ) : filteredRules.length === 0 ? (
-          <Typography variant="body2" sx={{ color: currentTheme?.textSecondary, textAlign: 'center', p: 3 }}>
-            No rules found. Create your first rule!
-          </Typography>
         ) : (
-          <List>
-            {filteredRules.map((rule, index) => (
-              <React.Fragment key={rule.id}>
-                <ListItem
-                  sx={{
-                    bgcolor: currentTheme?.card,
-                    borderRadius: 1,
-                    mb: 1,
-                    border: `1px solid ${currentTheme?.border}`,
-                    '&:hover': {
-                      bgcolor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)'
-                    }
-                  }}
-                >
-                  <ListItemText
-                    sx={{
-                      pr: rule.documentation ? 16 : 8
-                    }}
-                    primary={
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                        <Typography variant="h6" sx={{ color: currentTheme?.text }}>
-                          {rule.name}
-                        </Typography>
-                        <Chip
-                          label={rule.ruleType}
-                          size="small"
-                          sx={{
-                            ...getRuleTypeColor(rule.ruleType),
-                            textTransform: 'capitalize'
-                          }}
-                        />
-                        {!rule.enabled && (
-                          <Chip
-                            label="Disabled"
-                            size="small"
-                            sx={{
-                              bgcolor: darkMode ? 'rgba(158, 158, 158, 0.2)' : 'rgba(158, 158, 158, 0.1)',
-                              color: currentTheme?.textSecondary
-                            }}
-                          />
-                        )}
-                      </Box>
-                    }
-                    secondary={
-                      <Box>
-                        <Typography variant="body2" sx={{ color: currentTheme?.textSecondary, mb: 1 }}>
-                          {rule.description}
-                        </Typography>
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 1 }}>
-                          {rule.taggedObjects?.slice(0, 5).map((obj, idx) => (
-                            <Tooltip key={idx} title={obj}>
-                              <Chip
-                                icon={<DataObjectIcon />}
-                                label={obj}
-                                size="small"
-                                sx={{
-                                  bgcolor: darkMode ? 'rgba(76, 175, 80, 0.2)' : 'rgba(76, 175, 80, 0.1)',
-                                  color: currentTheme?.text,
-                                  maxWidth: 150
-                                }}
-                              />
-                            </Tooltip>
-                          ))}
-                          {rule.taggedObjects?.length > 5 && (
-                            <Chip
-                              label={`+${rule.taggedObjects.length - 5} more`}
-                              size="small"
-                              sx={{
-                                bgcolor: darkMode ? 'rgba(76, 175, 80, 0.2)' : 'rgba(76, 175, 80, 0.1)',
-                                color: currentTheme?.text
-                              }}
-                            />
-                          )}
-                          {rule.taggedColumns?.slice(0, 5).map((col, idx) => (
-                            <Tooltip key={idx} title={col}>
-                              <Chip
-                                icon={<ViewColumnIcon />}
-                                label={col}
-                                size="small"
-                                sx={{
-                                  bgcolor: darkMode ? 'rgba(33, 150, 243, 0.2)' : 'rgba(33, 150, 243, 0.1)',
-                                  color: currentTheme?.text,
-                                  maxWidth: 150
-                                }}
-                              />
-                            </Tooltip>
-                          ))}
-                          {rule.taggedColumns?.length > 5 && (
-                            <Chip
-                              label={`+${rule.taggedColumns.length - 5} more`}
-                              size="small"
-                              sx={{
-                                bgcolor: darkMode ? 'rgba(33, 150, 243, 0.2)' : 'rgba(33, 150, 243, 0.1)',
-                                color: currentTheme?.text
-                              }}
-                            />
-                          )}
-                          {rule.taggedFunctions?.slice(0, 3).map((funcId, idx) => {
-                            const func = availableFunctions.find(f => f.id === funcId);
-                            return (
-                              <Tooltip key={idx} title={func ? func.name : funcId}>
-                                <Chip
-                                  icon={<img src="/python.svg" alt="Python" style={{ width: 14, height: 14 }} />}
-                                  label={func ? func.name : funcId}
-                                  size="small"
-                                  sx={{
-                                    bgcolor: darkMode ? 'rgba(156, 39, 176, 0.2)' : 'rgba(156, 39, 176, 0.1)',
-                                    color: currentTheme?.text,
-                                    maxWidth: 150
-                                  }}
-                                />
-                              </Tooltip>
-                            );
-                          })}
-                          {rule.taggedFunctions?.length > 3 && (
-                            <Chip
-                              label={`+${rule.taggedFunctions.length - 3} more`}
-                              size="small"
-                              sx={{
-                                bgcolor: darkMode ? 'rgba(156, 39, 176, 0.2)' : 'rgba(156, 39, 176, 0.1)',
-                                color: currentTheme?.text
-                              }}
-                            />
-                          )}
-                        </Box>
-                      </Box>
-                    }
-                  />
-                  <ListItemSecondaryAction>
-                    <Box sx={{ display: 'flex', gap: 0.5 }}>
-                      {rule.documentation && (
-                        <Tooltip title="View Documentation">
-                          <IconButton
-                            edge="end"
-                            onClick={() => window.open(rule.documentation, '_blank')}
-                            sx={{ 
-                              color: currentTheme?.textSecondary,
-                              '&:hover': {
-                                bgcolor: darkMode ? 'rgba(33, 150, 243, 0.2)' : 'rgba(33, 150, 243, 0.1)',
-                                color: darkMode ? '#64b5f6' : '#1565c0'
-                              }
-                            }}
-                          >
-                            <DescriptionIcon />
-                          </IconButton>
-                        </Tooltip>
-                      )}
-                      <Tooltip title="Edit">
-                        <IconButton
-                          edge="end"
-                          onClick={() => handleEditRule(rule)}
-                          sx={{ 
-                            color: currentTheme?.textSecondary,
-                            '&:hover': {
-                              bgcolor: darkMode ? 'rgba(33, 150, 243, 0.2)' : 'rgba(33, 150, 243, 0.1)',
-                              color: darkMode ? '#64b5f6' : '#1565c0'
-                            }
-                          }}
-                        >
-                          <EditIcon />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Delete">
-                        <IconButton
-                          edge="end"
-                          onClick={() => handleDeleteRule(rule.id)}
-                          sx={{ 
-                            color: currentTheme?.textSecondary,
-                            '&:hover': {
-                              bgcolor: darkMode ? 'rgba(255, 0, 0, 0.2)' : 'rgba(255, 0, 0, 0.1)',
-                              color: darkMode ? '#ff6b6b' : '#d32f2f'
-                            }
-                          }}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      </Tooltip>
-                    </Box>
-                  </ListItemSecondaryAction>
-                </ListItem>
-                {index < filteredRules.length - 1 && (
-                  <Divider 
-                    sx={{ 
-                      borderColor: currentTheme?.border,
-                      opacity: 0.5
-                    }} 
-                  />
-                )}
-              </React.Fragment>
-            ))}
-          </List>
+          <ModelRulesTable
+            rules={rules}
+            loading={loading}
+            emptyMessage={
+              associationOnly
+                ? 'No rules on this model yet. Use Associate to model to copy a rule here (library or from another model), then use Set parent rule on each row to define hierarchy.'
+                : 'No rules yet. Use Associate to model to copy a rule onto this model, use + to create one, or open Edit on a rule to set its parent and define relationships.'
+            }
+            expandResetKey={selectedModel?.id}
+            readOnly={false}
+            associationOnly={associationOnly}
+            denseModal={inModal}
+            onEditRule={handleEditRule}
+            onDeleteRule={!associationOnly ? handleDeleteRule : undefined}
+            onOpenParentRule={!associationOnly ? handleOpenParentOnlyRule : undefined}
+          />
         )}
       </Box>
+      </Box>
+
+      {inModal && !associationOnly && (
+        <Fab
+          color="primary"
+          aria-label="add"
+          onClick={handleCreateRule}
+          sx={{
+            position: 'absolute',
+            right: 24,
+            bottom: 24,
+            zIndex: 10,
+            bgcolor: currentTheme?.primary,
+            boxShadow: darkMode ? '0 4px 18px rgba(0,0,0,0.45)' : 4,
+            '&:hover': {
+              bgcolor: currentTheme?.primary,
+              opacity: 0.9,
+            },
+          }}
+        >
+          <AddIcon />
+        </Fab>
+      )}
 
       {/* Rule Editor Dialog */}
       <Dialog
         open={ruleDialogOpen}
-        onClose={() => setRuleDialogOpen(false)}
+        onClose={closeRuleDialog}
         maxWidth="md"
         fullWidth
         PaperProps={{
@@ -879,9 +851,75 @@ const ModelRuleBuilder = ({ selectedModel, onBack }) => {
         }}
       >
         <DialogTitle sx={{ color: currentTheme?.text, borderBottom: `1px solid ${currentTheme?.border}`, pb: 2 }}>
-          {editingRule ? 'Edit Rule' : 'Create New Rule'}
+          {showParentOnlyDialog
+            ? 'Set parent rule'
+            : editingRule
+              ? 'Edit Rule'
+              : 'Create New Rule'}
         </DialogTitle>
         <DialogContent sx={{ color: currentTheme?.text }}>
+          {showParentOnlyDialog ? (
+            <Box sx={{ pt: 2 }}>
+              <Typography variant="body2" sx={{ mb: 2, color: currentTheme?.textSecondary }}>
+                Choose a parent for <strong>{editingRule.name}</strong>. Only rules on this model are listed.
+                Leave empty for a top-level rule.
+              </Typography>
+              <FormControl fullWidth sx={{ mb: 2 }}>
+                <InputLabel
+                  id="assoc-parent-lbl"
+                  sx={{ color: currentTheme?.textSecondary, '&.Mui-focused': { color: currentTheme?.primary } }}
+                >
+                  Parent rule (same model)
+                </InputLabel>
+                <Select
+                  labelId="assoc-parent-lbl"
+                  label="Parent rule (same model)"
+                  value={ruleForm.parentRuleId || ''}
+                  onChange={(e) => setRuleForm({ ...ruleForm, parentRuleId: e.target.value })}
+                  sx={{
+                    color: currentTheme?.text,
+                    '& .MuiOutlinedInput-notchedOutline': { borderColor: currentTheme?.border },
+                    '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: currentTheme?.primary },
+                    '& .MuiSvgIcon-root': { color: currentTheme?.textSecondary },
+                  }}
+                  MenuProps={{
+                    PaperProps: {
+                      sx: {
+                        bgcolor: currentTheme?.card,
+                        color: currentTheme?.text,
+                        border: `1px solid ${currentTheme?.border}`,
+                      },
+                    },
+                  }}
+                >
+                  <MenuItem value="">
+                    <em>None (top-level)</em>
+                  </MenuItem>
+                  {(() => {
+                    const graph = rules.map((r) =>
+                      r.id === editingRule.id
+                        ? { ...r, parentRuleId: ruleForm.parentRuleId || null }
+                        : r,
+                    );
+                    const invalid = new Set([
+                      String(editingRule.id),
+                      ...descendantRuleIds(editingRule.id, graph),
+                    ]);
+                    return rules
+                      .filter((r) => !invalid.has(String(r.id)))
+                      .sort((a, b) =>
+                        (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }),
+                      )
+                      .map((r) => (
+                        <MenuItem key={r.id} value={r.id}>
+                          {r.name}
+                        </MenuItem>
+                      ));
+                  })()}
+                </Select>
+              </FormControl>
+            </Box>
+          ) : (
           <Box sx={{ pt: 2 }}>
             <TextField
               fullWidth
@@ -973,11 +1011,52 @@ const ModelRuleBuilder = ({ selectedModel, onBack }) => {
               }}
             />
             <FormControl fullWidth sx={{ mb: 2 }}>
+              <InputLabel
+                id="model-rule-parent-lbl"
+                sx={{ color: currentTheme?.textSecondary, '&.Mui-focused': { color: currentTheme?.primary } }}
+              >
+                Parent rule (same model)
+              </InputLabel>
+              <Select
+                labelId="model-rule-parent-lbl"
+                label="Parent rule (same model)"
+                value={ruleForm.parentRuleId || ''}
+                onChange={(e) => setRuleForm({ ...ruleForm, parentRuleId: e.target.value })}
+                sx={{
+                  color: currentTheme?.text,
+                  '& .MuiOutlinedInput-notchedOutline': { borderColor: currentTheme?.border },
+                  '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: currentTheme?.primary },
+                  '& .MuiSvgIcon-root': { color: currentTheme?.textSecondary },
+                }}
+                MenuProps={{
+                  PaperProps: {
+                    sx: {
+                      bgcolor: currentTheme?.card,
+                      color: currentTheme?.text,
+                      border: `1px solid ${currentTheme?.border}`,
+                    },
+                  },
+                }}
+              >
+                <MenuItem value="">
+                  <em>None (top-level)</em>
+                </MenuItem>
+                {rules
+                  .filter((r) => !editingRule || r.id !== editingRule.id)
+                  .sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }))
+                  .map((r) => (
+                    <MenuItem key={r.id} value={r.id}>
+                      {r.name}
+                    </MenuItem>
+                  ))}
+              </Select>
+            </FormControl>
+            <FormControl fullWidth sx={{ mb: 2 }}>
               <InputLabel sx={{ color: currentTheme?.textSecondary, '&.Mui-focused': { color: currentTheme?.primary } }}>
                 Rule Type
               </InputLabel>
               <Select
-                value={ruleForm.ruleType}
+                value={normalizeRuleType(ruleForm.ruleType)}
                 onChange={(e) => setRuleForm({ ...ruleForm, ruleType: e.target.value })}
                 label="Rule Type"
                 sx={{
@@ -1011,204 +1090,49 @@ const ModelRuleBuilder = ({ selectedModel, onBack }) => {
                   }
                 }}
               >
-                <MenuItem value="validation" sx={{ color: darkMode ? '#81c784' : '#2e7d32' }}>
-                  Validation
-                </MenuItem>
-                <MenuItem value="transformation" sx={{ color: darkMode ? '#64b5f6' : '#1565c0' }}>
-                  Transformation
-                </MenuItem>
-                <MenuItem value="business" sx={{ color: darkMode ? '#ba68c8' : '#6a1b9a' }}>
-                  Business Logic
-                </MenuItem>
-                <MenuItem value="quality" sx={{ color: darkMode ? '#ffb74d' : '#e65100' }}>
-                  Data Quality
-                </MenuItem>
+                {RULE_TYPE_OPTIONS.map(({ value, label }) => {
+                  const tc = getRuleTypeColor(value);
+                  return (
+                    <MenuItem key={value} value={value} sx={{ color: tc.color }}>
+                      {label}
+                    </MenuItem>
+                  );
+                })}
               </Select>
             </FormControl>
 
-            {/* Tag Objects */}
-            <Box sx={{ mb: 2 }}>
-              <TextField
-                fullWidth
-                label="Tag Objects"
-                placeholder="Enter object name"
-                helperText="Leave empty to apply to all objects"
-                value={ruleForm.newObjectInput || ''}
-                onChange={(e) => setRuleForm({ ...ruleForm, newObjectInput: e.target.value })}
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter' && ruleForm.newObjectInput.trim()) {
-                    setRuleForm({
-                      ...ruleForm,
-                      taggedObjects: [...ruleForm.taggedObjects, ruleForm.newObjectInput.trim()],
-                      newObjectInput: ''
-                    });
-                  }
-                }}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        onClick={() => {
-                          if (ruleForm.newObjectInput.trim()) {
-                            setRuleForm({
-                              ...ruleForm,
-                              taggedObjects: [...ruleForm.taggedObjects, ruleForm.newObjectInput.trim()],
-                              newObjectInput: ''
-                            });
-                          }
-                        }}
-                        sx={{ color: currentTheme?.primary }}
-                      >
-                        <AddIcon />
-                      </IconButton>
-                    </InputAdornment>
-                  )
-                }}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    color: currentTheme?.text,
-                    '& fieldset': {
-                      borderColor: currentTheme?.border
-                    },
-                    '&:hover fieldset': {
-                      borderColor: currentTheme?.primary
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: currentTheme?.primary
-                    }
-                  },
-                  '& .MuiInputLabel-root': {
-                    color: currentTheme?.textSecondary,
-                    '&.Mui-focused': {
-                      color: currentTheme?.primary
-                    }
-                  },
-                  '& .MuiFormHelperText-root': {
-                    color: currentTheme?.textSecondary
-                  }
-                }}
-              />
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
-                {ruleForm.taggedObjects.map((obj, idx) => (
-                  <Chip
-                    key={idx}
-                    label={obj}
-                    onDelete={() => {
-                      setRuleForm({
-                        ...ruleForm,
-                        taggedObjects: ruleForm.taggedObjects.filter((_, i) => i !== idx)
-                      });
-                    }}
-                    icon={<DataObjectIcon />}
-                    sx={{
-                      bgcolor: darkMode ? 'rgba(76, 175, 80, 0.2)' : 'rgba(76, 175, 80, 0.1)',
-                      color: currentTheme?.text
-                    }}
-                  />
-                ))}
-              </Box>
-            </Box>
-
-            {/* Tag Columns */}
-            <Box sx={{ mb: 2 }}>
-              <TextField
-                fullWidth
-                label="Tag Columns"
-                placeholder="Enter column name"
-                helperText="Leave empty to apply to all columns"
-                value={ruleForm.newColumnInput || ''}
-                onChange={(e) => setRuleForm({ ...ruleForm, newColumnInput: e.target.value })}
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter' && ruleForm.newColumnInput.trim()) {
-                    setRuleForm({
-                      ...ruleForm,
-                      taggedColumns: [...ruleForm.taggedColumns, ruleForm.newColumnInput.trim()],
-                      newColumnInput: ''
-                    });
-                  }
-                }}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        onClick={() => {
-                          if (ruleForm.newColumnInput.trim()) {
-                            setRuleForm({
-                              ...ruleForm,
-                              taggedColumns: [...ruleForm.taggedColumns, ruleForm.newColumnInput.trim()],
-                              newColumnInput: ''
-                            });
-                          }
-                        }}
-                        sx={{ color: currentTheme?.primary }}
-                      >
-                        <AddIcon />
-                      </IconButton>
-                    </InputAdornment>
-                  )
-                }}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    color: currentTheme?.text,
-                    '& fieldset': {
-                      borderColor: currentTheme?.border
-                    },
-                    '&:hover fieldset': {
-                      borderColor: currentTheme?.primary
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: currentTheme?.primary
-                    }
-                  },
-                  '& .MuiInputLabel-root': {
-                    color: currentTheme?.textSecondary,
-                    '&.Mui-focused': {
-                      color: currentTheme?.primary
-                    }
-                  },
-                  '& .MuiFormHelperText-root': {
-                    color: currentTheme?.textSecondary
-                  }
-                }}
-              />
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
-                {ruleForm.taggedColumns.map((col, idx) => (
-                  <Chip
-                    key={idx}
-                    label={col}
-                    onDelete={() => {
-                      setRuleForm({
-                        ...ruleForm,
-                        taggedColumns: ruleForm.taggedColumns.filter((_, i) => i !== idx)
-                      });
-                    }}
-                    icon={<ViewColumnIcon />}
-                    sx={{
-                      bgcolor: darkMode ? 'rgba(33, 150, 243, 0.2)' : 'rgba(33, 150, 243, 0.1)',
-                      color: currentTheme?.text
-                    }}
-                  />
-                ))}
-              </Box>
-            </Box>
-
-            {/* Tag Functions */}
             <Autocomplete
               multiple
-              options={availableFunctions}
-              getOptionLabel={(option) => option.name}
-              value={ruleForm.taggedFunctions.map(funcId => availableFunctions.find(f => f.id === funcId)).filter(Boolean)}
+              freeSolo
+              options={tagSuggestions}
+              value={ruleForm.tags}
               onChange={(event, newValue) => {
-                setRuleForm({
-                  ...ruleForm,
-                  taggedFunctions: newValue.map(f => f.id)
-                });
+                const normalized = normalizeTagList(
+                  newValue.map((x) => (typeof x === 'string' ? x : String(x)))
+                );
+                setRuleForm({ ...ruleForm, tags: normalized });
               }}
+              filterSelectedOptions
+              renderTags={(value, getTagProps) =>
+                value.map((option, index) => (
+                  <Chip
+                    {...getTagProps({ index })}
+                    key={`${option}-${index}`}
+                    icon={<LocalOfferIcon sx={{ fontSize: 14 }} />}
+                    label={option}
+                    sx={{
+                      bgcolor: darkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(8, 145, 178, 0.1)',
+                      color: currentTheme?.text,
+                    }}
+                  />
+                ))
+              }
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  label="Tag Functions"
-                  placeholder="Select functions from toolkit"
+                  label="Tags"
+                  placeholder="Type and press Enter"
+                  helperText="Free-text tags for objects, columns, functions, or anything else"
                   sx={{
                     mb: 2,
                     '& .MuiOutlinedInput-root': {
@@ -1228,32 +1152,15 @@ const ModelRuleBuilder = ({ selectedModel, onBack }) => {
                       '&.Mui-focused': {
                         color: currentTheme?.primary
                       }
+                    },
+                    '& .MuiFormHelperText-root': {
+                      color: currentTheme?.textSecondary
                     }
                   }}
                 />
               )}
-              renderOption={(props, option) => (
-                <Box component="li" {...props} sx={{ color: currentTheme?.text, display: 'flex', alignItems: 'center' }}>
-                  <img src="/python.svg" alt="Python" style={{ width: 18, height: 18, marginRight: 8 }} />
-                  {option.name}
-                </Box>
-              )}
-              renderTags={(taggedValues, getTagProps) =>
-                taggedValues.map((option, index) => (
-                  <Chip
-                    {...getTagProps({ index })}
-                    key={option.id}
-                    label={option.name}
-                    icon={<img src="/python.svg" alt="Python" style={{ width: 16, height: 16 }} />}
-                    sx={{
-                      bgcolor: darkMode ? 'rgba(156, 39, 176, 0.2)' : 'rgba(156, 39, 176, 0.1)',
-                      color: currentTheme?.text
-                    }}
-                  />
-                ))
-              }
               sx={{
-                mb: 2,
+                mb: 0,
                 '& .MuiAutocomplete-popupIndicator': {
                   color: currentTheme?.textSecondary
                 },
@@ -1287,10 +1194,11 @@ const ModelRuleBuilder = ({ selectedModel, onBack }) => {
               </Typography>
             </Box>
           </Box>
+          )}
         </DialogContent>
         <DialogActions sx={{ borderTop: `1px solid ${currentTheme?.border}`, p: 2 }}>
           <Button
-            onClick={() => setRuleDialogOpen(false)}
+            onClick={closeRuleDialog}
             sx={{ color: currentTheme?.textSecondary }}
           >
             Cancel
@@ -1299,7 +1207,7 @@ const ModelRuleBuilder = ({ selectedModel, onBack }) => {
             onClick={handleSaveRule}
             variant="contained"
             startIcon={<SaveIcon />}
-            disabled={!ruleForm.name || loading}
+            disabled={loading || (!showParentOnlyDialog && !ruleForm.name?.trim())}
             sx={{ 
               bgcolor: currentTheme?.primary,
               color: '#fff',
@@ -1318,25 +1226,365 @@ const ModelRuleBuilder = ({ selectedModel, onBack }) => {
         </DialogActions>
       </Dialog>
 
-      {/* FAB */}
-      <Fab
-        color="primary"
-        aria-label="add"
-        onClick={handleCreateRule}
-        sx={{
-          position: 'fixed',
-          bottom: 24,
-          right: 24,
-          bgcolor: currentTheme?.primary,
-          boxShadow: 'none',
-          '&:hover': {
-            bgcolor: currentTheme?.primary,
-            opacity: 0.9
+      <Dialog
+        open={libraryAttachOpen}
+        onClose={() => {
+          if (!libraryLoading) {
+            setLibraryAttachOpen(false);
+            setCatalogAssocLineageIds(new Set());
           }
         }}
+        maxWidth="lg"
+        fullWidth
+        disableEnforceFocus
+        disableAutoFocus
+        disableScrollLock
+        PaperProps={{
+          sx: {
+            bgcolor: currentTheme?.card,
+            color: currentTheme?.text,
+            border: `1px solid ${currentTheme?.border}`,
+            maxHeight: 'calc(100vh - 64px)',
+          },
+        }}
       >
-        <AddIcon />
-      </Fab>
+        <DialogTitle sx={{ color: currentTheme?.text, borderBottom: `1px solid ${currentTheme?.border}` }}>
+          Associate to model
+        </DialogTitle>
+        <DialogContent sx={{ color: currentTheme?.text, pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <Typography variant="body2" sx={{ color: currentTheme?.textSecondary, fontFamily: fontStackSans }}>
+            Same catalog as <strong>Data Rules</strong>, one row per rule (copies on different models are merged).
+            Models that already have this rule show as chips. Check any rules not yet on{' '}
+            <strong>{selectedModel?.name || 'this model'}</strong>, then <strong>Associate</strong> (you can select
+            several).
+          </Typography>
+          {!libraryLoading &&
+          catalogLineageEntries.length > 0 &&
+          !catalogLineageEntries.some((e) => catalogEntryCanAssociate(e)) ? (
+            <Typography variant="body2" sx={{ color: currentTheme?.textSecondary, bgcolor: darkMode ? 'rgba(255,193,7,0.08)' : 'rgba(255,152,0,0.12)', borderRadius: 1, p: 1.5 }}>
+              Every rule in the catalog is already represented on this model (same lineage). Nothing left to associate.
+            </Typography>
+          ) : null}
+          <TextField
+            fullWidth
+            size="small"
+            placeholder="Search name, model, tags…"
+            value={masterListSearch}
+            onChange={(e) => setMasterListSearch(e.target.value)}
+            disabled={libraryLoading}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon sx={{ color: currentTheme?.textSecondary, fontSize: 20 }} />
+                </InputAdornment>
+              ),
+            }}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                bgcolor: currentTheme?.card,
+                color: currentTheme?.text,
+                '& fieldset': { borderColor: currentTheme?.border },
+              },
+            }}
+          />
+          {libraryLoading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+              <CircularProgress size={32} />
+            </Box>
+          ) : libraryMasterRows.length === 0 ? (
+            <Typography variant="body2" sx={{ color: currentTheme?.textSecondary }}>
+              No rules in catalog.
+            </Typography>
+          ) : (
+            <TableContainer
+              component={Paper}
+              elevation={0}
+              sx={{
+                border: `1px solid ${currentTheme?.border}`,
+                maxHeight: 'min(420px, 50vh)',
+                bgcolor: darkMode ? 'rgba(255,255,255,0.02)' : currentTheme?.card,
+              }}
+            >
+              <Table size="small" stickyHeader sx={{ '& td': { fontFamily: fontStackSans } }}>
+                <TableHead>
+                  <TableRow>
+                    <TableCell
+                      padding="checkbox"
+                      sx={{ color: currentTheme?.textSecondary, fontWeight: 600, bgcolor: currentTheme?.card }}
+                    >
+                      On model
+                    </TableCell>
+                    <TableCell sx={{ color: currentTheme?.textSecondary, fontWeight: 600, bgcolor: currentTheme?.card }}>
+                      Name
+                    </TableCell>
+                    <TableCell sx={{ color: currentTheme?.textSecondary, fontWeight: 600, bgcolor: currentTheme?.card }}>
+                      Present on
+                    </TableCell>
+                    <TableCell sx={{ color: currentTheme?.textSecondary, fontWeight: 600, bgcolor: currentTheme?.card }}>
+                      Parent
+                    </TableCell>
+                    <TableCell sx={{ color: currentTheme?.textSecondary, fontWeight: 600, bgcolor: currentTheme?.card }}>
+                      Type
+                    </TableCell>
+                    <TableCell sx={{ color: currentTheme?.textSecondary, fontWeight: 600, bgcolor: currentTheme?.card }} align="center">
+                      On
+                    </TableCell>
+                    <TableCell sx={{ color: currentTheme?.textSecondary, fontWeight: 600, bgcolor: currentTheme?.card }} align="right">
+                      Action
+                    </TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {catalogEntriesFilteredSorted.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} sx={{ color: currentTheme?.textSecondary, textAlign: 'center', py: 4 }}>
+                        No rules match your search.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    catalogEntriesFilteredSorted.map((entry) => {
+                      const rule = entry.representative;
+                      const canAssoc = catalogEntryCanAssociate(entry);
+                      const isOnCurrentModel = !canAssoc;
+                      const lidKey = String(entry.lineageId);
+                      const selectedForAdd = catalogAssocLineageIds.has(lidKey);
+                      const checkboxChecked = isOnCurrentModel || selectedForAdd;
+                      return (
+                        <TableRow
+                          key={entry.lineageId}
+                          hover
+                          selected={selectedForAdd && canAssoc}
+                          onClick={() => {
+                            if (canAssoc) {
+                              setCatalogAssocLineageIds((prev) => {
+                                const next = new Set(prev);
+                                if (next.has(lidKey)) next.delete(lidKey);
+                                else next.add(lidKey);
+                                return next;
+                              });
+                            }
+                          }}
+                          sx={{
+                            cursor: canAssoc ? 'pointer' : 'default',
+                            ...(canAssoc && selectedForAdd
+                              ? {
+                                  bgcolor: darkMode ? 'rgba(255,255,255,0.06)' : 'rgba(8, 145, 178, 0.08)',
+                                }
+                              : {}),
+                          }}
+                        >
+                          <TableCell
+                            padding="checkbox"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <Checkbox
+                              size="small"
+                              checked={checkboxChecked}
+                              onChange={(e) => {
+                                const nextChecked = e.target.checked;
+                                if (isOnCurrentModel && !nextChecked) {
+                                  const orderedRuleIds = orderRuleIdsToDeleteForLineage(rules, entry.lineageId);
+                                  if (!orderedRuleIds.length) {
+                                    setSnackbar({
+                                      open: true,
+                                      message: 'Could not find this rule on the model to remove.',
+                                      severity: 'warning',
+                                    });
+                                    return;
+                                  }
+                                  setDissociateDialog({
+                                    ruleName: rule.name || 'this rule',
+                                    orderedRuleIds,
+                                  });
+                                  return;
+                                }
+                                if (!isOnCurrentModel) {
+                                  setCatalogAssocLineageIds((prev) => {
+                                    const next = new Set(prev);
+                                    if (next.has(lidKey)) next.delete(lidKey);
+                                    else next.add(lidKey);
+                                    return next;
+                                  });
+                                }
+                              }}
+                              inputProps={{
+                                'aria-label': isOnCurrentModel
+                                  ? `Associated with this model — uncheck to remove: ${rule.name}`
+                                  : selectedForAdd
+                                    ? `Selected to associate: ${rule.name}`
+                                    : `Not on this model — select to associate: ${rule.name}`,
+                              }}
+                              sx={{ color: currentTheme?.primary, p: 0.5 }}
+                            />
+                          </TableCell>
+                          <TableCell sx={{ color: currentTheme?.text, fontWeight: 600 }}>{rule.name}</TableCell>
+                          <TableCell sx={{ maxWidth: 280 }}>
+                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, alignItems: 'center' }}>
+                              {entry.hasLibrary ? (
+                                <Chip
+                                  size="small"
+                                  label="Library"
+                                  variant="outlined"
+                                  sx={{ borderColor: currentTheme?.border }}
+                                />
+                              ) : null}
+                              {entry.modelsWithLineage.map((m) => {
+                                const onCurrent =
+                                  Boolean(selectedModel?.shortName) && m === selectedModel.shortName;
+                                return (
+                                  <Chip
+                                    key={m}
+                                    size="small"
+                                    label={m}
+                                    sx={{ fontFamily: fontStackSans }}
+                                    color={onCurrent ? 'primary' : 'default'}
+                                    variant="filled"
+                                  />
+                                );
+                              })}
+                              {!entry.hasLibrary && entry.modelsWithLineage.length === 0 ? (
+                                <Typography variant="caption" sx={{ color: currentTheme?.textSecondary }}>
+                                  —
+                                </Typography>
+                              ) : null}
+                            </Box>
+                          </TableCell>
+                          <TableCell sx={{ color: currentTheme?.textSecondary }}>{parentLabelMaster(rule)}</TableCell>
+                          <TableCell sx={{ color: currentTheme?.textSecondary }}>{rule.ruleType || '—'}</TableCell>
+                          <TableCell align="center">
+                            {rule.enabled !== false ? (
+                              <Chip size="small" label="Yes" color="success" variant="outlined" />
+                            ) : (
+                              <Chip size="small" label="No" variant="outlined" />
+                            )}
+                          </TableCell>
+                          <TableCell align="right" onClick={(e) => e.stopPropagation()}>
+                            {canAssoc ? (
+                              <Tooltip title="Copy this rule onto the current model now">
+                                <IconButton
+                                  size="small"
+                                  disabled={libraryLoading}
+                                  onClick={() => {
+                                    handleAssociateFromMasterRow(rule.id);
+                                  }}
+                                  sx={{ color: currentTheme?.primary }}
+                                  aria-label={`Associate ${rule.name}`}
+                                >
+                                  <AssignIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                            ) : (
+                              <Typography variant="caption" sx={{ color: currentTheme?.textSecondary }}>
+                                On this model
+                              </Typography>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+        </DialogContent>
+        <DialogActions
+          sx={{
+            borderTop: `1px solid ${currentTheme?.border}`,
+            p: 2,
+            flexWrap: 'wrap',
+            gap: 1,
+            justifyContent: 'space-between',
+          }}
+        >
+          <Button
+            onClick={() => {
+              setLibraryAttachOpen(false);
+              setCatalogAssocLineageIds(new Set());
+            }}
+            disabled={libraryLoading}
+            sx={{ color: currentTheme?.textSecondary, textTransform: 'none' }}
+          >
+            Close
+          </Button>
+          <Button
+            variant="contained"
+            disabled={libraryLoading || catalogAssocLineageIds.size === 0}
+            onClick={handleBatchAssociateFromCatalog}
+            sx={{ textTransform: 'none' }}
+          >
+            {catalogAssocLineageIds.size > 1
+              ? `Associate ${catalogAssocLineageIds.size} rules with ${selectedModel?.name || 'model'}`
+              : `Associate with ${selectedModel?.name || 'model'}`}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={Boolean(dissociateDialog)}
+        onClose={() => {
+          if (!libraryLoading) setDissociateDialog(null);
+        }}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{
+          sx: {
+            bgcolor: currentTheme?.card,
+            color: currentTheme?.text,
+            border: `1px solid ${currentTheme?.border}`,
+          },
+        }}
+      >
+        <DialogTitle sx={{ color: currentTheme?.text }}>Remove rule from model?</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ color: currentTheme?.textSecondary }}>
+            Remove <strong>{dissociateDialog?.ruleName}</strong> from{' '}
+            <strong>{selectedModel?.name || selectedModel?.shortName || 'this model'}</strong>? This deletes the
+            model&apos;s copy of the rule. Subrules on this model under that copy are removed first. The library or other
+            models are not affected.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ borderTop: `1px solid ${currentTheme?.border}`, p: 2 }}>
+          <Button
+            onClick={() => setDissociateDialog(null)}
+            disabled={libraryLoading}
+            sx={{ color: currentTheme?.textSecondary, textTransform: 'none' }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            disabled={libraryLoading}
+            onClick={handleConfirmDissociateFromCatalog}
+            sx={{ textTransform: 'none' }}
+          >
+            Remove from model
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* FAB (full page only — modal uses absolute FAB on modal pane) */}
+      {!inModal && (
+        <Fab
+          color="primary"
+          aria-label="add"
+          onClick={handleCreateRule}
+          sx={{
+            position: 'fixed',
+            bottom: 24,
+            right: 24,
+            bgcolor: currentTheme?.primary,
+            boxShadow: 'none',
+            '&:hover': {
+              bgcolor: currentTheme?.primary,
+              opacity: 0.9,
+            },
+          }}
+        >
+          <AddIcon />
+        </Fab>
+      )}
 
       {/* Snackbar */}
       <Snackbar

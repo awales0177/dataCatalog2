@@ -21,7 +21,6 @@ import {
   ListItemText,
   ListItemIcon,
   ListItemButton,
-  Divider,
   Tabs,
   Tab,
 } from '@mui/material';
@@ -31,21 +30,10 @@ import {
   PushPin as PinIcon,
   PinDrop as PinDropIcon,
   Storage as StorageIcon,
-  Description as DescriptionIcon,
-  AccountTree as AccountTreeIcon,
-  ShoppingCart as ShoppingCartIcon,
-  Build as BuildIcon,
-  Delete as DeleteIcon,
 } from '@mui/icons-material';
 import { ThemeContext } from '../contexts/ThemeContext';
-import DataProductCard from '../components/DataProductCard';
 import DataModelCard from '../components/DataModelCard';
-import DatasetCard from '../components/DatasetCard';
-import dataProductsData from '../data/dataProducts.json';
 import modelsData from '../data/models.json';
-import datasetsData from '../data/datasets.json';
-import pipelinesData from '../data/pipelines.json';
-import { getPipelineName } from '../utils/pipelineUtils';
 
 const PINNED_STORAGE_KEY = 'pinnedItems';
 
@@ -56,28 +44,22 @@ const HomePage = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState(0);
-  const [pipelineNames, setPipelineNames] = useState({});
 
-  // Load pinned items from localStorage
+  // Load pinned items from localStorage (models only; drop legacy product/dataset pins)
   useEffect(() => {
     const stored = localStorage.getItem(PINNED_STORAGE_KEY);
     if (stored) {
       try {
-        setPinnedItems(JSON.parse(stored));
+        const parsed = JSON.parse(stored);
+        const allowed = parsed.filter((p) => p.type === 'model' || p.type === 'tool');
+        if (allowed.length !== parsed.length) {
+          localStorage.setItem(PINNED_STORAGE_KEY, JSON.stringify(allowed));
+        }
+        setPinnedItems(allowed);
       } catch (e) {
         console.error('Error loading pinned items:', e);
       }
     }
-  }, []);
-
-  // Load pipeline names
-  useEffect(() => {
-    const pipelinesArray = Array.isArray(pipelinesData) ? pipelinesData : [];
-    const nameMap = {};
-    pipelinesArray.forEach(p => {
-      nameMap[p.uuid] = p.name;
-    });
-    setPipelineNames(nameMap);
   }, []);
 
   // Save pinned items to localStorage
@@ -106,17 +88,9 @@ const HomePage = () => {
 
   // Search functionality
   const searchResults = React.useMemo(() => {
-    if (!searchQuery.trim()) return { products: [], models: [], datasets: [] };
+    if (!searchQuery.trim()) return { models: [] };
 
     const query = searchQuery.toLowerCase();
-    const products = (dataProductsData.products || dataProductsData.items || [])
-      .filter(p => 
-        p.name?.toLowerCase().includes(query) ||
-        p.description?.toLowerCase().includes(query)
-      )
-      .slice(0, 5)
-      .map(p => ({ ...p, type: 'product', displayName: p.name }));
-
     const models = (Array.isArray(modelsData) ? modelsData : (modelsData.models || []))
       .filter(m => 
         m.name?.toLowerCase().includes(query) ||
@@ -126,98 +100,28 @@ const HomePage = () => {
       .slice(0, 5)
       .map(m => ({ ...m, type: 'model', displayName: m.name || m.shortName, id: m.shortName || m.id }));
 
-    const datasets = (Array.isArray(datasetsData) ? datasetsData : [])
-      .filter(d => 
-        d.name?.toLowerCase().includes(query) ||
-        d.description?.toLowerCase().includes(query)
-      )
-      .slice(0, 5)
-      .map(d => ({ ...d, type: 'dataset', displayName: d.name }));
-
-    return { products, models, datasets };
+    return { models };
   }, [searchQuery]);
 
   // Group pinned items by type
   const groupedPins = React.useMemo(() => {
-    const groups = {
-      products: [],
-      models: [],
-      datasets: [],
-      tools: [],
-    };
-
+    const groups = { models: [], tools: [] };
     pinnedItems.forEach(item => {
       if (groups[item.type]) {
         groups[item.type].push(item);
       }
     });
-
     return groups;
   }, [pinnedItems]);
 
   const handleNavigate = (item) => {
-    switch (item.type) {
-      case 'product':
-        navigate(`/data-products/${item.id}`);
-        break;
-      case 'model':
-        navigate(`/models/${item.id}`);
-        break;
-      case 'dataset':
-        navigate(`/pipelines/datasets/${item.id}`);
-        break;
-      default:
-        break;
+    if (item.type === 'model') {
+      navigate(`/models/${item.id}`);
     }
   };
 
   const renderPinnedItem = (item) => {
     switch (item.type) {
-      case 'product':
-        const product = (dataProductsData.products || dataProductsData.items || [])
-          .find(p => p.id === item.id);
-        if (!product) return null;
-        return (
-          <Grid item xs={12} sm={6} md={4} lg={3} key={`product-${item.id}`}>
-            <Box sx={{ position: 'relative', overflow: 'visible' }}>
-              <IconButton
-                size="small"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleUnpin(item.id, 'product');
-                }}
-                sx={{
-                  position: 'absolute',
-                  bottom: 12,
-                  right: -16,
-                  zIndex: 20,
-                  bgcolor: '#37ABBF',
-                  width: 32,
-                  height: 32,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderRadius: '4px 0 0 4px',
-                  boxShadow: '0 2px 8px rgba(55, 171, 191, 0.3)',
-                  clipPath: 'polygon(0 0, calc(100% - 8px) 0, 100% 50%, calc(100% - 8px) 100%, 0 100%)',
-                  '&:hover': { 
-                    bgcolor: '#2a8a9a',
-                    boxShadow: '0 2px 12px rgba(55, 171, 191, 0.4)',
-                  },
-                }}
-              >
-                <PinIcon sx={{ color: 'white', fontSize: 18 }} />
-              </IconButton>
-              <Box onClick={() => handleNavigate(item)}>
-                <DataProductCard
-                  product={product}
-                  currentTheme={currentTheme}
-                  onClick={() => handleNavigate(item)}
-                />
-              </Box>
-            </Box>
-          </Grid>
-        );
       case 'model':
         const model = (Array.isArray(modelsData) ? modelsData : (modelsData.models || []))
           .find(m => (m.shortName || m.id) === item.id);
@@ -258,52 +162,6 @@ const HomePage = () => {
                   model={model}
                   currentTheme={currentTheme}
                   onClick={() => handleNavigate(item)}
-                />
-              </Box>
-            </Box>
-          </Grid>
-        );
-      case 'dataset':
-        const dataset = (Array.isArray(datasetsData) ? datasetsData : [])
-          .find(d => d.id === item.id);
-        if (!dataset) return null;
-        return (
-          <Grid item xs={12} sm={6} md={4} lg={3} key={`dataset-${item.id}`}>
-            <Box sx={{ position: 'relative', overflow: 'visible' }}>
-              <IconButton
-                size="small"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleUnpin(item.id, 'dataset');
-                }}
-                sx={{
-                  position: 'absolute',
-                  bottom: 12,
-                  right: -16,
-                  zIndex: 20,
-                  bgcolor: '#37ABBF',
-                  width: 32,
-                  height: 32,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderRadius: '4px 0 0 4px',
-                  boxShadow: '0 2px 8px rgba(55, 171, 191, 0.3)',
-                  clipPath: 'polygon(0 0, calc(100% - 8px) 0, 100% 50%, calc(100% - 8px) 100%, 0 100%)',
-                  '&:hover': { 
-                    bgcolor: '#2a8a9a',
-                    boxShadow: '0 2px 12px rgba(55, 171, 191, 0.4)',
-                  },
-                }}
-              >
-                <PinIcon sx={{ color: 'white', fontSize: 18 }} />
-              </IconButton>
-              <Box onClick={() => handleNavigate(item)}>
-                <DatasetCard
-                  dataset={dataset}
-                  currentTheme={currentTheme}
-                  onClick={() => handleNavigate(item)}
-                  pipelineNames={pipelineNames}
                 />
               </Box>
             </Box>
@@ -359,9 +217,7 @@ const HomePage = () => {
             }}
           >
             <Tab label={`All (${pinnedItems.length})`} />
-            <Tab label={`Products (${groupedPins.products.length})`} />
             <Tab label={`Models (${groupedPins.models.length})`} />
-            <Tab label={`Datasets (${groupedPins.datasets.length})`} />
           </Tabs>
         </Box>
       )}
@@ -405,9 +261,7 @@ const HomePage = () => {
         <Grid container spacing={3}>
           {(() => {
             let itemsToShow = pinnedItems;
-            if (activeTab === 1) itemsToShow = groupedPins.products;
-            else if (activeTab === 2) itemsToShow = groupedPins.models;
-            else if (activeTab === 3) itemsToShow = groupedPins.datasets;
+            if (activeTab === 1) itemsToShow = groupedPins.models;
 
             return itemsToShow.map(item => renderPinnedItem(item)).filter(Boolean);
           })()}
@@ -448,7 +302,7 @@ const HomePage = () => {
         <DialogContent>
           <TextField
             fullWidth
-            placeholder="Search for products, models, datasets..."
+            placeholder="Search for models to pin..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             InputProps={{
@@ -477,47 +331,6 @@ const HomePage = () => {
 
           {searchQuery.trim() && (
             <Box>
-              {searchResults.products.length > 0 && (
-                <Box sx={{ mb: 3 }}>
-                  <Typography variant="subtitle2" sx={{ color: currentTheme.text, mb: 1, fontWeight: 600 }}>
-                    Data Products
-                  </Typography>
-                  <List>
-                    {searchResults.products.map((product) => (
-                      <ListItem
-                        key={product.id}
-                        disablePadding
-                        secondaryAction={
-                          isPinned(product.id, 'product') ? (
-                            <Chip label="Pinned" size="small" sx={{ bgcolor: alpha('#37ABBF', 0.1), color: '#37ABBF' }} />
-                          ) : (
-                            <IconButton
-                              edge="end"
-                              onClick={() => handlePin({ id: product.id, type: 'product', name: product.name })}
-                              sx={{ color: '#37ABBF' }}
-                            >
-                              <PinDropIcon />
-                            </IconButton>
-                          )
-                        }
-                      >
-                        <ListItemButton onClick={() => handleNavigate(product)}>
-                          <ListItemIcon>
-                            <ShoppingCartIcon sx={{ color: '#37ABBF' }} />
-                          </ListItemIcon>
-                          <ListItemText
-                            primary={product.name}
-                            secondary={product.description?.substring(0, 60) + '...'}
-                            primaryTypographyProps={{ color: currentTheme.text }}
-                            secondaryTypographyProps={{ color: currentTheme.textSecondary }}
-                          />
-                        </ListItemButton>
-                      </ListItem>
-                    ))}
-                  </List>
-                </Box>
-              )}
-
               {searchResults.models.length > 0 && (
                 <Box sx={{ mb: 3 }}>
                   <Typography variant="subtitle2" sx={{ color: currentTheme.text, mb: 1, fontWeight: 600 }}>
@@ -559,50 +372,7 @@ const HomePage = () => {
                 </Box>
               )}
 
-              {searchResults.datasets.length > 0 && (
-                <Box sx={{ mb: 3 }}>
-                  <Typography variant="subtitle2" sx={{ color: currentTheme.text, mb: 1, fontWeight: 600 }}>
-                    Datasets
-                  </Typography>
-                  <List>
-                    {searchResults.datasets.map((dataset) => (
-                      <ListItem
-                        key={dataset.id}
-                        disablePadding
-                        secondaryAction={
-                          isPinned(dataset.id, 'dataset') ? (
-                            <Chip label="Pinned" size="small" sx={{ bgcolor: alpha('#37ABBF', 0.1), color: '#37ABBF' }} />
-                          ) : (
-                            <IconButton
-                              edge="end"
-                              onClick={() => handlePin({ id: dataset.id, type: 'dataset', name: dataset.name })}
-                              sx={{ color: '#37ABBF' }}
-                            >
-                              <PinDropIcon />
-                            </IconButton>
-                          )
-                        }
-                      >
-                        <ListItemButton onClick={() => handleNavigate(dataset)}>
-                          <ListItemIcon>
-                            <AccountTreeIcon sx={{ color: '#37ABBF' }} />
-                          </ListItemIcon>
-                          <ListItemText
-                            primary={dataset.name}
-                            secondary={dataset.description?.substring(0, 60) + '...'}
-                            primaryTypographyProps={{ color: currentTheme.text }}
-                            secondaryTypographyProps={{ color: currentTheme.textSecondary }}
-                          />
-                        </ListItemButton>
-                      </ListItem>
-                    ))}
-                  </List>
-                </Box>
-              )}
-
-              {searchResults.products.length === 0 &&
-                searchResults.models.length === 0 &&
-                searchResults.datasets.length === 0 && (
+              {searchResults.models.length === 0 && (
                   <Box sx={{ textAlign: 'center', py: 4 }}>
                     <Typography variant="body2" sx={{ color: currentTheme.textSecondary }}>
                       No results found

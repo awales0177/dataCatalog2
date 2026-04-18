@@ -1981,25 +1981,6 @@ const DataProductDetailPage = () => {
                     color: currentTheme.textSecondary,
                     fontStyle: 'italic',
                   },
-                  '& table': {
-                    width: '100%',
-                    borderCollapse: 'collapse',
-                    mb: 2,
-                  },
-                  '& th, & td': {
-                    border: `1px solid ${currentTheme.border}`,
-                    padding: 1,
-                    textAlign: 'left',
-                    color: currentTheme.text,
-                  },
-                  '& th': {
-                    backgroundColor: darkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
-                    color: currentTheme.text,
-                    fontWeight: 600,
-                  },
-                  '& tr:nth-of-type(even)': {
-                    backgroundColor: darkMode ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.02)',
-                  },
                 }}>
                   <ReactMarkdown
                     remarkPlugins={[remarkGfm, remarkEmoji]}
