@@ -93,7 +93,7 @@ export const useAppState = () => {
     } else if (path === '/settings') {
       title = 'Settings';
     } else if (path === '/rules') {
-      title = 'Data Rules';
+      title = 'Data Quality Rules';
     } else if (path.startsWith('/models/')) {
       const shortName = path.split('/').pop().toUpperCase();
       title = shortName;

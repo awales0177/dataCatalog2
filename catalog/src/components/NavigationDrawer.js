@@ -313,7 +313,6 @@ const NavigationDrawer = ({
                 flexDirection: 'row',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: 1,
                 width: '100%',
               }}
             >
@@ -332,18 +331,6 @@ const NavigationDrawer = ({
                   {getRoleIcon(currentRole || 'reader')}
                 </IconButton>
               </Tooltip>
-              <Typography
-                component="div"
-                variant="caption"
-                sx={{
-                  color: currentTheme.textSecondary,
-                  fontSize: '0.65rem',
-                  lineHeight: 1.2,
-                  opacity: 0.85,
-                }}
-              >
-                v{packageJson.version}
-              </Typography>
             </Box>
           )}
         </Box>

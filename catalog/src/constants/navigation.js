@@ -45,19 +45,13 @@ export const menuItems = [
     id: 'home'
   },
   {
-    name: 'Workspaces',
-    path: '/workspaces',
-    icon: <WorkspacesIcon />,
-    id: 'workspaces'
-  },
-  {
     name: 'Data Models',
     path: '/models',
     icon: <PiGraph />,
     id: 'models'
   },
   {
-    name: 'Data Rules',
+    name: 'Rules',
     path: '/rules',
     icon: <DataRulesIcon />,
     id: 'rules',
@@ -108,6 +102,12 @@ export const menuItems = [
     icon: <BarChartIcon />,
     id: 'statistics',
     adminOnly: true
+  },
+  {
+    name: 'Workspaces',
+    path: '/workspaces',
+    icon: <WorkspacesIcon />,
+    id: 'workspaces'
   },
   {
     name: 'Settings',

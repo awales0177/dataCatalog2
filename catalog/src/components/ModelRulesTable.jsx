@@ -25,6 +25,8 @@ import {
 } from '@mui/icons-material';
 import { ThemeContext } from '../contexts/ThemeContext';
 import { ruleTagsList } from '../utils/ruleTags';
+import { normalizeRuleStage, ruleStageColor } from '../utils/ruleStage';
+import { normalizeRuleZone, ruleZoneColor, ruleZoneLabel } from '../utils/ruleZone';
 import { fontStackSans } from '../theme/theme';
 
 function buildOrderedRules(rules) {
@@ -227,7 +229,7 @@ const ModelRulesTable = ({
           size="medium"
           stickyHeader
           sx={{
-            minWidth: 640,
+            minWidth: 1040,
             '& td': { fontFamily: fontStackSans, verticalAlign: 'middle' },
           }}
         >
@@ -259,10 +261,44 @@ const ModelRulesTable = ({
                   color: currentTheme?.textSecondary,
                   fontWeight: 700,
                   borderBottom: `2px solid ${currentTheme?.border}`,
+                  width: 150,
+                  minWidth: 130,
+                }}
+              >
+                Rule ID
+              </TableCell>
+              <TableCell
+                sx={{
+                  bgcolor: currentTheme?.card,
+                  color: currentTheme?.textSecondary,
+                  fontWeight: 700,
+                  borderBottom: `2px solid ${currentTheme?.border}`,
                   width: 120,
                 }}
               >
                 Type
+              </TableCell>
+              <TableCell
+                sx={{
+                  bgcolor: currentTheme?.card,
+                  color: currentTheme?.textSecondary,
+                  fontWeight: 700,
+                  borderBottom: `2px solid ${currentTheme?.border}`,
+                  width: 100,
+                }}
+              >
+                Stage
+              </TableCell>
+              <TableCell
+                sx={{
+                  bgcolor: currentTheme?.card,
+                  color: currentTheme?.textSecondary,
+                  fontWeight: 700,
+                  borderBottom: `2px solid ${currentTheme?.border}`,
+                  width: 100,
+                }}
+              >
+                Zone
               </TableCell>
               <TableCell
                 align="center"
@@ -303,6 +339,10 @@ const ModelRulesTable = ({
           <TableBody>
             {visibleOrderedRules.map((rule) => {
               const typeStyle = getRuleTypeColor(rule.ruleType);
+              const stage = normalizeRuleStage(rule.stage);
+              const stageHex = ruleStageColor(stage);
+              const zone = normalizeRuleZone(rule.ruleZone);
+              const zoneHex = ruleZoneColor(zone);
               const tags = ruleTagsList(rule);
               const depth = depthByRuleId[rule.id] || 0;
               const hasKids = ruleHasChildren(rule.id);
@@ -374,6 +414,28 @@ const ModelRulesTable = ({
                       </Typography>
                     ) : null}
                   </TableCell>
+                  <TableCell sx={{ py: 1, maxWidth: 180 }}>
+                    {rule.id ? (
+                      <Typography
+                        variant="body2"
+                        component="span"
+                        title={String(rule.id)}
+                        sx={{
+                          fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+                          fontSize: '0.75rem',
+                          color: currentTheme?.textSecondary,
+                          wordBreak: 'break-all',
+                          display: 'block',
+                        }}
+                      >
+                        {rule.id}
+                      </Typography>
+                    ) : (
+                      <Typography variant="caption" sx={{ color: currentTheme?.textSecondary }}>
+                        —
+                      </Typography>
+                    )}
+                  </TableCell>
                   <TableCell sx={{ py: 1 }}>
                     <Chip
                       label={rule.ruleType}
@@ -400,6 +462,36 @@ const ModelRulesTable = ({
                         }}
                       />
                     )}
+                  </TableCell>
+                  <TableCell sx={{ py: 1 }}>
+                    <Chip
+                      label={stage}
+                      size="small"
+                      sx={{
+                        ...compactChip,
+                        height: 24,
+                        fontSize: '0.75rem',
+                        textTransform: 'capitalize',
+                        bgcolor: `${stageHex}22`,
+                        color: stageHex,
+                        border: `1px solid ${stageHex}44`,
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell sx={{ py: 1 }}>
+                    <Chip
+                      label={ruleZoneLabel(zone)}
+                      size="small"
+                      sx={{
+                        ...compactChip,
+                        height: 24,
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        bgcolor: `${zoneHex}22`,
+                        color: zoneHex,
+                        border: `1px solid ${zoneHex}44`,
+                      }}
+                    />
                   </TableCell>
                   <TableCell align="center" sx={{ py: 1 }}>
                     {rule.enabled !== false ? (

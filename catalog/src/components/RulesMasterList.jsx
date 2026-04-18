@@ -33,6 +33,8 @@ import {
 import { ThemeContext } from '../contexts/ThemeContext';
 import { getAllModelRules, createRule } from '../services/api';
 import { ruleTagsList, normalizeTagList } from '../utils/ruleTags';
+import { RULE_STAGE_OPTIONS, normalizeRuleStage, ruleStageColor } from '../utils/ruleStage';
+import { RULE_ZONE_OPTIONS, normalizeRuleZone, ruleZoneColor, ruleZoneLabel } from '../utils/ruleZone';
 import { fontStackSans } from '../theme/theme';
 
 const RULE_TYPE_OPTIONS = [
@@ -80,6 +82,8 @@ const RulesMasterList = () => {
     description: '',
     documentation: '',
     ruleType: 'validation',
+    stage: 'bronze',
+    ruleZone: 'value',
     enabled: true,
     tags: [],
   });
@@ -141,8 +145,12 @@ const RulesMasterList = () => {
     return lineageRows.filter((entry) => {
       const r = entry.representative;
       if (r.name?.toLowerCase().includes(q)) return true;
+      if (String(r.id || '').toLowerCase().includes(q)) return true;
       if (r.description?.toLowerCase().includes(q)) return true;
       if (r.ruleType?.toLowerCase().includes(q)) return true;
+      if (normalizeRuleStage(r.stage).includes(q)) return true;
+      if (normalizeRuleZone(r.ruleZone).includes(q)) return true;
+      if (ruleZoneLabel(r.ruleZone).toLowerCase().includes(q)) return true;
       if (entry.modelsWithLineage.some((m) => m.toLowerCase().includes(q))) return true;
       if (entry.hasLibrary && 'library'.includes(q)) return true;
       return ruleTagsList(r).some((t) => t.toLowerCase().includes(q));
@@ -171,6 +179,8 @@ const RulesMasterList = () => {
         description: libraryForm.description || '',
         documentation: libraryForm.documentation || '',
         ruleType: normalizeRuleType(libraryForm.ruleType),
+        stage: normalizeRuleStage(libraryForm.stage),
+        ruleZone: normalizeRuleZone(libraryForm.ruleZone),
         enabled: libraryForm.enabled,
         tags: normalizeTagList(libraryForm.tags),
       });
@@ -181,6 +191,8 @@ const RulesMasterList = () => {
         description: '',
         documentation: '',
         ruleType: 'validation',
+        stage: 'bronze',
+        ruleZone: 'value',
         enabled: true,
         tags: [],
       });
@@ -209,7 +221,7 @@ const RulesMasterList = () => {
     <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
       <Box sx={{ mb: 3 }}>
         <Typography variant="h4" component="h1" sx={{ color: currentTheme?.text, fontWeight: 700, mb: 1 }}>
-          Data Rules
+          Data Quality Rules
         </Typography>
         <Typography variant="body1" sx={{ color: currentTheme?.textSecondary, maxWidth: 720 }}>
           Library rules are not tied to a model. Use the workbench <strong>Rule Builder</strong> (Workspaces) to copy
@@ -261,15 +273,18 @@ const RulesMasterList = () => {
             size="medium"
             stickyHeader
             sx={{
-              minWidth: 560,
+              minWidth: 680,
               '& td': { fontFamily: fontStackSans, verticalAlign: 'middle' },
             }}
           >
             <TableHead>
               <TableRow>
                 <TableCell sx={headCellSx}>Name</TableCell>
+                <TableCell sx={{ ...headCellSx, width: 160, minWidth: 140 }}>Rule ID</TableCell>
                 <TableCell sx={{ ...headCellSx, minWidth: 200, maxWidth: 360 }}>Model</TableCell>
                 <TableCell sx={{ ...headCellSx, width: 140 }}>Type</TableCell>
+                <TableCell sx={{ ...headCellSx, width: 100 }}>Stage</TableCell>
+                <TableCell sx={{ ...headCellSx, width: 100 }}>Zone</TableCell>
                 <TableCell sx={{ ...headCellSx, width: 88 }} align="center">
                   On
                 </TableCell>
@@ -278,7 +293,7 @@ const RulesMasterList = () => {
             <TableBody>
               {sortedRows.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} sx={{ color: currentTheme?.textSecondary, textAlign: 'center', py: 4 }}>
+                  <TableCell colSpan={7} sx={{ color: currentTheme?.textSecondary, textAlign: 'center', py: 4 }}>
                     No rules match.
                   </TableCell>
                 </TableRow>
@@ -296,6 +311,27 @@ const RulesMasterList = () => {
                       }}
                     >
                       <TableCell sx={{ color: currentTheme?.text, fontWeight: 600 }}>{rule.name}</TableCell>
+                      <TableCell sx={{ maxWidth: 200 }}>
+                        {rule.id ? (
+                          <Typography
+                            variant="body2"
+                            component="span"
+                            title={String(rule.id)}
+                            sx={{
+                              fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+                              fontSize: '0.8125rem',
+                              color: currentTheme?.textSecondary,
+                              wordBreak: 'break-all',
+                            }}
+                          >
+                            {rule.id}
+                          </Typography>
+                        ) : (
+                          <Typography variant="caption" sx={{ color: currentTheme?.textSecondary }}>
+                            —
+                          </Typography>
+                        )}
+                      </TableCell>
                       <TableCell sx={{ maxWidth: 360 }}>
                         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, alignItems: 'center' }}>
                           {entry.hasLibrary ? (
@@ -323,6 +359,45 @@ const RulesMasterList = () => {
                         </Box>
                       </TableCell>
                       <TableCell sx={{ color: currentTheme?.textSecondary }}>{rule.ruleType || '—'}</TableCell>
+                      <TableCell sx={{ py: 1 }}>
+                        {(() => {
+                          const st = normalizeRuleStage(rule.stage);
+                          const c = ruleStageColor(st);
+                          return (
+                            <Chip
+                              label={st}
+                              size="small"
+                              sx={{
+                                height: 24,
+                                fontWeight: 600,
+                                textTransform: 'capitalize',
+                                bgcolor: `${c}22`,
+                                color: c,
+                                border: `1px solid ${c}44`,
+                              }}
+                            />
+                          );
+                        })()}
+                      </TableCell>
+                      <TableCell sx={{ py: 1 }}>
+                        {(() => {
+                          const z = normalizeRuleZone(rule.ruleZone);
+                          const c = ruleZoneColor(z);
+                          return (
+                            <Chip
+                              label={ruleZoneLabel(z)}
+                              size="small"
+                              sx={{
+                                height: 24,
+                                fontWeight: 600,
+                                bgcolor: `${c}22`,
+                                color: c,
+                                border: `1px solid ${c}44`,
+                              }}
+                            />
+                          );
+                        })()}
+                      </TableCell>
                       <TableCell align="center">
                         {rule.enabled !== false ? (
                           <Chip size="small" label="Yes" color="success" variant="outlined" />
@@ -397,6 +472,34 @@ const RulesMasterList = () => {
               onChange={(e) => setLibraryForm({ ...libraryForm, ruleType: e.target.value })}
             >
               {RULE_TYPE_OPTIONS.map((o) => (
+                <MenuItem key={o.value} value={o.value}>
+                  {o.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <FormControl fullWidth size="small" sx={{ mb: 2 }}>
+            <InputLabel>Stage</InputLabel>
+            <Select
+              label="Stage"
+              value={normalizeRuleStage(libraryForm.stage)}
+              onChange={(e) => setLibraryForm({ ...libraryForm, stage: e.target.value })}
+            >
+              {RULE_STAGE_OPTIONS.map((o) => (
+                <MenuItem key={o.value} value={o.value}>
+                  {o.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <FormControl fullWidth size="small" sx={{ mb: 2 }}>
+            <InputLabel>Rule zone</InputLabel>
+            <Select
+              label="Rule zone"
+              value={normalizeRuleZone(libraryForm.ruleZone)}
+              onChange={(e) => setLibraryForm({ ...libraryForm, ruleZone: e.target.value })}
+            >
+              {RULE_ZONE_OPTIONS.map((o) => (
                 <MenuItem key={o.value} value={o.value}>
                   {o.label}
                 </MenuItem>

@@ -18,6 +18,11 @@ import uuid
 from auth import get_current_user_optional, require_editor_or_admin, require_admin, UserRole
 from endpoints.auth import router as auth_router
 from services.search_service import search_service
+from services.catalog_rule_id import (
+    next_catalog_rule_id,
+    normalize_rule_stage,
+    normalize_rule_zone,
+)
 from services.python_introspection_service import python_introspection_service
 
 # Configure logging
@@ -3152,12 +3157,13 @@ async def create_rule(request: Dict[str, Any], current_user: dict = Depends(requ
             # File doesn't exist, create new structure
             rules_data = {"rules": []}
         
-        # Generate UUID as ID
-        new_id = str(uuid.uuid4())
-        
-        # Add lastUpdated timestamp and assign the generated ID
         # Remove form state fields that shouldn't be saved
         new_rule = {k: v for k, v in request.items() if k not in ['newObjectInput', 'newColumnInput', 'ruleTypeIdentifier']}
+        # ID: {stage}_{ruleZone}_{NNN} (NNN increments per stage+zone; client-sent id ignored)
+        new_rule['stage'] = normalize_rule_stage(new_rule.get('stage'))
+        new_rule['ruleZone'] = normalize_rule_zone(new_rule.get('ruleZone'))
+        existing = rules_data.get('rules', [])
+        new_id = next_catalog_rule_id(existing, new_rule['stage'], new_rule['ruleZone'])
         new_rule['id'] = new_id
         new_rule['lastUpdated'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         new_rule['createdBy'] = current_user.get('username', 'unknown')

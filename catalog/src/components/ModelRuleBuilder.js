@@ -48,6 +48,8 @@ import {
   deleteRule,
 } from '../services/api';
 import { ruleTagsList, normalizeTagList } from '../utils/ruleTags';
+import { RULE_STAGE_OPTIONS, normalizeRuleStage } from '../utils/ruleStage';
+import { RULE_ZONE_OPTIONS, normalizeRuleZone, ruleZoneLabel } from '../utils/ruleZone';
 import { fontStackSans } from '../theme/theme';
 import ModelRulesTable from './ModelRulesTable';
 
@@ -164,6 +166,8 @@ const ModelRuleBuilder = ({
     modelShortName: '',
     tags: [],
     ruleType: 'validation',
+    stage: 'bronze',
+    ruleZone: 'value',
     enabled: true,
     parentRuleId: '',
   });
@@ -228,8 +232,12 @@ const ModelRuleBuilder = ({
       list = catalogLineageEntries.filter((e) => {
         const r = e.representative;
         if (r.name?.toLowerCase().includes(q)) return true;
+        if (String(r.id || '').toLowerCase().includes(q)) return true;
         if (r.description?.toLowerCase().includes(q)) return true;
         if (r.ruleType?.toLowerCase().includes(q)) return true;
+        if (normalizeRuleStage(r.stage).includes(q)) return true;
+        if (normalizeRuleZone(r.ruleZone).includes(q)) return true;
+        if (ruleZoneLabel(r.ruleZone).toLowerCase().includes(q)) return true;
         if (e.modelsWithLineage.some((m) => m.toLowerCase().includes(q))) return true;
         if (e.hasLibrary && 'library'.includes(q)) return true;
         return ruleTagsList(r).some((t) => t.toLowerCase().includes(q));
@@ -428,6 +436,8 @@ const ModelRuleBuilder = ({
       modelShortName: selectedModel.shortName,
       tags: [],
       ruleType: 'validation',
+      stage: 'bronze',
+      ruleZone: 'value',
       enabled: true,
       parentRuleId: '',
     });
@@ -445,6 +455,8 @@ const ModelRuleBuilder = ({
       modelShortName: rule.modelShortName || selectedModel.shortName,
       tags: ruleTagsList(rule),
       ruleType: normalizeRuleType(rule.ruleType || 'validation'),
+      stage: normalizeRuleStage(rule.stage),
+      ruleZone: normalizeRuleZone(rule.ruleZone),
       enabled: rule.enabled !== undefined ? rule.enabled : true,
       parentRuleId: rule.parentRuleId || '',
     });
@@ -462,6 +474,8 @@ const ModelRuleBuilder = ({
         modelShortName: rule.modelShortName || selectedModel.shortName,
         tags: ruleTagsList(rule),
         ruleType: normalizeRuleType(rule.ruleType || 'validation'),
+        stage: normalizeRuleStage(rule.stage),
+        ruleZone: normalizeRuleZone(rule.ruleZone),
         enabled: rule.enabled !== undefined ? rule.enabled : true,
         parentRuleId: rule.parentRuleId || '',
       });
@@ -477,6 +491,8 @@ const ModelRuleBuilder = ({
       modelShortName: rule.modelShortName || selectedModel.shortName,
       tags: ruleTagsList(rule),
       ruleType: normalizeRuleType(rule.ruleType || 'validation'),
+      stage: normalizeRuleStage(rule.stage),
+      ruleZone: normalizeRuleZone(rule.ruleZone),
       enabled: rule.enabled !== undefined ? rule.enabled : true,
       parentRuleId: rule.parentRuleId || '',
     });
@@ -520,6 +536,8 @@ const ModelRuleBuilder = ({
         documentation: ruleForm.documentation || '',
         modelShortName: ruleForm.modelShortName || selectedModel?.shortName,
         ruleType: normalizeRuleType(ruleForm.ruleType),
+        stage: normalizeRuleStage(ruleForm.stage),
+        ruleZone: normalizeRuleZone(ruleForm.ruleZone),
         enabled: ruleForm.enabled,
         tags: normalizeTagList(ruleForm.tags),
         parentRuleId: ruleForm.parentRuleId ? ruleForm.parentRuleId : null,
@@ -1100,6 +1118,98 @@ const ModelRuleBuilder = ({
                 })}
               </Select>
             </FormControl>
+            <FormControl fullWidth sx={{ mb: 2 }}>
+              <InputLabel sx={{ color: currentTheme?.textSecondary, '&.Mui-focused': { color: currentTheme?.primary } }}>
+                Stage
+              </InputLabel>
+              <Select
+                value={normalizeRuleStage(ruleForm.stage)}
+                onChange={(e) => setRuleForm({ ...ruleForm, stage: e.target.value })}
+                label="Stage"
+                sx={{
+                  color: currentTheme?.text,
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    borderColor: currentTheme?.border
+                  },
+                  '&:hover .MuiOutlinedInput-notchedOutline': {
+                    borderColor: currentTheme?.primary
+                  },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                    borderColor: currentTheme?.primary
+                  },
+                  '& .MuiSvgIcon-root': {
+                    color: currentTheme?.textSecondary
+                  }
+                }}
+                MenuProps={{
+                  PaperProps: {
+                    sx: {
+                      bgcolor: currentTheme?.card,
+                      color: currentTheme?.text,
+                      border: `1px solid ${currentTheme?.border}`,
+                      '& .MuiMenuItem-root': {
+                        color: currentTheme?.text,
+                        '&:hover': {
+                          bgcolor: darkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)'
+                        }
+                      }
+                    }
+                  }
+                }}
+              >
+                {RULE_STAGE_OPTIONS.map(({ value, label }) => (
+                  <MenuItem key={value} value={value}>
+                    {label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl fullWidth sx={{ mb: 2 }}>
+              <InputLabel sx={{ color: currentTheme?.textSecondary, '&.Mui-focused': { color: currentTheme?.primary } }}>
+                Rule zone
+              </InputLabel>
+              <Select
+                value={normalizeRuleZone(ruleForm.ruleZone)}
+                onChange={(e) => setRuleForm({ ...ruleForm, ruleZone: e.target.value })}
+                label="Rule zone"
+                sx={{
+                  color: currentTheme?.text,
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    borderColor: currentTheme?.border
+                  },
+                  '&:hover .MuiOutlinedInput-notchedOutline': {
+                    borderColor: currentTheme?.primary
+                  },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                    borderColor: currentTheme?.primary
+                  },
+                  '& .MuiSvgIcon-root': {
+                    color: currentTheme?.textSecondary
+                  }
+                }}
+                MenuProps={{
+                  PaperProps: {
+                    sx: {
+                      bgcolor: currentTheme?.card,
+                      color: currentTheme?.text,
+                      border: `1px solid ${currentTheme?.border}`,
+                      '& .MuiMenuItem-root': {
+                        color: currentTheme?.text,
+                        '&:hover': {
+                          bgcolor: darkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.04)'
+                        }
+                      }
+                    }
+                  }
+                }}
+              >
+                {RULE_ZONE_OPTIONS.map(({ value, label }) => (
+                  <MenuItem key={value} value={value}>
+                    {label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
 
             <Autocomplete
               multiple
@@ -1253,7 +1363,7 @@ const ModelRuleBuilder = ({
         </DialogTitle>
         <DialogContent sx={{ color: currentTheme?.text, pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
           <Typography variant="body2" sx={{ color: currentTheme?.textSecondary, fontFamily: fontStackSans }}>
-            Same catalog as <strong>Data Rules</strong>, one row per rule (copies on different models are merged).
+            Same catalog as <strong>Data Quality Rules</strong>, one row per rule (copies on different models are merged).
             Models that already have this rule show as chips. Check any rules not yet on{' '}
             <strong>{selectedModel?.name || 'this model'}</strong>, then <strong>Associate</strong> (you can select
             several).

@@ -45,6 +45,7 @@ import {
   DeleteForever as DeleteForeverIcon,
   ExpandMore as ExpandMoreIcon,
   HelpOutline as HelpOutlineIcon,
+  MenuBook as MenuBookIcon,
 } from '@mui/icons-material';
 import { GoVerified } from "react-icons/go";
 import { fetchData, updateModel, createModel, deleteModel } from '../services/api';
@@ -56,6 +57,7 @@ import TeamSelector from '../components/TeamSelector';
 import ReferenceDataSelector from '../components/ReferenceDataSelector';
 import { useAuth } from '../contexts/AuthContext';
 import { modelFieldsConfig } from '../config/modelFields';
+import { normalizeModelMarkdowns } from '../utils/modelMarkdowns';
 
 const EditDataModelDetailPage = ({ currentTheme }) => {
   const { shortName } = useParams();
@@ -99,6 +101,7 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
           const newModelTemplate = localStorage.getItem('newModelTemplate');
           if (newModelTemplate) {
             const newModel = JSON.parse(newModelTemplate);
+            newModel.markdowns = normalizeModelMarkdowns(newModel.markdowns);
             setModel(newModel);
             setEditedModel(JSON.parse(JSON.stringify(newModel))); // Deep copy
             setLoading(false);
@@ -114,6 +117,7 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
         const foundModel = modelData.models.find(m => m.shortName.toLowerCase() === shortName.toLowerCase());
         
         if (foundModel) {
+          foundModel.markdowns = normalizeModelMarkdowns(foundModel.markdowns);
           // Ensure versionHistory exists
           if (!foundModel.versionHistory) {
             foundModel.versionHistory = [
@@ -1613,6 +1617,97 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
           }}
           currentTheme={currentTheme}
         />
+
+        {/* Markdown documentation (multi-tab, GFM + mermaid in view mode) */}
+        <Box sx={{ mt: 4 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+            <MenuBookIcon sx={{ color: currentTheme.primary }} />
+            <Typography variant="h6" sx={{ color: currentTheme.text }}>
+              Markdown documentation
+            </Typography>
+          </Box>
+          <Typography variant="body2" sx={{ color: currentTheme.textSecondary, mb: 2 }}>
+            Optional tabs of markdown shown on the model detail page (tables, links, ```mermaid``` blocks, etc.).
+          </Typography>
+          {(normalizeModelMarkdowns(editedModel.markdowns)).map((tab, index) => (
+            <Paper
+              key={tab.id}
+              elevation={0}
+              sx={{
+                p: 2,
+                mb: 2,
+                bgcolor: currentTheme.background,
+                border: `1px solid ${currentTheme.border}`,
+                borderRadius: 1,
+              }}
+            >
+              <Box sx={{ display: 'flex', gap: 1, mb: 1, flexWrap: 'wrap', alignItems: 'center' }}>
+                <TextField
+                  size="small"
+                  label="Tab title"
+                  value={tab.title}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setEditedModel((prev) => {
+                      const tabs = normalizeModelMarkdowns(prev.markdowns);
+                      const next = [...tabs];
+                      next[index] = { ...next[index], title: v };
+                      return { ...prev, markdowns: next };
+                    });
+                  }}
+                  sx={{ flex: 1, minWidth: 200, '& .MuiInputBase-input': { color: currentTheme.text } }}
+                />
+                <IconButton
+                  aria-label="Remove tab"
+                  onClick={() => {
+                    setEditedModel((prev) => {
+                      const tabs = normalizeModelMarkdowns(prev.markdowns);
+                      return { ...prev, markdowns: tabs.filter((_, i) => i !== index) };
+                    });
+                  }}
+                  sx={{ color: 'error.main' }}
+                >
+                  <DeleteIcon />
+                </IconButton>
+              </Box>
+              <TextField
+                fullWidth
+                multiline
+                minRows={8}
+                label="Markdown"
+                value={tab.content}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setEditedModel((prev) => {
+                    const tabs = normalizeModelMarkdowns(prev.markdowns);
+                    const next = [...tabs];
+                    next[index] = { ...next[index], content: v };
+                    return { ...prev, markdowns: next };
+                  });
+                }}
+                sx={{
+                  '& .MuiInputBase-input': { color: currentTheme.text, fontFamily: 'monospace', fontSize: '0.875rem' },
+                }}
+              />
+            </Paper>
+          ))}
+          <Button
+            startIcon={<AddIcon />}
+            variant="outlined"
+            onClick={() => {
+              setEditedModel((prev) => {
+                const tabs = normalizeModelMarkdowns(prev.markdowns);
+                return {
+                  ...prev,
+                  markdowns: [...tabs, { id: `md_${Date.now()}`, title: 'New tab', content: '' }],
+                };
+              });
+            }}
+            sx={{ color: currentTheme.primary, borderColor: currentTheme.primary }}
+          >
+            Add markdown tab
+          </Button>
+        </Box>
 
         {/* Resources */}
         <Box sx={{ mt: 4 }}>

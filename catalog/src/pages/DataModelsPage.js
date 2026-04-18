@@ -312,6 +312,7 @@ const DataModelsPage = () => {
         validation: '',
       },
       users: [],
+      markdowns: [],
     };
 
     localStorage.setItem('newModelTemplate', JSON.stringify(newModel));

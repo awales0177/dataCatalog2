@@ -7,7 +7,7 @@
       "version": "2.1.0",
       "description": "Comprehensive model for managing customer information including personal details, contact information, purchase history, preferences, and interaction records. Supports customer segmentation, relationship management, and personalized service delivery across multiple channels.",
       "extendedDescription": "The Customer Data Model serves as the foundation for all customer-related operations. It includes detailed schemas for personal information, contact details, purchase history, preferences, and interaction records. The model supports advanced features like customer segmentation, relationship management, and personalized service delivery. It integrates with multiple channels including web, mobile, and in-store systems. The model also includes data quality checks, validation rules, and compliance measures for handling sensitive customer information.",
-      "lastUpdated": "2025-11-12 21:15:44",
+      "lastUpdated": "2026-04-18 14:23:28",
       "owner": "Data Team",
       "specMaintainer": "Jane Smith",
       "maintainerEmail": "abc@yahoo.com",
@@ -72,6 +72,13 @@
       "users": [
         "Auth Service",
         "User Service"
+      ],
+      "markdowns": [
+        {
+          "id": "overview",
+          "title": "README",
+          "content": "## Purpose\n\nThe **Customer** data model is the canonical source for party and account context used across channels.\n\n| Area | Scope |\n|------|--------|\n| Identity | Customer keys, merge rules |\n| Contact | Email, phone, address |\n| Preferences | Consent and marketing opts |\n\nSee also the [documentation](https://docs.example.com/customer-data-model) link under **Resources**."
+        }
       ],
       "versionHistory": [
         {
@@ -813,7 +820,7 @@
       "version": "1.1.0",
       "description": "Agricultural program management and tracking",
       "extendedDescription": "The Agricultural Programs model manages comprehensive agricultural program data. It includes schemas for program planning, resource allocation, and progress tracking. The model supports crop management, livestock tracking, and equipment maintenance. It includes features for weather monitoring, soil analysis, and pest control. The model also handles integration with market systems, supply chain platforms, and regulatory compliance tools.",
-      "lastUpdated": "2024-03-05",
+      "lastUpdated": "2026-04-18 14:01:53",
       "owner": "Agriculture Team",
       "specMaintainer": "Emma Davis",
       "maintainerEmail": "emma.davis@example.com",
@@ -837,7 +844,23 @@
         },
         "git": "https://git.example.com/agricultural-programs",
         "validation": "https://validation.example.com/agricultural-programs"
-      }
+      },
+      "markdowns": [
+        {
+          "id": "md_1776535304963",
+          "title": "README",
+          "content": "test"
+        }
+      ],
+      "versionHistory": [
+        {
+          "version": "1.1.0",
+          "timestamp": "2024-03-05",
+          "updatedBy": "System",
+          "changeDescription": "Initial model load",
+          "changedFields": []
+        }
+      ]
     },
     {
       "id": 17,

@@ -13,7 +13,7 @@ const WorkspacesPage = () => {
       </Typography>
       <Typography variant="body1" sx={{ mb: 4, color: currentTheme.textSecondary, maxWidth: 720 }}>
         Launch the same workbench modals as in DH: query engine (Agora), data modeling, modeling studio (split
-        view), reference data hub, and rule builder for editors.
+        view), reference data hub, and rule builder for data quality rules (editors).
       </Typography>
       <HomeWorkspaceSection />
     </Container>

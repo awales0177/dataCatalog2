@@ -10,49 +10,45 @@ import {
   alpha,
   Tooltip,
   CircularProgress,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
   IconButton,
   Button,
+  Tabs,
+  Tab,
 } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   ArrowBack as ArrowBackIcon,
   Code as CodeIcon,
   MenuBook as MenuBookIcon,
-  Build as BuildIcon,
   GitHub as GitHubIcon,
   VerifiedUser as VerifiedUserIcon,
   WorkspacePremium as CrownIcon,
   Construction as WrenchIcon,
-  ExpandMore as ExpandMoreIcon,
-  History as HistoryIcon,
-  Timeline as TimelineIcon,
   NavigateNext as NavigateNextIcon,
   NavigateBefore as NavigateBeforeIcon,
   Email as EmailIcon,
   HelpOutline as HelpOutlineIcon,
-  Gavel as GavelIcon,
   Edit as EditIcon,
 } from '@mui/icons-material';
-import { ImMakeGroup } from "react-icons/im";
 import { MdHandshake, MdDomain } from "react-icons/md";
 import { IoIosApps } from "react-icons/io";
 import { formatDate } from '../utils/themeUtils';
 import { calculateModelScore, getModelQualityColor } from '../utils/modelScoreUtils';
-import verifiedLogo from '../imgs/verified.svg';
-import { fetchData, fetchAgreementsByModel, getRuleCountForModel } from '../services/api';
-import { useWorkbenchModals } from '../contexts/WorkbenchModalsContext';
-import { RULE_BUILDER_MODEL_SHORT_NAME_KEY } from '../constants/workbenchPaths';
+import { fetchData, fetchAgreementsByModel, getRulesForModel } from '../services/api';
 import ProductAgreementCard from '../components/ProductAgreementCard';
+import ModelRulesTable from '../components/ModelRulesTable';
 import { GoVerified } from "react-icons/go";
 import { modelFieldsConfig } from '../config/modelFields';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import remarkEmoji from 'remark-emoji';
+import MermaidDiagram from '../components/MermaidDiagram';
+import { modelMarkdownsForDisplay, modelMarkdownProseSx } from '../utils/modelMarkdowns';
+import { fontStackSans } from '../theme/theme';
 
 const DataModelDetailPage = ({ currentTheme }) => {
   const { shortName } = useParams();
   const navigate = useNavigate();
-  const { openRuleBuilder } = useWorkbenchModals();
   const [model, setModel] = React.useState(null);
   const [agreements, setAgreements] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
@@ -61,6 +57,9 @@ const DataModelDetailPage = ({ currentTheme }) => {
   const [applications, setApplications] = React.useState([]);
   const [maintainerEmail, setMaintainerEmail] = React.useState(null);
   const [ruleCount, setRuleCount] = React.useState(0);
+  const [modelRulesList, setModelRulesList] = React.useState([]);
+  const [rulesListLoading, setRulesListLoading] = React.useState(false);
+  const [docTabIndex, setDocTabIndex] = React.useState(0);
 
   React.useEffect(() => {
     const loadModelAndAgreements = async () => {
@@ -85,16 +84,24 @@ const DataModelDetailPage = ({ currentTheme }) => {
             }
           }
           
-          // Load rule count
+          // Load rules for this model (table + count)
+          setRulesListLoading(true);
           try {
-            const ruleCountData = await getRuleCountForModel(foundModel.shortName);
-            setRuleCount(ruleCountData.count || 0);
+            const rulesData = await getRulesForModel(foundModel.shortName);
+            const list = rulesData.rules || [];
+            setModelRulesList(list);
+            setRuleCount(list.length);
           } catch (error) {
-            console.error('Error loading rule count:', error);
+            console.error('Error loading rules:', error);
+            setModelRulesList([]);
             setRuleCount(0);
+          } finally {
+            setRulesListLoading(false);
           }
         } else {
           setError('Model not found');
+          setModelRulesList([]);
+          setRuleCount(0);
         }
       } catch (error) {
         setError('Failed to load model and agreements');
@@ -105,6 +112,57 @@ const DataModelDetailPage = ({ currentTheme }) => {
 
     loadModelAndAgreements();
   }, [shortName]);
+
+  const markdownTabs = model ? modelMarkdownsForDisplay(model) : [];
+  const hasTools =
+    model?.resources?.tools &&
+    typeof model.resources.tools === 'object' &&
+    Object.keys(model.resources.tools).length > 0;
+  const hasAgreements = agreements.length > 0;
+  const hasReleaseNotes = Boolean(model?.changelog?.length > 0);
+
+  const detailTabLayout = React.useMemo(() => {
+    const md = markdownTabs.length;
+    let n = md;
+    let toolsIdx = -1;
+    if (hasTools) {
+      toolsIdx = n;
+      n += 1;
+    }
+    const rulesIdx = n;
+    n += 1;
+    let agreementsIdx = -1;
+    if (hasAgreements) {
+      agreementsIdx = n;
+      n += 1;
+    }
+    let releaseIdx = -1;
+    if (hasReleaseNotes) {
+      releaseIdx = n;
+      n += 1;
+    }
+    const versionIdx = n;
+    n += 1;
+    return { toolsIdx, rulesIdx, agreementsIdx, releaseIdx, versionIdx, total: n };
+  }, [markdownTabs.length, hasTools, hasAgreements, hasReleaseNotes]);
+
+  const docTabCount = detailTabLayout.total;
+
+  const sortedModelRules = React.useMemo(
+    () =>
+      [...modelRulesList].sort((a, b) =>
+        (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }),
+      ),
+    [modelRulesList],
+  );
+
+  React.useEffect(() => {
+    setDocTabIndex(0);
+  }, [shortName]);
+
+  React.useEffect(() => {
+    setDocTabIndex((i) => Math.min(i, Math.max(0, docTabCount - 1)));
+  }, [docTabCount]);
 
   if (loading) {
     return (
@@ -145,6 +203,10 @@ const DataModelDetailPage = ({ currentTheme }) => {
       return newIndex < 0 ? Math.max(0, agreements.length - 2) : newIndex;
     });
   };
+
+  const { toolsIdx, rulesIdx, agreementsIdx, releaseIdx, versionIdx } = detailTabLayout;
+  const mdTabCount = markdownTabs.length;
+  const docTabSafe = Math.min(docTabIndex, Math.max(0, docTabCount - 1));
 
   return (
     <Box sx={{ p: 3, maxWidth: 1200, margin: '0 auto' }}>
@@ -211,16 +273,20 @@ const DataModelDetailPage = ({ currentTheme }) => {
         </Tooltip>
       </Box>
 
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={8}>
+      <Grid container spacing={3} sx={{ mb: 3, alignItems: 'stretch' }}>
+        <Grid item xs={12} md={8} sx={{ display: 'flex' }}>
           <Paper 
             elevation={0}
             sx={{ 
               p: 3,
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              width: '100%',
+              boxSizing: 'border-box',
               bgcolor: currentTheme.card,
               border: `1px solid ${currentTheme.border}`,
               borderRadius: 2,
-              mb: 3,
             }}
           >
             <Typography variant="h6" sx={{ color: currentTheme.text, mb: 2 }}>
@@ -312,7 +378,7 @@ const DataModelDetailPage = ({ currentTheme }) => {
               )}
             </Box>
 
-            <Box sx={{ mb: 3 }}>
+            <Box sx={{ mt: 'auto', pt: 2 }}>
               <Typography variant="h6" sx={{ color: currentTheme.text, mb: 2 }}>
                 Metadata Score
               </Typography>
@@ -355,114 +421,18 @@ const DataModelDetailPage = ({ currentTheme }) => {
               </Box>
             </Box>
           </Paper>
-
-          {agreements.length > 0 && (
-            <Paper 
-              elevation={0}
-              sx={{ 
-                p: 3,
-                bgcolor: currentTheme.card,
-                border: `1px solid ${currentTheme.border}`,
-                borderRadius: 2,
-              }}
-            >
-              <Typography variant="h6" sx={{ color: currentTheme.text, mb: 2 }}>
-                Product Agreements
-              </Typography>
-              {agreements.length > 2 ? (
-                <Box sx={{ position: 'relative' }}>
-                  <Box sx={{ 
-                    display: 'flex', 
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 2,
-                    mb: 2
-                  }}>
-                    <IconButton 
-                      onClick={handlePrevAgreement}
-                      sx={{ 
-                        color: currentTheme.text,
-                        '&:hover': { color: currentTheme.primary }
-                      }}
-                    >
-                      <NavigateBeforeIcon />
-                    </IconButton>
-                    <Box sx={{ 
-                      display: 'flex', 
-                      gap: 2, 
-                      flex: 1,
-                      justifyContent: 'center'
-                    }}>
-                      <Box sx={{ flex: 1, maxWidth: 'calc(50% - 8px)' }}>
-                        <ProductAgreementCard 
-                          agreement={agreements[currentAgreementIndex]} 
-                          currentTheme={currentTheme} 
-                        />
-                      </Box>
-                      {currentAgreementIndex + 1 < agreements.length && (
-                        <Box sx={{ flex: 1, maxWidth: 'calc(50% - 8px)' }}>
-                          <ProductAgreementCard 
-                            agreement={agreements[currentAgreementIndex + 1]} 
-                            currentTheme={currentTheme} 
-                          />
-                        </Box>
-                      )}
-                    </Box>
-                    <IconButton 
-                      onClick={handleNextAgreement}
-                      sx={{ 
-                        color: currentTheme.text,
-                        '&:hover': { color: currentTheme.primary }
-                      }}
-                    >
-                      <NavigateNextIcon />
-                    </IconButton>
-                  </Box>
-                  <Box sx={{ 
-                    display: 'flex', 
-                    justifyContent: 'center', 
-                    gap: 1,
-                    mt: 2
-                  }}>
-                    {Array.from({ length: Math.ceil(agreements.length / 2) }).map((_, index) => (
-                      <Box
-                        key={index}
-                        sx={{
-                          width: 8,
-                          height: 8,
-                          borderRadius: '50%',
-                          bgcolor: index === Math.floor(currentAgreementIndex / 2)
-                            ? currentTheme.primary 
-                            : alpha(currentTheme.primary, 0.2),
-                          cursor: 'pointer',
-                          transition: 'all 0.2s ease-in-out',
-                          '&:hover': {
-                            bgcolor: currentTheme.primary,
-                          }
-                        }}
-                        onClick={() => setCurrentAgreementIndex(index * 2)}
-                      />
-                    ))}
-                  </Box>
-                </Box>
-              ) : (
-                <Grid container spacing={2}>
-                  {agreements.map((agreement) => (
-                    <Grid item xs={12} sm={6} key={agreement.id}>
-                      <ProductAgreementCard agreement={agreement} currentTheme={currentTheme} />
-                    </Grid>
-                  ))}
-                </Grid>
-              )}
-            </Paper>
-          )}
         </Grid>
 
-        <Grid item xs={12} md={4}>
+        <Grid item xs={12} md={4} sx={{ display: 'flex' }}>
           <Paper 
             elevation={0}
             sx={{ 
               p: 3,
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              width: '100%',
+              boxSizing: 'border-box',
               bgcolor: currentTheme.card,
               border: `1px solid ${currentTheme.border}`,
               borderRadius: 2,
@@ -626,6 +596,7 @@ const DataModelDetailPage = ({ currentTheme }) => {
               </>
             )}
 
+            <Box sx={{ mt: 'auto', width: '100%' }}>
             <Divider sx={{ my: 2 }} />
 
             <Typography variant="h6" sx={{ color: currentTheme.text, mb: 2 }}>
@@ -673,104 +644,6 @@ const DataModelDetailPage = ({ currentTheme }) => {
                   <Typography variant="body2">Documentation</Typography>
                 </Link>
               )}
-              {model.resources?.tools && typeof model.resources.tools === 'object' && Object.keys(model.resources.tools).length > 0 && (
-                  <Accordion 
-                    defaultExpanded={false}
-                    sx={{ 
-                      bgcolor: 'transparent',
-                      boxShadow: 'none',
-                      '&:before': {
-                        display: 'none',
-                      },
-                      '&.Mui-expanded': {
-                        margin: 0,
-                      }
-                    }}
-                  >
-                    <AccordionSummary
-                      expandIcon={<ExpandMoreIcon sx={{ color: currentTheme.text, fontSize: 16 }} />}
-                      sx={{
-                        px: 0,
-                        py: 0,
-                        minHeight: 'auto',
-                        '& .MuiAccordionSummary-content': {
-                          margin: 0,
-                        },
-                        '&:hover': {
-                          bgcolor: 'transparent',
-                        }
-                      }}
-                    >
-                      <Box sx={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        gap: 1,
-                        color: currentTheme.text,
-                        '&:hover': {
-                          color: currentTheme.primary,
-                        },
-                      }}>
-                        <BuildIcon sx={{ fontSize: 20 }} />
-                        <Typography variant="body2">Tools ({Object.keys(model.resources.tools).length})</Typography>
-                      </Box>
-                    </AccordionSummary>
-                    <AccordionDetails sx={{ px: 0, py: 1 }}>
-                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, pl: 3 }}>
-                        {Object.entries(model.resources.tools).map(([toolName, toolUrl], index) => (
-                          <Link
-                            key={index}
-                            href={toolUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            sx={{
-                              color: currentTheme.textSecondary,
-                              textDecoration: 'none',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: 1,
-                              fontSize: '0.875rem',
-                              '&:hover': {
-                                color: currentTheme.primary,
-                              },
-                            }}
-                          >
-                            <WrenchIcon sx={{ fontSize: 16, opacity: 0.7 }} />
-                            <Typography variant="body2" sx={{ textTransform: 'capitalize' }}>
-                              {toolName}
-                            </Typography>
-                          </Link>
-                        ))}
-                      </Box>
-                    </AccordionDetails>
-                  </Accordion>
-              )}
-              <Link
-                component="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  navigate('/rules', {
-                    state: { [RULE_BUILDER_MODEL_SHORT_NAME_KEY]: model.shortName },
-                  });
-                  openRuleBuilder();
-                }}
-                sx={{
-                  color: currentTheme.text,
-                  textDecoration: 'none',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1,
-                  cursor: 'pointer',
-                  border: 'none',
-                  background: 'none',
-                  padding: 0,
-                  '&:hover': {
-                    color: currentTheme.primary,
-                  },
-                }}
-              >
-                <GavelIcon sx={{ fontSize: 20 }} />
-                <Typography variant="body2">Rules {ruleCount > 0 && `(${ruleCount})`}</Typography>
-              </Link>
               {model.resources?.git && (
                 <Link
                   href={model.resources.git}
@@ -812,264 +685,411 @@ const DataModelDetailPage = ({ currentTheme }) => {
                 </Link>
               )}
             </Box>
+            </Box>
           </Paper>
         </Grid>
       </Grid>
 
-      {/* Release Notes Section */}
-      {model.changelog && model.changelog.length > 0 && (
-        <Paper 
-          elevation={0}
-          sx={{ 
-            mt: 3,
-            bgcolor: currentTheme.card,
-            border: `1px solid ${currentTheme.border}`,
-            borderRadius: 2,
-            overflow: 'hidden'
+      <Paper
+        elevation={0}
+        sx={{
+          mt: 0,
+          bgcolor: currentTheme.card,
+          border: `1px solid ${currentTheme.border}`,
+          borderRadius: 2,
+          overflow: 'hidden',
+        }}
+      >
+        <Tabs
+          value={docTabSafe}
+          onChange={(_, v) => setDocTabIndex(v)}
+          variant="scrollable"
+          scrollButtons="auto"
+          sx={{
+            borderBottom: `1px solid ${currentTheme.border}`,
+            px: 1,
+            '& .MuiTab-root': { textTransform: 'none', minHeight: 48 },
           }}
         >
-          <Accordion 
-            defaultExpanded={false}
-            sx={{ 
-              bgcolor: 'transparent',
-              boxShadow: 'none',
-              '&:before': {
-                display: 'none',
-              },
-              '&.Mui-expanded': {
-                margin: 0,
-              }
-            }}
-          >
-            <AccordionSummary
-              expandIcon={<ExpandMoreIcon sx={{ color: currentTheme.text }} />}
+          {markdownTabs.map((t) => (
+            <Tab key={t.id} label={t.title} />
+          ))}
+          {hasTools && <Tab label="Tools" />}
+          <Tab label={`Rules${ruleCount > 0 ? ` (${ruleCount})` : ''}`} />
+          {hasAgreements && <Tab label="Product agreements" />}
+          {hasReleaseNotes && <Tab label="Release notes" />}
+          <Tab label="Version history" />
+        </Tabs>
+
+        <Box sx={{ p: 3 }}>
+          {docTabSafe < mdTabCount && (
+            <Box
               sx={{
-                px: 3,
-                py: 2,
-                '& .MuiAccordionSummary-content': {
-                  margin: 0,
-                },
-                '&:hover': {
-                  bgcolor: alpha(currentTheme.primary, 0.05),
-                }
+                ...modelMarkdownProseSx(currentTheme),
+                fontFamily: fontStackSans,
               }}
             >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <HistoryIcon sx={{ color: currentTheme.primary }} />
-                <Typography variant="h6" sx={{ color: currentTheme.text }}>
-                  Release Notes
-                </Typography>
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm, remarkEmoji]}
+                components={{
+                  code({ inline, className, children, ...props }) {
+                    const match = /language-(\w+)/.exec(className || '');
+                    const isMermaid = match && match[1] === 'mermaid';
+                    if (isMermaid && !inline) {
+                      const codeContent = Array.isArray(children)
+                        ? children.join('')
+                        : String(children);
+                      return (
+                        <MermaidDiagram className={className}>
+                          {codeContent}
+                        </MermaidDiagram>
+                      );
+                    }
+                    return (
+                      <code className={className} {...props}>
+                        {children}
+                      </code>
+                    );
+                  },
+                }}
+              >
+                {markdownTabs[docTabSafe]?.content || ''}
+              </ReactMarkdown>
+            </Box>
+          )}
+
+          {hasTools && docTabSafe === toolsIdx && (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+              <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
+                Links from model resources
+              </Typography>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                {Object.entries(model.resources.tools).map(([toolName, toolUrl], index) => (
+                  <Link
+                    key={index}
+                    href={toolUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    sx={{
+                      color: currentTheme.textSecondary,
+                      textDecoration: 'none',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1,
+                      fontSize: '0.875rem',
+                      '&:hover': { color: currentTheme.primary },
+                    }}
+                  >
+                    <WrenchIcon sx={{ fontSize: 16, opacity: 0.7 }} />
+                    <Typography variant="body2" sx={{ textTransform: 'capitalize' }}>
+                      {toolName}
+                    </Typography>
+                  </Link>
+                ))}
               </Box>
-            </AccordionSummary>
-            <AccordionDetails sx={{ px: 3, pb: 3 }}>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                {model.changelog.map((entry, index) => (
-                  <Box key={index}>
-                    <Box sx={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
+            </Box>
+          )}
+
+          {docTabSafe === rulesIdx && (
+            <Box>
+              <Typography variant="body2" sx={{ color: currentTheme.textSecondary, mb: 2 }}>
+                Rules associated with this model
+              </Typography>
+              <ModelRulesTable
+                rules={sortedModelRules}
+                loading={rulesListLoading}
+                readOnly
+                expandResetKey={model.shortName}
+                currentTheme={currentTheme}
+                darkMode={currentTheme.darkMode}
+                emptyMessage="No rules for this model yet."
+              />
+            </Box>
+          )}
+
+          {hasAgreements && docTabSafe === agreementsIdx && (
+            <Box>
+              {agreements.length > 2 ? (
+                <Box sx={{ position: 'relative' }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
                       gap: 2,
-                      mb: 1
-                    }}>
-                      <Typography 
-                        variant="subtitle1" 
-                        sx={{ 
-                          color: currentTheme.primary,
-                          fontWeight: 600,
-                        }}
-                      >
-                        v{entry.version}
-                      </Typography>
-                      <Typography 
-                        variant="body2" 
-                        sx={{ 
-                          color: currentTheme.textSecondary,
-                        }}
-                      >
-                        {formatDate(entry.date)}
-                      </Typography>
+                      mb: 2,
+                    }}
+                  >
+                    <IconButton
+                      onClick={handlePrevAgreement}
+                      sx={{
+                        color: currentTheme.text,
+                        '&:hover': { color: currentTheme.primary },
+                      }}
+                    >
+                      <NavigateBeforeIcon />
+                    </IconButton>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        gap: 2,
+                        flex: 1,
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <Box sx={{ flex: 1, maxWidth: 'calc(50% - 8px)' }}>
+                        <ProductAgreementCard
+                          agreement={agreements[currentAgreementIndex]}
+                          currentTheme={currentTheme}
+                        />
+                      </Box>
+                      {currentAgreementIndex + 1 < agreements.length && (
+                        <Box sx={{ flex: 1, maxWidth: 'calc(50% - 8px)' }}>
+                          <ProductAgreementCard
+                            agreement={agreements[currentAgreementIndex + 1]}
+                            currentTheme={currentTheme}
+                          />
+                        </Box>
+                      )}
                     </Box>
-                    <Box component="ul" sx={{ 
-                      m: 0, 
+                    <IconButton
+                      onClick={handleNextAgreement}
+                      sx={{
+                        color: currentTheme.text,
+                        '&:hover': { color: currentTheme.primary },
+                      }}
+                    >
+                      <NavigateNextIcon />
+                    </IconButton>
+                  </Box>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'center',
+                      gap: 1,
+                      mt: 2,
+                    }}
+                  >
+                    {Array.from({ length: Math.ceil(agreements.length / 2) }).map((_, index) => (
+                      <Box
+                        key={index}
+                        sx={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: '50%',
+                          bgcolor:
+                            index === Math.floor(currentAgreementIndex / 2)
+                              ? currentTheme.primary
+                              : alpha(currentTheme.primary, 0.2),
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease-in-out',
+                          '&:hover': { bgcolor: currentTheme.primary },
+                        }}
+                        onClick={() => setCurrentAgreementIndex(index * 2)}
+                      />
+                    ))}
+                  </Box>
+                </Box>
+              ) : (
+                <Grid container spacing={2}>
+                  {agreements.map((agreement) => (
+                    <Grid item xs={12} sm={6} key={agreement.id}>
+                      <ProductAgreementCard agreement={agreement} currentTheme={currentTheme} />
+                    </Grid>
+                  ))}
+                </Grid>
+              )}
+            </Box>
+          )}
+
+          {hasReleaseNotes && docTabSafe === releaseIdx && (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              {model.changelog.map((entry, index) => (
+                <Box key={index}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 2,
+                      mb: 1,
+                    }}
+                  >
+                    <Typography
+                      variant="subtitle1"
+                      sx={{
+                        color: currentTheme.primary,
+                        fontWeight: 600,
+                      }}
+                    >
+                      v{entry.version}
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: currentTheme.textSecondary }}>
+                      {formatDate(entry.date)}
+                    </Typography>
+                  </Box>
+                  <Box
+                    component="ul"
+                    sx={{
+                      m: 0,
                       pl: 2,
                       '& li': {
                         color: currentTheme.textSecondary,
                         mb: 0.5,
-                        '&:last-child': {
-                          mb: 0
-                        }
-                      }
-                    }}>
-                      {entry.changes.map((change, changeIndex) => (
-                        <Box component="li" key={changeIndex}>
-                          {change}
-                        </Box>
-                      ))}
-                    </Box>
+                        '&:last-child': { mb: 0 },
+                      },
+                    }}
+                  >
+                    {entry.changes.map((change, changeIndex) => (
+                      <Box component="li" key={changeIndex}>
+                        {change}
+                      </Box>
+                    ))}
                   </Box>
-                ))}
-              </Box>
-            </AccordionDetails>
-          </Accordion>
-        </Paper>
-      )}
+                </Box>
+              ))}
+            </Box>
+          )}
 
-      {/* Version History Section */}
-      {model && (
-        <Paper 
-          elevation={0}
-          sx={{ 
-            mt: 3,
-            bgcolor: currentTheme.card,
-            border: `1px solid ${currentTheme.border}`,
-            borderRadius: 2,
-            overflow: 'hidden'
-          }}
-        >
-          <Accordion 
-            defaultExpanded={false}
-            sx={{ 
-              bgcolor: 'transparent',
-              boxShadow: 'none',
-              '&:before': {
-                display: 'none',
-              },
-              '&.Mui-expanded': {
-                margin: 0,
-              }
-            }}
-          >
-            <AccordionSummary
-              expandIcon={<ExpandMoreIcon sx={{ color: currentTheme.text }} />}
-              sx={{
-                px: 3,
-                py: 2,
-                '& .MuiAccordionSummary-content': {
-                  margin: 0,
-                },
-                '&:hover': {
-                  bgcolor: alpha(currentTheme.primary, 0.05),
-                }
-              }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <TimelineIcon sx={{ color: currentTheme.primary }} />
-                <Typography variant="h6" sx={{ color: currentTheme.text }}>
-                  Version History
-                </Typography>
-              </Box>
-            </AccordionSummary>
-            <AccordionDetails sx={{ px: 3, pb: 3 }}>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                {(model.versionHistory || []).map((entry, index) => (
-                  <Box key={index} sx={{ 
-                    p: 2, 
-                    border: `1px solid ${currentTheme.border}`, 
+          {docTabSafe === versionIdx && (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              {(model.versionHistory || []).map((entry, index) => (
+                <Box
+                  key={index}
+                  sx={{
+                    p: 2,
+                    border: `1px solid ${currentTheme.border}`,
                     borderRadius: 1,
-                    bgcolor: currentTheme.background
-                  }}>
-                    <Box sx={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
+                    bgcolor: currentTheme.background,
+                  }}
+                >
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
                       gap: 2,
-                      mb: 1
-                    }}>
-                      <Typography 
-                        variant="subtitle2" 
-                        sx={{ 
-                          color: currentTheme.primary,
-                          fontWeight: 600,
-                        }}
-                      >
-                        v{entry.version}
-                      </Typography>
-                      <Typography 
-                        variant="caption" 
-                        sx={{ 
-                          color: currentTheme.textSecondary,
-                        }}
-                      >
-                        {formatDate(entry.timestamp)}
-                      </Typography>
-                      <Typography 
-                        variant="caption" 
-                        sx={{ 
-                          color: currentTheme.textSecondary,
-                        }}
-                      >
-                        by {entry.updatedBy}
-                      </Typography>
-                    </Box>
-                    <Typography variant="body2" sx={{ color: currentTheme.text }}>
-                      {entry.changeDescription}
+                      mb: 1,
+                      flexWrap: 'wrap',
+                    }}
+                  >
+                    <Typography
+                      variant="subtitle2"
+                      sx={{
+                        color: currentTheme.primary,
+                        fontWeight: 600,
+                      }}
+                    >
+                      v{entry.version}
                     </Typography>
-                    {entry.fieldChanges && entry.fieldChanges.length > 0 && (
-                      <Box sx={{ mt: 2 }}>
-                        <Typography variant="caption" sx={{ color: currentTheme.textSecondary, fontWeight: 600, mb: 1, display: 'block' }}>
-                          Field Changes:
-                        </Typography>
-                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                          {entry.fieldChanges.map((change, changeIndex) => (
-                            <Box key={changeIndex} sx={{ 
-                              p: 1.5, 
-                              bgcolor: currentTheme.background, 
-                              borderRadius: 1, 
-                              border: `1px solid ${currentTheme.border}` 
-                            }}>
-                              <Typography variant="body2" sx={{ color: currentTheme.primary, fontWeight: 600, mb: 0.5 }}>
-                                {change.field}
-                              </Typography>
-                              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                  <Typography variant="caption" sx={{ color: currentTheme.textSecondary, minWidth: '60px' }}>
-                                    From:
-                                  </Typography>
-                                  <Typography variant="body2" sx={{ 
-                                    color: currentTheme.text, 
+                    <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
+                      {formatDate(entry.timestamp)}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
+                      by {entry.updatedBy}
+                    </Typography>
+                  </Box>
+                  <Typography variant="body2" sx={{ color: currentTheme.text }}>
+                    {entry.changeDescription}
+                  </Typography>
+                  {entry.fieldChanges && entry.fieldChanges.length > 0 && (
+                    <Box sx={{ mt: 2 }}>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: currentTheme.textSecondary,
+                          fontWeight: 600,
+                          mb: 1,
+                          display: 'block',
+                        }}
+                      >
+                        Field Changes:
+                      </Typography>
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                        {entry.fieldChanges.map((change, changeIndex) => (
+                          <Box
+                            key={changeIndex}
+                            sx={{
+                              p: 1.5,
+                              bgcolor: currentTheme.background,
+                              borderRadius: 1,
+                              border: `1px solid ${currentTheme.border}`,
+                            }}
+                          >
+                            <Typography
+                              variant="body2"
+                              sx={{ color: currentTheme.primary, fontWeight: 600, mb: 0.5 }}
+                            >
+                              {change.field}
+                            </Typography>
+                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Typography
+                                  variant="caption"
+                                  sx={{ color: currentTheme.textSecondary, minWidth: '60px' }}
+                                >
+                                  From:
+                                </Typography>
+                                <Typography
+                                  variant="body2"
+                                  sx={{
+                                    color: currentTheme.text,
                                     fontFamily: 'monospace',
                                     bgcolor: alpha('#f44336', 0.1),
                                     px: 1,
                                     py: 0.5,
                                     borderRadius: 0.5,
-                                    fontSize: '0.8rem'
-                                  }}>
-                                    {change.oldValue ?? 'empty'}
-                                  </Typography>
-                                </Box>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                  <Typography variant="caption" sx={{ color: currentTheme.textSecondary, minWidth: '60px' }}>
-                                    To:
-                                  </Typography>
-                                  <Typography variant="body2" sx={{ 
-                                    color: currentTheme.text, 
+                                    fontSize: '0.8rem',
+                                  }}
+                                >
+                                  {change.oldValue ?? 'empty'}
+                                </Typography>
+                              </Box>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Typography
+                                  variant="caption"
+                                  sx={{ color: currentTheme.textSecondary, minWidth: '60px' }}
+                                >
+                                  To:
+                                </Typography>
+                                <Typography
+                                  variant="body2"
+                                  sx={{
+                                    color: currentTheme.text,
                                     fontFamily: 'monospace',
                                     bgcolor: alpha('#4caf50', 0.1),
                                     px: 1,
                                     py: 0.5,
                                     borderRadius: 0.5,
-                                    fontSize: '0.8rem'
-                                  }}>
-                                    {change.newValue ?? 'empty'}
-                                  </Typography>
-                                </Box>
+                                    fontSize: '0.8rem',
+                                  }}
+                                >
+                                  {change.newValue ?? 'empty'}
+                                </Typography>
                               </Box>
                             </Box>
-                          ))}
-                        </Box>
+                          </Box>
+                        ))}
                       </Box>
-                    )}
-                  </Box>
-                ))}
-                {(!model.versionHistory || model.versionHistory.length === 0) && (
-                  <Typography variant="body2" sx={{ color: currentTheme.textSecondary, fontStyle: 'italic', textAlign: 'center', py: 2 }}>
-                    No version history available. Changes will be tracked starting from the next update.
-                  </Typography>
-                )}
-              </Box>
-            </AccordionDetails>
-          </Accordion>
-        </Paper>
-      )}
+                    </Box>
+                  )}
+                </Box>
+              ))}
+              {(!model.versionHistory || model.versionHistory.length === 0) && (
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: currentTheme.textSecondary,
+                    fontStyle: 'italic',
+                    textAlign: 'center',
+                    py: 2,
+                  }}
+                >
+                  No version history available. Changes will be tracked starting from the next update.
+                </Typography>
+              )}
+            </Box>
+          )}
+        </Box>
+      </Paper>
     </Box>
   );
 };
