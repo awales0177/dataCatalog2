@@ -21,6 +21,7 @@ import {
   Transform as DerivedIcon,
   SubdirectoryArrowRight as ChildIcon,
 } from '@mui/icons-material';
+import { catalogInteractivePaperSx } from '../theme/catalogSurfaces';
 
 const DataProductCard = ({ product, onClick, currentTheme }) => {
   const navigate = useNavigate();
@@ -102,20 +103,12 @@ const DataProductCard = ({ product, onClick, currentTheme }) => {
         minHeight: '280px',
         p: 2.5,
         cursor: 'pointer',
-        bgcolor: currentTheme.darkMode ? '#1E1E1E' : currentTheme.card,
-        border: `1px solid ${currentTheme.darkMode ? 'rgba(255, 255, 255, 0.1)' : currentTheme.border}`,
-        borderRadius: '12px',
-        transition: 'all 0.2s ease-in-out',
         display: 'flex',
         flexDirection: 'column',
         boxSizing: 'border-box',
         overflow: 'hidden',
         position: 'relative',
-        '&:hover': {
-          transform: 'translateY(-2px)',
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-          borderColor: '#37ABBF',
-        },
+        ...catalogInteractivePaperSx(currentTheme),
       }}
     >
       {/* Top Right Corner Icons */}

@@ -188,7 +188,6 @@ class CreateModelRequest(BaseModel):
     description: str = Field(..., description="Description of the new model")
     version: str = Field(default="1.0.0", description="Version of the new model")
     extendedDescription: str = Field(default="", description="Extended description of the new model")
-    owner: str = Field(default="", description="Owner of the new model")
     specMaintainer: str = Field(default="", description="Spec maintainer of the new model")
     maintainerEmail: str = Field(default="", description="Maintainer email of the new model")
     domain: List[str] = Field(default=[], description="Domains of the new model")
@@ -889,7 +888,6 @@ async def create_model(request: CreateModelRequest, current_user: dict = Depends
             'description': request.description,
             'version': request.version,
             'extendedDescription': request.extendedDescription,
-            'owner': request.owner,
             'specMaintainer': request.specMaintainer,
             'maintainerEmail': request.maintainerEmail,
             'domain': request.domain,
@@ -1091,6 +1089,7 @@ async def update_model(short_name: str, request: UpdateModelRequest, current_use
         # Update the model
         old_model = models_data['models'][model_index]
         updated_model = {**old_model, **request.modelData}
+        updated_model.pop('owner', None)
         
         # Preserve clickCount in meta if it exists in the old model
         if 'meta' in request.modelData and 'meta' in old_model:
@@ -1896,14 +1895,10 @@ async def create_application(application: Dict[str, Any], current_user: dict = D
         max_id = max([app['id'] for app in applications_data['applications']]) if applications_data['applications'] else 0
         new_id = max_id + 1
         
-        # Create new application with ID
-        new_application = {
-            "id": new_id,
-            "name": application.get('name', ''),
-            "description": application.get('description', ''),
-            "domains": application.get('domains', []),
-            "link": application.get('link', '')
-        }
+        # Preserve full payload from client (roles, email, image, etc.); assign server id
+        incoming = dict(application)
+        incoming.pop("id", None)
+        new_application = {**incoming, "id": new_id}
         
         applications_data['applications'].append(new_application)
         
@@ -1951,14 +1946,11 @@ async def update_application(application_id: int, application: Dict[str, Any], c
         if app_to_update is None:
             raise HTTPException(status_code=404, detail=f"Application with ID {application_id} not found")
         
-        # Update the application
-        applications_data['applications'][app_to_update] = {
-            "id": application_id,
-            "name": application.get('name', ''),
-            "description": application.get('description', ''),
-            "domains": application.get('domains', []),
-            "link": application.get('link', '')
-        }
+        # Merge so optional fields (image, email, roles, etc.) persist
+        existing = applications_data['applications'][app_to_update]
+        body = dict(application)
+        body["id"] = application_id
+        applications_data['applications'][app_to_update] = {**existing, **body}
         
         local_file_path = JSON_FILES['applications']
         write_json_file(local_file_path, applications_data)

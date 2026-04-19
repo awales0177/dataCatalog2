@@ -8,7 +8,6 @@ export const EXPECTED_MODEL_FIELDS = {
   extendedDescription: { required: false, weight: 0.5 },
   
   // Ownership & Maintenance
-  owner: { required: true, weight: 1 },
   specMaintainer: { required: true, weight: 1 },
   maintainerEmail: { required: true, weight: 1 },
   

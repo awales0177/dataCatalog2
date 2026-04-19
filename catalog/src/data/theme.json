@@ -19,22 +19,22 @@
     }
   },
   "dark": {
-    "background": "#1a1a1a",
-    "card": "#2d2d2d",
-    "text": "#ffffff",
-    "textSecondary": "#bdc3c7",
-    "primary": "#3498db",
-    "primaryHover": "#2980b9",
-    "border": "rgba(255, 255, 255, 0.08)",
+    "background": "#121212",
+    "card": "#1e1e1e",
+    "text": "#e8e8ea",
+    "textSecondary": "#9d9da3",
+    "primary": "#42a5f5",
+    "primaryHover": "#64b5f6",
+    "border": "rgba(255, 255, 255, 0.12)",
     "favorite": "#f1c40f",
-    "favoriteInactive": "#7f8c8d",
-    "success": "#27ae60",
-    "warning": "#f39c12",
-    "error": "#c0392b",
+    "favoriteInactive": "#6b6b70",
+    "success": "#66bb6a",
+    "warning": "#ffa726",
+    "error": "#ef5350",
     "quality": {
-      "high": "#27ae60",
-      "medium": "#f39c12",
-      "low": "#c0392b"
+      "high": "#66bb6a",
+      "medium": "#ffa726",
+      "low": "#ef5350"
     }
   }
 } 

@@ -47,6 +47,8 @@ import { fetchData, trackModelClick } from '../services/api';
 import Pagination from '../components/Pagination';
 import { fontStackSans } from '../theme/theme';
 import { useCatalogPreferences } from '../contexts/CatalogPreferencesContext';
+import StickyPageIntro from '../components/StickyPageIntro';
+import PageWithFixedHeader from '../components/PageWithFixedHeader';
 
 const ITEMS_PER_PAGE_GRID = 12;
 const ITEMS_PER_PAGE_TABLE = 20;
@@ -279,7 +281,6 @@ const DataModelsPage = () => {
       description: '',
       extendedDescription: '',
       lastUpdated: new Date().toISOString().slice(0, 19).replace('T', ' '),
-      owner: '',
       specMaintainer: '',
       domain: [],
       referenceData: [],
@@ -359,16 +360,19 @@ const DataModelsPage = () => {
   const inputBorder = currentTheme.inputBorder || currentTheme.border;
 
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" component="h1" sx={{ color: currentTheme.text, fontWeight: 700, mb: 1 }}>
-          Data Models
-        </Typography>
-        <Typography variant="body1" sx={{ color: currentTheme.textSecondary, maxWidth: 720 }}>
-          Explore and manage your data models. Use grid or table view, sort columns, and filter by domain or tier.
-        </Typography>
-      </Box>
-
+    <PageWithFixedHeader
+      header={
+        <StickyPageIntro sx={{ mb: 0 }}>
+          <Typography variant="h4" component="h1" sx={{ mb: 1, color: currentTheme.text, fontWeight: 600 }}>
+            Data Models
+          </Typography>
+          <Typography variant="body1" sx={{ color: currentTheme.textSecondary, maxWidth: 720 }}>
+            Explore and manage your data models. Use grid or table view, sort columns, and filter by domain or tier.
+          </Typography>
+        </StickyPageIntro>
+      }
+    >
+      <Container maxWidth="xl" sx={{ py: 4, pt: 2 }}>
       <Box sx={{ mb: 4 }}>
         <TextField
           fullWidth
@@ -801,7 +805,8 @@ const DataModelsPage = () => {
       >
         <AddIcon />
       </Fab>
-    </Container>
+      </Container>
+    </PageWithFixedHeader>
   );
 };
 

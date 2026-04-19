@@ -33,6 +33,9 @@ import {
 } from '@mui/icons-material';
 import { ThemeContext } from '../contexts/ThemeContext';
 import DataModelCard from '../components/DataModelCard';
+import StickyPageIntro from '../components/StickyPageIntro';
+import PageWithFixedHeader from '../components/PageWithFixedHeader';
+import { catalogStaticPaperSx } from '../theme/catalogSurfaces';
 import modelsData from '../data/models.json';
 
 const PINNED_STORAGE_KEY = 'pinnedItems';
@@ -173,237 +176,239 @@ const HomePage = () => {
   };
 
   return (
-    <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
-      {/* Header */}
-      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Box>
-          <Typography variant="h4" sx={{ mb: 1, color: currentTheme.text, fontWeight: 600 }}>
+    <PageWithFixedHeader
+      header={
+        <StickyPageIntro sx={{ mb: 0 }}>
+          <Typography variant="h4" component="h1" sx={{ mb: 1, color: currentTheme.text, fontWeight: 600 }}>
             My Dashboard
           </Typography>
-          <Typography variant="body1" sx={{ color: currentTheme.textSecondary }}>
+          <Typography variant="body1" sx={{ color: currentTheme.textSecondary, maxWidth: 720 }}>
             Pin your frequently accessed items for quick access
           </Typography>
-        </Box>
-        <Button
-          variant="contained"
-          startIcon={<PinDropIcon />}
-          onClick={() => setSearchOpen(true)}
-          sx={{
-            bgcolor: '#37ABBF',
-            '&:hover': { bgcolor: '#2a8a9a' },
-          }}
-        >
-          Add Pin
-        </Button>
-      </Box>
-
-      {/* Tabs for filtering pinned items */}
-      {pinnedItems.length > 0 && (
-        <Box sx={{ mb: 3 }}>
-          <Tabs
-            value={activeTab}
-            onChange={(e, newValue) => setActiveTab(newValue)}
-            sx={{
-              '& .MuiTab-root': {
-                textTransform: 'none',
-                color: currentTheme.textSecondary,
-                '&.Mui-selected': {
-                  color: '#37ABBF',
-                },
-              },
-              '& .MuiTabs-indicator': {
-                bgcolor: '#37ABBF',
-              },
-            }}
-          >
-            <Tab label={`All (${pinnedItems.length})`} />
-            <Tab label={`Models (${groupedPins.models.length})`} />
-          </Tabs>
-        </Box>
-      )}
-
-      {/* Pinned Items Grid */}
-      {pinnedItems.length === 0 ? (
-        <Paper
-          elevation={0}
-          sx={{
-            p: 6,
-            textAlign: 'center',
-            bgcolor: currentTheme.card,
-            border: `1px dashed ${currentTheme.border}`,
-            borderRadius: 2,
-          }}
-        >
-          <PinDropIcon sx={{ fontSize: 64, color: currentTheme.textSecondary, mb: 2, opacity: 0.5 }} />
-          <Typography variant="h6" sx={{ color: currentTheme.text, mb: 1 }}>
-            No pinned items yet
-          </Typography>
-          <Typography variant="body2" sx={{ color: currentTheme.textSecondary, mb: 3 }}>
-            Click "Add Pin" to start pinning your favorite items
-          </Typography>
+        </StickyPageIntro>
+      }
+    >
+      <Container maxWidth="xl" sx={{ py: 2, pb: 4 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
           <Button
-            variant="outlined"
+            variant="contained"
             startIcon={<PinDropIcon />}
             onClick={() => setSearchOpen(true)}
             sx={{
-              borderColor: '#37ABBF',
-              color: '#37ABBF',
-              '&:hover': {
-                borderColor: '#2a8a9a',
-                bgcolor: alpha('#37ABBF', 0.1),
-              },
+              bgcolor: '#37ABBF',
+              '&:hover': { bgcolor: '#2a8a9a' },
             }}
           >
-            Add Your First Pin
+            Add Pin
           </Button>
-        </Paper>
-      ) : (
-        <Grid container spacing={3}>
-          {(() => {
-            let itemsToShow = pinnedItems;
-            if (activeTab === 1) itemsToShow = groupedPins.models;
+        </Box>
 
-            return itemsToShow.map(item => renderPinnedItem(item)).filter(Boolean);
-          })()}
-        </Grid>
-      )}
-
-      {/* Search Dialog */}
-      <Dialog
-        open={searchOpen}
-        onClose={() => {
-          setSearchOpen(false);
-          setSearchQuery('');
-        }}
-        maxWidth="sm"
-        fullWidth
-        PaperProps={{
-          sx: {
-            bgcolor: currentTheme.card,
-            border: `1px solid ${currentTheme.border}`,
-          },
-        }}
-      >
-        <DialogTitle sx={{ color: currentTheme.text, pb: 1 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Typography variant="h6">Pin Items</Typography>
-            <IconButton
-              size="small"
-              onClick={() => {
-                setSearchOpen(false);
-                setSearchQuery('');
+        {/* Tabs for filtering pinned items */}
+        {pinnedItems.length > 0 && (
+          <Box sx={{ mb: 3 }}>
+            <Tabs
+              value={activeTab}
+              onChange={(e, newValue) => setActiveTab(newValue)}
+              sx={{
+                '& .MuiTab-root': {
+                  textTransform: 'none',
+                  color: currentTheme.textSecondary,
+                  '&.Mui-selected': {
+                    color: '#37ABBF',
+                  },
+                },
+                '& .MuiTabs-indicator': {
+                  bgcolor: '#37ABBF',
+                },
               }}
-              sx={{ color: currentTheme.textSecondary }}
             >
-              <CloseIcon />
-            </IconButton>
+              <Tab label={`All (${pinnedItems.length})`} />
+              <Tab label={`Models (${groupedPins.models.length})`} />
+            </Tabs>
           </Box>
-        </DialogTitle>
-        <DialogContent>
-          <TextField
-            fullWidth
-            placeholder="Search for models to pin..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon sx={{ color: currentTheme.textSecondary }} />
-                </InputAdornment>
-              ),
-            }}
+        )}
+
+        {/* Pinned Items Grid */}
+        {pinnedItems.length === 0 ? (
+          <Paper
+            elevation={0}
             sx={{
-              mb: 2,
-              '& .MuiOutlinedInput-root': {
-                bgcolor: currentTheme.background,
-                '& fieldset': {
-                  borderColor: currentTheme.border,
-                },
-                '&:hover fieldset': {
-                  borderColor: '#37ABBF',
-                },
-                '&.Mui-focused fieldset': {
-                  borderColor: '#37ABBF',
-                },
-              },
+              p: 6,
+              textAlign: 'center',
+              ...catalogStaticPaperSx(currentTheme),
+              border: `1px dashed ${currentTheme.border}`,
             }}
-          />
+          >
+            <PinDropIcon sx={{ fontSize: 64, color: currentTheme.textSecondary, mb: 2, opacity: 0.5 }} />
+            <Typography variant="h6" sx={{ color: currentTheme.text, mb: 1 }}>
+              No pinned items yet
+            </Typography>
+            <Typography variant="body2" sx={{ color: currentTheme.textSecondary, mb: 3 }}>
+              Click "Add Pin" to start pinning your favorite items
+            </Typography>
+            <Button
+              variant="outlined"
+              startIcon={<PinDropIcon />}
+              onClick={() => setSearchOpen(true)}
+              sx={{
+                borderColor: '#37ABBF',
+                color: '#37ABBF',
+                '&:hover': {
+                  borderColor: '#2a8a9a',
+                  bgcolor: alpha('#37ABBF', 0.1),
+                },
+              }}
+            >
+              Add Your First Pin
+            </Button>
+          </Paper>
+        ) : (
+          <Grid container spacing={3}>
+            {(() => {
+              let itemsToShow = pinnedItems;
+              if (activeTab === 1) itemsToShow = groupedPins.models;
 
-          {searchQuery.trim() && (
-            <Box>
-              {searchResults.models.length > 0 && (
-                <Box sx={{ mb: 3 }}>
-                  <Typography variant="subtitle2" sx={{ color: currentTheme.text, mb: 1, fontWeight: 600 }}>
-                    Data Models
-                  </Typography>
-                  <List>
-                    {searchResults.models.map((model) => (
-                      <ListItem
-                        key={model.id}
-                        disablePadding
-                        secondaryAction={
-                          isPinned(model.id, 'model') ? (
-                            <Chip label="Pinned" size="small" sx={{ bgcolor: alpha('#37ABBF', 0.1), color: '#37ABBF' }} />
-                          ) : (
-                            <IconButton
-                              edge="end"
-                              onClick={() => handlePin({ id: model.id, type: 'model', name: model.displayName })}
-                              sx={{ color: '#37ABBF' }}
-                            >
-                              <PinDropIcon />
-                            </IconButton>
-                          )
-                        }
-                      >
-                        <ListItemButton onClick={() => handleNavigate(model)}>
-                          <ListItemIcon>
-                            <StorageIcon sx={{ color: '#37ABBF' }} />
-                          </ListItemIcon>
-                          <ListItemText
-                            primary={model.displayName}
-                            secondary={model.summary?.substring(0, 60) + '...'}
-                            primaryTypographyProps={{ color: currentTheme.text }}
-                            secondaryTypographyProps={{ color: currentTheme.textSecondary }}
-                          />
-                        </ListItemButton>
-                      </ListItem>
-                    ))}
-                  </List>
-                </Box>
-              )}
+              return itemsToShow.map(item => renderPinnedItem(item)).filter(Boolean);
+            })()}
+          </Grid>
+        )}
 
-              {searchResults.models.length === 0 && (
+        <Dialog
+          open={searchOpen}
+          onClose={() => {
+            setSearchOpen(false);
+            setSearchQuery('');
+          }}
+          maxWidth="sm"
+          fullWidth
+          PaperProps={{
+            sx: {
+              bgcolor: currentTheme.card,
+              border: `1px solid ${currentTheme.border}`,
+            },
+          }}
+        >
+          <DialogTitle sx={{ color: currentTheme.text, pb: 1 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Typography variant="h6">Pin Items</Typography>
+              <IconButton
+                size="small"
+                onClick={() => {
+                  setSearchOpen(false);
+                  setSearchQuery('');
+                }}
+                sx={{ color: currentTheme.textSecondary }}
+              >
+                <CloseIcon />
+              </IconButton>
+            </Box>
+          </DialogTitle>
+          <DialogContent>
+            <TextField
+              fullWidth
+              placeholder="Search for models to pin..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon sx={{ color: currentTheme.textSecondary }} />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{
+                mb: 2,
+                '& .MuiOutlinedInput-root': {
+                  bgcolor: currentTheme.background,
+                  '& fieldset': {
+                    borderColor: currentTheme.border,
+                  },
+                  '&:hover fieldset': {
+                    borderColor: '#37ABBF',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#37ABBF',
+                  },
+                },
+              }}
+            />
+
+            {searchQuery.trim() && (
+              <Box>
+                {searchResults.models.length > 0 && (
+                  <Box sx={{ mb: 3 }}>
+                    <Typography variant="subtitle2" sx={{ color: currentTheme.text, mb: 1, fontWeight: 600 }}>
+                      Data Models
+                    </Typography>
+                    <List>
+                      {searchResults.models.map((model) => (
+                        <ListItem
+                          key={model.id}
+                          disablePadding
+                          secondaryAction={
+                            isPinned(model.id, 'model') ? (
+                              <Chip label="Pinned" size="small" sx={{ bgcolor: alpha('#37ABBF', 0.1), color: '#37ABBF' }} />
+                            ) : (
+                              <IconButton
+                                edge="end"
+                                onClick={() => handlePin({ id: model.id, type: 'model', name: model.displayName })}
+                                sx={{ color: '#37ABBF' }}
+                              >
+                                <PinDropIcon />
+                              </IconButton>
+                            )
+                          }
+                        >
+                          <ListItemButton onClick={() => handleNavigate(model)}>
+                            <ListItemIcon>
+                              <StorageIcon sx={{ color: '#37ABBF' }} />
+                            </ListItemIcon>
+                            <ListItemText
+                              primary={model.displayName}
+                              secondary={model.summary?.substring(0, 60) + '...'}
+                              primaryTypographyProps={{ color: currentTheme.text }}
+                              secondaryTypographyProps={{ color: currentTheme.textSecondary }}
+                            />
+                          </ListItemButton>
+                        </ListItem>
+                      ))}
+                    </List>
+                  </Box>
+                )}
+
+                {searchResults.models.length === 0 && (
                   <Box sx={{ textAlign: 'center', py: 4 }}>
                     <Typography variant="body2" sx={{ color: currentTheme.textSecondary }}>
                       No results found
                     </Typography>
                   </Box>
                 )}
-            </Box>
-          )}
+              </Box>
+            )}
 
-          {!searchQuery.trim() && (
-            <Box sx={{ textAlign: 'center', py: 4 }}>
-              <SearchIcon sx={{ fontSize: 48, color: currentTheme.textSecondary, mb: 2, opacity: 0.5 }} />
-              <Typography variant="body2" sx={{ color: currentTheme.textSecondary }}>
-                Start typing to search for items to pin
-              </Typography>
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions sx={{ p: 2, borderTop: `1px solid ${currentTheme.border}` }}>
-          <Button
-            onClick={() => {
-              setSearchOpen(false);
-              setSearchQuery('');
-            }}
-            sx={{ color: currentTheme.textSecondary }}
-          >
-            Close
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Container>
+            {!searchQuery.trim() && (
+              <Box sx={{ textAlign: 'center', py: 4 }}>
+                <SearchIcon sx={{ fontSize: 48, color: currentTheme.textSecondary, mb: 2, opacity: 0.5 }} />
+                <Typography variant="body2" sx={{ color: currentTheme.textSecondary }}>
+                  Start typing to search for items to pin
+                </Typography>
+              </Box>
+            )}
+          </DialogContent>
+          <DialogActions sx={{ p: 2, borderTop: `1px solid ${currentTheme.border}` }}>
+            <Button
+              onClick={() => {
+                setSearchOpen(false);
+                setSearchQuery('');
+              }}
+              sx={{ color: currentTheme.textSecondary }}
+            >
+              Close
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </Container>
+    </PageWithFixedHeader>
   );
 };
 

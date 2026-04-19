@@ -28,6 +28,7 @@ import { ruleTagsList } from '../utils/ruleTags';
 import { normalizeRuleStage, ruleStageColor } from '../utils/ruleStage';
 import { normalizeRuleZone, ruleZoneColor, ruleZoneLabel } from '../utils/ruleZone';
 import { fontStackSans } from '../theme/theme';
+import { maintainerToTeamSelectorSelection } from '../utils/maintainerTeamSelection';
 
 function buildOrderedRules(rules) {
   const list = [...rules];
@@ -91,6 +92,8 @@ const ModelRulesTable = ({
   onOpenParentRule,
   /** Show Expand all / Collapse all above the table when any row has children. */
   showHierarchyControls = true,
+  /** Resolve legacy numeric maintainer ids to application names (optional). */
+  applications = [],
 }) => {
   const ctx = useContext(ThemeContext);
   const currentTheme = themeProp ?? ctx?.currentTheme;
@@ -229,7 +232,7 @@ const ModelRulesTable = ({
           size="medium"
           stickyHeader
           sx={{
-            minWidth: 1040,
+            minWidth: readOnly ? 1000 : 1120,
             '& td': { fontFamily: fontStackSans, verticalAlign: 'middle' },
           }}
         >
@@ -266,6 +269,19 @@ const ModelRulesTable = ({
                 }}
               >
                 Rule ID
+              </TableCell>
+              <TableCell
+                sx={{
+                  bgcolor: currentTheme?.card,
+                  color: currentTheme?.textSecondary,
+                  fontWeight: 700,
+                  borderBottom: `2px solid ${currentTheme?.border}`,
+                  width: 120,
+                  minWidth: 100,
+                  maxWidth: 160,
+                }}
+              >
+                Maintainer
               </TableCell>
               <TableCell
                 sx={{
@@ -322,18 +338,20 @@ const ModelRulesTable = ({
               >
                 Tags
               </TableCell>
-              <TableCell
-                align="right"
-                sx={{
-                  bgcolor: currentTheme?.card,
-                  color: currentTheme?.textSecondary,
-                  fontWeight: 700,
-                  borderBottom: `2px solid ${currentTheme?.border}`,
-                  width: readOnly ? 56 : 168,
-                }}
-              >
-                Actions
-              </TableCell>
+              {!readOnly ? (
+                <TableCell
+                  align="right"
+                  sx={{
+                    bgcolor: currentTheme?.card,
+                    color: currentTheme?.textSecondary,
+                    fontWeight: 700,
+                    borderBottom: `2px solid ${currentTheme?.border}`,
+                    width: 168,
+                  }}
+                >
+                  Actions
+                </TableCell>
+              ) : null}
             </TableRow>
           </TableHead>
           <TableBody>
@@ -347,6 +365,10 @@ const ModelRulesTable = ({
               const depth = depthByRuleId[rule.id] || 0;
               const hasKids = ruleHasChildren(rule.id);
               const isOpen = expandedRuleIds.has(String(rule.id));
+              const maintainerLabel =
+                rule.maintainer != null && String(rule.maintainer).trim() !== ''
+                  ? maintainerToTeamSelectorSelection(rule.maintainer, applications)[0] || rule.maintainer
+                  : '';
               const compactChip = {
                 height: 22,
                 maxWidth: 100,
@@ -429,6 +451,27 @@ const ModelRulesTable = ({
                         }}
                       >
                         {rule.id}
+                      </Typography>
+                    ) : (
+                      <Typography variant="caption" sx={{ color: currentTheme?.textSecondary }}>
+                        —
+                      </Typography>
+                    )}
+                  </TableCell>
+                  <TableCell sx={{ py: 1, maxWidth: 160 }}>
+                    {maintainerLabel ? (
+                      <Typography
+                        variant="body2"
+                        title={maintainerLabel}
+                        sx={{
+                          color: currentTheme?.textSecondary,
+                          fontSize: '0.8125rem',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {maintainerLabel}
                       </Typography>
                     ) : (
                       <Typography variant="caption" sx={{ color: currentTheme?.textSecondary }}>
@@ -529,52 +572,54 @@ const ModelRulesTable = ({
                       )}
                     </Box>
                   </TableCell>
-                  <TableCell align="right" sx={{ py: 1 }} onClick={(e) => e.stopPropagation()}>
-                    {rule.documentation && (
-                      <Tooltip title="View Documentation">
-                        <IconButton
-                          size="small"
-                          onClick={() => window.open(rule.documentation, '_blank')}
-                          sx={{ color: currentTheme?.textSecondary }}
-                        >
-                          <DescriptionIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    )}
-                    {!readOnly && !associationOnly && onOpenParentRule && (
-                      <Tooltip title="Set parent rule (relationships)">
-                        <IconButton
-                          size="small"
-                          onClick={() => onOpenParentRule(rule)}
-                          sx={{ color: currentTheme?.textSecondary }}
-                        >
-                          <AccountTreeIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    )}
-                    {!readOnly && onEditRule && (
-                      <Tooltip title={associationOnly ? 'Set parent rule' : 'Edit rule'}>
-                        <IconButton
-                          size="small"
-                          onClick={() => onEditRule(rule)}
-                          sx={{ color: currentTheme?.textSecondary }}
-                        >
-                          <EditIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    )}
-                    {!readOnly && !associationOnly && onDeleteRule && (
-                      <Tooltip title="Delete">
-                        <IconButton
-                          size="small"
-                          onClick={() => onDeleteRule(rule.id)}
-                          sx={{ color: currentTheme?.textSecondary }}
-                        >
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    )}
-                  </TableCell>
+                  {!readOnly ? (
+                    <TableCell align="right" sx={{ py: 1 }} onClick={(e) => e.stopPropagation()}>
+                      {rule.documentation && (
+                        <Tooltip title="View Documentation">
+                          <IconButton
+                            size="small"
+                            onClick={() => window.open(rule.documentation, '_blank')}
+                            sx={{ color: currentTheme?.textSecondary }}
+                          >
+                            <DescriptionIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                      {!associationOnly && onOpenParentRule && (
+                        <Tooltip title="Set parent rule (relationships)">
+                          <IconButton
+                            size="small"
+                            onClick={() => onOpenParentRule(rule)}
+                            sx={{ color: currentTheme?.textSecondary }}
+                          >
+                            <AccountTreeIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                      {onEditRule && (
+                        <Tooltip title={associationOnly ? 'Set parent rule' : 'Edit rule'}>
+                          <IconButton
+                            size="small"
+                            onClick={() => onEditRule(rule)}
+                            sx={{ color: currentTheme?.textSecondary }}
+                          >
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                      {!associationOnly && onDeleteRule && (
+                        <Tooltip title="Delete">
+                          <IconButton
+                            size="small"
+                            onClick={() => onDeleteRule(rule.id)}
+                            sx={{ color: currentTheme?.textSecondary }}
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                    </TableCell>
+                  ) : null}
                 </TableRow>
               );
             })}

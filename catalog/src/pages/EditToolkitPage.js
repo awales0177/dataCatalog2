@@ -71,6 +71,8 @@ import {
   mergeMarkdownTabStateFromTech,
   normalizeMarkdownTabId,
 } from '../utils/toolkitMarkdownTabs';
+import TeamSelector from '../components/TeamSelector';
+import { maintainerToTeamSelectorSelection } from '../utils/maintainerTeamSelection';
 
 const TOOLKIT_PANE_ID = '__toolkit__';
 
@@ -131,7 +133,7 @@ const EditToolkitPage = () => {
   const [rightPane, setRightPane] = useState(TOOLKIT_PANE_ID);
   const [tagInput, setTagInput] = useState('');
   const [newMarkdownTabTitle, setNewMarkdownTabTitle] = useState('');
-  const [dataTeams, setDataTeams] = useState([]);
+  const [applications, setApplications] = useState([]);
 
   const isNewToolkit = !toolkitId || toolkitId === 'create';
 
@@ -139,10 +141,10 @@ const EditToolkitPage = () => {
     let cancelled = false;
     (async () => {
       try {
-        const response = await fetchData('teams');
-        if (!cancelled) setDataTeams(response.data_teams || []);
+        const response = await fetchData('applications');
+        if (!cancelled) setApplications(response.applications || []);
       } catch (e) {
-        console.error('Error loading data teams:', e);
+        console.error('Error loading applications:', e);
       }
     })();
     return () => {
@@ -220,20 +222,29 @@ const EditToolkitPage = () => {
             .sort((a, b) => (a.rank || 0) - (b.rank || 0));
           const singleTechMode = toolkit.multipleTechnologies === false;
           if (singleTechMode) {
-            const one = merged.length ? [{ ...merged[0], rank: 1 }] : [
-              {
-                id: `tech-${Date.now()}`,
-                name: '',
-                description: '',
-                rank: 1,
-                status: 'production',
-                maintainerTeamId: '',
-                pros: [],
-                cons: [],
-                languages: [],
-                ...mergeMarkdownTabStateFromTech({}),
-              },
-            ];
+            const one = merged.length
+              ? [
+                  {
+                    ...merged[0],
+                    name: toolkit.name ?? merged[0].name ?? '',
+                    description: toolkit.description ?? merged[0].description ?? '',
+                    rank: 1,
+                  },
+                ]
+              : [
+                  {
+                    id: `tech-${Date.now()}`,
+                    name: toolkit.name || '',
+                    description: toolkit.description || '',
+                    rank: 1,
+                    status: 'production',
+                    maintainerTeamId: '',
+                    pros: [],
+                    cons: [],
+                    languages: [],
+                    ...mergeMarkdownTabStateFromTech({}),
+                  },
+                ];
             setTechnologies(one);
             setOriginalTechnologiesJson(JSON.stringify(one));
             setRightPane(one[0].id);
@@ -319,6 +330,19 @@ const EditToolkitPage = () => {
   const hasUnsavedChanges = toolkitHasChanges || techListDirty;
 
   const isMultiTech = editedToolkit?.multipleTechnologies !== false;
+
+  // Single-technology toolkits: technology name/description always match the toolkit.
+  useEffect(() => {
+    if (!editedToolkit || isMultiTech) return;
+    const name = editedToolkit.name ?? '';
+    const description = editedToolkit.description ?? '';
+    setTechnologies((prev) => {
+      if (!prev[0]) return prev;
+      const t = prev[0];
+      if (t.name === name && t.description === description) return prev;
+      return [{ ...t, name, description }];
+    });
+  }, [isMultiTech, editedToolkit?.name, editedToolkit?.description]);
 
   const selectedTech = useMemo(() => {
     if (!isMultiTech) return technologies[0] ?? null;
@@ -987,22 +1011,30 @@ const EditToolkitPage = () => {
         <Typography variant="subtitle1" sx={{ color: currentTheme.text, fontWeight: 600 }}>
           Technology
         </Typography>
-        <TextField
-          fullWidth
-          label="Name *"
-          value={selectedTech.name || ''}
-          onChange={(e) => updateSelectedTechField('name', e.target.value)}
-          sx={textFieldSx(currentTheme)}
-        />
-        <TextField
-          fullWidth
-          label="Description *"
-          multiline
-          rows={4}
-          value={selectedTech.description || ''}
-          onChange={(e) => updateSelectedTechField('description', e.target.value)}
-          sx={textFieldSx(currentTheme)}
-        />
+        {!isMultiTech ? (
+          <Typography variant="body2" sx={{ color: currentTheme.textSecondary }}>
+            Name and description are the same as the toolkit fields above.
+          </Typography>
+        ) : (
+          <>
+            <TextField
+              fullWidth
+              label="Name *"
+              value={selectedTech.name || ''}
+              onChange={(e) => updateSelectedTechField('name', e.target.value)}
+              sx={textFieldSx(currentTheme)}
+            />
+            <TextField
+              fullWidth
+              label="Description *"
+              multiline
+              rows={4}
+              value={selectedTech.description || ''}
+              onChange={(e) => updateSelectedTechField('description', e.target.value)}
+              sx={textFieldSx(currentTheme)}
+            />
+          </>
+        )}
         {!hideRank ? (
           <TextField
             fullWidth
@@ -1027,46 +1059,17 @@ const EditToolkitPage = () => {
             <MenuItem value="evaluated">Evaluated</MenuItem>
           </Select>
         </FormControl>
-        <FormControl fullWidth variant="outlined" sx={textFieldSx(currentTheme)}>
-          <InputLabel id="tech-maintainer-label" shrink>
-            Maintainer team
-          </InputLabel>
-          <Select
-            labelId="tech-maintainer-label"
-            label="Maintainer team"
-            notched
-            displayEmpty
-            value={
-              selectedTech.maintainerTeamId != null &&
-              String(selectedTech.maintainerTeamId).trim() !== ''
-                ? String(selectedTech.maintainerTeamId)
-                : ''
-            }
-            renderValue={(v) => {
-              if (v == null || String(v).trim() === '') {
-                return (
-                  <Box component="span" sx={{ color: currentTheme.textSecondary }}>
-                    None
-                  </Box>
-                );
-              }
-              const team = dataTeams.find((t) => String(t.id) === String(v));
-              return team?.name ?? String(v);
-            }}
-            onChange={(e) => updateSelectedTechField('maintainerTeamId', e.target.value || '')}
-          >
-            <MenuItem value="">
-              <em>None</em>
-            </MenuItem>
-            {[...dataTeams]
-              .sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')))
-              .map((team) => (
-                <MenuItem key={team.id} value={String(team.id)}>
-                  {team.name}
-                </MenuItem>
-              ))}
-          </Select>
-        </FormControl>
+        <TeamSelector
+          selectedTeams={maintainerToTeamSelectorSelection(selectedTech.maintainerTeamId, applications)}
+          onTeamsChange={(teams) => {
+            updateSelectedTechField('maintainerTeamId', teams.length > 0 ? teams[0] : '');
+          }}
+          currentTheme={currentTheme}
+          label="Maintainer"
+          showLabel={true}
+          maxSelections={1}
+          placeholder="No maintainer selected"
+        />
 
         <Box>
           <Typography variant="subtitle2" sx={{ color: currentTheme.text, mb: 0.5, fontWeight: 600 }}>

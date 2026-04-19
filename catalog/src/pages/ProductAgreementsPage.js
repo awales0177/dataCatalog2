@@ -26,7 +26,7 @@ import {
   CheckCircle as CheckCircleIcon,
 } from '@mui/icons-material';
 import { ThemeContext } from '../contexts/ThemeContext';
-import { fetchAgreements } from '../services/api';
+import { fetchAgreements, fetchData } from '../services/api';
 import ProductAgreementCard from '../components/ProductAgreementCard';
 import Pagination from '../components/Pagination';
 import { useNavigate } from 'react-router-dom';
@@ -37,6 +37,7 @@ const ProductAgreementsPage = () => {
   const { currentTheme } = useContext(ThemeContext);
   const navigate = useNavigate();
   const [allAgreements, setAllAgreements] = useState([]);
+  const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -47,11 +48,15 @@ const ProductAgreementsPage = () => {
   useEffect(() => {
     const loadAgreements = async () => {
       try {
-        const data = await fetchAgreements();
-        const validAgreements = (data?.agreements || []).filter(agreement => 
+        const [agreementData, appData] = await Promise.all([
+          fetchAgreements(),
+          fetchData('applications').catch(() => ({ applications: [] })),
+        ]);
+        const validAgreements = (agreementData?.agreements || []).filter(agreement => 
           agreement && typeof agreement === 'object'
         );
         setAllAgreements(validAgreements);
+        setApplications(appData?.applications || []);
         setError(null);
       } catch (err) {
         setError('Failed to load agreements');
@@ -423,7 +428,11 @@ const ProductAgreementsPage = () => {
       <Grid container spacing={3}>
         {paginatedAgreements.map((agreement) => (
           <Grid item xs={12} sm={6} md={4} lg={3} key={agreement.id}>
-            <ProductAgreementCard agreement={agreement} currentTheme={currentTheme} />
+            <ProductAgreementCard
+              agreement={agreement}
+              currentTheme={currentTheme}
+              applications={applications}
+            />
           </Grid>
         ))}
       </Grid>

@@ -20,8 +20,6 @@ import {
   Security as SecurityIcon,
   Settings as SettingsIcon,
 } from '@mui/icons-material';
-import { formatDate } from '../utils/themeUtils';
-
 const ApplicationCard = ({ application, currentTheme, onEdit }) => {
   // Handle link out functionality
   const handleLinkOut = (e) => {
@@ -72,48 +70,60 @@ const ApplicationCard = ({ application, currentTheme, onEdit }) => {
     return roleTooltips[role] || role;
   };
   
-  return (
-    <Card 
-      elevation={0}
-      sx={{ 
-        height: '100%',
-        borderRadius: 2,
-        transition: 'all 0.2s ease-in-out',
-        bgcolor: currentTheme.card,
-        border: `1px solid ${currentTheme.border}`,
-        cursor: 'default',
-        '&:hover': {
-          transform: 'translateY(-4px)',
-          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
-          borderColor: '#37ABBF',
-        },
-        position: 'relative',
-      }}
-    >
+  const imageSrc = application.image || application.imageUrl || application.logo;
 
+  return (
+    <Card sx={{ height: '100%', cursor: 'default', position: 'relative', overflow: 'hidden' }}>
       <CardContent sx={{ 
         display: 'flex', 
         flexDirection: 'column',
         height: '100%'
       }}>
-        <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 1 }}>
-          <Typography 
-            variant="h6" 
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            justifyContent: 'space-between',
+            gap: 1.5,
+            mb: 1,
+          }}
+        >
+          <Typography
+            variant="h6"
             sx={{ 
               fontWeight: 600, 
               color: currentTheme.text,
               flex: 1,
               minWidth: 0,
               wordBreak: 'break-word',
-              lineHeight: 1.2
+              lineHeight: 1.3
             }}
           >
             {application.name}
           </Typography>
-          
-          {/* Role icons in top right */}
-          {application.roles && application.roles.length > 0 && (
-            <Box sx={{ display: 'flex', gap: 0.5, ml: 1, flexShrink: 0 }}>
+
+          {(imageSrc || (application.roles && application.roles.length > 0)) ? (
+          <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, flexShrink: 0 }}>
+            {imageSrc ? (
+              <Box
+                component="img"
+                src={imageSrc}
+                alt=""
+                sx={{
+                  width: 48,
+                  height: 48,
+                  objectFit: 'cover',
+                  borderRadius: 1,
+                  border: `1px solid ${currentTheme.border}`,
+                  bgcolor: alpha(currentTheme.text, 0.04),
+                }}
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                }}
+              />
+            ) : null}
+          {application.roles && application.roles.length > 0 ? (
+            <Box sx={{ display: 'flex', gap: 0.5, flexShrink: 0 }}>
               {application.roles.slice(0, 3).map((role, index) => {
                 const IconComponent = getRoleIcon(role);
                 if (!IconComponent) return null;
@@ -158,7 +168,9 @@ const ApplicationCard = ({ application, currentTheme, onEdit }) => {
                 </Tooltip>
               )}
             </Box>
-          )}
+          ) : null}
+          </Box>
+          ) : null}
         </Box>
 
         <Typography variant="body2" sx={{ color: currentTheme.textSecondary, mb: 2 }}>

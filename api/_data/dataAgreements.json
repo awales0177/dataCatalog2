@@ -839,7 +839,7 @@
       "specificationMaintainer": "Content Management Team",
       "parentSystem": "Content Management System",
       "dataProducer": [
-        "CMS Service"
+        "Catalog"
       ],
       "dataValidator": "Content Management Team",
       "dataConsumer": [
@@ -898,7 +898,7 @@
           ]
         }
       ],
-      "lastUpdated": "2025-12-10 22:13:56",
+      "lastUpdated": "2026-04-18 23:36:05",
       "dataPolicies": [
         "retention_policy_001",
         "access_policy_001",
@@ -984,6 +984,19 @@
               "field": "restricted",
               "oldValue": "false",
               "newValue": "true"
+            }
+          ]
+        },
+        {
+          "version": "2.0.0",
+          "timestamp": "2026-04-19T03:36:05.939Z",
+          "updatedBy": "user",
+          "changeDescription": "Updated dataProducer",
+          "fieldChanges": [
+            {
+              "field": "dataProducer",
+              "oldValue": "[CMS Service]",
+              "newValue": "[Catalog]"
             }
           ]
         }

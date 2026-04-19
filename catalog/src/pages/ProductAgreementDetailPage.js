@@ -66,6 +66,7 @@ import {
 import { formatDate } from '../utils/themeUtils';
 import { fetchAgreements, fetchModels } from '../services/api';
 import { agreementFieldsConfig } from '../config/agreementFields';
+import FieldInfoIcon from '../components/FieldInfoIcon';
 
 const ProductAgreementDetailPage = ({ currentTheme }) => {
   const { id } = useParams();
@@ -652,35 +653,38 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
             {/* Consumer/Producer chips */}
             {getRoleChips() && (
               <Box sx={{ mb: 2 }}>
-                <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary, mb: 1 }}>
-                  {(() => {
-                    const producers = agreement.dataProducer || [];
-                    const consumers = agreement.dataConsumer || [];
-                    const owner = agreement.owner;
-                    
-                    if (!owner) return 'Parties';
-                    
-                    const ownerArray = Array.isArray(owner) ? owner : [owner];
-                    const producerArray = Array.isArray(producers) ? producers : [producers];
-                    const consumerArray = Array.isArray(consumers) ? consumers : [consumers];
-                    
-                    const validProducers = producerArray.filter(p => p && p.trim());
-                    const validConsumers = consumerArray.filter(c => c && c.trim());
-                    
-                    const isProducer = ownerArray.some(ownerName => 
-                      validProducers.some(producer => producer && producer.toLowerCase() === ownerName.toLowerCase())
-                    );
-                    
-                    const isConsumer = ownerArray.some(ownerName => 
-                      validConsumers.some(consumer => consumer && consumer.toLowerCase() === ownerName.toLowerCase())
-                    );
-                    
-                    if (isProducer && !isConsumer) return 'Consumers';
-                    if (isConsumer && !isProducer) return 'Producers';
-                    if (isProducer && isConsumer) return 'Parties';
-                    return 'Parties';
-                  })()}
-                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 1 }}>
+                  <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
+                    {(() => {
+                      const producers = agreement.dataProducer || [];
+                      const consumers = agreement.dataConsumer || [];
+                      const owner = agreement.owner;
+                      
+                      if (!owner) return 'Parties';
+                      
+                      const ownerArray = Array.isArray(owner) ? owner : [owner];
+                      const producerArray = Array.isArray(producers) ? producers : [producers];
+                      const consumerArray = Array.isArray(consumers) ? consumers : [consumers];
+                      
+                      const validProducers = producerArray.filter(p => p && p.trim());
+                      const validConsumers = consumerArray.filter(c => c && c.trim());
+                      
+                      const isProducer = ownerArray.some(ownerName => 
+                        validProducers.some(producer => producer && producer.toLowerCase() === ownerName.toLowerCase())
+                      );
+                      
+                      const isConsumer = ownerArray.some(ownerName => 
+                        validConsumers.some(consumer => consumer && consumer.toLowerCase() === ownerName.toLowerCase())
+                      );
+                      
+                      if (isProducer && !isConsumer) return 'Consumers';
+                      if (isConsumer && !isProducer) return 'Producers';
+                      if (isProducer && isConsumer) return 'Parties';
+                      return 'Parties';
+                    })()}
+                  </Typography>
+                  <FieldInfoIcon fieldId="productAgreement.parties" />
+                </Box>
                 <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
                   {getRoleChips()}
                 </Stack>
@@ -724,6 +728,7 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
                 <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
                   Version Health
                 </Typography>
+                <FieldInfoIcon fieldId="productAgreement.versionHealth" />
                 {versionDiff.isBehind && (
                   <Tooltip title={
                     `Version differences: ${versionDiff.versionDetails.map(detail => 
@@ -771,17 +776,23 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
               </Box>
             </Box>
             <Box sx={{ textAlign: 'right' }}>
-              <Typography variant="caption" sx={{ color: currentTheme.textSecondary, display: 'block' }}>
-                Model Versions Delivered
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 0.25 }}>
+                <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
+                  Model Versions Delivered
+                </Typography>
+                <FieldInfoIcon fieldId="productAgreement.modelVersionsDelivered" iconSize={14} />
+              </Box>
               <Typography variant="body2" sx={{ color: currentTheme.text }}>
                 {versionDiff.versions.map(v => `v${v}`).join(', ')}
               </Typography>
             </Box>
             <Box sx={{ textAlign: 'right' }}>
-              <Typography variant="caption" sx={{ color: currentTheme.textSecondary, display: 'block' }}>
-                Latest Model Version
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 0.25 }}>
+                <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
+                  Latest Model Version
+                </Typography>
+                <FieldInfoIcon fieldId="productAgreement.latestModelVersion" iconSize={14} />
+              </Box>
               <Typography variant="body2" sx={{ color: currentTheme.text }}>
                 v{versionDiff.modelVersion}
               </Typography>
@@ -802,9 +813,12 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
               mb: 3,
             }}
           >
-            <Typography variant="h6" sx={{ color: currentTheme.text, mb: 2 }}>
-              Data Flow
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 2 }}>
+              <Typography variant="h6" sx={{ color: currentTheme.text }}>
+                Data Flow
+              </Typography>
+              <FieldInfoIcon fieldId="productAgreement.section.dataFlow" iconSize={18} />
+            </Box>
             <Box sx={{ 
               display: 'flex',
               alignItems: 'center',
@@ -814,9 +828,12 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
               borderRadius: 2,
             }}>
               <Box sx={{ textAlign: 'center', flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary, mb: 1 }}>
-                  Producer
-                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.25, mb: 1 }}>
+                  <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
+                    Producer
+                  </Typography>
+                  <FieldInfoIcon fieldId="productAgreement.flow.producer" />
+                </Box>
                 <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                   {(() => {
                     const producerInfo = parseDataProducer(agreement.dataProducer);
@@ -879,9 +896,12 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
               </Box>
 
               <Box sx={{ textAlign: 'center', flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary, mb: 1 }}>
-                  Model
-                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.25, mb: 1 }}>
+                  <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
+                    Model
+                  </Typography>
+                  <FieldInfoIcon fieldId="productAgreement.flow.model" />
+                </Box>
                 <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                   <Typography variant="h6" sx={{ color: currentTheme.text, userSelect: 'text' }}>
                     {agreement.modelShortName || 'No Model Associated'}
@@ -894,9 +914,12 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
               </Box>
 
               <Box sx={{ textAlign: 'center', flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary, mb: 1 }}>
-                  Consumer
-                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.25, mb: 1 }}>
+                  <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
+                    Consumer
+                  </Typography>
+                  <FieldInfoIcon fieldId="productAgreement.flow.consumer" />
+                </Box>
                 {(() => {
                   const consumerInfo = parseDataConsumer(agreement.dataConsumer);
                   const consumers = Array.isArray(consumerInfo) ? consumerInfo : [consumerInfo];
@@ -964,18 +987,31 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
               mb: 3,
             }}
           >
-            <Typography variant="h6" sx={{ color: currentTheme.text, mb: 2 }}>
-              Roles & Responsibilities
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 2 }}>
+              <Typography variant="h6" sx={{ color: currentTheme.text }}>
+                Roles & Responsibilities
+              </Typography>
+              <FieldInfoIcon fieldId="productAgreement.section.roles" iconSize={18} />
+            </Box>
             <TableContainer>
               <Table>
                 <TableHead>
                   <TableRow>
                     <TableCell sx={{ color: currentTheme.textSecondary, borderBottom: `1px solid ${currentTheme.border}` }}>
-                      Role
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}>
+                        <Typography component="span" variant="body2" sx={{ color: currentTheme.textSecondary, fontWeight: 600 }}>
+                          Role
+                        </Typography>
+                        <FieldInfoIcon fieldId="productAgreement.table.role" iconSize={14} />
+                      </Box>
                     </TableCell>
                     <TableCell sx={{ color: currentTheme.textSecondary, borderBottom: `1px solid ${currentTheme.border}` }}>
-                      Team
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}>
+                        <Typography component="span" variant="body2" sx={{ color: currentTheme.textSecondary, fontWeight: 600 }}>
+                          Team
+                        </Typography>
+                        <FieldInfoIcon fieldId="productAgreement.table.team" iconSize={14} />
+                      </Box>
                     </TableCell>
                   </TableRow>
                 </TableHead>
@@ -990,6 +1026,7 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
                             opacity: 0.8
                           }} />
                           <Typography>Parent System</Typography>
+                          <FieldInfoIcon fieldId="productAgreement.role.parentSystem" />
                         </Box>
                       </TableCell>
                       <TableCell sx={{ color: currentTheme.text, borderBottom: `1px solid ${currentTheme.border}` }}>
@@ -1006,6 +1043,7 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
                           opacity: 0.8
                         }} />
                         <Typography>Specification Maintainer</Typography>
+                        <FieldInfoIcon fieldId="productAgreement.role.specificationMaintainer" />
                       </Box>
                     </TableCell>
                     <TableCell sx={{ color: currentTheme.text, borderBottom: `1px solid ${currentTheme.border}` }}>
@@ -1021,6 +1059,7 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
                           opacity: 0.8
                         }} />
                         <Typography>Data Producer</Typography>
+                        <FieldInfoIcon fieldId="productAgreement.role.dataProducer" />
                       </Box>
                     </TableCell>
                     <TableCell sx={{ color: currentTheme.text, borderBottom: `1px solid ${currentTheme.border}` }}>
@@ -1060,6 +1099,7 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
                           opacity: 0.8
                         }} />
                         <Typography>Data Validator</Typography>
+                        <FieldInfoIcon fieldId="productAgreement.role.dataValidator" />
                       </Box>
                     </TableCell>
                     <TableCell sx={{ color: currentTheme.text, borderBottom: `1px solid ${currentTheme.border}` }}>
@@ -1075,6 +1115,7 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
                           opacity: 0.8
                         }} />
                         <Typography>Data Consumer</Typography>
+                        <FieldInfoIcon fieldId="productAgreement.role.dataConsumer" />
                       </Box>
                     </TableCell>
                     <TableCell sx={{ color: currentTheme.text, borderBottom: 'none' }}>
@@ -1121,9 +1162,12 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
               mb: 3,
             }}
           >
-            <Typography variant="h6" sx={{ color: currentTheme.text, mb: 2 }}>
-              TODO
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 2 }}>
+              <Typography variant="h6" sx={{ color: currentTheme.text }}>
+                TODO
+              </Typography>
+              <FieldInfoIcon fieldId="productAgreement.section.todo" iconSize={18} />
+            </Box>
             <Box sx={{ mb: 2 }}>
               <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary, mb: 1 }}>
                 Last Updated: {formatDate(agreement.todo?.date)}
@@ -1197,6 +1241,7 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
                     <Typography variant="h6" sx={{ color: currentTheme.text }}>
                       Changelog
                     </Typography>
+                    <FieldInfoIcon fieldId="productAgreement.section.changelog" iconSize={18} />
                   </Box>
                 </AccordionSummary>
                 <AccordionDetails sx={{ px: 0 }}>
@@ -1292,6 +1337,7 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
                   <Typography variant="h6" sx={{ color: currentTheme.text }}>
                     Version History
                   </Typography>
+                  <FieldInfoIcon fieldId="productAgreement.section.versionHistory" iconSize={18} />
                 </Box>
               </AccordionSummary>
               <AccordionDetails sx={{ px: 0 }}>
@@ -1340,9 +1386,12 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
                       </Typography>
                       {entry.fieldChanges && entry.fieldChanges.length > 0 && (
                         <Box sx={{ mt: 2 }}>
-                          <Typography variant="caption" sx={{ color: currentTheme.textSecondary, fontWeight: 600, mb: 1, display: 'block' }}>
-                            Field Changes:
-                          </Typography>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 1 }}>
+                            <Typography variant="caption" sx={{ color: currentTheme.textSecondary, fontWeight: 600 }}>
+                              Field Changes:
+                            </Typography>
+                            <FieldInfoIcon fieldId="productAgreement.versionHistory.fieldChanges" iconSize={14} />
+                          </Box>
                           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                             {entry.fieldChanges.map((change, changeIndex) => (
                               <Box key={changeIndex} sx={{ 
@@ -1440,32 +1489,44 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
                 </IconButton>
               </Tooltip>
             )}
-            <Typography variant="h6" sx={{ color: currentTheme.text, mb: 2 }}>
-              Agreement Information
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 2 }}>
+              <Typography variant="h6" sx={{ color: currentTheme.text }}>
+                Agreement Information
+              </Typography>
+              <FieldInfoIcon fieldId="productAgreement.section.agreementInfo" iconSize={18} />
+            </Box>
             
             <Box sx={{ mb: 2 }}>
-              <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
-                Agreement Version
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
+                  Agreement Version
+                </Typography>
+                <FieldInfoIcon fieldId="productAgreement.agreementVersion" />
+              </Box>
               <Typography variant="body1" sx={{ color: currentTheme.text }}>
                 v{agreement.contractVersion}
               </Typography>
             </Box>
 
             <Box sx={{ mb: 2 }}>
-              <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
-                Model Name
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
+                  Model Name
+                </Typography>
+                <FieldInfoIcon fieldId="productAgreement.modelName" />
+              </Box>
               <Typography variant="body1" sx={{ color: currentTheme.text }}>
                 {agreement.modelShortName || 'No Model Associated'}
               </Typography>
             </Box>
 
             <Box sx={{ mb: 2 }}>
-              <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
-                Model Version Delivered
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
+                  Model Version Delivered
+                </Typography>
+                <FieldInfoIcon fieldId="productAgreement.modelVersionDelivered" />
+              </Box>
               <Typography variant="body1" sx={{ color: currentTheme.text }}>
                 {Array.isArray(agreement.deliveredVersion) 
                   ? agreement.deliveredVersion.map(v => `v${v}`).join(', ')
@@ -1474,18 +1535,24 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
             </Box>
 
             <Box sx={{ mb: 2 }}>
-              <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
-                File Format
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
+                  File Format
+                </Typography>
+                <FieldInfoIcon fieldId="productAgreement.fileFormat" />
+              </Box>
               <Typography variant="body1" sx={{ color: currentTheme.text }}>
                 {agreement.fileFormat || 'Not specified'}
               </Typography>
             </Box>
 
             <Box sx={{ mb: 2 }}>
-              <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
-                Delivery Frequency
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
+                  Delivery Frequency
+                </Typography>
+                <FieldInfoIcon fieldId="productAgreement.deliveryFrequency" />
+              </Box>
               <List dense sx={{ bgcolor: 'transparent', borderRadius: 1, p: 0.5, pl: 0, ml: '-12px' }}>
                 {Array.isArray(agreement.deliveryFrequency) ? agreement.deliveryFrequency.map((freq, index) => {
                   const { icon: IconComponent, label, description } = parseDeliveryFrequency(freq);
@@ -1520,9 +1587,12 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
             <Divider sx={{ my: 2 }} />
 
             <Box sx={{ mb: 2 }}>
-              <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
-                Location
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
+                  Location
+                </Typography>
+                <FieldInfoIcon fieldId="productAgreement.location" />
+              </Box>
               <List dense sx={{ bgcolor: 'transparent', borderRadius: 1, p: 0.5, pl: 0, ml: '-12px' }}>
                 {(() => {
                   if (Array.isArray(agreement.location)) {
@@ -1580,9 +1650,12 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
 
             {/* Field 1 (Network) */}
             <Box sx={{ mb: 2 }}>
-              <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
-                {agreementFieldsConfig.field1.name}
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
+                  {agreementFieldsConfig.field1.name}
+                </Typography>
+                <FieldInfoIcon fieldId="productAgreement.field.network" />
+              </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
                 {(agreement[agreementFieldsConfig.field1.jsonKey] || []).map((value, index) => {
                   // Find the option configuration for this value
@@ -1611,9 +1684,12 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
             <Divider sx={{ my: 2 }} />
 
             <Box sx={{ mb: 2 }}>
-              <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
-                Start Date
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
+                  Start Date
+                </Typography>
+                <FieldInfoIcon fieldId="productAgreement.startDate" />
+              </Box>
               <Typography variant="body1" sx={{ color: currentTheme.text }}>
                 {formatDate(agreement.startDate)}
               </Typography>
@@ -1622,9 +1698,12 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
             <Divider sx={{ my: 2 }} />
 
             <Box sx={{ mb: 2 }}>
-              <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
-                End Date
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
+                  End Date
+                </Typography>
+                <FieldInfoIcon fieldId="productAgreement.endDate" />
+              </Box>
               <Typography variant="body1" sx={{ color: currentTheme.text }}>
                 {agreement.endDate ? formatDate(agreement.endDate) : 'Not specified'}
               </Typography>
@@ -1633,9 +1712,12 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
             <Divider sx={{ my: 2 }} />
 
             <Box sx={{ mb: 2 }}>
-              <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
-                Last Updated
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
+                  Last Updated
+                </Typography>
+                <FieldInfoIcon fieldId="productAgreement.lastUpdated" />
+              </Box>
               <Typography variant="body1" sx={{ color: currentTheme.text }}>
                 {formatDate(agreement.lastUpdated)}
               </Typography>
@@ -1644,9 +1726,12 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
             <Divider sx={{ my: 2 }} />
 
             <Box sx={{ mb: 2 }}>
-              <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary, mb: 1 }}>
-                Data Standards
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 1 }}>
+                <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
+                  Data Standards
+                </Typography>
+                <FieldInfoIcon fieldId="productAgreement.dataStandards" />
+              </Box>
               {agreement.dataPolicies && agreement.dataPolicies.length > 0 ? (
                 <List dense sx={{ bgcolor: 'transparent', borderRadius: 1, p: 0.5, pl: 0, ml: '-12px' }}>
                   {agreement.dataPolicies.map((policyId, index) => {

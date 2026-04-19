@@ -31,22 +31,9 @@ const ReferenceDataCard = ({ item, currentTheme }) => {
   const avgUsage = Math.round(usageData.reduce((a, b) => a + b, 0) / usageData.length);
 
   return (
-    <Card 
-      elevation={0}
+    <Card
       onClick={() => navigate(`/reference/${item.id}`)}
-      sx={{ 
-        height: '100%',
-        borderRadius: 2,
-        transition: 'all 0.2s ease-in-out',
-        bgcolor: currentTheme.card,
-        border: `1px solid ${currentTheme.border}`,
-        cursor: 'pointer',
-        '&:hover': {
-          transform: 'translateY(-4px)',
-          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
-          borderColor: '#37ABBF',
-        },
-      }}
+      sx={{ height: '100%', cursor: 'pointer', overflow: 'hidden' }}
     >
       <CardContent>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>

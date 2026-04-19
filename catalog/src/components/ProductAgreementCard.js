@@ -6,19 +6,16 @@ import {
   Box,
   Chip,
   alpha,
-  Tooltip,
   Stack,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { formatDate } from '../utils/themeUtils';
 import ShoppingBasketIcon from '@mui/icons-material/ShoppingBasket';
 import FactoryIcon from '@mui/icons-material/Factory';
-import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
-import PeopleIcon from '@mui/icons-material/People';
-import BusinessIcon from '@mui/icons-material/Business';
+import { getProducerTeamImageSrc } from '../utils/producerTeamImage';
 
 // ProductAgreementCard component for displaying individual product agreement information
-const ProductAgreementCard = ({ agreement, currentTheme }) => {
+const ProductAgreementCard = ({ agreement, currentTheme, applications = [] }) => {
   const navigate = useNavigate();
 
   const getStatusColor = (status) => {
@@ -37,6 +34,7 @@ const ProductAgreementCard = ({ agreement, currentTheme }) => {
   };
 
   const statusColor = getStatusColor(agreement.status);
+  const producerTeamImageSrc = getProducerTeamImageSrc(agreement, applications);
 
   // Determine owner role based on producers and consumers
   const getOwnerRole = () => {
@@ -151,53 +149,19 @@ const ProductAgreementCard = ({ agreement, currentTheme }) => {
     return null;
   };
 
-  const getRoleIcon = () => {
-    switch (ownerRole) {
-      case 'producer':
-        return (
-          <Tooltip title="Owner is a data producer" arrow>
-            <FactoryIcon sx={{ fontSize: 16, color: currentTheme.primary }} />
-          </Tooltip>
-        );
-      case 'consumer':
-        return (
-          <Tooltip title="Owner is a data consumer" arrow>
-            <ShoppingBasketIcon sx={{ fontSize: 16, color: currentTheme.primary }} />
-          </Tooltip>
-        );
-      case 'both':
-        return (
-          <Tooltip title="Owner is both producer and consumer" arrow>
-            <SwapHorizIcon sx={{ fontSize: 16, color: currentTheme.primary }} />
-          </Tooltip>
-        );
-      default:
-        return null;
-    }
-  };
-
   const handleClick = () => {
     navigate(`/agreements/${agreement.id}`);
   };
 
   return (
-    <Card 
-      elevation={0}
+    <Card
       onClick={handleClick}
-      sx={{ 
+      sx={{
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        borderRadius: 2,
-        transition: 'all 0.2s ease-in-out',
-        bgcolor: currentTheme.card,
-        border: `1px solid ${currentTheme.border}`,
         cursor: 'pointer',
-        '&:hover': {
-          transform: 'translateY(-4px)',
-          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
-          borderColor: '#37ABBF',
-        },
+        overflow: 'hidden',
       }}
     >
       <CardContent sx={{ 
@@ -205,53 +169,67 @@ const ProductAgreementCard = ({ agreement, currentTheme }) => {
         flexDirection: 'column',
         flex: 1
       }}>
-        <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 2, position: 'relative' }}>
-          <Box sx={{ flex: 1 }}>
-            <Typography 
-              variant="h6" 
-              sx={{ 
-                color: currentTheme.text, 
-                fontWeight: 600, 
-                mb: 1,
+        <Box sx={{ mb: 2 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              justifyContent: 'space-between',
+              gap: 1.5,
+              mb: 1,
+            }}
+          >
+            <Typography
+              variant="h6"
+              sx={{
+                color: currentTheme.text,
+                fontWeight: 600,
+                flex: 1,
+                minWidth: 0,
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 display: '-webkit-box',
                 WebkitLineClamp: 2,
                 WebkitBoxOrient: 'vertical',
+                lineHeight: 1.3,
               }}
             >
               {agreement.name}
             </Typography>
-            <Typography 
-              variant="body2" 
-              sx={{ 
-                color: currentTheme.textSecondary,
-                mb: 2,
-                lineHeight: 1.4,
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                display: '-webkit-box',
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: 'vertical',
-              }}
-            >
-              {agreement.description || 'No description available'}
-            </Typography>
+            {producerTeamImageSrc ? (
+              <Box
+                component="img"
+                src={producerTeamImageSrc}
+                alt=""
+                sx={{
+                  width: 48,
+                  height: 48,
+                  objectFit: 'cover',
+                  borderRadius: 1,
+                  border: `1px solid ${currentTheme.border}`,
+                  bgcolor: alpha(currentTheme.text, 0.04),
+                  flexShrink: 0,
+                }}
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                }}
+              />
+            ) : null}
           </Box>
-          
-          {/* Role icon in top right corner */}
-          <Box sx={{ 
-            position: 'absolute', 
-            top: 0, 
-            right: 0,
-            zIndex: 1
-          }}>
-            {getRoleIcon() || (
-              <Tooltip title="Owner role not determined" arrow>
-                <FactoryIcon sx={{ fontSize: 16, color: currentTheme.primary }} />
-              </Tooltip>
-            )}
-          </Box>
+          <Typography
+            variant="body2"
+            sx={{
+              color: currentTheme.textSecondary,
+              lineHeight: 1.4,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+            }}
+          >
+            {agreement.description || 'No description available'}
+          </Typography>
         </Box>
 
         {/* Consumer/Producer chips */}

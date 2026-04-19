@@ -20,21 +20,7 @@ import { useNavigate } from 'react-router-dom';
 const GlossaryCard = ({ term, currentTheme, dataModels = [], canEdit = false }) => {
   const navigate = useNavigate();
   return (
-    <Card 
-      elevation={0}
-      sx={{ 
-        borderRadius: 2,
-        transition: 'all 0.2s ease-in-out',
-        bgcolor: currentTheme.card,
-        border: `1px solid ${currentTheme.border}`,
-        overflow: 'hidden',
-        '&:hover': {
-          transform: 'translateY(-4px)',
-          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
-          borderColor: '#37ABBF',
-        },
-      }}
-    >
+    <Card sx={{ overflow: 'hidden' }}>
       <CardContent>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
           <Box sx={{ flex: 1 }}>

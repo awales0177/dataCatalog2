@@ -37,10 +37,13 @@ const AppHeader = ({
   return (
     <AppBar
       position="fixed"
+      color="inherit"
+      elevation={0}
       sx={{
         width: '100%',
         ml: 0,
         bgcolor: currentTheme.card,
+        backgroundImage: 'none',
         color: currentTheme.text,
         boxShadow: 'none',
         top: '20px',

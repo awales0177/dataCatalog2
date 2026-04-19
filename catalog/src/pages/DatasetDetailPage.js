@@ -19,6 +19,7 @@ import {
   LockOpen as LockOpenIcon,
 } from '@mui/icons-material';
 import { ThemeContext } from '../contexts/ThemeContext';
+import FieldInfoIcon from '../components/FieldInfoIcon';
 import { getPipelineName, initializePipelines } from '../utils/pipelineUtils';
 import datasetsData from '../data/datasets.json';
 import pipelinesData from '../data/pipelines.json';
@@ -150,48 +151,63 @@ const DatasetDetailPage = () => {
       <Grid container spacing={3}>
         {/* Basic Info */}
         <Grid item xs={12} md={6}>
-          <Card sx={{ bgcolor: currentTheme.card, border: `1px solid ${currentTheme.border}` }}>
+          <Card sx={{ overflow: 'hidden' }}>
             <CardContent>
               <Typography variant="h6" sx={{ mb: 2, color: currentTheme.text }}>
                 Basic Information
               </Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
                 <Box>
-                  <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
-                    Records
-                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}>
+                    <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
+                      Records
+                    </Typography>
+                    <FieldInfoIcon fieldId="dataset.records" iconSize={14} />
+                  </Box>
                   <Typography variant="body1" sx={{ color: currentTheme.text }}>
                     {dataset.records?.toLocaleString() || 'N/A'}
                   </Typography>
                 </Box>
                 <Box>
-                  <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
-                    Size
-                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}>
+                    <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
+                      Size
+                    </Typography>
+                    <FieldInfoIcon fieldId="dataset.size" iconSize={14} />
+                  </Box>
                   <Typography variant="body1" sx={{ color: currentTheme.text }}>
                     {dataset.size || 'N/A'}
                   </Typography>
                 </Box>
                 <Box>
-                  <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
-                    Complexity
-                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}>
+                    <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
+                      Complexity
+                    </Typography>
+                    <FieldInfoIcon fieldId="dataset.complexity" iconSize={14} />
+                  </Box>
                   <Typography variant="body1" sx={{ color: currentTheme.text }}>
                     {dataset.complexity || 'N/A'}
                   </Typography>
                 </Box>
                 <Box>
-                  <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
-                    Periodicity
-                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}>
+                    <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
+                      Periodicity
+                    </Typography>
+                    <FieldInfoIcon fieldId="dataset.periodicity" iconSize={14} />
+                  </Box>
                   <Typography variant="body1" sx={{ color: currentTheme.text }}>
                     {dataset.periodicity || 'N/A'}
                   </Typography>
                 </Box>
                 <Box>
-                  <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
-                    Last Updated
-                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}>
+                    <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
+                      Last Updated
+                    </Typography>
+                    <FieldInfoIcon fieldId="dataset.lastUpdated" iconSize={14} />
+                  </Box>
                   <Typography variant="body1" sx={{ color: currentTheme.text }}>
                     {dataset.lastUpdated || 'N/A'}
                   </Typography>
@@ -203,11 +219,14 @@ const DatasetDetailPage = () => {
 
         {/* Pipelines */}
         <Grid item xs={12} md={6}>
-          <Card sx={{ bgcolor: currentTheme.card, border: `1px solid ${currentTheme.border}` }}>
+          <Card sx={{ overflow: 'hidden' }}>
             <CardContent>
-              <Typography variant="h6" sx={{ mb: 2, color: currentTheme.text }}>
-                Pipelines
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 2 }}>
+                <Typography variant="h6" sx={{ color: currentTheme.text }}>
+                  Pipelines
+                </Typography>
+                <FieldInfoIcon fieldId="dataset.section.pipelines" iconSize={18} />
+              </Box>
               {dataset.systems && dataset.systems.length > 0 ? (
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                   {dataset.systems.map((systemUuid, idx) => (
@@ -233,7 +252,7 @@ const DatasetDetailPage = () => {
         {/* ETL Overview */}
         {dataset.etlOverview && (
           <Grid item xs={12}>
-            <Card sx={{ bgcolor: currentTheme.card, border: `1px solid ${currentTheme.border}` }}>
+            <Card sx={{ overflow: 'hidden' }}>
               <CardContent>
                 <Typography variant="h6" sx={{ mb: 2, color: currentTheme.text }}>
                   ETL Overview
@@ -241,9 +260,12 @@ const DatasetDetailPage = () => {
                 <Grid container spacing={2}>
                   {dataset.etlOverview.poc && (
                     <Grid item xs={12} sm={6} md={3}>
-                      <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
-                        POC
-                      </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}>
+                        <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
+                          POC
+                        </Typography>
+                        <FieldInfoIcon fieldId="dataset.etl.poc" iconSize={14} />
+                      </Box>
                       <Typography variant="body1" sx={{ color: currentTheme.text }}>
                         {dataset.etlOverview.poc}
                       </Typography>
@@ -251,9 +273,12 @@ const DatasetDetailPage = () => {
                   )}
                   {dataset.etlOverview.org && (
                     <Grid item xs={12} sm={6} md={3}>
-                      <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
-                        Organization
-                      </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}>
+                        <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
+                          Organization
+                        </Typography>
+                        <FieldInfoIcon fieldId="dataset.etl.organization" iconSize={14} />
+                      </Box>
                       <Typography variant="body1" sx={{ color: currentTheme.text }}>
                         {dataset.etlOverview.org}
                       </Typography>
@@ -261,9 +286,12 @@ const DatasetDetailPage = () => {
                   )}
                   {dataset.etlOverview.platform && (
                     <Grid item xs={12} sm={6} md={3}>
-                      <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
-                        Platform
-                      </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}>
+                        <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
+                          Platform
+                        </Typography>
+                        <FieldInfoIcon fieldId="dataset.etl.platform" iconSize={14} />
+                      </Box>
                       <Typography variant="body1" sx={{ color: currentTheme.text }}>
                         {dataset.etlOverview.platform}
                       </Typography>
@@ -271,9 +299,12 @@ const DatasetDetailPage = () => {
                   )}
                   {dataset.etlOverview.avgRunTime && (
                     <Grid item xs={12} sm={6} md={3}>
-                      <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
-                        Avg Runtime
-                      </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}>
+                        <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
+                          Avg Runtime
+                        </Typography>
+                        <FieldInfoIcon fieldId="dataset.etl.avgRuntime" iconSize={14} />
+                      </Box>
                       <Typography variant="body1" sx={{ color: currentTheme.text }}>
                         {dataset.etlOverview.avgRunTime}
                       </Typography>
@@ -288,7 +319,7 @@ const DatasetDetailPage = () => {
         {/* Notifications */}
         {dataset.notifications && dataset.notifications.length > 0 && (
           <Grid item xs={12}>
-            <Card sx={{ bgcolor: currentTheme.card, border: `1px solid ${currentTheme.border}` }}>
+            <Card sx={{ overflow: 'hidden' }}>
               <CardContent>
                 <Typography variant="h6" sx={{ mb: 2, color: currentTheme.text }}>
                   Notifications

@@ -41,7 +41,6 @@ const EditApplicationPage = () => {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-
   // Helper function for deep cloning
   const deepClone = (obj) => {
     if (window.structuredClone) {
@@ -63,6 +62,7 @@ const EditApplicationPage = () => {
             link: '',
             email: '',
             roles: [],
+            image: null,
             lastUpdated: new Date().toISOString().slice(0, 19).replace('T', ' ')
           };
           setApplication(newApp);
@@ -249,6 +249,70 @@ const EditApplicationPage = () => {
                 '& .MuiInputBase-input': { color: currentTheme.text },
               }}
             />
+          </Grid>
+
+          <Grid item xs={12}>
+            <Typography variant="subtitle2" sx={{ color: currentTheme.text, mb: 1, fontWeight: 600 }}>
+              Team image
+            </Typography>
+            <Typography variant="caption" sx={{ color: currentTheme.textSecondary, display: 'block', mb: 1 }}>
+              Shown on the Enterprise Data Teams cards. JPEG/PNG/WebP, max 1.5&nbsp;MB.
+            </Typography>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 2 }}>
+              <Button variant="outlined" component="label" disabled={saving}>
+                {editedApplication?.image ? 'Replace image' : 'Upload image'}
+                <input
+                  type="file"
+                  hidden
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    e.target.value = '';
+                    if (!f) return;
+                    const max = 1.5 * 1024 * 1024;
+                    if (f.size > max) {
+                      setSnackbar({
+                        open: true,
+                        message: 'Image must be 1.5 MB or smaller.',
+                        severity: 'error',
+                      });
+                      return;
+                    }
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                      const dataUrl = reader.result;
+                      if (typeof dataUrl === 'string') {
+                        setEditedApplication((prev) => ({ ...prev, image: dataUrl }));
+                      }
+                    };
+                    reader.readAsDataURL(f);
+                  }}
+                />
+              </Button>
+              {editedApplication?.image ? (
+                <>
+                  <Box
+                    component="img"
+                    src={editedApplication.image}
+                    alt=""
+                    sx={{
+                      width: 96,
+                      height: 96,
+                      objectFit: 'cover',
+                      borderRadius: 1,
+                      border: `1px solid ${currentTheme.border}`,
+                    }}
+                  />
+                  <Button
+                    variant="text"
+                    color="inherit"
+                    onClick={() => setEditedApplication((prev) => ({ ...prev, image: null }))}
+                  >
+                    Remove image
+                  </Button>
+                </>
+              ) : null}
+            </Box>
           </Grid>
 
           <Grid item xs={12}>

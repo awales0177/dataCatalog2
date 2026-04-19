@@ -61,6 +61,7 @@ import {
   tabLabelForTab,
 } from '../utils/toolkitMarkdownTabs';
 import { fontStackMono } from '../theme/theme';
+import FieldInfoIcon from '../components/FieldInfoIcon';
 
 const ToolkitDetailPage = () => {
   const { currentTheme, darkMode } = useContext(ThemeContext);
@@ -77,6 +78,7 @@ const ToolkitDetailPage = () => {
   const [rankChangeDialog, setRankChangeDialog] = useState({ open: false, techId: null, direction: null, techName: null });
   const [canonicalToolkitId, setCanonicalToolkitId] = useState(null);
   const [dataTeams, setDataTeams] = useState([]);
+  const [applications, setApplications] = useState([]);
   const reactionSaveTimer = useRef(null);
   const technologiesRef = useRef([]);
   const rankingDisabled = Boolean(toolkitData?.rankingDisabled);
@@ -107,10 +109,16 @@ const ToolkitDetailPage = () => {
     let cancelled = false;
     (async () => {
       try {
-        const response = await fetchData('teams');
-        if (!cancelled) setDataTeams(response.data_teams || []);
+        const [teamsRes, appsRes] = await Promise.all([
+          fetchData('teams'),
+          fetchData('applications'),
+        ]);
+        if (!cancelled) {
+          setDataTeams(teamsRes.data_teams || []);
+          setApplications(appsRes.applications || []);
+        }
       } catch (e) {
-        console.error('Error loading data teams:', e);
+        console.error('Error loading teams / applications:', e);
       }
     })();
     return () => {
@@ -398,6 +406,8 @@ const ToolkitDetailPage = () => {
     if (mid) {
       const team = dataTeams.find((t) => String(t.id) === mid);
       if (team?.name) return team.name;
+      const appById = applications.find((a) => String(a.id) === mid);
+      if (appById?.name) return appById.name;
     }
     const legacy = tech.maintainer || tech.author;
     if (legacy) return legacy;
@@ -641,6 +651,24 @@ const ToolkitDetailPage = () => {
           >
             <ArrowBackIcon />
           </IconButton>
+          {toolkitData.cardImage ? (
+            <Box
+              component="img"
+              src={toolkitData.cardImage}
+              alt=""
+              sx={{
+                width: 56,
+                height: 56,
+                objectFit: 'cover',
+                borderRadius: 1.5,
+                flexShrink: 0,
+                border: `1px solid ${currentTheme.border}`,
+              }}
+              onError={(e) => {
+                e.target.style.display = 'none';
+              }}
+            />
+          ) : null}
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Typography variant="h4" sx={{ color: currentTheme.text, mb: 0.5 }}>
               {toolkitData.displayName || toolkitData.name}
@@ -938,11 +966,9 @@ const ToolkitDetailPage = () => {
               <>
                 {/* Header */}
                 <Box sx={{ p: 3, borderBottom: `1px solid ${currentTheme.border}`, flexShrink: 0 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-                    <Typography variant="h5" sx={{ color: currentTheme.text, fontWeight: 600, flex: 1 }}>
-                      {selectedTech.name}
-                    </Typography>
-                  </Box>
+                  <Typography variant="h5" sx={{ color: currentTheme.text, fontWeight: 600, mb: 2 }}>
+                    {selectedTech.name}
+                  </Typography>
 
                   <Typography variant="body1" sx={{ color: currentTheme.textSecondary, mb: 2 }}>
                     {selectedTech.description}
@@ -958,17 +984,22 @@ const ToolkitDetailPage = () => {
                           {/* Pros Row */}
                           {techIcons.pros.length > 0 && (
                             <Box sx={{ mb: 1.5 }}>
-                              <Typography variant="caption" sx={{ color: currentTheme.textSecondary, mb: 0.5, display: 'block', fontWeight: 700 }}>
-                                Pros
-                              </Typography>
-                              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, mb: 0.5 }}>
+                                <Typography variant="caption" sx={{ color: currentTheme.textSecondary, fontWeight: 700 }}>
+                                  Pros
+                                </Typography>
+                                <FieldInfoIcon fieldId="toolkit.technology.evalPros" iconSize={14} />
+                              </Box>
+                              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'flex-start' }}>
                                 {techIcons.pros.map((iconData, iconIndex) => (
                                   <Box
                                     key={`pros-${iconIndex}`}
                                     sx={{
+                                      width: 56,
+                                      flexShrink: 0,
                                       display: 'flex',
                                       flexDirection: 'column',
-                                      alignItems: 'center',
+                                      alignItems: 'flex-start',
                                       gap: 0.5,
                                     }}
                                   >
@@ -1006,12 +1037,18 @@ const ToolkitDetailPage = () => {
                                         }}
                                       />
                                     </Box>
-                                    <Typography 
-                                      variant="caption" 
+                                    <Typography
+                                      variant="caption"
                                       sx={{ 
                                         color: currentTheme.textSecondary,
                                         fontSize: '0.65rem',
-                                        textAlign: 'center',
+                                        width: '100%',
+                                        textAlign: 'left',
+                                        lineHeight: 1.25,
+                                        wordBreak: 'break-word',
+                                        overflowWrap: 'break-word',
+                                        pr: 0.5,
+                                        pb: 0.25,
                                       }}
                                     >
                                       {iconData.label}
@@ -1025,17 +1062,22 @@ const ToolkitDetailPage = () => {
                           {/* Cons Row */}
                           {techIcons.cons.length > 0 && (
                             <Box sx={{ mb: techIcons.languages.length > 0 ? 1.5 : 0 }}>
-                              <Typography variant="caption" sx={{ color: currentTheme.textSecondary, mb: 0.5, display: 'block', fontWeight: 700 }}>
-                                Cons
-                              </Typography>
-                              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, mb: 0.5 }}>
+                                <Typography variant="caption" sx={{ color: currentTheme.textSecondary, fontWeight: 700 }}>
+                                  Cons
+                                </Typography>
+                                <FieldInfoIcon fieldId="toolkit.technology.evalCons" iconSize={14} />
+                              </Box>
+                              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'flex-start' }}>
                                 {techIcons.cons.map((iconData, iconIndex) => (
                                   <Box
                                     key={`cons-${iconIndex}`}
                                     sx={{
+                                      width: 56,
+                                      flexShrink: 0,
                                       display: 'flex',
                                       flexDirection: 'column',
-                                      alignItems: 'center',
+                                      alignItems: 'flex-start',
                                       gap: 0.5,
                                     }}
                                   >
@@ -1078,7 +1120,13 @@ const ToolkitDetailPage = () => {
                                       sx={{ 
                                         color: currentTheme.textSecondary,
                                         fontSize: '0.65rem',
-                                        textAlign: 'center',
+                                        width: '100%',
+                                        textAlign: 'left',
+                                        lineHeight: 1.25,
+                                        wordBreak: 'break-word',
+                                        overflowWrap: 'break-word',
+                                        pr: 0.5,
+                                        pb: 0.25,
                                       }}
                                     >
                                       {iconData.label}
@@ -1092,17 +1140,22 @@ const ToolkitDetailPage = () => {
                           {/* Languages row */}
                           {techIcons.languages.length > 0 && (
                             <Box>
-                              <Typography variant="caption" sx={{ color: currentTheme.textSecondary, mb: 0.5, display: 'block', fontWeight: 700 }}>
-                                Languages
-                              </Typography>
-                              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, mb: 0.5 }}>
+                                <Typography variant="caption" sx={{ color: currentTheme.textSecondary, fontWeight: 700 }}>
+                                  Languages
+                                </Typography>
+                                <FieldInfoIcon fieldId="toolkit.technology.languages" iconSize={14} />
+                              </Box>
+                              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'flex-start' }}>
                                 {techIcons.languages.map((iconData, iconIndex) => (
                                   <Box
                                     key={`lang-${iconIndex}-${iconData.label}`}
                                     sx={{
+                                      width: 56,
+                                      flexShrink: 0,
                                       display: 'flex',
                                       flexDirection: 'column',
-                                      alignItems: 'center',
+                                      alignItems: 'flex-start',
                                       gap: 0.5,
                                     }}
                                   >
@@ -1144,7 +1197,13 @@ const ToolkitDetailPage = () => {
                                       sx={{ 
                                         color: currentTheme.textSecondary,
                                         fontSize: '0.65rem',
-                                        textAlign: 'center',
+                                        width: '100%',
+                                        textAlign: 'left',
+                                        lineHeight: 1.25,
+                                        wordBreak: 'break-word',
+                                        overflowWrap: 'break-word',
+                                        pr: 0.5,
+                                        pb: 0.25,
                                       }}
                                     >
                                       {iconData.label}
@@ -1172,15 +1231,21 @@ const ToolkitDetailPage = () => {
 
                     {/* Roles Section */}
                     <Box sx={{ flex: 1, minWidth: 200 }}>
-                      <Typography variant="caption" sx={{ color: currentTheme.textSecondary, mb: 1, display: 'block', fontWeight: 700 }}>
-                        Roles
-                      </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, mb: 1 }}>
+                        <Typography variant="caption" sx={{ color: currentTheme.textSecondary, fontWeight: 700 }}>
+                          Roles
+                        </Typography>
+                        <FieldInfoIcon fieldId="toolkit.technology.rolesSection" iconSize={14} />
+                      </Box>
                       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                         {/* Maintainer */}
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <Typography variant="caption" sx={{ color: currentTheme.textSecondary, fontWeight: 500 }}>
-                            Maintainer:
-                          </Typography>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}>
+                            <Typography variant="caption" sx={{ color: currentTheme.textSecondary, fontWeight: 500 }}>
+                              Maintainer:
+                            </Typography>
+                            <FieldInfoIcon fieldId="toolkit.technology.maintainer" iconSize={14} />
+                          </Box>
                           <Typography variant="caption" sx={{ color: currentTheme.text }}>
                             {maintainerDisplayForTech(selectedTech)}
                           </Typography>
@@ -1188,9 +1253,12 @@ const ToolkitDetailPage = () => {
                         
                         {/* Deployed to */}
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <Typography variant="caption" sx={{ color: currentTheme.textSecondary, fontWeight: 500 }}>
-                            Deployed to:
-                          </Typography>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}>
+                            <Typography variant="caption" sx={{ color: currentTheme.textSecondary, fontWeight: 500 }}>
+                              Deployed to:
+                            </Typography>
+                            <FieldInfoIcon fieldId="toolkit.technology.deployedTo" iconSize={14} />
+                          </Box>
                           <Typography variant="caption" sx={{ color: currentTheme.text }}>
                             {selectedTech.deployedTo || selectedTech.deployment || 'N/A'}
                           </Typography>
@@ -1198,9 +1266,12 @@ const ToolkitDetailPage = () => {
                         
                         {/* Last Updated */}
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <Typography variant="caption" sx={{ color: currentTheme.textSecondary, fontWeight: 500 }}>
-                            Last updated:
-                          </Typography>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}>
+                            <Typography variant="caption" sx={{ color: currentTheme.textSecondary, fontWeight: 500 }}>
+                              Last updated:
+                            </Typography>
+                            <FieldInfoIcon fieldId="toolkit.technology.lastUpdated" iconSize={14} />
+                          </Box>
                           <Typography variant="caption" sx={{ color: currentTheme.text }}>
                             {selectedTech.lastUpdated || selectedTech.lastModified || 'N/A'}
                           </Typography>
@@ -1208,9 +1279,12 @@ const ToolkitDetailPage = () => {
                         
                         {/* Version */}
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <Typography variant="caption" sx={{ color: currentTheme.textSecondary, fontWeight: 500 }}>
-                            Version:
-                          </Typography>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}>
+                            <Typography variant="caption" sx={{ color: currentTheme.textSecondary, fontWeight: 500 }}>
+                              Version:
+                            </Typography>
+                            <FieldInfoIcon fieldId="toolkit.technology.version" iconSize={14} />
+                          </Box>
                           <Typography variant="caption" sx={{ color: currentTheme.text }}>
                             {selectedTech.version || 'N/A'}
                           </Typography>
@@ -1440,13 +1514,17 @@ const ToolkitDetailPage = () => {
                 </Box>
               </>
             ) : (
-              <Box sx={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center', 
-                height: '100%',
-                p: 3,
-              }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  height: '100%',
+                  p: 3,
+                  gap: 2,
+                }}
+              >
                 <Typography variant="body1" sx={{ color: currentTheme.textSecondary, textAlign: 'center' }}>
                   {multipleTechnologies
                     ? 'Select a technology from the list to view details'

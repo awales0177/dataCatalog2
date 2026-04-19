@@ -3,17 +3,14 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import {
   Box,
   CssBaseline,
-  Menu,
-  MenuItem,
   CircularProgress,
 } from '@mui/material';
-import { ThemeProvider } from '@mui/material/styles';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
 
 // Import components
 import DataModelsPage from './pages/DataModelsPage';
 import ProductAgreementsPage from './pages/ProductAgreementsPage';
 import DataDomainsPage from './pages/DataDomainsPage';
-import SplashPage from './pages/SplashPage';
 import HomePage from './pages/HomePage';
 import WorkspacesPage from './pages/WorkspacesPage';
 import ApplicationsPage from './pages/ApplicationsPage';
@@ -51,17 +48,22 @@ import UserManagementPage from './pages/UserManagementPage';
 import StatisticsPage from './pages/StatisticsPage';
 import SettingsPage from './pages/SettingsPage';
 import RuleBuilderPage from './pages/RuleBuilderPage';
-import InfoSidebar from './components/InfoSidebar';
-import AppHeader from './components/AppHeader';
 import NavigationDrawer from './components/NavigationDrawer';
 import ProtectedRoute from './components/ProtectedRoute';
 import GlobalSearch from './components/GlobalSearch';
+import MainGlassHeader from './components/MainGlassHeader';
 
 // Import theme and hooks
 import { theme, addGoogleFonts } from './theme/theme';
+import { catalogMuiCardOverrides } from './theme/catalogSurfaces';
 import { useAppState } from './hooks/useAppState';
 import { getRandomColor } from './utils/common';
-import { drawerWidth, collapsedDrawerWidth } from './constants/navigation';
+import {
+  collapsedDrawerWidth,
+  drawerWidth,
+  sidebarFloatInset,
+  sidebarContentGap,
+} from './constants/navigation';
 import { ThemeContext } from './contexts/ThemeContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { WorkbenchModalsProvider } from './contexts/WorkbenchModalsContext';
@@ -70,27 +72,58 @@ import { CatalogPreferencesProvider } from './contexts/CatalogPreferencesContext
 function AppContent() {
   const {
     mobileOpen,
-    isDrawerCollapsed,
-    anchorEl,
-    notificationsAnchorEl,
-    infoSidebarOpen,
     darkMode,
     themeData,
     menuData,
     loading,
     currentTheme,
     sidebarVisibilityMode,
+    isDrawerCollapsed,
     handleDrawerToggle,
-    handleMenuClose,
-    handleThemeToggle,
     handleDrawerCollapse,
-    handleInfoSidebarToggle,
+    handleThemeToggle,
     handleSidebarVisibilityToggle,
   } = useAppState();
   
   const [searchOpen, setSearchOpen] = React.useState(false);
+  const mainScrollRef = React.useRef(null);
 
   const [avatarColor] = React.useState(getRandomColor());
+
+  const sidebarHidden = sidebarVisibilityMode === 'always-hidden';
+  const desktopRailWidthPx = isDrawerCollapsed ? collapsedDrawerWidth : drawerWidth;
+  const floatingRailOffsetPx = sidebarHidden
+    ? 0
+    : sidebarFloatInset + desktopRailWidthPx + sidebarContentGap;
+
+  const muiTheme = React.useMemo(() => {
+    if (!currentTheme) return theme;
+    return createTheme({
+      ...theme,
+      palette: {
+        mode: darkMode ? 'dark' : 'light',
+        primary: {
+          main: currentTheme.primary,
+          dark: currentTheme.primaryHover,
+        },
+        background: {
+          default: currentTheme.background,
+          paper: currentTheme.card,
+        },
+        text: {
+          primary: currentTheme.text,
+          secondary: currentTheme.textSecondary,
+        },
+        divider: currentTheme.border,
+        success: { main: currentTheme.success },
+        warning: { main: currentTheme.warning },
+        error: { main: currentTheme.error },
+      },
+      components: {
+        ...catalogMuiCardOverrides(),
+      },
+    });
+  }, [darkMode, currentTheme]);
 
   // Check if we're on the splash page (deprecated - keeping for backward compatibility)
   const isSplashPage = false;
@@ -124,58 +157,31 @@ function AppContent() {
 
     return (
     <ThemeContext.Provider value={{ currentTheme, darkMode, setDarkMode: () => {} }}>
+      <ThemeProvider theme={muiTheme}>
       <CatalogPreferencesProvider>
       <WorkbenchModalsProvider currentTheme={currentTheme} darkMode={darkMode}>
       <Box sx={{ 
         display: 'flex', 
         flexDirection: 'column', 
         minHeight: '100vh',
-        bgcolor: currentTheme.card,
+        bgcolor: currentTheme.background,
         position: 'fixed',
         top: 0,
         left: 0,
         right: 0,
         bottom: 0,
-        overflow: 'auto'
+        overflow: 'hidden',
       }}>
-        <Box 
-          sx={{ 
-            bgcolor: '#FFC107',
-            color: 'rgba(0, 0, 0, 0.87)',
-            py: 0.25,
-            textAlign: 'center',
-            fontWeight: 600,
-            fontSize: '0.8rem',
-            width: '100%',
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            zIndex: (theme) => theme.zIndex.appBar + 1
-          }}
-        >
-          New Website
-        </Box>
-
-        <AppHeader
-          currentTheme={currentTheme}
-          darkMode={darkMode}
-          onDrawerToggle={handleDrawerToggle}
-          onThemeToggle={handleThemeToggle}
-          onInfoSidebarToggle={handleInfoSidebarToggle}
-          isSplashPage={isSplashPage}
-        />
-
         <CssBaseline />
         
         {/* Sidebar Navigation - Only show if not on splash page */}
         {!isSplashPage && (
           <NavigationDrawer
             currentTheme={currentTheme}
-            isDrawerCollapsed={isDrawerCollapsed}
-            onDrawerCollapse={handleDrawerCollapse}
             mobileOpen={mobileOpen}
             onDrawerToggle={handleDrawerToggle}
+            isDrawerCollapsed={isDrawerCollapsed}
+            onDrawerCollapse={handleDrawerCollapse}
             menuData={menuData}
             avatarColor={avatarColor}
             sidebarVisibilityMode={sidebarVisibilityMode}
@@ -183,59 +189,58 @@ function AppContent() {
           />
         )}
 
-        {/* Main Content */}
+        {/* Main: single scroll for the whole column (header bands + page body) */}
         <Box
           component="main"
+          ref={mainScrollRef}
           sx={{
             flexGrow: 1,
-            width: { sm: `calc(100% - ${isDrawerCollapsed ? collapsedDrawerWidth : drawerWidth}px)` },
-            mt: '84px',
-            ml: { sm: `${isDrawerCollapsed ? collapsedDrawerWidth : drawerWidth}px` },
-            transition: 'margin-left 0.2s ease-in-out, width 0.2s ease-in-out',
+            minHeight: 0,
+            width: '100%',
+            alignSelf: 'stretch',
+            mt: 0,
+            pt: 0,
+            pb: 3,
+            px: 0,
+            ml: 0,
             position: 'relative',
-            height: 'calc(100vh - 84px)',
-            overflow: 'hidden',
-            bgcolor: currentTheme.card,
+            overflowY: 'auto',
+            overflowX: 'clip',
+            bgcolor: currentTheme.background,
+            WebkitOverflowScrolling: 'touch',
+            '&::-webkit-scrollbar': {
+              width: '8px',
+            },
+            '&::-webkit-scrollbar-track': {
+              bgcolor: 'transparent',
+            },
+            '&::-webkit-scrollbar-thumb': {
+              bgcolor: currentTheme.darkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)',
+              borderRadius: '4px',
+              '&:hover': {
+                bgcolor: currentTheme.darkMode ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)',
+              },
+            },
           }}
         >
-          {/* Curved Content Container */}
+          <MainGlassHeader
+            currentTheme={currentTheme}
+            darkMode={darkMode}
+            onThemeToggle={handleThemeToggle}
+            onOpenSearch={() => setSearchOpen(true)}
+            onDrawerToggle={handleDrawerToggle}
+            scrollContainerRef={mainScrollRef}
+          />
           <Box
             sx={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              bgcolor: currentTheme.background,
-              borderRadius: '24px',
-              border: `1px solid ${currentTheme.border}`,
-              overflow: 'hidden',
-              boxShadow: 'none',
+              pl: (t) => ({
+                xs: t.spacing(3),
+                sm: `calc(${floatingRailOffsetPx}px + ${t.spacing(3)})`,
+              }),
+              pr: (t) => t.spacing(3),
             }}
           >
-            {/* Scrollable Content Area */}
-            <Box
-              sx={{
-                height: '100%',
-                overflowY: 'auto',
-                overflowX: 'hidden',
-                p: 3,
-                '&::-webkit-scrollbar': {
-                  width: '8px',
-                },
-                '&::-webkit-scrollbar-track': {
-                  bgcolor: 'transparent',
-                },
-                '&::-webkit-scrollbar-thumb': {
-                  bgcolor: currentTheme.darkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)',
-                  borderRadius: '4px',
-                  '&:hover': {
-                    bgcolor: currentTheme.darkMode ? 'rgba(255, 255, 255, 0.3)' : 'rgba(0, 0, 0, 0.3)',
-                  },
-                },
-              }}
-            >
-              <Routes>
+          <Routes>
             <Route path="/role" element={<RolePage />} />
             <Route path="/unauthorized" element={<UnauthorizedPage />} />
             
@@ -524,50 +529,10 @@ function AppContent() {
                 </ProtectedRoute>
               } 
             />
-              </Routes>
-            </Box>
+          </Routes>
           </Box>
         </Box>
 
-        <Menu
-          anchorEl={anchorEl}
-          open={Boolean(anchorEl)}
-          onClose={handleMenuClose}
-          sx={{
-            '& .MuiPaper-root': {
-              bgcolor: currentTheme.card,
-              color: currentTheme.text,
-            },
-          }}
-        >
-          <MenuItem onClick={handleMenuClose}>Profile</MenuItem>
-          <MenuItem onClick={handleMenuClose}>My Account</MenuItem>
-          <MenuItem onClick={handleMenuClose}>Logout</MenuItem>
-        </Menu>
-
-        <Menu
-          anchorEl={notificationsAnchorEl}
-          open={Boolean(notificationsAnchorEl)}
-          onClose={handleMenuClose}
-          sx={{
-            '& .MuiPaper-root': {
-              bgcolor: currentTheme.card,
-              color: currentTheme.text,
-            },
-          }}
-        >
-          <MenuItem onClick={handleMenuClose}>New data model added</MenuItem>
-          <MenuItem onClick={handleMenuClose}>Contract violation detected</MenuItem>
-          <MenuItem onClick={handleMenuClose}>Domain health check failed</MenuItem>
-          <MenuItem onClick={handleMenuClose}>System update available</MenuItem>
-        </Menu>
-
-        <InfoSidebar
-          open={infoSidebarOpen}
-          onClose={handleInfoSidebarToggle}
-          currentTheme={currentTheme}
-        />
-        
         {/* Global Search Dialog */}
         <GlobalSearch 
           open={searchOpen} 
@@ -576,6 +541,7 @@ function AppContent() {
       </Box>
       </WorkbenchModalsProvider>
       </CatalogPreferencesProvider>
+      </ThemeProvider>
     </ThemeContext.Provider>
   );
 }
@@ -589,9 +555,7 @@ function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <ThemeProvider theme={theme}>
-          <AppContent />
-        </ThemeProvider>
+        <AppContent />
       </AuthProvider>
     </BrowserRouter>
   );

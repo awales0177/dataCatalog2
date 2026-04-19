@@ -42,28 +42,7 @@ html.dark-mode {
   background-color: #2d2d2d;
 }
 
-/* Card hover effects */
-.MuiCard-root {
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  background-color: #ffffff;
-}
-
-.dark-mode .MuiCard-root {
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background-color: #2d2d2d;
-}
-
-.MuiCard-root:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-  border-color: #37ABBF;
-}
-
-.dark-mode .MuiCard-root:hover {
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-  border-color: #37ABBF;
-}
+/* Card surfaces: outline + shadow from MUI theme (catalogSurfaces / workspace tiles) */
 
 /* Button hover effects */
 .MuiButton-root {

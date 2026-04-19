@@ -166,11 +166,18 @@ export const useAppState = () => {
         },
         dark: {
           background: '#121212',
-          text: '#ffffff',
-          primary: '#90caf9',
           card: '#1e1e1e',
-          border: '#333333',
-          textSecondary: '#b0b0b0',
+          text: '#e8e8ea',
+          textSecondary: '#9d9da3',
+          primary: '#42a5f5',
+          primaryHover: '#64b5f6',
+          border: 'rgba(255, 255, 255, 0.12)',
+          favorite: '#f1c40f',
+          favoriteInactive: '#6b6b70',
+          success: '#66bb6a',
+          warning: '#ffa726',
+          error: '#ef5350',
+          quality: { high: '#66bb6a', medium: '#ffa726', low: '#ef5350' },
         },
       };
       const themeTimeoutMs = 12_000;

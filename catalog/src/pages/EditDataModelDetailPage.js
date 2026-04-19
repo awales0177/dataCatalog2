@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -58,6 +58,10 @@ import ReferenceDataSelector from '../components/ReferenceDataSelector';
 import { useAuth } from '../contexts/AuthContext';
 import { modelFieldsConfig } from '../config/modelFields';
 import { normalizeModelMarkdowns } from '../utils/modelMarkdowns';
+import {
+  flattenToolkitTechnologyOptions,
+  uniqueToolResourceKey,
+} from '../utils/modelToolkitTools';
 
 const EditDataModelDetailPage = ({ currentTheme }) => {
   const { shortName } = useParams();
@@ -80,6 +84,10 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
   const [showSelectionDialog, setShowSelectionDialog] = useState(false);
   const [selectionPath, setSelectionPath] = useState('');
   const [availableOptions, setAvailableOptions] = useState([]);
+  const [toolkitTechOptions, setToolkitTechOptions] = useState([]);
+  const [toolkitCatalogLoading, setToolkitCatalogLoading] = useState(true);
+  const [toolkitToolPickerOpen, setToolkitToolPickerOpen] = useState(false);
+  const [toolkitToolSearch, setToolkitToolSearch] = useState('');
 
   // Simple back function that goes back one level in the URL path
   const goToViewMode = () => {
@@ -185,6 +193,37 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
       }
     };
   }, []); // Empty dependency array - only run on mount/unmount
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const data = await fetchData('toolkit');
+        const toolkits = data.toolkit?.toolkits || [];
+        if (!cancelled) {
+          setToolkitTechOptions(flattenToolkitTechnologyOptions(toolkits));
+        }
+      } catch {
+        if (!cancelled) setToolkitTechOptions([]);
+      } finally {
+        if (!cancelled) setToolkitCatalogLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const filteredToolkitTechOptions = useMemo(() => {
+    const q = toolkitToolSearch.trim().toLowerCase();
+    if (!q) return toolkitTechOptions;
+    return toolkitTechOptions.filter(
+      (o) =>
+        o.label.toLowerCase().includes(q) ||
+        o.techName.toLowerCase().includes(q) ||
+        o.toolkitName.toLowerCase().includes(q),
+    );
+  }, [toolkitTechOptions, toolkitToolSearch]);
 
   const handleFieldChange = (path, value) => {
     setEditedModel(prev => {
@@ -355,64 +394,29 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
     setAvailableOptions([]);
   };
 
-  // Tool-specific functions
-  const addToolItem = (path) => {
-    setEditedModel(prev => {
+  const addToolkitToolFromCatalog = (option) => {
+    setEditedModel((prev) => {
       const newModel = JSON.parse(JSON.stringify(prev));
-      const pathArray = path.split('.');
-      let current = newModel;
-      
-      // Navigate to the tools object
-      for (let i = 0; i < pathArray.length; i++) {
-        if (!current[pathArray[i]]) {
-          current[pathArray[i]] = {};
-        }
-        current = current[pathArray[i]];
+      if (!newModel.resources) newModel.resources = {};
+      if (!newModel.resources.tools || typeof newModel.resources.tools !== 'object') {
+        newModel.resources.tools = {};
       }
-      
-      // Add new tool with a default name and URL
-      const newToolName = `tool${Object.keys(current).length + 1}`;
-      current[newToolName] = 'https://docs.example.com/new-tool';
-      
+      const tools = newModel.resources.tools;
+      const key = uniqueToolResourceKey(
+        tools,
+        option.techName,
+        option.toolkitName,
+        option.technologyId,
+      );
+      tools[key] = option.url;
       return newModel;
     });
-  };
-
-  const handleToolNameChange = (path, oldToolName, newToolName) => {
-    if (oldToolName === newToolName) return; // No change
-    
-    setEditedModel(prev => {
-      const newModel = JSON.parse(JSON.stringify(prev));
-      const pathArray = path.split('.');
-      let current = newModel;
-      
-      // Navigate to the tools object
-      for (let i = 0; i < pathArray.length; i++) {
-        current = current[pathArray[i]];
-      }
-      
-      // Get the old tool URL
-      const toolUrl = current[oldToolName];
-      
-      // Create a new tools object preserving order
-      const newTools = {};
-      const toolEntries = Object.entries(current);
-      
-      for (const [key, value] of toolEntries) {
-        if (key === oldToolName) {
-          // Replace the old tool name with the new one
-          newTools[newToolName] = toolUrl;
-        } else {
-          // Keep other tools as they are
-          newTools[key] = value;
-        }
-      }
-      
-      // Replace the tools object
-      Object.keys(current).forEach(key => delete current[key]);
-      Object.assign(current, newTools);
-      
-      return newModel;
+    setToolkitToolPickerOpen(false);
+    setToolkitToolSearch('');
+    setSnackbar({
+      open: true,
+      message: `Linked tool from toolkit: ${option.label}`,
+      severity: 'success',
     });
   };
 
@@ -527,7 +531,7 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
       modelFieldsConfig.field1.jsonKey
     ];
     
-    // Check owner and specMaintainer separately since they're handled by TeamSelector
+    // Check specMaintainer separately since it's handled by TeamSelector
     // Normalize values for comparison (treat null, undefined, and empty string as equivalent)
     const normalizeValue = (val) => {
       if (val === null || val === undefined || val === '') {
@@ -535,16 +539,6 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
       }
       return val;
     };
-    
-    const originalOwner = normalizeValue(originalModel.owner);
-    const updatedOwner = normalizeValue(updatedModel.owner);
-    if (originalOwner !== updatedOwner) {
-      fieldChanges.push({
-        field: 'owner',
-        oldValue: formatValueForDisplay(originalModel.owner),
-        newValue: formatValueForDisplay(updatedModel.owner)
-      });
-    }
     
     const originalSpecMaintainer = normalizeValue(originalModel.specMaintainer);
     const updatedSpecMaintainer = normalizeValue(updatedModel.specMaintainer);
@@ -652,6 +646,7 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
         ...editedModel,
         lastUpdated: currentTimestamp
       };
+      delete updatedModel.owner;
       
       // Add version history entry if there are changes
       if (versionHistoryEntry && versionHistoryEntry.fieldChanges.length > 0) {
@@ -990,8 +985,9 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
   };
 
   const renderField = (path, value, label, type = 'text', options = null, isRequired = false) => {
-    // Special handling for tools section to make tool names editable
-    if (path === 'resources.tools' && typeof value === 'object' && value !== null) {
+    // Tools: toolkit catalog only (no free-text name/URL)
+    if (path === 'resources.tools' && typeof value === 'object' && value !== null && !Array.isArray(value)) {
+      const entries = Object.entries(value);
       return (
         <Box key={path} sx={{ mb: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
@@ -1003,67 +999,70 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
                 </Typography>
               )}
             </Typography>
-            <IconButton
-              size="small"
-              onClick={() => addToolItem(path)}
-              sx={{ color: currentTheme.primary }}
+            <Tooltip
+              title={
+                toolkitCatalogLoading
+                  ? 'Loading toolkit catalog…'
+                  : toolkitTechOptions.length === 0
+                    ? 'No toolkit technologies available'
+                    : 'Add link from toolkit workbench (technology)'
+              }
             >
-              <AddIcon />
-            </IconButton>
-          </Box>
-          {Object.entries(value).map(([toolName, toolUrl], index) => (
-            <Box key={`${path}.${index}`} sx={{ mb: 2, p: 2, border: `1px solid ${currentTheme.border}`, borderRadius: 1 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                              <TextField
-                size="small"
-                value={toolName}
-                onChange={(e) => handleToolNameChange(path, toolName, e.target.value)}
-                label="Tool Name"
-                sx={{ 
-                  flex: 1,
-                  '& .MuiInputLabel-root': { color: currentTheme.textSecondary },
-                  '& .MuiInputLabel-root.Mui-focused': { color: currentTheme.primary },
-                  '& .MuiOutlinedInput-root': { 
-                    color: currentTheme.text,
-                    '& fieldset': { borderColor: currentTheme.border },
-                    '&:hover fieldset': { borderColor: currentTheme.primary },
-                    '&.Mui-focused fieldset': { borderColor: currentTheme.primary }
-                  },
-                  '& .MuiInputBase-input': { color: currentTheme.text },
-                  '& .MuiInputBase-input::placeholder': { color: currentTheme.textSecondary, opacity: 0.7 }
-                }}
-                placeholder="Enter tool name"
-              />
+              <span>
                 <IconButton
                   size="small"
-                  onClick={() => confirmDeleteTool(path, toolName, `Tool: ${toolName}`)}
-                  sx={{ color: 'error.main' }}
+                  onClick={() => setToolkitToolPickerOpen(true)}
+                  sx={{ color: currentTheme.primary }}
+                  disabled={toolkitCatalogLoading || toolkitTechOptions.length === 0}
                 >
-                  <DeleteIcon />
+                  <AddIcon />
                 </IconButton>
+              </span>
+            </Tooltip>
+          </Box>
+          <Typography variant="caption" sx={{ color: currentTheme.textSecondary, display: 'block', mb: 1 }}>
+            Link technologies from the toolkit workbench only. Remove a link with the trash control.
+          </Typography>
+          {entries.length === 0 ? (
+            <Typography variant="body2" sx={{ color: currentTheme.textSecondary, fontStyle: 'italic' }}>
+              No toolkit tools linked.
+            </Typography>
+          ) : (
+            entries.map(([toolName, toolUrl], index) => (
+              <Box
+                key={`${path}.${toolName}.${index}`}
+                sx={{ mb: 2, p: 2, border: `1px solid ${currentTheme.border}`, borderRadius: 1 }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography variant="body2" sx={{ color: currentTheme.text, fontWeight: 600 }}>
+                      {toolName}
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      component="div"
+                      sx={{
+                        color: currentTheme.textSecondary,
+                        mt: 0.5,
+                        wordBreak: 'break-all',
+                        fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+                      }}
+                    >
+                      {typeof toolUrl === 'string' ? toolUrl : ''}
+                    </Typography>
+                  </Box>
+                  <IconButton
+                    size="small"
+                    onClick={() => confirmDeleteTool(path, toolName, `Tool: ${toolName}`)}
+                    sx={{ color: 'error.main', flexShrink: 0 }}
+                    aria-label={`Remove ${toolName}`}
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                </Box>
               </Box>
-              <TextField
-                size="small"
-                value={toolUrl}
-                onChange={(e) => handleFieldChange(`${path}.${toolName}`, e.target.value)}
-                label="Tool URL"
-                fullWidth
-                sx={{ 
-                  '& .MuiInputLabel-root': { color: currentTheme.textSecondary },
-                  '& .MuiInputLabel-root.Mui-focused': { color: currentTheme.primary },
-                  '& .MuiOutlinedInput-root': { 
-                    color: currentTheme.text,
-                    '& fieldset': { borderColor: currentTheme.border },
-                    '&:hover fieldset': { borderColor: currentTheme.primary },
-                    '&.Mui-focused fieldset': { borderColor: currentTheme.primary }
-                  },
-                  '& .MuiInputBase-input': { color: currentTheme.text },
-                  '& .MuiInputBase-input::placeholder': { color: currentTheme.textSecondary, opacity: 0.7 }
-                }}
-                placeholder="Enter tool URL"
-              />
-            </Box>
-          ))}
+            ))
+          )}
         </Box>
       );
     }
@@ -1495,24 +1494,6 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
             {/* Short Name - Editable */}
             {renderField('shortName', editedModel.shortName, 'Short Name', 'text', null, shortName === 'new')}
             
-            {/* Owner - Team Selector */}
-            <Box sx={{ mb: 2 }}>
-              <TeamSelector
-                selectedTeams={editedModel.owner ? [editedModel.owner] : []}
-                onTeamsChange={(teams) => {
-                  setEditedModel(prev => ({
-                    ...prev,
-                    owner: teams.length > 0 ? teams[0] : ''
-                  }));
-                }}
-                currentTheme={currentTheme}
-                label="Owner"
-                showLabel={true}
-                maxSelections={1}
-                placeholder="No owner selected"
-              />
-            </Box>
-            
             {/* Spec Maintainer - Team Selector */}
             <Box sx={{ mb: 4 }}>
               <TeamSelector
@@ -1722,7 +1703,7 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
               {renderField('resources.validation', editedModel.resources?.validation, 'Validation')}
             </Grid>
             <Grid item xs={12} md={6}>
-              {renderField('resources.tools', editedModel.resources?.tools, 'Tools')}
+              {renderField('resources.tools', editedModel.resources?.tools ?? {}, 'Tools')}
             </Grid>
           </Grid>
         </Box>
@@ -1925,6 +1906,111 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setShowSelectionDialog(false)} sx={{ color: currentTheme.text }}>
+              Cancel
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        <Dialog
+          open={toolkitToolPickerOpen}
+          onClose={() => {
+            setToolkitToolPickerOpen(false);
+            setToolkitToolSearch('');
+          }}
+          maxWidth="sm"
+          fullWidth
+          PaperProps={{
+            sx: {
+              bgcolor: currentTheme.card,
+              color: currentTheme.text,
+              border: `1px solid ${currentTheme.border}`,
+            },
+          }}
+        >
+          <DialogTitle sx={{ color: currentTheme.text, display: 'flex', alignItems: 'center', gap: 1 }}>
+            <AddIcon />
+            Link tool from toolkit
+          </DialogTitle>
+          <DialogContent sx={{ color: currentTheme.text }}>
+            <Typography variant="body2" sx={{ mb: 2, color: currentTheme.textSecondary }}>
+              Choose a technology from the toolkit workbench. The link uses documentation or GitHub when
+              available; otherwise it opens the technology page in this catalog.
+            </Typography>
+            <TextField
+              size="small"
+              fullWidth
+              placeholder="Search toolkit or technology…"
+              value={toolkitToolSearch}
+              onChange={(e) => setToolkitToolSearch(e.target.value)}
+              sx={{
+                mb: 2,
+                '& .MuiOutlinedInput-root': {
+                  color: currentTheme.text,
+                  '& fieldset': { borderColor: currentTheme.border },
+                },
+                '& .MuiInputLabel-root': { color: currentTheme.textSecondary },
+              }}
+            />
+            <Box sx={{ maxHeight: 360, overflow: 'auto' }}>
+              {filteredToolkitTechOptions.length === 0 ? (
+                <Typography variant="body2" sx={{ color: currentTheme.textSecondary, py: 2 }}>
+                  {toolkitTechOptions.length === 0
+                    ? 'No technologies found in the toolkit catalog.'
+                    : 'No matches. Try a different search.'}
+                </Typography>
+              ) : (
+                filteredToolkitTechOptions.map((opt) => (
+                  <Button
+                    key={`${opt.toolkitId}:${opt.technologyId}`}
+                    fullWidth
+                    variant="outlined"
+                    onClick={() => addToolkitToolFromCatalog(opt)}
+                    sx={{
+                      mb: 1,
+                      py: 1.25,
+                      justifyContent: 'flex-start',
+                      textAlign: 'left',
+                      flexDirection: 'column',
+                      alignItems: 'flex-start',
+                      color: currentTheme.text,
+                      borderColor: currentTheme.border,
+                      '&:hover': {
+                        bgcolor: currentTheme.primary,
+                        color: currentTheme.background,
+                        borderColor: currentTheme.primary,
+                      },
+                    }}
+                  >
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                      {opt.label}
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        display: 'block',
+                        mt: 0.5,
+                        opacity: 0.85,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        maxWidth: '100%',
+                      }}
+                    >
+                      {opt.url}
+                    </Typography>
+                  </Button>
+                ))
+              )}
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button
+              onClick={() => {
+                setToolkitToolPickerOpen(false);
+                setToolkitToolSearch('');
+              }}
+              sx={{ color: currentTheme.text }}
+            >
               Cancel
             </Button>
           </DialogActions>

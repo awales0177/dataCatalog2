@@ -10,6 +10,7 @@ import {
   Lock as LockIcon,
   LockOpen as LockOpenIcon,
 } from '@mui/icons-material';
+import { catalogInteractivePaperSx } from '../theme/catalogSurfaces';
 
 const DatasetCard = ({ dataset, onClick, currentTheme, pipelineNames }) => {
   const getStatusColor = (status) => {
@@ -96,19 +97,11 @@ const DatasetCard = ({ dataset, onClick, currentTheme, pipelineNames }) => {
         minHeight: '200px',
         p: 2,
         cursor: 'pointer',
-        bgcolor: currentTheme.darkMode ? '#1E1E1E' : currentTheme.card,
-        border: `1px solid ${currentTheme.darkMode ? 'rgba(255, 255, 255, 0.1)' : currentTheme.border}`,
-        borderRadius: '12px',
-        transition: 'all 0.2s ease-in-out',
         display: 'flex',
         flexDirection: 'column',
         boxSizing: 'border-box',
         overflow: 'hidden',
-        '&:hover': {
-          transform: 'translateY(-2px)',
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-          borderColor: '#37ABBF',
-        },
+        ...catalogInteractivePaperSx(currentTheme),
       }}
     >
       {/* Header */}

@@ -1,6 +1,7 @@
 import React, { useContext, useMemo } from 'react';
-import { Box, Typography, Grid, Paper, Chip, alpha } from '@mui/material';
+import { Box, Typography, Grid, Paper, Chip } from '@mui/material';
 import { ThemeContext } from '../contexts/ThemeContext';
+import { catalogInteractivePaperSx } from '../theme/catalogSurfaces';
 import { useAuth } from '../contexts/AuthContext';
 import { useWorkbenchModals } from '../contexts/WorkbenchModalsContext';
 
@@ -124,27 +125,21 @@ const HomeWorkspaceSection = () => {
                   }
                 }}
                 sx={{
-                  borderRadius: 2,
                   p: 2,
                   height: '100%',
                   minHeight: 140,
-                  bgcolor: currentTheme.card,
-                  border: `1px solid ${currentTheme.border}`,
-                  boxShadow: darkMode
-                    ? '0 4px 20px rgba(0,0,0,0.25)'
-                    : '0 4px 16px rgba(15, 35, 52, 0.08)',
                   cursor: inactive ? 'not-allowed' : 'pointer',
                   opacity: inactive ? 0.55 : 1,
-                  transition: (theme) =>
-                    theme.transitions.create(['box-shadow', 'border-color', 'opacity'], {
-                      duration: theme.transitions.duration.short,
-                    }),
-                  ...(!inactive && {
+                  ...catalogInteractivePaperSx(currentTheme),
+                  ...(inactive && {
+                    boxShadow: darkMode
+                      ? '0 4px 20px rgba(0,0,0,0.25)'
+                      : '0 4px 16px rgba(15, 35, 52, 0.08)',
                     '&:hover': {
-                      borderColor: currentTheme.primary,
+                      borderColor: currentTheme.border,
                       boxShadow: darkMode
-                        ? '0 6px 24px rgba(0,0,0,0.35)'
-                        : `0 8px 24px ${alpha(currentTheme.primary, 0.18)}`,
+                        ? '0 4px 20px rgba(0,0,0,0.25)'
+                        : '0 4px 16px rgba(15, 35, 52, 0.08)',
                     },
                   }),
                 }}

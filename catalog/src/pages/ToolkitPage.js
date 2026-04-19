@@ -55,14 +55,10 @@ function techStatusChipColor(s, themePrimary) {
 const TAB_ALL = 0;
 const TAB_PACKAGES = 1;
 const TAB_CONTAINERS = 2;
-const TAB_SCRIPTS = 3;
-const TAB_SOPS = 4;
 
 const RESOURCE_KIND_LABEL = {
   package: 'Package',
   container: 'Container',
-  function: 'Script',
-  sop: 'SOP',
 };
 
 /** dataCatalog2 routes use /toolkit/toolkit/:id for workbenches (not UUX /toolkit/:id). */
@@ -76,23 +72,9 @@ const resourceDetailPath = (kind, item) => {
       return `/toolkit/package/${encodeURIComponent(pid)}`;
     case 'container':
       return `/toolkit/container/${item.id}`;
-    case 'function':
-      return `/toolkit/function/${item.id}`;
-    case 'sop':
-      return `/toolkit/sop/${item.id}`;
     default:
       return '/toolkit';
   }
-};
-
-const isSopFunction = (fn) => {
-  if (!fn || typeof fn !== 'object') return false;
-  const kind = String(fn.kind || '').toLowerCase();
-  if (kind === 'sop') return true;
-  const cat = String(fn.category || '').toLowerCase();
-  if (cat.includes('sop')) return true;
-  const tags = fn.tags || [];
-  return tags.some((t) => String(t).toLowerCase() === 'sop');
 };
 
 const matchesSearch = (searchLower, ...fields) =>
@@ -166,25 +148,6 @@ const ToolkitPage = () => {
   const toolkits = toolkitData?.toolkit?.toolkits || [];
   const packages = toolkitData?.toolkit?.packages || [];
   const containers = toolkitData?.toolkit?.containers || [];
-  const functions = toolkitData?.toolkit?.functions || [];
-  const standaloneSops = toolkitData?.toolkit?.sops || [];
-
-  const scriptFunctions = useMemo(
-    () => functions.filter((f) => !isSopFunction(f)),
-    [functions]
-  );
-
-  const sopFunctions = useMemo(() => functions.filter(isSopFunction), [functions]);
-
-  const standaloneSopsDeduped = useMemo(() => {
-    const fnIds = new Set(functions.map((f) => f.id));
-    return standaloneSops.filter((s) => s?.id && !fnIds.has(s.id));
-  }, [standaloneSops, functions]);
-
-  const allSopItems = useMemo(
-    () => [...sopFunctions, ...standaloneSopsDeduped],
-    [sopFunctions, standaloneSopsDeduped]
-  );
 
   const searchLower = searchTerm.trim().toLowerCase();
 
@@ -215,52 +178,17 @@ const ToolkitPage = () => {
     );
   };
 
-  const filterFunctions = (list) => {
-    if (!searchLower) return list;
-    return list.filter((f) =>
-      matchesSearch(
-        searchLower,
-        f.displayName,
-        f.name,
-        f.description,
-        f.language,
-        ...(f.tags || []).map(String)
-      )
-    );
-  };
-
-  const filterSops = (list) => {
-    if (!searchLower) return list;
-    return list.filter((s) =>
-      matchesSearch(searchLower, s.displayName, s.name, s.description, s.id, ...(s.tags || []).map(String))
-    );
-  };
-
   const filteredToolkits = filterToolkits(toolkits);
   const filteredPackages = filterPackages(packages);
   const filteredContainers = filterContainers(containers);
-  const filteredScripts = filterFunctions(scriptFunctions);
-  const filteredSops = filterSops(allSopItems);
 
   const allTabRows = useMemo(() => {
     const rows = [];
     filteredToolkits.forEach((item) => rows.push({ rowType: 'toolkit', item }));
     filteredPackages.forEach((item) => rows.push({ rowType: 'package', item }));
     filteredContainers.forEach((item) => rows.push({ rowType: 'container', item }));
-    filteredScripts.forEach((item) => rows.push({ rowType: 'function', item }));
-    filteredSops.forEach((item) => {
-      const fromFn = functions.some((f) => f.id === item.id);
-      rows.push({ rowType: fromFn ? 'function' : 'sop', item });
-    });
     return rows;
-  }, [
-    filteredToolkits,
-    filteredPackages,
-    filteredContainers,
-    filteredScripts,
-    filteredSops,
-    functions,
-  ]);
+  }, [filteredToolkits, filteredPackages, filteredContainers]);
 
   const tabRows = useMemo(() => {
     switch (activeTab) {
@@ -270,32 +198,18 @@ const ToolkitPage = () => {
         return filteredPackages.map((item) => ({ rowType: 'package', item }));
       case TAB_CONTAINERS:
         return filteredContainers.map((item) => ({ rowType: 'container', item }));
-      case TAB_SCRIPTS:
-        return filteredScripts.map((item) => ({ rowType: 'function', item }));
-      case TAB_SOPS:
-        return filteredSops.map((item) => {
-          const fromFn = functions.some((f) => f.id === item.id);
-          return { rowType: fromFn ? 'function' : 'sop', item };
-        });
       default:
         return [];
     }
-  }, [activeTab, allTabRows, filteredPackages, filteredContainers, filteredScripts, filteredSops, functions]);
+  }, [activeTab, allTabRows, filteredPackages, filteredContainers]);
 
   const counts = useMemo(
     () => ({
-      all:
-        toolkits.length +
-        packages.length +
-        containers.length +
-        scriptFunctions.length +
-        allSopItems.length,
+      all: toolkits.length + packages.length + containers.length,
       packages: packages.length,
       containers: containers.length,
-      scripts: scriptFunctions.length,
-      sops: allSopItems.length,
     }),
-    [toolkits, packages, containers, scriptFunctions, allSopItems]
+    [toolkits, packages, containers]
   );
 
   const renderToolkitCard = (toolkit) => {
@@ -305,21 +219,8 @@ const ToolkitPage = () => {
     return (
       <Card
         key={`tk-${toolkit.id}`}
-        elevation={0}
         onClick={handleCardClick}
-        sx={{
-          height: '100%',
-          borderRadius: 2,
-          transition: 'all 0.2s ease-in-out',
-          bgcolor: currentTheme.card,
-          border: `1px solid ${currentTheme.border}`,
-          cursor: 'pointer',
-          '&:hover': {
-            transform: 'translateY(-4px)',
-            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
-            borderColor: currentTheme.primary,
-          },
-        }}
+        sx={{ height: '100%', cursor: 'pointer', overflow: 'hidden' }}
       >
         <CardContent>
           <Box
@@ -401,21 +302,8 @@ const ToolkitPage = () => {
     return (
       <Card
         key={`res-${kind}-${item.id ?? item.name}`}
-        elevation={0}
         onClick={() => navigate(path)}
-        sx={{
-          height: '100%',
-          borderRadius: 2,
-          transition: 'all 0.2s ease-in-out',
-          bgcolor: currentTheme.card,
-          border: `1px solid ${currentTheme.border}`,
-          cursor: 'pointer',
-          '&:hover': {
-            transform: 'translateY(-4px)',
-            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
-            borderColor: currentTheme.primary,
-          },
-        }}
+        sx={{ height: '100%', cursor: 'pointer', overflow: 'hidden' }}
       >
         <CardContent>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
@@ -497,13 +385,6 @@ const ToolkitPage = () => {
     if (rowType === 'container') {
       return renderUnifiedResourceCard('container', item);
     }
-    if (rowType === 'function') {
-      // Scripts and SOP-classified functions both use the function detail route here.
-      return renderUnifiedResourceCard('function', item);
-    }
-    if (rowType === 'sop') {
-      return renderUnifiedResourceCard('sop', item);
-    }
     return null;
   };
 
@@ -516,10 +397,6 @@ const ToolkitPage = () => {
         return 'No packages yet.';
       case TAB_CONTAINERS:
         return 'No containers yet.';
-      case TAB_SCRIPTS:
-        return 'No scripts yet.';
-      case TAB_SOPS:
-        return 'No SOPs yet.';
       default:
         return 'No items.';
     }
@@ -550,7 +427,7 @@ const ToolkitPage = () => {
           Toolkit
         </Typography>
         <Typography variant="body1" sx={{ color: currentTheme.textSecondary, maxWidth: 720 }}>
-          Packages, containers, scripts, and SOPs for data work.
+          Packages and containers for data work.
         </Typography>
       </Box>
       <Box sx={{ mb: 3 }}>
@@ -602,8 +479,6 @@ const ToolkitPage = () => {
           <Tab label={`All (${counts.all})`} />
           <Tab label={`Packages (${counts.packages})`} />
           <Tab label={`Containers (${counts.containers})`} />
-          <Tab label={`Scripts (${counts.scripts})`} />
-          <Tab label={`SOPs (${counts.sops})`} />
         </Tabs>
       </Box>
 
@@ -616,7 +491,7 @@ const ToolkitPage = () => {
           </Grid>
         ) : (
           tabRows.map((row, idx) => (
-            <Grid item xs={12} sm={6} md={4} lg={3} key={`${row.rowType}-${row.item?.id ?? 'x'}-${idx}`}>
+            <Grid item xs={12} sm={6} md={6} lg={4} key={`${row.rowType}-${row.item?.id ?? 'x'}-${idx}`}>
               {renderRow(row)}
             </Grid>
           ))

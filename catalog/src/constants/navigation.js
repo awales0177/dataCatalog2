@@ -35,6 +35,18 @@ export const BasketIcon = ({ style }) => (
 export const drawerWidth = 280;
 export const collapsedDrawerWidth = 72;
 
+/** Floating sidebar: inset from viewport (px) — UUX dh */
+export const sidebarFloatInset = 16;
+/** Extra offset below viewport top (was used with app bar;0 when using sidebar-only shell) */
+export const sidebarBottomLift = 0;
+
+export const sidebarContentGap = 14;
+export const sidebarBorderRadius = 16;
+
+/** Total horizontal space reserved left of main (floating rail + gap) */
+export const mainColumnOffsetPx = (isCollapsed) =>
+  sidebarFloatInset + (isCollapsed ? collapsedDrawerWidth : drawerWidth) + sidebarContentGap;
+
 // Define where the dividers should appear in the navigation
 
 export const menuItems = [
@@ -48,7 +60,7 @@ export const menuItems = [
     name: 'Data Models',
     path: '/models',
     icon: <PiGraph />,
-    id: 'models'
+    id: 'models',
   },
   {
     name: 'Rules',

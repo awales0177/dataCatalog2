@@ -154,26 +154,18 @@ const DataPoliciesPage = () => {
     const statusColor = getStatusColor(policy.status);
 
     return (
-      <Card 
+      <Card
         key={policy.id}
-        elevation={0}
-        sx={{ 
+        sx={{
           height: '100%',
           minHeight: '320px',
           display: 'flex',
           flexDirection: 'column',
-          bgcolor: currentTheme.card,
-          border: `1px solid ${currentTheme.border}`,
-          borderRadius: 2,
-          transition: 'all 0.2s ease-in-out',
-          '&:hover': {
-            transform: 'translateY(-4px)',
-            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
-            '& .action-buttons': {
-              opacity: 1,
-            },
-          },
           position: 'relative',
+          overflow: 'hidden',
+          '&:hover .action-buttons': {
+            opacity: 1,
+          },
         }}
       >
         {/* Action buttons */}

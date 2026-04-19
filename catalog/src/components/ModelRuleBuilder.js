@@ -46,7 +46,10 @@ import {
   createRule,
   updateRule,
   deleteRule,
+  fetchData,
 } from '../services/api';
+import TeamSelector from './TeamSelector';
+import { maintainerToTeamSelectorSelection } from '../utils/maintainerTeamSelection';
 import { ruleTagsList, normalizeTagList } from '../utils/ruleTags';
 import { RULE_STAGE_OPTIONS, normalizeRuleStage } from '../utils/ruleStage';
 import { RULE_ZONE_OPTIONS, normalizeRuleZone, ruleZoneLabel } from '../utils/ruleZone';
@@ -157,12 +160,14 @@ const ModelRuleBuilder = ({
   const [catalogAssocLineageIds, setCatalogAssocLineageIds] = useState(() => new Set());
   /** Confirm removing catalog lineage from current model (uncheck "On model"). */
   const [dissociateDialog, setDissociateDialog] = useState(null);
+  const [applications, setApplications] = useState([]);
 
   // Rule form state
   const [ruleForm, setRuleForm] = useState({
     name: '',
     description: '',
     documentation: '',
+    maintainer: '',
     modelShortName: '',
     tags: [],
     ruleType: 'validation',
@@ -235,6 +240,11 @@ const ModelRuleBuilder = ({
         if (String(r.id || '').toLowerCase().includes(q)) return true;
         if (r.description?.toLowerCase().includes(q)) return true;
         if (r.ruleType?.toLowerCase().includes(q)) return true;
+        const maintRaw = String(r.maintainer || '').toLowerCase();
+        const maintResolved = (
+          maintainerToTeamSelectorSelection(r.maintainer, applications)[0] || ''
+        ).toLowerCase();
+        if (maintRaw.includes(q) || maintResolved.includes(q)) return true;
         if (normalizeRuleStage(r.stage).includes(q)) return true;
         if (normalizeRuleZone(r.ruleZone).includes(q)) return true;
         if (ruleZoneLabel(r.ruleZone).toLowerCase().includes(q)) return true;
@@ -249,7 +259,7 @@ const ModelRuleBuilder = ({
       if (ma !== mb) return ma.localeCompare(mb);
       return (a.representative.name || '').localeCompare(b.representative.name || '', undefined, { sensitivity: 'base' });
     });
-  }, [catalogLineageEntries, masterListSearch]);
+  }, [catalogLineageEntries, masterListSearch, applications]);
 
   // Load rules when model is selected
   useEffect(() => {
@@ -257,6 +267,21 @@ const ModelRuleBuilder = ({
       loadRules();
     }
   }, [selectedModel]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const response = await fetchData('applications');
+        if (!cancelled) setApplications(response.applications || []);
+      } catch {
+        if (!cancelled) setApplications([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const loadRules = async () => {
     if (!selectedModel) return;
@@ -433,6 +458,7 @@ const ModelRuleBuilder = ({
       name: '',
       description: '',
       documentation: '',
+      maintainer: '',
       modelShortName: selectedModel.shortName,
       tags: [],
       ruleType: 'validation',
@@ -452,6 +478,7 @@ const ModelRuleBuilder = ({
       name: rule.name || '',
       description: rule.description || '',
       documentation: rule.documentation || '',
+      maintainer: rule.maintainer || '',
       modelShortName: rule.modelShortName || selectedModel.shortName,
       tags: ruleTagsList(rule),
       ruleType: normalizeRuleType(rule.ruleType || 'validation'),
@@ -471,6 +498,7 @@ const ModelRuleBuilder = ({
         name: rule.name || '',
         description: rule.description || '',
         documentation: rule.documentation || '',
+        maintainer: rule.maintainer || '',
         modelShortName: rule.modelShortName || selectedModel.shortName,
         tags: ruleTagsList(rule),
         ruleType: normalizeRuleType(rule.ruleType || 'validation'),
@@ -488,6 +516,7 @@ const ModelRuleBuilder = ({
       name: rule.name || '',
       description: rule.description || '',
       documentation: rule.documentation || '',
+      maintainer: rule.maintainer || '',
       modelShortName: rule.modelShortName || selectedModel.shortName,
       tags: ruleTagsList(rule),
       ruleType: normalizeRuleType(rule.ruleType || 'validation'),
@@ -534,6 +563,7 @@ const ModelRuleBuilder = ({
         name: ruleForm.name,
         description: ruleForm.description,
         documentation: ruleForm.documentation || '',
+        maintainer: (ruleForm.maintainer || '').trim(),
         modelShortName: ruleForm.modelShortName || selectedModel?.shortName,
         ruleType: normalizeRuleType(ruleForm.ruleType),
         stage: normalizeRuleStage(ruleForm.stage),
@@ -815,6 +845,7 @@ const ModelRuleBuilder = ({
           <ModelRulesTable
             rules={rules}
             loading={loading}
+            applications={applications}
             emptyMessage={
               associationOnly
                 ? 'No rules on this model yet. Use Associate to model to copy a rule here (library or from another model), then use Set parent rule on each row to define hierarchy.'
@@ -1027,6 +1058,17 @@ const ModelRuleBuilder = ({
                   opacity: 1
                 }
               }}
+            />
+            <TeamSelector
+              selectedTeams={maintainerToTeamSelectorSelection(ruleForm.maintainer, applications)}
+              onTeamsChange={(teams) =>
+                setRuleForm({ ...ruleForm, maintainer: teams.length > 0 ? teams[0] : '' })
+              }
+              currentTheme={currentTheme}
+              label="Maintainer"
+              showLabel
+              maxSelections={1}
+              placeholder="No maintainer selected"
             />
             <FormControl fullWidth sx={{ mb: 2 }}>
               <InputLabel

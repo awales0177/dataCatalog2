@@ -198,16 +198,7 @@ const UserManagementPage = () => {
       <Grid container spacing={3}>
         {users.map((user) => (
           <Grid item xs={12} sm={6} md={4} lg={3} key={user.username}>
-            <Card
-              sx={{
-                bgcolor: currentTheme.card,
-                color: currentTheme.text,
-                border: `1px solid ${currentTheme.border}`,
-                '&:hover': {
-                  boxShadow: `0 4px 20px ${currentTheme.primary}20`,
-                }
-              }}
-            >
+            <Card sx={{ color: currentTheme.text, overflow: 'hidden' }}>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                   <Avatar

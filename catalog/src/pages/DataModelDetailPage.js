@@ -22,20 +22,22 @@ import {
   MenuBook as MenuBookIcon,
   GitHub as GitHubIcon,
   VerifiedUser as VerifiedUserIcon,
-  WorkspacePremium as CrownIcon,
   Construction as WrenchIcon,
   NavigateNext as NavigateNextIcon,
   NavigateBefore as NavigateBeforeIcon,
   Email as EmailIcon,
   HelpOutline as HelpOutlineIcon,
   Edit as EditIcon,
+  OpenInNew as OpenInNewIcon,
+  ChevronRight as ChevronRightIcon,
+  Handyman as HandymanIcon,
 } from '@mui/icons-material';
 import { MdHandshake, MdDomain } from "react-icons/md";
 import { IoIosApps } from "react-icons/io";
 import { formatDate } from '../utils/themeUtils';
 import { calculateModelScore, getModelQualityColor } from '../utils/modelScoreUtils';
 import { fetchData, fetchAgreementsByModel, getRulesForModel } from '../services/api';
-import ProductAgreementCard from '../components/ProductAgreementCard';
+import MiniCard from '../components/MiniCards';
 import ModelRulesTable from '../components/ModelRulesTable';
 import { GoVerified } from "react-icons/go";
 import { modelFieldsConfig } from '../config/modelFields';
@@ -45,6 +47,99 @@ import remarkEmoji from 'remark-emoji';
 import MermaidDiagram from '../components/MermaidDiagram';
 import { modelMarkdownsForDisplay, modelMarkdownProseSx } from '../utils/modelMarkdowns';
 import { fontStackSans } from '../theme/theme';
+import FieldInfoIcon from '../components/FieldInfoIcon';
+import {
+  resolveModelToolTechnology,
+  getTechnologyCardImage,
+} from '../utils/modelToolCardImage';
+
+/** Short line for tool cards (hostname or path, truncated). */
+function toolLinkCaption(url) {
+  if (!url || typeof url !== 'string') return '';
+  const s = url.trim();
+  if (!s) return '';
+  if (s.startsWith('/')) return s.length > 72 ? `${s.slice(0, 72)}…` : s;
+  try {
+    const u = new URL(s);
+    const path = u.pathname === '/' ? '' : u.pathname;
+    const line = `${u.hostname}${path}`;
+    return line.length > 72 ? `${line.slice(0, 72)}…` : line;
+  } catch {
+    return s.length > 72 ? `${s.slice(0, 72)}…` : s;
+  }
+}
+
+function ModelToolCardAvatar({ imgSpec, darkMode }) {
+  const [broken, setBroken] = React.useState(false);
+  React.useEffect(() => {
+    setBroken(false);
+  }, [imgSpec?.src]);
+  if (!imgSpec?.src || broken) {
+    return <HandymanIcon sx={{ fontSize: 22 }} />;
+  }
+  return (
+    <Box
+      component="img"
+      src={imgSpec.src}
+      alt={imgSpec.alt || ''}
+      onError={() => setBroken(true)}
+      sx={{
+        width: 28,
+        height: 28,
+        objectFit: 'contain',
+        filter: imgSpec.invert && darkMode ? 'invert(1)' : 'none',
+      }}
+    />
+  );
+}
+
+function getAgreementStatusColor(status) {
+  switch (status) {
+    case 'active':
+      return '#4caf50';
+    case 'in_progress':
+      return '#2196f3';
+    case 'in_review':
+      return '#ff9800';
+    case 'expired':
+      return '#f44336';
+    default:
+      return '#9e9e9e';
+  }
+}
+
+function AgreementMiniCard({ agreement, currentTheme, navigate }) {
+  const statusColor = getAgreementStatusColor(agreement.status);
+  const statusLabel = (agreement.status || 'unknown')
+    .split('_')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+  return (
+    <MiniCard
+      currentTheme={currentTheme}
+      title={agreement.name}
+      description={agreement.description?.trim() || 'No description available'}
+      descriptionLines={3}
+      avatar={<MdHandshake style={{ fontSize: 22, color: 'inherit' }} />}
+      chip={
+        <Chip
+          label={statusLabel}
+          size="small"
+          sx={{
+            height: 22,
+            fontSize: '0.7rem',
+            fontWeight: 600,
+            bgcolor: alpha(statusColor, 0.12),
+            color: statusColor,
+            textTransform: 'capitalize',
+          }}
+        />
+      }
+      trailing={<ChevronRightIcon sx={{ fontSize: 22 }} />}
+      onClick={() => navigate(`/agreements/${agreement.id}`)}
+    />
+  );
+}
 
 const DataModelDetailPage = ({ currentTheme }) => {
   const { shortName } = useParams();
@@ -60,57 +155,89 @@ const DataModelDetailPage = ({ currentTheme }) => {
   const [modelRulesList, setModelRulesList] = React.useState([]);
   const [rulesListLoading, setRulesListLoading] = React.useState(false);
   const [docTabIndex, setDocTabIndex] = React.useState(0);
+  const [toolkitCatalogForTools, setToolkitCatalogForTools] = React.useState([]);
 
   React.useEffect(() => {
+    let cancelled = false;
+
     const loadModelAndAgreements = async () => {
+      setLoading(true);
+      setError(null);
+      setModel(null);
+      setAgreements([]);
+      setMaintainerEmail(null);
+      setCurrentAgreementIndex(0);
+
       try {
         const modelData = await fetchData('models', { forceRefresh: true });
+        if (cancelled) return;
         const agreementsData = await fetchAgreementsByModel(shortName, { forceRefresh: true });
+        if (cancelled) return;
         const applicationsData = await fetchData('applications', { forceRefresh: true });
+        if (cancelled) return;
+
         setApplications(applicationsData.applications || []);
-        
-        const foundModel = modelData.models.find(m => m.shortName.toLowerCase() === shortName.toLowerCase());
+
+        const modelsList = modelData?.models;
+        if (!Array.isArray(modelsList)) {
+          throw new Error('Invalid models response');
+        }
+
+        const sn = (shortName || '').toLowerCase();
+        const foundModel = modelsList.find((m) => m?.shortName && m.shortName.toLowerCase() === sn);
+
         if (foundModel) {
           setModel(foundModel);
           setAgreements(agreementsData.agreements || []);
-          
-          // Find maintainer email from applications
+
           if (foundModel.specMaintainer) {
-            const maintainerApp = applicationsData.applications.find(app => 
-              app.name === foundModel.specMaintainer
+            const maintainerApp = applicationsData.applications?.find(
+              (app) => app.name === foundModel.specMaintainer,
             );
-            if (maintainerApp && maintainerApp.email) {
-              setMaintainerEmail(maintainerApp.email);
-            }
+            setMaintainerEmail(maintainerApp?.email || null);
+          } else {
+            setMaintainerEmail(null);
           }
-          
-          // Load rules for this model (table + count)
+
           setRulesListLoading(true);
           try {
             const rulesData = await getRulesForModel(foundModel.shortName);
+            if (cancelled) return;
             const list = rulesData.rules || [];
             setModelRulesList(list);
             setRuleCount(list.length);
-          } catch (error) {
-            console.error('Error loading rules:', error);
-            setModelRulesList([]);
-            setRuleCount(0);
+          } catch (err) {
+            if (!cancelled) {
+              console.error('Error loading rules:', err);
+              setModelRulesList([]);
+              setRuleCount(0);
+            }
           } finally {
-            setRulesListLoading(false);
+            if (!cancelled) setRulesListLoading(false);
           }
-        } else {
+        } else if (!cancelled) {
           setError('Model not found');
+          setModel(null);
+          setAgreements([]);
           setModelRulesList([]);
           setRuleCount(0);
         }
-      } catch (error) {
-        setError('Failed to load model and agreements');
+      } catch (err) {
+        if (!cancelled) {
+          console.error('Error loading model:', err);
+          setError('Failed to load model and agreements');
+          setModel(null);
+          setAgreements([]);
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
     loadModelAndAgreements();
+    return () => {
+      cancelled = true;
+    };
   }, [shortName]);
 
   const markdownTabs = model ? modelMarkdownsForDisplay(model) : [];
@@ -120,6 +247,25 @@ const DataModelDetailPage = ({ currentTheme }) => {
     Object.keys(model.resources.tools).length > 0;
   const hasAgreements = agreements.length > 0;
   const hasReleaseNotes = Boolean(model?.changelog?.length > 0);
+
+  React.useEffect(() => {
+    if (!hasTools) {
+      setToolkitCatalogForTools([]);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const data = await fetchData('toolkit');
+        if (!cancelled) setToolkitCatalogForTools(data.toolkit?.toolkits || []);
+      } catch {
+        if (!cancelled) setToolkitCatalogForTools([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [hasTools]);
 
   const detailTabLayout = React.useMemo(() => {
     const md = markdownTabs.length;
@@ -183,7 +329,13 @@ const DataModelDetailPage = ({ currentTheme }) => {
   }
 
   if (!model) {
-    return null;
+    return (
+      <Box sx={{ p: 3 }}>
+        <Typography variant="body1" sx={{ color: currentTheme.textSecondary }}>
+          No model to display. Try returning to the list and opening the model again.
+        </Typography>
+      </Box>
+    );
   }
 
   const score = calculateScore(model);
@@ -289,9 +441,12 @@ const DataModelDetailPage = ({ currentTheme }) => {
               borderRadius: 2,
             }}
           >
-            <Typography variant="h6" sx={{ color: currentTheme.text, mb: 2 }}>
-              Description
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 2 }}>
+              <Typography variant="h6" sx={{ color: currentTheme.text }}>
+                Description
+              </Typography>
+              <FieldInfoIcon fieldId="dataModel.section.description" iconSize={18} />
+            </Box>
             <Typography variant="body1" sx={{ color: currentTheme.textSecondary, mb: 3 }}>
               {model.extendedDescription || model.description}
             </Typography>
@@ -300,10 +455,13 @@ const DataModelDetailPage = ({ currentTheme }) => {
               <Box sx={{ display: 'flex', gap: 4 }}>
                 {model.domain?.length > 0 && (
                   <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>
-                    <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary, display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                       <MdDomain style={{ fontSize: 20, color: currentTheme.primary }} />
-                      Domains
-                    </Typography>
+                      <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
+                        Domains
+                      </Typography>
+                      <FieldInfoIcon fieldId="dataModel.section.domains" />
+                    </Box>
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                       {model.domain.map((domain, index) => (
                         <Chip
@@ -326,10 +484,13 @@ const DataModelDetailPage = ({ currentTheme }) => {
 
                 {model.referenceData?.length > 0 && (
                   <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>
-                    <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary, display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                       <IoIosApps style={{ fontSize: 20, color: currentTheme.primary }} />
-                      Reference Data
-                    </Typography>
+                      <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
+                        Reference Data
+                      </Typography>
+                      <FieldInfoIcon fieldId="dataModel.section.referenceData" />
+                    </Box>
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                       {model.referenceData.map((ref, index) => (
                         <Chip
@@ -353,10 +514,13 @@ const DataModelDetailPage = ({ currentTheme }) => {
 
               {model.users?.length > 0 && (
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                  <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary, display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                     <MdHandshake style={{ fontSize: 20, color: currentTheme.primary }} />
-                    Users
-                  </Typography>
+                    <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
+                      Users
+                    </Typography>
+                    <FieldInfoIcon fieldId="dataModel.section.users" />
+                  </Box>
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                     {model.users.map((user, index) => (
                       <Chip
@@ -379,9 +543,12 @@ const DataModelDetailPage = ({ currentTheme }) => {
             </Box>
 
             <Box sx={{ mt: 'auto', pt: 2 }}>
-              <Typography variant="h6" sx={{ color: currentTheme.text, mb: 2 }}>
-                Metadata Score
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 2 }}>
+                <Typography variant="h6" sx={{ color: currentTheme.text }}>
+                  Metadata Score
+                </Typography>
+                <FieldInfoIcon fieldId="dataModel.metadataScore" iconSize={18} />
+              </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                 <Typography variant="body1" sx={{ color: qualityColor, fontWeight: 600, mr: 1 }}>
                   {score.score}%
@@ -443,34 +610,24 @@ const DataModelDetailPage = ({ currentTheme }) => {
             </Typography>
             
             <Box sx={{ mb: 2 }}>
-              <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
-                Latest Version
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
+                  Latest Version
+                </Typography>
+                <FieldInfoIcon fieldId="dataModel.spec.latestVersion" />
+              </Box>
               <Typography variant="body1" sx={{ color: currentTheme.text }}>
                 {model.version}
               </Typography>
             </Box>
 
             <Box sx={{ mb: 2 }}>
-              <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
-                Owner
-              </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <CrownIcon sx={{ 
-                  fontSize: 20, 
-                  color: currentTheme.primary,
-                  opacity: 0.8
-                }} />
-                <Typography variant="body1" sx={{ color: currentTheme.text }}>
-                  {model.owner}
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 1 }}>
+                <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
+                  Specification Maintainer
                 </Typography>
+                <FieldInfoIcon fieldId="dataModel.spec.specificationMaintainer" />
               </Box>
-            </Box>
-
-            <Box sx={{ mb: 2 }}>
-              <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary, mb: 1 }}>
-                Specification Maintainer
-              </Typography>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <WrenchIcon sx={{ 
                   fontSize: 20, 
@@ -511,18 +668,24 @@ const DataModelDetailPage = ({ currentTheme }) => {
             </Box>
 
             <Box sx={{ mb: 2 }}>
-              <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
-                Last Updated
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
+                  Last Updated
+                </Typography>
+                <FieldInfoIcon fieldId="dataModel.spec.lastUpdated" />
+              </Box>
               <Typography variant="body1" sx={{ color: currentTheme.text }}>
                 {formatDate(model.lastUpdated)}
               </Typography>
             </Box>
 
             <Box sx={{ mb: 2 }}>
-              <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
-                Tier
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
+                  Tier
+                </Typography>
+                <FieldInfoIcon fieldId="dataModel.spec.tier" />
+              </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Box
                   sx={{
@@ -544,9 +707,12 @@ const DataModelDetailPage = ({ currentTheme }) => {
               <>
                 <Divider sx={{ my: 2 }} />
                 <Box sx={{ mb: 2 }}>
-                  <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary, mb: 1 }}>
-                    {modelFieldsConfig.field1.name}
-                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 1 }}>
+                    <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
+                      {modelFieldsConfig.field1.name}
+                    </Typography>
+                    <FieldInfoIcon fieldId="dataModel.field.sensitivityLevel" />
+                  </Box>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
                     {(Array.isArray(model[modelFieldsConfig.field1.jsonKey]) 
                       ? model[modelFieldsConfig.field1.jsonKey] 
@@ -759,33 +925,80 @@ const DataModelDetailPage = ({ currentTheme }) => {
           )}
 
           {hasTools && docTabSafe === toolsIdx && (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
-                Links from model resources
+                Toolkit technologies linked from model resources. Each card opens the technology in the
+                catalog or the documentation link.
               </Typography>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                {Object.entries(model.resources.tools).map(([toolName, toolUrl], index) => (
-                  <Link
-                    key={index}
-                    href={toolUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    sx={{
-                      color: currentTheme.textSecondary,
-                      textDecoration: 'none',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 1,
-                      fontSize: '0.875rem',
-                      '&:hover': { color: currentTheme.primary },
-                    }}
-                  >
-                    <WrenchIcon sx={{ fontSize: 16, opacity: 0.7 }} />
-                    <Typography variant="body2" sx={{ textTransform: 'capitalize' }}>
-                      {toolName}
-                    </Typography>
-                  </Link>
-                ))}
+              <Box
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' },
+                  gap: 2,
+                }}
+              >
+                {Object.entries(model.resources.tools).map(([toolName, toolUrl], index) => {
+                  const url = typeof toolUrl === 'string' ? toolUrl : '';
+                  const isInternal = url.startsWith('/');
+                  const caption = toolLinkCaption(url);
+                  const resolved = resolveModelToolTechnology(toolkitCatalogForTools, toolName, url);
+                  const imgSpec = resolved
+                    ? getTechnologyCardImage(resolved.technology, resolved.toolkit)
+                    : null;
+                  const techDescription = resolved?.technology?.description?.trim();
+                  const toolDescription = techDescription || caption || undefined;
+                  const descriptionSx = techDescription
+                    ? {}
+                    : caption
+                      ? {
+                          fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+                          fontSize: '0.75rem',
+                          wordBreak: 'break-all',
+                        }
+                      : {};
+
+                  return (
+                    <MiniCard
+                      key={`${toolName}-${index}`}
+                      currentTheme={currentTheme}
+                      title={toolName}
+                      description={toolDescription}
+                      descriptionVariant={techDescription ? 'body2' : 'caption'}
+                      descriptionLines={techDescription ? 3 : 2}
+                      descriptionSx={descriptionSx}
+                      avatar={
+                        <ModelToolCardAvatar imgSpec={imgSpec} darkMode={currentTheme.darkMode} />
+                      }
+                      chip={
+                        <Chip
+                          size="small"
+                          label={isInternal ? 'In catalog' : 'External'}
+                          sx={{
+                            height: 22,
+                            fontSize: '0.7rem',
+                            fontWeight: 600,
+                            bgcolor: isInternal
+                              ? alpha(currentTheme.primary, currentTheme.darkMode ? 0.25 : 0.15)
+                              : alpha(currentTheme.textSecondary, 0.12),
+                            color: isInternal ? currentTheme.primary : currentTheme.textSecondary,
+                            border: 'none',
+                          }}
+                        />
+                      }
+                      trailing={
+                        isInternal ? (
+                          <ChevronRightIcon sx={{ fontSize: 22 }} />
+                        ) : (
+                          <OpenInNewIcon sx={{ fontSize: 20 }} />
+                        )
+                      }
+                      to={isInternal ? url : undefined}
+                      href={!isInternal ? url : undefined}
+                      target={!isInternal ? '_blank' : undefined}
+                      rel={!isInternal ? 'noopener noreferrer' : undefined}
+                    />
+                  );
+                })}
               </Box>
             </Box>
           )}
@@ -802,6 +1015,7 @@ const DataModelDetailPage = ({ currentTheme }) => {
                 expandResetKey={model.shortName}
                 currentTheme={currentTheme}
                 darkMode={currentTheme.darkMode}
+                applications={applications}
                 emptyMessage="No rules for this model yet."
               />
             </Box>
@@ -838,16 +1052,18 @@ const DataModelDetailPage = ({ currentTheme }) => {
                       }}
                     >
                       <Box sx={{ flex: 1, maxWidth: 'calc(50% - 8px)' }}>
-                        <ProductAgreementCard
+                        <AgreementMiniCard
                           agreement={agreements[currentAgreementIndex]}
                           currentTheme={currentTheme}
+                          navigate={navigate}
                         />
                       </Box>
                       {currentAgreementIndex + 1 < agreements.length && (
                         <Box sx={{ flex: 1, maxWidth: 'calc(50% - 8px)' }}>
-                          <ProductAgreementCard
+                          <AgreementMiniCard
                             agreement={agreements[currentAgreementIndex + 1]}
                             currentTheme={currentTheme}
+                            navigate={navigate}
                           />
                         </Box>
                       )}
@@ -894,7 +1110,11 @@ const DataModelDetailPage = ({ currentTheme }) => {
                 <Grid container spacing={2}>
                   {agreements.map((agreement) => (
                     <Grid item xs={12} sm={6} key={agreement.id}>
-                      <ProductAgreementCard agreement={agreement} currentTheme={currentTheme} />
+                      <AgreementMiniCard
+                        agreement={agreement}
+                        currentTheme={currentTheme}
+                        navigate={navigate}
+                      />
                     </Grid>
                   ))}
                 </Grid>
@@ -992,17 +1212,18 @@ const DataModelDetailPage = ({ currentTheme }) => {
                   </Typography>
                   {entry.fieldChanges && entry.fieldChanges.length > 0 && (
                     <Box sx={{ mt: 2 }}>
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          color: currentTheme.textSecondary,
-                          fontWeight: 600,
-                          mb: 1,
-                          display: 'block',
-                        }}
-                      >
-                        Field Changes:
-                      </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 1 }}>
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: currentTheme.textSecondary,
+                            fontWeight: 600,
+                          }}
+                        >
+                          Field Changes:
+                        </Typography>
+                        <FieldInfoIcon fieldId="dataModel.versionHistory.fieldChanges" />
+                      </Box>
                       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                         {entry.fieldChanges.map((change, changeIndex) => (
                           <Box

@@ -134,19 +134,7 @@ const StatisticsPage = () => {
       </Typography>
 
       {/* Total Site Visits Card */}
-      <Card 
-        elevation={0}
-        sx={{ 
-          mb: 4, 
-          bgcolor: currentTheme.card, 
-          border: `1px solid ${currentTheme.border}`,
-          '&:hover': {
-            transform: 'none',
-            boxShadow: 'none',
-            elevation: 0
-          }
-        }}
-      >
+      <Card sx={{ mb: 4, overflow: 'hidden' }}>
         <CardContent>
           <Typography variant="h6" sx={{ mb: 2, color: currentTheme.text }}>
             All-Time Total Site Visits
@@ -160,19 +148,7 @@ const StatisticsPage = () => {
       <Grid container spacing={3}>
         {/* Total Views by Page - Bar Chart */}
         <Grid item xs={12} lg={6}>
-          <Card 
-            elevation={0}
-            sx={{ 
-              bgcolor: currentTheme.card, 
-              border: `1px solid ${currentTheme.border}`, 
-              height: '100%',
-              '&:hover': {
-                transform: 'none',
-                boxShadow: 'none',
-                elevation: 0
-              }
-            }}
-          >
+          <Card sx={{ height: '100%', overflow: 'hidden' }}>
             <CardContent>
               <Typography variant="h6" sx={{ mb: 2, color: currentTheme.text }}>
                 Total Views by Page
@@ -205,19 +181,7 @@ const StatisticsPage = () => {
 
         {/* Daily Views Over Time - Line Chart (Last 30 Days) */}
         <Grid item xs={12} lg={6}>
-          <Card 
-            elevation={0}
-            sx={{ 
-              bgcolor: currentTheme.card, 
-              border: `1px solid ${currentTheme.border}`, 
-              height: '100%',
-              '&:hover': {
-                transform: 'none',
-                boxShadow: 'none',
-                elevation: 0
-              }
-            }}
-          >
+          <Card sx={{ height: '100%', overflow: 'hidden' }}>
             <CardContent>
               <Typography variant="h6" sx={{ mb: 2, color: currentTheme.text }}>
                 Daily Views (Last 30 Days)
@@ -265,18 +229,7 @@ const StatisticsPage = () => {
 
         {/* All Daily Views - Line Chart */}
         <Grid item xs={12}>
-          <Card 
-            elevation={0}
-            sx={{ 
-              bgcolor: currentTheme.card, 
-              border: `1px solid ${currentTheme.border}`,
-              '&:hover': {
-                transform: 'none',
-                boxShadow: 'none',
-                elevation: 0
-              }
-            }}
-          >
+          <Card sx={{ overflow: 'hidden' }}>
             <CardContent>
               <Typography variant="h6" sx={{ mb: 2, color: currentTheme.text }}>
                 Daily Views by Page (All Time)

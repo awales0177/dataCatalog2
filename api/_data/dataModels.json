@@ -7,7 +7,7 @@
       "version": "2.1.0",
       "description": "Comprehensive model for managing customer information including personal details, contact information, purchase history, preferences, and interaction records. Supports customer segmentation, relationship management, and personalized service delivery across multiple channels.",
       "extendedDescription": "The Customer Data Model serves as the foundation for all customer-related operations. It includes detailed schemas for personal information, contact details, purchase history, preferences, and interaction records. The model supports advanced features like customer segmentation, relationship management, and personalized service delivery. It integrates with multiple channels including web, mobile, and in-store systems. The model also includes data quality checks, validation rules, and compliance measures for handling sensitive customer information.",
-      "lastUpdated": "2026-04-18 14:23:28",
+      "lastUpdated": "2026-04-18 21:37:46",
       "owner": "Data Team",
       "specMaintainer": "Jane Smith",
       "maintainerEmail": "abc@yahoo.com",
@@ -62,9 +62,7 @@
         "documentation": "https://docs.example.com/customer-data-model",
         "rules": "https://docs.example.com/customer-data-model",
         "tools": {
-          "map": "https://docs.example.com/customer-data-model",
-          "screw": "https://docs.example.com/customer-data-model",
-          "hamme": "https://docs.example.com/customer-data-model"
+          "Kubeflow": "/toolkit/toolkit/ee5f0f3e-665b-4152-8405-b1534c05575a/technology/tech-1776539315008"
         },
         "git": "https://git.example.com/customer-data-model",
         "validation": "https://docs.example.com/customer-data-model"
@@ -163,6 +161,19 @@
               "field": "name",
               "oldValue": "Customer Data Mode",
               "newValue": "Customer Data Model"
+            }
+          ]
+        },
+        {
+          "version": "2.1.0",
+          "timestamp": "2026-04-19T01:37:46.744Z",
+          "updatedBy": "user",
+          "changeDescription": "Updated resources.tools",
+          "fieldChanges": [
+            {
+              "field": "resources.tools",
+              "oldValue": "{map, screw, hamme}",
+              "newValue": "{Kubeflow}"
             }
           ]
         }

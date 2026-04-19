@@ -25,13 +25,23 @@ import {
   Container,
   Fab,
   InputAdornment,
+  IconButton,
+  Tooltip,
+  Autocomplete,
+  FormControlLabel,
+  Switch,
 } from '@mui/material';
 import {
   Add as AddIcon,
   Search as SearchIcon,
+  Edit as EditIcon,
+  LocalOffer as LocalOfferIcon,
+  Delete as DeleteIcon,
 } from '@mui/icons-material';
 import { ThemeContext } from '../contexts/ThemeContext';
-import { getAllModelRules, createRule } from '../services/api';
+import { getAllModelRules, createRule, updateRule, deleteRule, fetchData } from '../services/api';
+import TeamSelector from './TeamSelector';
+import { maintainerToTeamSelectorSelection } from '../utils/maintainerTeamSelection';
 import { ruleTagsList, normalizeTagList } from '../utils/ruleTags';
 import { RULE_STAGE_OPTIONS, normalizeRuleStage, ruleStageColor } from '../utils/ruleStage';
 import { RULE_ZONE_OPTIONS, normalizeRuleZone, ruleZoneColor, ruleZoneLabel } from '../utils/ruleZone';
@@ -75,18 +85,43 @@ const RulesMasterList = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [applications, setApplications] = useState([]);
 
   const [libraryDialogOpen, setLibraryDialogOpen] = useState(false);
   const [libraryForm, setLibraryForm] = useState({
     name: '',
     description: '',
     documentation: '',
+    maintainer: '',
     ruleType: 'validation',
     stage: 'bronze',
     ruleZone: 'value',
     enabled: true,
     tags: [],
   });
+
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingRule, setEditingRule] = useState(null);
+  const [editForm, setEditForm] = useState({
+    name: '',
+    description: '',
+    documentation: '',
+    maintainer: '',
+    ruleType: 'validation',
+    stage: 'bronze',
+    ruleZone: 'value',
+    enabled: true,
+    tags: [],
+  });
+
+  const tagSuggestions = useMemo(() => {
+    const s = new Set();
+    rows.forEach((r) => {
+      if (editingRule && r.id === editingRule.id) return;
+      ruleTagsList(r).forEach((t) => s.add(t));
+    });
+    return Array.from(s).sort((a, b) => a.localeCompare(b));
+  }, [rows, editingRule]);
 
   const load = async () => {
     try {
@@ -104,6 +139,21 @@ const RulesMasterList = () => {
 
   useEffect(() => {
     load();
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const response = await fetchData('applications');
+        if (!cancelled) setApplications(response.applications || []);
+      } catch {
+        if (!cancelled) setApplications([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   /** One table row per rule lineage (merged copies across models). */
@@ -148,6 +198,11 @@ const RulesMasterList = () => {
       if (String(r.id || '').toLowerCase().includes(q)) return true;
       if (r.description?.toLowerCase().includes(q)) return true;
       if (r.ruleType?.toLowerCase().includes(q)) return true;
+      const maintRaw = String(r.maintainer || '').toLowerCase();
+      const maintResolved = (
+        maintainerToTeamSelectorSelection(r.maintainer, applications)[0] || ''
+      ).toLowerCase();
+      if (maintRaw.includes(q) || maintResolved.includes(q)) return true;
       if (normalizeRuleStage(r.stage).includes(q)) return true;
       if (normalizeRuleZone(r.ruleZone).includes(q)) return true;
       if (ruleZoneLabel(r.ruleZone).toLowerCase().includes(q)) return true;
@@ -155,7 +210,7 @@ const RulesMasterList = () => {
       if (entry.hasLibrary && 'library'.includes(q)) return true;
       return ruleTagsList(r).some((t) => t.toLowerCase().includes(q));
     });
-  }, [lineageRows, search]);
+  }, [lineageRows, search, applications]);
 
   const sortedRows = useMemo(() => {
     return [...filtered].sort((a, b) => {
@@ -178,6 +233,7 @@ const RulesMasterList = () => {
         name: libraryForm.name.trim(),
         description: libraryForm.description || '',
         documentation: libraryForm.documentation || '',
+        maintainer: (libraryForm.maintainer || '').trim(),
         ruleType: normalizeRuleType(libraryForm.ruleType),
         stage: normalizeRuleStage(libraryForm.stage),
         ruleZone: normalizeRuleZone(libraryForm.ruleZone),
@@ -190,6 +246,7 @@ const RulesMasterList = () => {
         name: '',
         description: '',
         documentation: '',
+        maintainer: '',
         ruleType: 'validation',
         stage: 'bronze',
         ruleZone: 'value',
@@ -199,6 +256,73 @@ const RulesMasterList = () => {
       load();
     } catch (e) {
       setSnackbar({ open: true, message: e.message || 'Create failed', severity: 'error' });
+    }
+  };
+
+  const openEditDialog = (entry) => {
+    const rule = entry.representative;
+    if (!rule?.id) {
+      setSnackbar({ open: true, message: 'This rule has no ID and cannot be edited.', severity: 'error' });
+      return;
+    }
+    setEditingRule(rule);
+    setEditForm({
+      name: rule.name || '',
+      description: rule.description || '',
+      documentation: rule.documentation || '',
+      maintainer: rule.maintainer || '',
+      ruleType: normalizeRuleType(rule.ruleType),
+      stage: normalizeRuleStage(rule.stage),
+      ruleZone: normalizeRuleZone(rule.ruleZone),
+      enabled: rule.enabled !== false,
+      tags: ruleTagsList(rule),
+    });
+    setEditDialogOpen(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingRule?.id) return;
+    if (!editForm.name?.trim()) {
+      setSnackbar({ open: true, message: 'Name is required', severity: 'error' });
+      return;
+    }
+    try {
+      const payload = {
+        name: editForm.name.trim(),
+        description: editForm.description || '',
+        documentation: editForm.documentation || '',
+        maintainer: (editForm.maintainer || '').trim(),
+        ruleType: normalizeRuleType(editForm.ruleType),
+        stage: normalizeRuleStage(editForm.stage),
+        ruleZone: normalizeRuleZone(editForm.ruleZone),
+        enabled: editForm.enabled,
+        tags: normalizeTagList(editForm.tags),
+        modelShortName: isLibraryRule(editingRule)
+          ? ''
+          : editingRule.modelShortName || '',
+        parentRuleId: editingRule.parentRuleId ? editingRule.parentRuleId : null,
+      };
+      await updateRule(editingRule.id, payload);
+      setSnackbar({ open: true, message: 'Rule updated', severity: 'success' });
+      setEditDialogOpen(false);
+      setEditingRule(null);
+      load();
+    } catch (e) {
+      setSnackbar({ open: true, message: e.message || 'Update failed', severity: 'error' });
+    }
+  };
+
+  const handleDeleteEditingRule = async () => {
+    if (!editingRule?.id) return;
+    if (!window.confirm('Are you sure you want to delete this rule?')) return;
+    try {
+      await deleteRule(editingRule.id);
+      setSnackbar({ open: true, message: 'Rule deleted', severity: 'success' });
+      setEditDialogOpen(false);
+      setEditingRule(null);
+      load();
+    } catch (e) {
+      setSnackbar({ open: true, message: e.message || 'Delete failed', severity: 'error' });
     }
   };
 
@@ -224,15 +348,16 @@ const RulesMasterList = () => {
           Data Quality Rules
         </Typography>
         <Typography variant="body1" sx={{ color: currentTheme?.textSecondary, maxWidth: 720 }}>
-          Library rules are not tied to a model. Use the workbench <strong>Rule Builder</strong> (Workspaces) to copy
-          rules onto a model. Edit model-scoped rules in Rule Builder or on the model&apos;s Quality Rules tab.
+          Library rules are not tied to a model. Use <strong>Edit</strong> in the table to change a rule (the library
+          copy when one exists, otherwise the listed model instance). Use the workbench <strong>Rule Builder</strong>{' '}
+          (Workspaces) to copy rules onto a model.
         </Typography>
       </Box>
 
       <Box sx={{ mb: 3 }}>
         <TextField
           fullWidth
-          placeholder="Search name, model, tags…"
+          placeholder="Search name, model, maintainer, tags…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           InputProps={{
@@ -273,7 +398,7 @@ const RulesMasterList = () => {
             size="medium"
             stickyHeader
             sx={{
-              minWidth: 680,
+              minWidth: 840,
               '& td': { fontFamily: fontStackSans, verticalAlign: 'middle' },
             }}
           >
@@ -281,6 +406,7 @@ const RulesMasterList = () => {
               <TableRow>
                 <TableCell sx={headCellSx}>Name</TableCell>
                 <TableCell sx={{ ...headCellSx, width: 160, minWidth: 140 }}>Rule ID</TableCell>
+                <TableCell sx={{ ...headCellSx, width: 120, minWidth: 100, maxWidth: 180 }}>Maintainer</TableCell>
                 <TableCell sx={{ ...headCellSx, minWidth: 200, maxWidth: 360 }}>Model</TableCell>
                 <TableCell sx={{ ...headCellSx, width: 140 }}>Type</TableCell>
                 <TableCell sx={{ ...headCellSx, width: 100 }}>Stage</TableCell>
@@ -288,18 +414,25 @@ const RulesMasterList = () => {
                 <TableCell sx={{ ...headCellSx, width: 88 }} align="center">
                   On
                 </TableCell>
+                <TableCell sx={{ ...headCellSx, width: 72 }} align="right">
+                  Actions
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {sortedRows.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} sx={{ color: currentTheme?.textSecondary, textAlign: 'center', py: 4 }}>
+                  <TableCell colSpan={9} sx={{ color: currentTheme?.textSecondary, textAlign: 'center', py: 4 }}>
                     No rules match.
                   </TableCell>
                 </TableRow>
               ) : (
                 sortedRows.map((entry) => {
                   const rule = entry.representative;
+                  const maintainerLabel =
+                    rule.maintainer != null && String(rule.maintainer).trim() !== ''
+                      ? maintainerToTeamSelectorSelection(rule.maintainer, applications)[0] || rule.maintainer
+                      : '';
                   return (
                     <TableRow
                       key={entry.lineageId}
@@ -325,6 +458,27 @@ const RulesMasterList = () => {
                             }}
                           >
                             {rule.id}
+                          </Typography>
+                        ) : (
+                          <Typography variant="caption" sx={{ color: currentTheme?.textSecondary }}>
+                            —
+                          </Typography>
+                        )}
+                      </TableCell>
+                      <TableCell sx={{ maxWidth: 180 }}>
+                        {maintainerLabel ? (
+                          <Typography
+                            variant="body2"
+                            title={maintainerLabel}
+                            sx={{
+                              color: currentTheme?.textSecondary,
+                              fontSize: '0.8125rem',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {maintainerLabel}
                           </Typography>
                         ) : (
                           <Typography variant="caption" sx={{ color: currentTheme?.textSecondary }}>
@@ -405,6 +559,20 @@ const RulesMasterList = () => {
                           <Chip size="small" label="No" variant="outlined" />
                         )}
                       </TableCell>
+                      <TableCell align="right" onClick={(e) => e.stopPropagation()}>
+                        {rule.id ? (
+                          <Tooltip title="Edit rule">
+                            <IconButton
+                              size="small"
+                              aria-label="Edit rule"
+                              onClick={() => openEditDialog(entry)}
+                              sx={{ color: currentTheme?.textSecondary }}
+                            >
+                              <EditIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        ) : null}
+                      </TableCell>
                     </TableRow>
                   );
                 })
@@ -464,6 +632,17 @@ const RulesMasterList = () => {
             onChange={(e) => setLibraryForm({ ...libraryForm, documentation: e.target.value })}
             sx={{ mb: 2, input: { color: currentTheme?.text } }}
           />
+          <TeamSelector
+            selectedTeams={maintainerToTeamSelectorSelection(libraryForm.maintainer, applications)}
+            onTeamsChange={(teams) =>
+              setLibraryForm({ ...libraryForm, maintainer: teams.length > 0 ? teams[0] : '' })
+            }
+            currentTheme={currentTheme}
+            label="Maintainer"
+            showLabel
+            maxSelections={1}
+            placeholder="No maintainer selected"
+          />
           <FormControl fullWidth size="small" sx={{ mb: 2 }}>
             <InputLabel>Rule type</InputLabel>
             <Select
@@ -511,6 +690,212 @@ const RulesMasterList = () => {
           <Button onClick={() => setLibraryDialogOpen(false)}>Cancel</Button>
           <Button variant="contained" onClick={handleCreateLibrary}>
             Create
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={editDialogOpen}
+        onClose={() => {
+          setEditDialogOpen(false);
+          setEditingRule(null);
+        }}
+        fullWidth
+        maxWidth="sm"
+        PaperProps={{ sx: { bgcolor: currentTheme?.card, border: `1px solid ${currentTheme?.border}` } }}
+      >
+        <DialogTitle
+          component="div"
+          sx={{
+            color: currentTheme?.text,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 1,
+            pr: 1,
+          }}
+        >
+          <Typography component="h2" variant="h6" sx={{ color: currentTheme?.text, fontSize: '1.25rem', fontWeight: 600, m: 0 }}>
+            Edit rule
+          </Typography>
+          {editingRule?.id ? (
+            <Tooltip title="Delete">
+              <IconButton
+                size="small"
+                aria-label="Delete rule"
+                onClick={handleDeleteEditingRule}
+                sx={{ color: currentTheme?.textSecondary }}
+              >
+                <DeleteIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          ) : null}
+        </DialogTitle>
+        <DialogContent>
+          <TextField
+            fullWidth
+            label="Name"
+            value={editForm.name}
+            onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+            sx={{ mt: 1, mb: 2, input: { color: currentTheme?.text } }}
+            required
+          />
+          <TextField
+            fullWidth
+            label="Description"
+            value={editForm.description}
+            onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+            multiline
+            rows={2}
+            sx={{ mb: 2, input: { color: currentTheme?.text } }}
+          />
+          <TextField
+            fullWidth
+            label="Documentation URL"
+            value={editForm.documentation}
+            onChange={(e) => setEditForm({ ...editForm, documentation: e.target.value })}
+            sx={{ mb: 2, input: { color: currentTheme?.text } }}
+          />
+          <TeamSelector
+            selectedTeams={maintainerToTeamSelectorSelection(editForm.maintainer, applications)}
+            onTeamsChange={(teams) =>
+              setEditForm({ ...editForm, maintainer: teams.length > 0 ? teams[0] : '' })
+            }
+            currentTheme={currentTheme}
+            label="Maintainer"
+            showLabel
+            maxSelections={1}
+            placeholder="No maintainer selected"
+          />
+          <FormControl fullWidth size="small" sx={{ mb: 2 }}>
+            <InputLabel>Rule type</InputLabel>
+            <Select
+              label="Rule type"
+              value={editForm.ruleType}
+              onChange={(e) => setEditForm({ ...editForm, ruleType: e.target.value })}
+            >
+              {RULE_TYPE_OPTIONS.map((o) => (
+                <MenuItem key={o.value} value={o.value}>
+                  {o.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <FormControl fullWidth size="small" sx={{ mb: 2 }}>
+            <InputLabel>Stage</InputLabel>
+            <Select
+              label="Stage"
+              value={normalizeRuleStage(editForm.stage)}
+              onChange={(e) => setEditForm({ ...editForm, stage: e.target.value })}
+            >
+              {RULE_STAGE_OPTIONS.map((o) => (
+                <MenuItem key={o.value} value={o.value}>
+                  {o.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <FormControl fullWidth size="small" sx={{ mb: 2 }}>
+            <InputLabel>Rule zone</InputLabel>
+            <Select
+              label="Rule zone"
+              value={normalizeRuleZone(editForm.ruleZone)}
+              onChange={(e) => setEditForm({ ...editForm, ruleZone: e.target.value })}
+            >
+              {RULE_ZONE_OPTIONS.map((o) => (
+                <MenuItem key={o.value} value={o.value}>
+                  {o.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={editForm.enabled}
+                onChange={(e) => setEditForm({ ...editForm, enabled: e.target.checked })}
+                color="primary"
+              />
+            }
+            label="Enabled"
+            sx={{ color: currentTheme?.text, mb: 1, display: 'block' }}
+          />
+          <Autocomplete
+            multiple
+            freeSolo
+            options={tagSuggestions}
+            value={editForm.tags}
+            onChange={(event, newValue) => {
+              const normalized = normalizeTagList(
+                newValue.map((x) => (typeof x === 'string' ? x : String(x))),
+              );
+              setEditForm({ ...editForm, tags: normalized });
+            }}
+            filterSelectedOptions
+            renderTags={(value, getTagProps) =>
+              value.map((option, index) => (
+                <Chip
+                  {...getTagProps({ index })}
+                  key={`${option}-${index}`}
+                  icon={<LocalOfferIcon sx={{ fontSize: 14 }} />}
+                  label={option}
+                  sx={{
+                    bgcolor: darkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(8, 145, 178, 0.1)',
+                    color: currentTheme?.text,
+                  }}
+                />
+              ))
+            }
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Tags"
+                placeholder="Type and press Enter"
+                helperText="Free-text tags for objects, columns, functions, or anything else"
+                sx={{
+                  mb: 0,
+                  '& .MuiOutlinedInput-root': {
+                    color: currentTheme?.text,
+                    '& fieldset': { borderColor: currentTheme?.border },
+                    '&:hover fieldset': { borderColor: currentTheme?.primary },
+                    '&.Mui-focused fieldset': { borderColor: currentTheme?.primary },
+                  },
+                  '& .MuiInputLabel-root': {
+                    color: currentTheme?.textSecondary,
+                    '&.Mui-focused': { color: currentTheme?.primary },
+                  },
+                  '& .MuiFormHelperText-root': { color: currentTheme?.textSecondary },
+                }}
+              />
+            )}
+            sx={{
+              '& .MuiAutocomplete-popupIndicator': { color: currentTheme?.textSecondary },
+              '& .MuiAutocomplete-clearIndicator': { color: currentTheme?.textSecondary },
+            }}
+            PaperComponent={({ children, ...other }) => (
+              <Paper {...other} elevation={0} sx={{ bgcolor: currentTheme?.card, border: `1px solid ${currentTheme?.border}` }}>
+                {children}
+              </Paper>
+            )}
+          />
+          {editingRule?.id ? (
+            <Typography variant="caption" sx={{ color: currentTheme?.textSecondary, display: 'block', mt: 1 }}>
+              Rule ID: {editingRule.id}
+              {isLibraryRule(editingRule) ? ' · Library' : editingRule.modelShortName ? ` · Model: ${editingRule.modelShortName}` : ''}
+            </Typography>
+          ) : null}
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => {
+              setEditDialogOpen(false);
+              setEditingRule(null);
+            }}
+          >
+            Cancel
+          </Button>
+          <Button variant="contained" onClick={handleSaveEdit}>
+            Save
           </Button>
         </DialogActions>
       </Dialog>

@@ -4,6 +4,7 @@ import {
   Paper,
   Typography,
 } from '@mui/material';
+import { catalogInteractivePaperSx } from '../theme/catalogSurfaces';
 import {
   People as PeopleIcon,
   AccountBalance as TaxIcon,
@@ -68,19 +69,11 @@ const DomainCard = ({ domain, onClick, currentTheme }) => {
         height: '110px',
         p: 0.75,
         cursor: 'pointer',
-        bgcolor: currentTheme.darkMode ? '#1E1E1E' : currentTheme.card,
-        border: `1px solid ${currentTheme.darkMode ? 'rgba(255, 255, 255, 0.1)' : currentTheme.border}`,
-        borderRadius: '8px',
-        transition: 'all 0.15s ease-in-out',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        '&:hover': {
-          transform: 'translateY(-1px)',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
-          borderColor: '#37ABBF',
-        },
+        ...catalogInteractivePaperSx(currentTheme),
       }}
     >
       <Box sx={{ 

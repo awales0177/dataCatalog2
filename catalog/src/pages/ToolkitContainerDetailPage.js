@@ -42,6 +42,7 @@ import {
   Edit as EditIcon,
 } from '@mui/icons-material';
 import { ThemeContext } from '../contexts/ThemeContext';
+import FieldInfoIcon from '../components/FieldInfoIcon';
 import { fetchData } from '../services/api';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark, oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
@@ -490,33 +491,45 @@ const ToolkitContainerDetailPage = () => {
             </Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <Box>
-                <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
-                  Type
-                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}>
+                  <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
+                    Type
+                  </Typography>
+                  <FieldInfoIcon fieldId="catalog.item.type" iconSize={14} />
+                </Box>
                 <Typography variant="body2" sx={{ color: currentTheme.text }}>
                   {containerData.type || 'docker'}
                 </Typography>
               </Box>
               <Box>
-                <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
-                  Category
-                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}>
+                  <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
+                    Category
+                  </Typography>
+                  <FieldInfoIcon fieldId="catalog.item.category" iconSize={14} />
+                </Box>
                 <Typography variant="body2" sx={{ color: currentTheme.text }}>
                   {containerData.category}
                 </Typography>
               </Box>
               <Box>
-                <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
-                  Last Updated
-                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}>
+                  <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
+                    Last Updated
+                  </Typography>
+                  <FieldInfoIcon fieldId="catalog.item.lastUpdated" iconSize={14} />
+                </Box>
                 <Typography variant="body2" sx={{ color: currentTheme.text }}>
                   {formatDate(containerData.lastUpdated)}
                 </Typography>
               </Box>
               <Box>
-                <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
-                  Usage Instructions
-                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}>
+                  <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
+                    Usage Instructions
+                  </Typography>
+                  <FieldInfoIcon fieldId="catalog.item.usageInstructions" iconSize={14} />
+                </Box>
                 <Typography variant="body2" sx={{ color: currentTheme.text }}>
                   {containerData.usage}
                 </Typography>
