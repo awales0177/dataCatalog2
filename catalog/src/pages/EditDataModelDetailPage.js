@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useContext } from 'react';
 import {
   Box,
   Typography,
@@ -63,8 +63,10 @@ import {
   uniqueToolResourceKey,
 } from '../utils/modelToolkitTools';
 import { findCatalogModel, modelApiRef } from '../utils/catalogModelLookup';
+import { ThemeContext } from '../contexts/ThemeContext';
 
-const EditDataModelDetailPage = ({ currentTheme }) => {
+const EditDataModelDetailPage = () => {
+  const { currentTheme } = useContext(ThemeContext);
   const { modelId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();

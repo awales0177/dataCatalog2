@@ -68,6 +68,7 @@ import { ThemeContext } from './contexts/ThemeContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { WorkbenchModalsProvider } from './contexts/WorkbenchModalsContext';
 import { CatalogPreferencesProvider } from './contexts/CatalogPreferencesContext';
+import WelcomeModal, { shouldShowWelcomeModal } from './components/WelcomeModal';
 
 function AppContent() {
   const {
@@ -88,6 +89,7 @@ function AppContent() {
   } = useAppState();
   
   const [searchOpen, setSearchOpen] = React.useState(false);
+  const [welcomeOpen, setWelcomeOpen] = React.useState(false);
   const mainScrollRef = React.useRef(null);
 
   const [avatarColor] = React.useState(getRandomColor());
@@ -140,6 +142,11 @@ function AppContent() {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, []);
 
+  React.useEffect(() => {
+    if (loading || !currentTheme) return;
+    setWelcomeOpen(shouldShowWelcomeModal());
+  }, [loading, currentTheme]);
+
   if (loading || !themeData || !menuData) {
     return (
       <Box sx={{ 
@@ -158,7 +165,7 @@ function AppContent() {
     <ThemeContext.Provider value={{ currentTheme, darkMode, setDarkMode: () => {} }}>
       <ThemeProvider theme={muiTheme}>
       <CatalogPreferencesProvider>
-      <WorkbenchModalsProvider currentTheme={currentTheme} darkMode={darkMode}>
+      <WorkbenchModalsProvider>
       <Box sx={{ 
         display: 'flex', 
         flexDirection: 'column', 
@@ -174,7 +181,6 @@ function AppContent() {
         <CssBaseline />
         
         <NavigationDrawer
-          currentTheme={currentTheme}
           mobileOpen={mobileOpen}
           onDrawerToggle={handleDrawerToggle}
           isDrawerCollapsed={isDrawerCollapsed}
@@ -220,8 +226,6 @@ function AppContent() {
           }}
         >
           <MainGlassHeader
-            currentTheme={currentTheme}
-            darkMode={darkMode}
             onThemeToggle={handleThemeToggle}
             onOpenSearch={() => setSearchOpen(true)}
             onDrawerToggle={handleDrawerToggle}
@@ -472,9 +476,7 @@ function AppContent() {
               path="/models/:modelId" 
               element={
                 <ProtectedRoute>
-                  <DataModelDetailPage 
-                    currentTheme={currentTheme}
-                  />
+                  <DataModelDetailPage />
                 </ProtectedRoute>
               } 
             />
@@ -482,9 +484,7 @@ function AppContent() {
               path="/models/:modelId/edit" 
               element={
                 <ProtectedRoute requiredRole="editor">
-                  <EditDataModelDetailPage 
-                    currentTheme={currentTheme}
-                  />
+                  <EditDataModelDetailPage />
                 </ProtectedRoute>
               } 
             />
@@ -500,9 +500,7 @@ function AppContent() {
               path="/agreements/create" 
               element={
                 <ProtectedRoute requiredRole="editor">
-                  <EditAgreementPage 
-                    currentTheme={currentTheme}
-                  />
+                  <EditAgreementPage />
                 </ProtectedRoute>
               } 
             />
@@ -510,9 +508,7 @@ function AppContent() {
               path="/agreements/:id" 
               element={
                 <ProtectedRoute>
-                  <ProductAgreementDetailPage 
-                    currentTheme={currentTheme}
-                  />
+                  <ProductAgreementDetailPage />
                 </ProtectedRoute>
               } 
             />
@@ -520,9 +516,7 @@ function AppContent() {
               path="/agreements/:id/edit" 
               element={
                 <ProtectedRoute requiredRole="editor">
-                  <EditAgreementPage 
-                    currentTheme={currentTheme}
-                  />
+                  <EditAgreementPage />
                 </ProtectedRoute>
               } 
             />
@@ -541,13 +535,18 @@ function AppContent() {
         <InfoSidebar
           open={infoSidebarOpen}
           onClose={handleInfoSidebarToggle}
-          currentTheme={currentTheme}
         />
 
         {/* Global Search Dialog */}
         <GlobalSearch 
           open={searchOpen} 
           onClose={() => setSearchOpen(false)} 
+        />
+
+        <WelcomeModal
+          open={welcomeOpen}
+          onClose={() => setWelcomeOpen(false)}
+          theme={currentTheme}
         />
       </Box>
       </WorkbenchModalsProvider>

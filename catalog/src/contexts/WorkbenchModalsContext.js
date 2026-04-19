@@ -17,10 +17,12 @@ import {
   getWorkbenchExitPath,
   workbenchModalFlagsFromPath,
 } from '../constants/workbenchPaths';
+import { ThemeContext } from './ThemeContext';
 
 const WorkbenchModalsContext = createContext(null);
 
-export function WorkbenchModalsProvider({ children, currentTheme, darkMode }) {
+export function WorkbenchModalsProvider({ children }) {
+  const { currentTheme, darkMode } = useContext(ThemeContext);
   const navigate = useNavigate();
   const location = useLocation();
 

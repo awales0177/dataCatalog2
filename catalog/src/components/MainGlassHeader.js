@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { Box, IconButton, Tooltip, Typography, useTheme } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import {
@@ -12,6 +12,7 @@ import {
 } from '@mui/icons-material';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { ThemeContext } from '../contexts/ThemeContext';
 import { mainHeaderGlassSx, mainHeaderRestSx } from '../theme/glassStyle';
 import { portalColors } from '../theme/portalTokens';
 
@@ -19,14 +20,13 @@ const BANNER_TEXT = 'new website';
 const SCROLL_THRESHOLD_PX = 8;
 
 export default function MainGlassHeader({
-  currentTheme,
-  darkMode,
   onThemeToggle,
   onOpenSearch,
   onDrawerToggle,
   onInfoSidebarToggle,
   scrollContainerRef,
 }) {
+  const { currentTheme, darkMode } = useContext(ThemeContext);
   const theme = useTheme();
   const location = useLocation();
   const { isAuthenticated } = useAuth();

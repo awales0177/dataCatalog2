@@ -109,8 +109,6 @@ const normalizeCountryName = (name) => {
 const geoUrl = "/world-countries.json";
 
 const CountryRuleBuilder = ({ onBack }) => {
-  console.log('CountryRuleBuilder rendering');
-  
   const themeContext = useContext(ThemeContext);
   const { currentTheme: themeCurrentTheme, darkMode: themeDarkMode } = themeContext || {};
   
@@ -143,11 +141,6 @@ const CountryRuleBuilder = ({ onBack }) => {
   const [mapKey, setMapKey] = useState(0); // Key to force remount of map
   const [allCountries, setAllCountries] = useState([]); // All countries from map data
   const [tooltip, setTooltip] = useState({ open: false, country: '', x: 0, y: 0, ruleCount: 0 }); // Tooltip state for map
-  
-  // Debug logging
-  useEffect(() => {
-    console.log('Map state:', { mapError, useDropdown, mapLoading, showDropdown: mapError || useDropdown });
-  }, [mapError, useDropdown, mapLoading]);
   
   // Rule form state
   const [ruleForm, setRuleForm] = useState({
@@ -232,10 +225,8 @@ const CountryRuleBuilder = ({ onBack }) => {
   const loadAvailableOptions = async () => {
     try {
       const toolkitData = await fetchToolkit('toolkit');
-      console.log('Toolkit data received:', toolkitData);
       // The API returns { toolkit: { functions: [...] } }
       const functions = toolkitData?.toolkit?.functions || toolkitData?.functions || [];
-      console.log('Functions extracted:', functions.length);
       setAvailableFunctions(functions);
     } catch (error) {
       console.error('Error loading toolkit functions:', error);
@@ -416,8 +407,6 @@ const CountryRuleBuilder = ({ onBack }) => {
 
   const filterOptions = getFilterOptions();
   const maxCount = Math.max(...Object.values(countryRuleCounts), 1);
-
-  console.log('CountryRuleBuilder: About to render JSX', { currentTheme, darkMode, selectedCountry });
 
   return (
     <Box sx={{ p: 3 }}>

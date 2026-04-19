@@ -784,7 +784,7 @@
       "meta": {
         "tier": "silver",
         "verified": true,
-        "clickCount": 2
+        "clickCount": 3
       },
       "resources": {
         "code": "https://github.com/org/cultural-programs",
@@ -873,7 +873,7 @@
       "meta": {
         "tier": "bronze",
         "verified": false,
-        "clickCount": 1
+        "clickCount": 2
       },
       "resources": {
         "code": "https://github.com/org/agricultural-programs",

@@ -50,9 +50,29 @@ determineApiUrl().then((url) => {
   }
 });
 
-const getAuthHeaders = () => {
+export const getApiUrl = () => API_URL;
+
+export const getAuthHeaders = () => {
   const token = localStorage.getItem('authToken');
   return token ? { 'Authorization': `Bearer ${token}` } : {};
+};
+
+/** List data policies for agreement pickers (GET /policies). */
+export const fetchDataPoliciesList = async () => {
+  try {
+    const response = await fetch(`${API_URL}/policies`, {
+      headers: {
+        Accept: 'application/json',
+        ...getAuthHeaders(),
+      },
+    });
+    if (!response.ok) {
+      return { policies: [] };
+    }
+    return await response.json();
+  } catch {
+    return { policies: [] };
+  }
 };
 
 const fetchWithCache = async (endpoint, params = {}, options = {}) => {

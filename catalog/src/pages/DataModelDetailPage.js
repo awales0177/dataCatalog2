@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import {
   Box,
   Typography,
@@ -54,6 +54,7 @@ import {
   getTechnologyCardImage,
 } from '../utils/modelToolCardImage';
 import { findCatalogModel, modelApiRef } from '../utils/catalogModelLookup';
+import { ThemeContext } from '../contexts/ThemeContext';
 
 /** Short line for tool cards (hostname or path, truncated). */
 function toolLinkCaption(url) {
@@ -143,7 +144,8 @@ function AgreementMiniCard({ agreement, currentTheme, navigate }) {
   );
 }
 
-const DataModelDetailPage = ({ currentTheme }) => {
+const DataModelDetailPage = () => {
+  const { currentTheme } = useContext(ThemeContext);
   const { modelId } = useParams();
   const navigate = useNavigate();
   const { canEdit } = useAuth();

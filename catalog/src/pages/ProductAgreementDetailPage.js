@@ -64,12 +64,14 @@ import {
   Upload as UploadIcon,
 } from '@mui/icons-material';
 import { formatDate } from '../utils/themeUtils';
-import { fetchAgreements, fetchModels } from '../services/api';
+import { fetchAgreements, fetchModels, fetchDataPoliciesList } from '../services/api';
 import { modelApiRef } from '../utils/catalogModelLookup';
 import { agreementFieldsConfig } from '../config/agreementFields';
 import FieldInfoIcon from '../components/FieldInfoIcon';
+import { ThemeContext } from '../contexts/ThemeContext';
 
-const ProductAgreementDetailPage = ({ currentTheme }) => {
+const ProductAgreementDetailPage = () => {
+  const { currentTheme } = React.useContext(ThemeContext);
   const { id } = useParams();
   const navigate = useNavigate();
   const [agreement, setAgreement] = React.useState(null);
@@ -187,19 +189,10 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
 
   // Fetch data policies
   React.useEffect(() => {
-    const fetchDataPolicies = async () => {
-      try {
-        const response = await fetch('http://localhost:8000/api/policies');
-        if (response.ok) {
-          const data = await response.json();
-          setDataPolicies(data.policies || []);
-        }
-      } catch (error) {
-
-      }
-    };
-
-    fetchDataPolicies();
+    (async () => {
+      const data = await fetchDataPoliciesList();
+      setDataPolicies(data.policies || []);
+    })();
   }, []);
 
   const calculateVersionDifference = (agreementVersions, modelVersion) => {

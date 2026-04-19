@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { getApiUrl, getAuthHeaders } from '../services/api';
 
 const AuthContext = createContext();
 
@@ -57,10 +58,11 @@ export const AuthProvider = ({ children }) => {
 
   const changeRole = async (username, password) => {
     try {
-      const response = await fetch('http://localhost:8000/auth/role', {
+      const response = await fetch(`${getApiUrl()}/auth/role`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders(),
         },
         body: JSON.stringify({ username, password }),
       });

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import {
   Box,
   Drawer,
@@ -19,8 +19,10 @@ import {
   Book as BookIcon,
   ChevronRight as ChevronRightIcon,
 } from '@mui/icons-material';
+import { ThemeContext } from '../contexts/ThemeContext';
 
-const InfoSidebar = ({ open, onClose, currentTheme }) => {
+const InfoSidebar = ({ open, onClose }) => {
+  const { currentTheme } = useContext(ThemeContext);
   const infoLinks = [
     {
       title: 'Documentation',

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import {
   Box,
   Drawer,
@@ -37,6 +37,7 @@ import {
 } from '../constants/navigation';
 import { useAuth } from '../contexts/AuthContext';
 import { useWorkbenchModals } from '../contexts/WorkbenchModalsContext';
+import { ThemeContext } from '../contexts/ThemeContext';
 import Logo from './Logo';
 import { portalColors } from '../theme/portalTokens';
 import { getSidebarDisable, getHomeCarouselDisable } from '../utils/disableConfig';
@@ -45,7 +46,6 @@ import { isWorkbenchPath } from '../constants/workbenchPaths';
 import packageJson from '../../package.json';
 
 const NavigationDrawer = ({
-  currentTheme,
   mobileOpen,
   onDrawerToggle,
   isDrawerCollapsed,
@@ -55,6 +55,7 @@ const NavigationDrawer = ({
   sidebarVisibilityMode,
   onSidebarVisibilityToggle,
 }) => {
+  const { currentTheme } = useContext(ThemeContext);
   const theme = useTheme();
   const isSmUp = useMediaQuery(theme.breakpoints.up('sm'));
   const location = useLocation();
@@ -161,18 +162,18 @@ const NavigationDrawer = ({
       : [item.name, item.count != null ? `(${item.count})` : ''].filter(Boolean).join(' ');
 
     const row = (
-      <Box
-        sx={{
-          position: 'relative',
+                <Box
+                  sx={{
+                    position: 'relative',
           mx: labelsOn ? 0 : 0.5,
-          my: isSelected ? 0.25 : 0,
-        }}
-      >
-        <ListItem
-          button
+                    my: isSelected ? 0.25 : 0,
+                  }}
+                >
+                  <ListItem
+                    button
           {...(!navDis ? { component: Link, to: item.path } : { component: 'div' })}
           aria-disabled={navDis}
-          selected={isSelected}
+                    selected={isSelected}
           onClick={
             navDis
               ? (e) => e.preventDefault()
@@ -180,7 +181,7 @@ const NavigationDrawer = ({
                 ? () => onDrawerToggle?.()
                 : undefined
           }
-          sx={{
+                    sx={{
             color: SIDEBAR_TEXT,
             py: 1.1,
             px: labelsOn ? 1.5 : 1,
@@ -190,7 +191,7 @@ const NavigationDrawer = ({
               opacity: NAV_DISABLED_OPACITY,
               cursor: 'not-allowed',
             }),
-            '&.Mui-selected': {
+                      '&.Mui-selected': {
               bgcolor: SIDEBAR_SELECTED_BG,
               color: SIDEBAR_ACCENT,
               fontWeight: 600,
@@ -208,19 +209,19 @@ const NavigationDrawer = ({
               '& svg': {
                 width: item.id === 'home' ? '1.2rem' : '1.35rem',
                 height: item.id === 'home' ? '1.2rem' : '1.35rem',
-              },
-            }}
-          >
-            {item.icon}
-          </ListItemIcon>
+                      },
+                    }}
+                  >
+                      {item.icon}
+                    </ListItemIcon>
           {labelsOn ? (
-            <ListItemText
+                      <ListItemText 
               primary={item.name}
               primaryTypographyProps={{ variant: 'body2', fontWeight: isSelected ? 600 : 500 }}
             />
           ) : null}
-        </ListItem>
-      </Box>
+                  </ListItem>
+                </Box>
     );
 
     if (labelsOn) {
@@ -230,27 +231,27 @@ const NavigationDrawer = ({
     return (
       <Tooltip title={tip} placement="right" arrow>
         {row}
-      </Tooltip>
-    );
-  };
+              </Tooltip>
+            );
+          };
 
   const buildMenuList = (filteredItems, { mobileLabels, isDrawerCollapsed: railCollapsed }) =>
     filteredItems.map((item) => (
-      <React.Fragment key={item.path}>
+              <React.Fragment key={item.path}>
         {renderMenuItem(item, {
           mobileLabels,
           showLabels: Boolean(mobileLabels || !railCollapsed),
         })}
-      </React.Fragment>
+              </React.Fragment>
     ));
 
   const userFooter = (compact) => (
-    <Box
-      sx={{
+      <Box
+        sx={{
         flexShrink: 0,
         p: compact ? 1 : 1.5,
         borderTop: `1px solid ${SIDEBAR_BORDER}`,
-        display: 'flex',
+            display: 'flex',
         flexDirection: compact ? 'column' : 'row',
         alignItems: compact ? 'center' : 'flex-start',
         gap: compact ? 1 : 1.5,
@@ -261,7 +262,7 @@ const NavigationDrawer = ({
         <>
           <Tooltip title={user?.full_name || user?.username || 'User'} placement="right">
             <Avatar
-              sx={{
+            sx={{
                 width: 28,
                 height: 28,
                 bgcolor: avatarColor,
@@ -289,12 +290,12 @@ const NavigationDrawer = ({
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap' }}>
                 <Typography variant="caption" sx={{ fontWeight: 600, color: SIDEBAR_TEXT }} noWrap>
                   {user?.full_name || user?.username}
-                </Typography>
-                <Chip
-                  icon={getRoleIcon(currentRole || 'reader')}
-                  label={(currentRole || 'reader').charAt(0).toUpperCase() + (currentRole || 'reader').slice(1)}
-                  color={getRoleColor(currentRole || 'reader')}
-                  size="small"
+                  </Typography>
+                  <Chip
+                    icon={getRoleIcon(currentRole || 'reader')}
+                    label={(currentRole || 'reader').charAt(0).toUpperCase() + (currentRole || 'reader').slice(1)}
+                    color={getRoleColor(currentRole || 'reader')}
+                    size="small"
                   sx={{ height: 20, fontSize: '0.65rem' }}
                 />
               </Box>
@@ -306,8 +307,8 @@ const NavigationDrawer = ({
               >
                 Change role
               </Button>
-            </Box>
-          )}
+              </Box>
+            )}
           <Box
             sx={{
               display: 'flex',
@@ -318,16 +319,16 @@ const NavigationDrawer = ({
             }}
           >
             <Tooltip title={user?.full_name || user?.username || 'User'} placement="right">
-              <Avatar
-                sx={{
-                  width: 32,
-                  height: 32,
-                  bgcolor: avatarColor,
+            <Avatar
+              sx={{
+                width: 32,
+                height: 32,
+                bgcolor: avatarColor,
                   fontSize: '0.75rem',
-                }}
-              >
-                {(user?.full_name || user?.username || 'U').charAt(0).toUpperCase()}
-              </Avatar>
+              }}
+            >
+              {(user?.full_name || user?.username || 'U').charAt(0).toUpperCase()}
+            </Avatar>
             </Tooltip>
             <Typography
               variant="caption"
@@ -406,7 +407,7 @@ const NavigationDrawer = ({
               {st.comingSoon ? (
                 <Chip
                   label="Soon"
-                  size="small"
+                size="small"
                   sx={{
                     position: 'absolute',
                     top: -2,
@@ -435,10 +436,10 @@ const NavigationDrawer = ({
                 </Typography>
               ) : null}
             </Box>
-          </Tooltip>
+            </Tooltip>
         );
       })}
-    </Box>
+      </Box>
   );
 
   const drawerInner = ({ mobileLabels }) => {
@@ -450,7 +451,7 @@ const NavigationDrawer = ({
       );
     }
     if (menuData.items.length === 0) {
-      return (
+  return (
         <ListItem>
           <ListItemText
             primary="No menu items available"
@@ -474,7 +475,7 @@ const NavigationDrawer = ({
   const paperBody = ({ mobileLabels }) => (
     <Paper
       elevation={0}
-      sx={{
+      sx={{ 
         display: 'flex',
         flexDirection: 'column',
         flex: 1,
@@ -505,7 +506,7 @@ const NavigationDrawer = ({
           '& img': { height: mobileLabels ? 32 : 28, width: 'auto' },
         }}
       >
-        <Logo currentTheme={currentTheme}>
+        <Logo>
           {(mobileLabels || !isDrawerCollapsed) && (
             <Typography
               variant="subtitle1"
@@ -559,10 +560,10 @@ const NavigationDrawer = ({
         top: drawerPaperTop,
         zIndex: (t) => t.zIndex.drawer + 1,
         display: { xs: 'none', sm: 'flex' },
-        flexDirection: 'column',
-        gap: 1,
-      }}
-    >
+          flexDirection: 'column',
+          gap: 1,
+        }}
+      >
       <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
         <Tooltip
           title={
@@ -597,19 +598,19 @@ const NavigationDrawer = ({
       {onSidebarVisibilityToggle ? (
         <Tooltip
           title={
-            sidebarVisibilityMode === 'auto'
-              ? 'Sidebar auto-collapses on detail pages'
-              : sidebarVisibilityMode === 'always-visible'
-                ? 'Sidebar is always visible'
+            sidebarVisibilityMode === 'auto' 
+              ? 'Sidebar auto-collapses on detail pages' 
+              : sidebarVisibilityMode === 'always-visible' 
+              ? 'Sidebar is always visible' 
                 : 'Sidebar is hidden'
           }
           placement="right"
           arrow
         >
-          <IconButton
+          <IconButton 
             onClick={onSidebarVisibilityToggle}
             size="small"
-            sx={{
+            sx={{ 
               ...controlIconSx,
               color:
                 sidebarVisibilityMode === 'always-visible'
@@ -665,7 +666,7 @@ const NavigationDrawer = ({
         <Box
           component="nav"
           aria-label="Primary navigation"
-          sx={{
+        sx={{
             display: { xs: 'none', sm: 'flex' },
             position: 'fixed',
             left: `${sidebarFloatInset}px`,
@@ -681,7 +682,7 @@ const NavigationDrawer = ({
           }}
         >
           {paperBody({ mobileLabels: false })}
-        </Box>
+    </Box>
       ) : null}
     </>
   );

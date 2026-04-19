@@ -39,7 +39,13 @@ import {
 import { useNavigate, useParams } from 'react-router-dom';
 import { ThemeContext } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
-import { fetchData, createAgreement, updateAgreement, deleteAgreement } from '../services/api';
+import {
+  fetchData,
+  createAgreement,
+  updateAgreement,
+  deleteAgreement,
+  fetchDataPoliciesList,
+} from '../services/api';
 import cacheService from '../services/cache';
 import ChangelogEditor from '../components/ChangelogEditor';
 import TeamSelector from '../components/TeamSelector';
@@ -315,21 +321,10 @@ const EditAgreementPage = () => {
 
   // Fetch data policies
   useEffect(() => {
-    const fetchDataPolicies = async () => {
-      try {
-        const response = await fetch('http://localhost:8000/api/policies');
-        if (response.ok) {
-          const data = await response.json();
-          setDataPolicies(data.policies || []);
-        } else {
-
-        }
-      } catch (error) {
-
-      }
-    };
-
-    fetchDataPolicies();
+    (async () => {
+      const data = await fetchDataPoliciesList();
+      setDataPolicies(data.policies || []);
+    })();
   }, []);
 
   // Fetch data models
