@@ -138,8 +138,8 @@ const ModelingModal = ({
   currentTheme,
   darkMode,
   splitMode = false,
-  onOpenAgora,
-  agoraOpen = false,
+  onOpenQuery,
+  queryOpen = false,
 }) => {
   const { currentTheme: contextTheme } = useContext(ThemeContext);
   const theme = currentTheme || contextTheme;
@@ -468,12 +468,12 @@ const ModelingModal = ({
             </Typography>
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexShrink: 0 }}>
-            {onOpenAgora && !agoraOpen && (
-              <Tooltip title="Open Agora query engine side-by-side on wide screens">
+            {onOpenQuery && !queryOpen && (
+              <Tooltip title="Open query workbench side-by-side on wide screens">
                 <Button
                   size="small"
                   variant="outlined"
-                  onClick={onOpenAgora}
+                  onClick={onOpenQuery}
                   sx={{
                     textTransform: 'none',
                     fontWeight: 600,

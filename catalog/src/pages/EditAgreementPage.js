@@ -76,7 +76,12 @@ const EditAgreementPage = () => {
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showDeleteArrayDialog, setShowDeleteArrayDialog] = useState(false);
-  const [deleteArrayItem, setDeleteArrayItem] = useState({ path: '', index: -1, label: '' });
+  const [deleteArrayItem, setDeleteArrayItem] = useState({
+    path: '',
+    index: -1,
+    label: '',
+    itemPreview: '',
+  });
 
   const [newChangelogVersion, setNewChangelogVersion] = useState('');
   const [newChangelogChanges, setNewChangelogChanges] = useState('');
@@ -184,8 +189,11 @@ const EditAgreementPage = () => {
             
 
             
+            const aid = String(finalAgreementId).toLowerCase();
             const foundAgreement = agreementsData.agreements.find(
-              a => a.id.toLowerCase() === finalAgreementId.toLowerCase()
+              (a) =>
+                (a.uuid && String(a.uuid).toLowerCase() === aid) ||
+                String(a.id).toLowerCase() === aid
             );
             
             if (foundAgreement) {
@@ -569,8 +577,10 @@ const EditAgreementPage = () => {
     });
   };
 
-  const confirmDeleteArrayItem = (path, index, label) => {
-    setDeleteArrayItem({ path, index, label });
+  const confirmDeleteArrayItem = (path, index, label, itemValue) => {
+    const itemPreview =
+      String(itemValue ?? '').trim() || `Row ${index + 1}`;
+    setDeleteArrayItem({ path, index, label, itemPreview });
     setShowDeleteArrayDialog(true);
   };
 
@@ -612,7 +622,7 @@ const EditAgreementPage = () => {
     });
     
     setShowDeleteArrayDialog(false);
-    setDeleteArrayItem({ path: '', index: -1, label: '' });
+    setDeleteArrayItem({ path: '', index: -1, label: '', itemPreview: '' });
   };
 
   // Helper function to format values for display
@@ -775,7 +785,7 @@ const EditAgreementPage = () => {
         
         // Navigate to the new agreement's view page using the UUID returned by the API
         setTimeout(() => {
-          navigate(`/agreements/${result.id}`, { replace: true });
+          navigate(`/agreements/${result.uuid || result.id}`, { replace: true });
         }, 1500);
       } else {
         // Update existing agreement
@@ -1372,7 +1382,7 @@ const EditAgreementPage = () => {
               />
               <IconButton
                 size="small"
-                onClick={() => confirmDeleteArrayItem(path, index, label)}
+                onClick={() => confirmDeleteArrayItem(path, index, label, item)}
                 sx={{ color: 'error.main' }}
               >
                 <DeleteIcon />
@@ -1942,35 +1952,19 @@ const EditAgreementPage = () => {
         </Grid>
       </Paper>
 
-      {/* Delete Array Item Confirmation Dialog */}
-      <Dialog
+      <DeleteModal
         open={showDeleteArrayDialog}
-        onClose={() => setShowDeleteArrayDialog(false)}
-        PaperProps={{
-          sx: {
-            bgcolor: currentTheme.card,
-            color: currentTheme.text,
-            border: `1px solid ${currentTheme.border}`
-          }
+        onClose={() => {
+          setShowDeleteArrayDialog(false);
+          setDeleteArrayItem({ path: '', index: -1, label: '', itemPreview: '' });
         }}
-      >
-        <DialogTitle sx={{ color: currentTheme.text }}>
-          Confirm Delete
-        </DialogTitle>
-        <DialogContent sx={{ color: currentTheme.text }}>
-          <Typography>
-            Are you sure you want to delete this {deleteArrayItem.label}?
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setShowDeleteArrayDialog(false)} sx={{ color: currentTheme.text }}>
-            Cancel
-          </Button>
-          <Button onClick={handleDeleteArrayItemConfirmed} color="error" variant="contained">
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
+        onConfirm={handleDeleteArrayItemConfirmed}
+        confirmMode="simple"
+        title="Remove list item"
+        itemType={String(deleteArrayItem.label || 'item').toLowerCase()}
+        itemName={deleteArrayItem.itemPreview || 'this entry'}
+        theme={currentTheme}
+      />
 
       {/* Delete Agreement Modal */}
       <DeleteModal

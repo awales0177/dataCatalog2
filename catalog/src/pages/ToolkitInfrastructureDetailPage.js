@@ -564,7 +564,6 @@ const ToolkitInfrastructureDetailPage = () => {
                   <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
                     Provider
                   </Typography>
-                  <FieldInfoIcon fieldId="catalog.item.provider" iconSize={14} />
                 </Box>
                 <Typography variant="body2" sx={{ color: currentTheme.text }}>
                   {infrastructureData.provider || 'terraform'}
@@ -575,7 +574,6 @@ const ToolkitInfrastructureDetailPage = () => {
                   <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
                     Category
                   </Typography>
-                  <FieldInfoIcon fieldId="catalog.item.category" iconSize={14} />
                 </Box>
                 <Typography variant="body2" sx={{ color: currentTheme.text }}>
                   {infrastructureData.category}
@@ -586,7 +584,6 @@ const ToolkitInfrastructureDetailPage = () => {
                   <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
                     Last Updated
                   </Typography>
-                  <FieldInfoIcon fieldId="catalog.item.lastUpdated" iconSize={14} />
                 </Box>
                 <Typography variant="body2" sx={{ color: currentTheme.text }}>
                   {formatDate(infrastructureData.lastUpdated)}

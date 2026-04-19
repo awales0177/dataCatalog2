@@ -62,9 +62,10 @@ import {
   flattenToolkitTechnologyOptions,
   uniqueToolResourceKey,
 } from '../utils/modelToolkitTools';
+import { findCatalogModel, modelApiRef } from '../utils/catalogModelLookup';
 
 const EditDataModelDetailPage = ({ currentTheme }) => {
-  const { shortName } = useParams();
+  const { modelId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [model, setModel] = useState(null);
@@ -73,7 +74,15 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
-  const [showDeleteDialog, setShowDeleteDialog] = useState({ open: false, path: '', index: -1, label: '' });
+  const [showDeleteDialog, setShowDeleteDialog] = useState({
+    open: false,
+    path: '',
+    index: -1,
+    label: '',
+    displayName: '',
+    toolName: '',
+    isTool: false,
+  });
   const [showShortNameChangeDialog, setShowShortNameChangeDialog] = useState(false);
   const [updateAssociatedLinks, setUpdateAssociatedLinks] = useState(true);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
@@ -91,7 +100,7 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
 
   // Simple back function that goes back one level in the URL path
   const goToViewMode = () => {
-    if (shortName === 'new') {
+    if (modelId === 'new') {
       // For new models, go directly to models page
       navigate('/models', { replace: true });
     } else {
@@ -105,7 +114,7 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
       try {
         
         // Check if this is a new model creation
-        if (shortName === 'new') {
+        if (modelId === 'new') {
           const newModelTemplate = localStorage.getItem('newModelTemplate');
           if (newModelTemplate) {
             const newModel = JSON.parse(newModelTemplate);
@@ -122,7 +131,7 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
         }
         
         const modelData = await fetchData('models');
-        const foundModel = modelData.models.find(m => m.shortName.toLowerCase() === shortName.toLowerCase());
+        const foundModel = findCatalogModel(modelData.models, modelId);
         
         if (foundModel) {
           foundModel.markdowns = normalizeModelMarkdowns(foundModel.markdowns);
@@ -155,12 +164,12 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
 
 
     // No need to manipulate browser history - we'll handle navigation differently
-  }, [shortName]);
+  }, [modelId]);
 
   // Handle browser back button to go back one step
   useEffect(() => {
     const handlePopState = () => {
-      if (shortName === 'new') {
+      if (modelId === 'new') {
         // For new models, go directly to models page
         navigate('/models', { replace: true });
       } else {
@@ -245,7 +254,7 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
     });
 
     // Check for duplicate shortName if this is the shortName field
-    if (path === 'shortName' && value && shortName === 'new') {
+    if (path === 'shortName' && value && modelId === 'new') {
       // Clear any existing timeout
       if (shortNameTimeoutRef.current) {
         clearTimeout(shortNameTimeoutRef.current);
@@ -351,8 +360,18 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
     });
   };
 
-  const confirmDeleteArrayItem = (path, index, label) => {
-    setShowDeleteDialog({ open: true, path, index, label });
+  const confirmDeleteArrayItem = (path, index, label, itemValue) => {
+    const displayName =
+      String(itemValue ?? '').trim() || `Row ${index + 1}`;
+    setShowDeleteDialog({
+      open: true,
+      path,
+      index,
+      label,
+      displayName,
+      toolName: '',
+      isTool: false,
+    });
   };
 
   const handleSelectionConfirm = (selectedValue) => {
@@ -421,52 +440,67 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
   };
 
   const confirmDeleteTool = (path, toolName, label) => {
-    setShowDeleteDialog({ 
-      open: true, 
-      path: path, 
-      index: -1, 
-      label: label,
-      toolName: toolName,
-      isTool: true 
+    setShowDeleteDialog({
+      open: true,
+      path,
+      index: -1,
+      label,
+      displayName: toolName,
+      toolName,
+      isTool: true,
     });
   };
 
   const handleDeleteConfirmed = () => {
-    const { path, index, toolName, isTool } = showDeleteDialog;
-    
+    const snapshot = showDeleteDialog;
+    const { path, index, toolName, isTool } = snapshot;
+    const deletedLabel = snapshot.label;
+
     if (isTool) {
-      // Handle tool deletion
       setEditedModel(prev => {
         const newModel = JSON.parse(JSON.stringify(prev));
         const pathArray = path.split('.');
         let current = newModel;
-        
-        // Navigate to the tools object
+
         for (let i = 0; i < pathArray.length; i++) {
           current = current[pathArray[i]];
         }
-        
-        // Remove the tool
+
         delete current[toolName];
-        
+
         return newModel;
       });
     } else {
-      // Handle array item deletion
       removeArrayItem(path, index);
     }
-    
-    setShowDeleteDialog({ open: false, path: '', index: -1, label: '' });
-    
+
+    setShowDeleteDialog({
+      open: false,
+      path: '',
+      index: -1,
+      label: '',
+      displayName: '',
+      toolName: '',
+      isTool: false,
+    });
+
     setSnackbar({
       open: true,
-      message: `${showDeleteDialog.label} deleted successfully`,
+      message: `${deletedLabel} deleted successfully`,
       severity: 'success'
     });
   };
 
   const handleDeleteCanceled = () => {
-    setShowDeleteDialog({ open: false, path: '', index: -1, label: '' });
+    setShowDeleteDialog({
+      open: false,
+      path: '',
+      index: -1,
+      label: '',
+      displayName: '',
+      toolName: '',
+      isTool: false,
+    });
   };
 
   const handleShortNameChangeConfirmed = async () => {
@@ -486,7 +520,7 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
     }
     
     // Check if shortName is being changed
-    const isShortNameChanging = editedModel.shortName !== shortName;
+    const isShortNameChanging = editedModel.shortName !== model?.shortName;
     
     if (isShortNameChanging) {
       // Reset the updateAssociatedLinks option to default (true)
@@ -502,12 +536,12 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
 
   const refreshModelData = async () => {
     try {
-      if (shortName !== 'new') {
+      if (modelId !== 'new') {
         // Invalidate models cache
         cacheService.invalidateByPrefix('models');
         
         const modelData = await fetchData('models', {}, { forceRefresh: true });
-        const foundModel = modelData.models.find(m => m.shortName.toLowerCase() === shortName.toLowerCase());
+        const foundModel = findCatalogModel(modelData.models, modelId);
         if (foundModel) {
           setModel(foundModel);
           setEditedModel(JSON.parse(JSON.stringify(foundModel)));
@@ -635,9 +669,9 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
       
       // Generate version history entry for changes
       let versionHistoryEntry = null;
-      if (shortName !== 'new' && model) {
+      if (modelId !== 'new' && model) {
         versionHistoryEntry = generateVersionHistoryEntry(model, editedModel);
-      } else if (shortName === 'new') {
+      } else if (modelId === 'new') {
         versionHistoryEntry = generateVersionHistoryEntry({}, editedModel, 'create');
       }
       
@@ -657,10 +691,10 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
       }
       
       // Check if this is a new model creation
-      const isNewModel = shortName === 'new';
+      const isNewModel = modelId === 'new';
       
       // Check if shortName is being changed (for existing models)
-      const isShortNameChanging = !isNewModel && editedModel.shortName !== shortName;
+      const isShortNameChanging = !isNewModel && editedModel.shortName !== model?.shortName;
       
       
       // Update the edited model with new lastUpdated
@@ -681,11 +715,12 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
         
         // Navigate to the new model's view page and replace the edit page in history
         setTimeout(() => {
-          navigate(`/models/${updatedModel.shortName}`, { replace: true });
+          const key = encodeURIComponent(result.uuid || modelApiRef(updatedModel));
+          navigate(`/models/${key}`, { replace: true });
         }, 1500);
       } else {
         // Update existing model
-        const result = await updateModel(shortName, updatedModel, { updateAssociatedLinks });
+        await updateModel(modelApiRef(model), updatedModel, { updateAssociatedLinks });
         
         // Refresh the UI with updated data
         await refreshModelData();
@@ -699,8 +734,7 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
         // Navigate back to view mode
         setTimeout(() => {
           if (isShortNameChanging) {
-            // If shortName changed, navigate to the new model URL
-            navigate(`/models/${updatedModel.shortName}`);
+            navigate(`/models/${encodeURIComponent(modelApiRef(updatedModel))}`);
           } else {
             // Otherwise, go back to view mode
             goToViewMode();
@@ -725,7 +759,7 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
     if (JSON.stringify(model) !== JSON.stringify(editedModel)) {
       setShowSaveDialog(true);
     } else {
-      if (shortName === 'new') {
+      if (modelId === 'new') {
         // For new models, go directly to models page
         navigate('/models', { replace: true });
       } else {
@@ -741,7 +775,7 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
   const confirmDeleteModel = async () => {
     try {
       // Call the delete API
-      await deleteModel(model.shortName);
+      await deleteModel(modelApiRef(model));
 
       setSnackbar({
         open: true,
@@ -1199,7 +1233,7 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
               />
               <IconButton
                 size="small"
-                onClick={() => confirmDeleteArrayItem(path, index, label)}
+                onClick={() => confirmDeleteArrayItem(path, index, label, item)}
                 sx={{ color: 'error.main' }}
               >
                 <DeleteIcon />
@@ -1398,7 +1432,7 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
 
   // For new models, check if required fields are filled and no shortName errors
   // For existing models, check if there are changes
-  const hasChanges = shortName === 'new' 
+  const hasChanges = modelId === 'new' 
     ? (editedModel.shortName && editedModel.name && editedModel.description && !shortNameError) // Required fields + no errors
     : JSON.stringify(model) !== JSON.stringify(editedModel); // Changes for existing models
 
@@ -1411,10 +1445,10 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
         </IconButton>
         <Box sx={{ flex: 1 }}>
           <Typography variant="h4" sx={{ color: currentTheme.text }}>
-            {shortName === 'new' ? 'Create New Model' : `Edit: ${model.name}`}
+            {modelId === 'new' ? 'Create New Model' : `Edit: ${model.name}`}
           </Typography>
           <Typography variant="subtitle1" sx={{ color: currentTheme.textSecondary }}>
-            {shortName === 'new' ? 'Fill in the details below' : model.shortName}
+            {modelId === 'new' ? 'Fill in the details below' : model.shortName}
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', gap: 1 }}>
@@ -1427,7 +1461,7 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
             Cancel
           </Button>
           {/* Delete button - only show for existing models */}
-          {shortName !== 'new' && (
+          {modelId !== 'new' && (
             <Button
               variant="outlined"
               color="error"
@@ -1452,14 +1486,14 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
             startIcon={saving ? <CircularProgress size={20} /> : <SaveIcon />}
             sx={{ bgcolor: currentTheme.primary }}
           >
-            {saving ? 'Saving...' : shortName === 'new' ? 'Create Model' : 'Save Changes'}
+            {saving ? 'Saving...' : modelId === 'new' ? 'Create Model' : 'Save Changes'}
           </Button>
         </Box>
       </Box>
 
       {/* Edit Form */}
       <Paper elevation={0} sx={{ p: 3, bgcolor: currentTheme.card, border: `1px solid ${currentTheme.border}`, borderRadius: 2 }}>
-        {shortName === 'new' && (
+        {modelId === 'new' && (
                       <Box sx={{ 
               mb: 3, 
               p: 2, 
@@ -1490,9 +1524,9 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
 
         <Grid container spacing={3}>
           <Grid item xs={12} md={6}>
-            {renderField('name', editedModel.name, 'Name', 'text', null, shortName === 'new')}
+            {renderField('name', editedModel.name, 'Name', 'text', null, modelId === 'new')}
             {/* Short Name - Editable */}
-            {renderField('shortName', editedModel.shortName, 'Short Name', 'text', null, shortName === 'new')}
+            {renderField('shortName', editedModel.shortName, 'Short Name', 'text', null, modelId === 'new')}
             
             {/* Spec Maintainer - Team Selector */}
             <Box sx={{ mb: 4 }}>
@@ -1512,7 +1546,7 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
               />
             </Box>
             {/* ShortName Error Display */}
-            {shortName === 'new' && (
+            {modelId === 'new' && (
               <Box sx={{ mb: 2 }}>
                 {checkingShortName && (
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
@@ -1530,7 +1564,7 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
               </Box>
             )}
             {renderField('version', editedModel.version, 'Version')}
-            {renderField('description', editedModel.description, 'Description', 'textarea', null, shortName === 'new')}
+            {renderField('description', editedModel.description, 'Description', 'textarea', null, modelId === 'new')}
             {renderField('extendedDescription', editedModel.extendedDescription, 'Extended Description', 'textarea')}
           </Grid>
           
@@ -1608,7 +1642,8 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
             </Typography>
           </Box>
           <Typography variant="body2" sx={{ color: currentTheme.textSecondary, mb: 2 }}>
-            Optional tabs of markdown shown on the model detail page (tables, links, ```mermaid``` blocks, etc.).
+            Add or remove documentation tabs here. Tab titles appear on the model page. Edit markdown on the model
+            detail view (same idea as toolkit README): open the model, choose a tab, then use Edit documentation.
           </Typography>
           {(normalizeModelMarkdowns(editedModel.markdowns)).map((tab, index) => (
             <Paper
@@ -1622,7 +1657,7 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
                 borderRadius: 1,
               }}
             >
-              <Box sx={{ display: 'flex', gap: 1, mb: 1, flexWrap: 'wrap', alignItems: 'center' }}>
+              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
                 <TextField
                   size="small"
                   label="Tab title"
@@ -1651,25 +1686,6 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
                   <DeleteIcon />
                 </IconButton>
               </Box>
-              <TextField
-                fullWidth
-                multiline
-                minRows={8}
-                label="Markdown"
-                value={tab.content}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  setEditedModel((prev) => {
-                    const tabs = normalizeModelMarkdowns(prev.markdowns);
-                    const next = [...tabs];
-                    next[index] = { ...next[index], content: v };
-                    return { ...prev, markdowns: next };
-                  });
-                }}
-                sx={{
-                  '& .MuiInputBase-input': { color: currentTheme.text, fontFamily: 'monospace', fontSize: '0.875rem' },
-                }}
-              />
             </Paper>
           ))}
           <Button
@@ -1737,33 +1753,24 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
           </DialogActions>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
-      <Dialog 
-        open={showDeleteDialog.open} 
+      <DeleteModal
+        open={showDeleteDialog.open}
         onClose={handleDeleteCanceled}
-        PaperProps={{
-          sx: {
-            bgcolor: currentTheme.card,
-            color: currentTheme.text,
-            border: `1px solid ${currentTheme.border}`
-          }
-        }}
-      >
-        <DialogTitle sx={{ color: currentTheme.text }}>Confirm Deletion</DialogTitle>
-        <DialogContent sx={{ color: currentTheme.text }}>
-          <Typography sx={{ color: currentTheme.text }}>
-            Are you sure you want to delete this {showDeleteDialog.label.toLowerCase()}? This action cannot be undone.
-          </Typography>
-        </DialogContent>
-                  <DialogActions>
-            <Button onClick={handleDeleteCanceled} sx={{ color: currentTheme.text }}>
-              Cancel
-            </Button>
-            <Button onClick={handleDeleteConfirmed} color="error" variant="contained">
-              Delete
-            </Button>
-          </DialogActions>
-      </Dialog>
+        onConfirm={handleDeleteConfirmed}
+        confirmMode="simple"
+        title="Confirm deletion"
+        itemType={
+          showDeleteDialog.isTool
+            ? 'tool'
+            : String(showDeleteDialog.label || 'item').toLowerCase()
+        }
+        itemName={
+          showDeleteDialog.isTool
+            ? showDeleteDialog.toolName
+            : showDeleteDialog.displayName || 'this entry'
+        }
+        theme={currentTheme}
+      />
 
               {/* ShortName Change Confirmation Dialog */}
         <Dialog
@@ -1785,7 +1792,7 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
           </DialogTitle>
           <DialogContent sx={{ color: currentTheme.text }}>
             <Typography sx={{ mb: 2 }}>
-              You are about to change the shortName from <strong>"{shortName}"</strong> to <strong>"{editedModel.shortName}"</strong>.
+              You are about to change the shortName from <strong>"{model?.shortName}"</strong> to <strong>"{editedModel.shortName}"</strong>.
             </Typography>
             
             <Box sx={{ mb: 3, p: 2, bgcolor: 'warning.light', borderRadius: 1 }}>
@@ -1817,7 +1824,7 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
               {!updateAssociatedLinks && (
                 <Box sx={{ mt: 2, p: 2, bgcolor: 'info.light', borderRadius: 1 }}>
                   <Typography variant="body2" sx={{ color: 'info.dark', fontWeight: 'bold' }}>
-                    ℹ️ Note: Existing agreements will continue to reference "{shortName}"
+                    ℹ️ Note: Existing agreements will continue to reference "{model?.shortName}"
                   </Typography>
                   <Typography variant="caption" sx={{ color: 'info.dark', display: 'block', mt: 0.5 }}>
                     This creates a redirect scenario where both old and new shortNames work
@@ -1830,7 +1837,7 @@ const EditDataModelDetailPage = ({ currentTheme }) => {
               This will:
             </Typography>
             <Box component="ul" sx={{ pl: 2, mb: 2 }}>
-                              <Typography component="li">Change the URL for this model to /models/{editedModel.shortName}</Typography>
+                              <Typography component="li">Change the URL for this model to /models/{modelApiRef(editedModel)}</Typography>
               {updateAssociatedLinks && (
                 <Typography component="li">Update all agreements that reference this model</Typography>
               )}

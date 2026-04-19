@@ -46,6 +46,7 @@ import { ruleTagsList, normalizeTagList } from '../utils/ruleTags';
 import { RULE_STAGE_OPTIONS, normalizeRuleStage, ruleStageColor } from '../utils/ruleStage';
 import { RULE_ZONE_OPTIONS, normalizeRuleZone, ruleZoneColor, ruleZoneLabel } from '../utils/ruleZone';
 import { fontStackSans } from '../theme/theme';
+import DeleteModal from './DeleteModal';
 
 const RULE_TYPE_OPTIONS = [
   { value: 'validation', label: 'Validation' },
@@ -101,6 +102,7 @@ const RulesMasterList = () => {
   });
 
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deleteRuleFromEditOpen, setDeleteRuleFromEditOpen] = useState(false);
   const [editingRule, setEditingRule] = useState(null);
   const [editForm, setEditForm] = useState({
     name: '',
@@ -312,9 +314,12 @@ const RulesMasterList = () => {
     }
   };
 
-  const handleDeleteEditingRule = async () => {
+  const handleOpenDeleteRuleModal = () => {
+    if (editingRule?.id) setDeleteRuleFromEditOpen(true);
+  };
+
+  const confirmDeleteEditingRule = async () => {
     if (!editingRule?.id) return;
-    if (!window.confirm('Are you sure you want to delete this rule?')) return;
     try {
       await deleteRule(editingRule.id);
       setSnackbar({ open: true, message: 'Rule deleted', severity: 'success' });
@@ -723,7 +728,7 @@ const RulesMasterList = () => {
               <IconButton
                 size="small"
                 aria-label="Delete rule"
-                onClick={handleDeleteEditingRule}
+                onClick={handleOpenDeleteRuleModal}
                 sx={{ color: currentTheme?.textSecondary }}
               >
                 <DeleteIcon fontSize="small" />
@@ -899,6 +904,17 @@ const RulesMasterList = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <DeleteModal
+        open={deleteRuleFromEditOpen}
+        onClose={() => setDeleteRuleFromEditOpen(false)}
+        onConfirm={confirmDeleteEditingRule}
+        confirmMode="simple"
+        title="Delete rule"
+        itemName={editingRule?.name?.trim() || (editingRule?.id ? `Rule ${editingRule.id}` : '')}
+        itemType="rule"
+        theme={currentTheme}
+      />
 
       <Snackbar
         open={snackbar.open}

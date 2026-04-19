@@ -28,7 +28,7 @@ import { alpha } from '@mui/material/styles';
 import { useTheme } from '@mui/material/styles';
 import { ThemeContext } from '../contexts/ThemeContext';
 import referenceJson from '../data/reference.json';
-import AgoraQueryEngine from '../pages/agora/AgoraQueryEngine';
+import QueryEngine from '../pages/query/QueryEngine';
 import { exportReferenceDatasetToExcel } from '../utils/referenceExcelIO';
 import { appendImportHistory } from '../utils/referenceExcelImportHistory';
 import { datasetOriginMeta } from '../utils/referenceDataOrigin';
@@ -100,7 +100,7 @@ function mergeReferenceWithOverrides(items, overrides) {
   });
 }
 
-/** Slug for Agora three-part name from reference domain / table labels */
+/** Slug for query workbench three-part name from reference domain / table labels */
 function refSqlSlug(s) {
   return (
     String(s || '')
@@ -137,6 +137,8 @@ function ReferenceDatasetOriginBanner({ item, border, theme, darkMode, onExportE
               height: o.origin === 'herd' ? 40 : 32,
               flexShrink: 0,
               borderRadius: 1,
+              objectFit: 'contain',
+              objectPosition: 'center',
             }}
           />
         </Tooltip>
@@ -189,7 +191,7 @@ function sortReferenceItemsByDatasetName(items) {
   });
 }
 
-/** Domain-like slug for Agora SQL from a reference item (no domain sidebar). */
+/** Domain-like slug for query SQL from a reference item (no domain sidebar). */
 function domainSlugForReferenceItem(ref) {
   if (!ref) return 'general';
   if (Array.isArray(ref.domain) && ref.domain.length > 0) {
@@ -212,7 +214,7 @@ const ReferenceDataHubModal = ({ open, onClose }) => {
   const sortedDatasets = useMemo(() => sortReferenceItemsByDatasetName(mergedItems), [mergedItems]);
 
   const [selectedRef, setSelectedRef] = useState(null);
-  /** Agora-shaped context for inline {@link AgoraQueryEngine} (same as main Agora modal). */
+  /** Query workbench context for inline {@link QueryEngine} (same as main query modal). */
   const [referenceQueryContext, setReferenceQueryContext] = useState(null);
   const [snack, setSnack] = useState({ open: false, message: '' });
   const [importExcelModalOpen, setImportExcelModalOpen] = useState(false);
@@ -450,6 +452,8 @@ const ReferenceDataHubModal = ({ open, onClose }) => {
                                 flexShrink: 0,
                                 borderRadius: 0.75,
                                 mt: 0.2,
+                                objectFit: 'contain',
+                                objectPosition: 'center',
                               }}
                             />
                           </Tooltip>
@@ -625,7 +629,7 @@ const ReferenceDataHubModal = ({ open, onClose }) => {
                     )}
                     </Box>
                     <Box sx={{ flex: 1, minHeight: 220, minWidth: 0, p: 2, overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
-                      <AgoraQueryEngine
+                      <QueryEngine
                         key={selectedRef?.id ?? selectedRef?.name ?? 'ref'}
                         selectedContext={referenceQueryContext}
                         currentTheme={theme}

@@ -41,14 +41,17 @@ class SearchService:
                         if filename == 'toolkit.json' and 'toolkit' in data:
                             toolkit_data = data['toolkit']
                             all_items = []
-                            # Combine functions, containers, and infrastructure
-                            for category in ['functions', 'containers', 'infrastructure']:
+                            for category in ['functions', 'containers', 'infrastructure', 'terraform']:
                                 if category in toolkit_data and isinstance(toolkit_data[category], list):
-                                    # Add type field to each item for routing
                                     for item in toolkit_data[category]:
                                         item_with_type = item.copy()
                                         item_with_type['_toolkit_type'] = category
                                         all_items.append(item_with_type)
+                            if 'toolkits' in toolkit_data and isinstance(toolkit_data['toolkits'], list):
+                                for item in toolkit_data['toolkits']:
+                                    item_with_type = item.copy()
+                                    item_with_type['_toolkit_type'] = 'toolkits'
+                                    all_items.append(item_with_type)
                             return all_items
                         
                         # Look for common array keys
@@ -143,7 +146,7 @@ class SearchService:
                 for item in data:
                     # Create a unique ID for the document
                     # Handle different ID fields for different types
-                    doc_id = str(item.get('id', item.get('shortName', item.get('name', item.get('term', '')))))
+                    doc_id = str(item.get('uuid') or item.get('id', item.get('shortName', item.get('name', item.get('term', '')))))
                     if not doc_id:
                         continue
                     

@@ -2,9 +2,9 @@
 export const WORKBENCH_CAROUSEL_ITEMS = [
   {
     src: '/trino.png',
-    alt: 'Trino',
-    description: 'A query engine for exploring and querying your data.',
-    action: 'agora',
+    alt: 'Query',
+    description: 'Query workbench for exploring datasets and running SQL.',
+    action: 'query',
   },
   {
     src: '/modeling-svgrepo-com.svg',

@@ -186,7 +186,7 @@ const DataPoliciesPage = () => {
               size="small"
               onClick={(e) => {
                 e.stopPropagation();
-                navigate(`/policies/edit/${policy.id}`);
+                navigate(`/policies/edit/${policy.uuid || policy.id}`);
               }}
               sx={{ 
                 bgcolor: alpha(currentTheme.primary, 0.1),

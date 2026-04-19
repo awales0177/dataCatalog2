@@ -8,6 +8,7 @@ import {
   LightMode as LightModeIcon,
   Home as HomeIcon,
   GitHub as GitHubIcon,
+  InfoOutlined as InfoOutlinedIcon,
 } from '@mui/icons-material';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -23,6 +24,7 @@ export default function MainGlassHeader({
   onThemeToggle,
   onOpenSearch,
   onDrawerToggle,
+  onInfoSidebarToggle,
   scrollContainerRef,
 }) {
   const theme = useTheme();
@@ -167,6 +169,18 @@ export default function MainGlassHeader({
           <Tooltip title={darkMode ? 'Light mode' : 'Dark mode'} placement="bottom" arrow>
             <IconButton size="small" onClick={onThemeToggle} sx={controlIconSx}>
               {darkMode ? <LightModeIcon sx={{ fontSize: 18 }} /> : <DarkModeIcon sx={{ fontSize: 18 }} />}
+            </IconButton>
+          </Tooltip>
+        ) : null}
+        {onInfoSidebarToggle ? (
+          <Tooltip title="Information" placement="bottom" arrow>
+            <IconButton
+              size="small"
+              onClick={onInfoSidebarToggle}
+              sx={controlIconSx}
+              aria-label="Open information panel"
+            >
+              <InfoOutlinedIcon sx={{ fontSize: 18 }} />
             </IconButton>
           </Tooltip>
         ) : null}

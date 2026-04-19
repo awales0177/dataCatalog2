@@ -33,6 +33,7 @@ import {
   Cancel as CancelIcon,
 } from '@mui/icons-material';
 import { ThemeContext } from '../contexts/ThemeContext';
+import DeleteModal from '../components/DeleteModal';
 import { useAuth } from '../contexts/AuthContext';
 import { hashPassword } from '../utils/passwordUtils';
 
@@ -482,25 +483,19 @@ const UserManagementPage = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={showDeleteDialog} onClose={() => setShowDeleteDialog(false)}>
-        <DialogTitle>Confirm Delete</DialogTitle>
-        <DialogContent>
-          <Typography>
-            Are you sure you want to delete user "{deletingUser}"? This action cannot be undone.
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setShowDeleteDialog(false)}>Cancel</Button>
-          <Button 
-            onClick={confirmDeleteUser} 
-            color="error" 
-            variant="contained"
-          >
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <DeleteModal
+        open={showDeleteDialog}
+        onClose={() => {
+          setShowDeleteDialog(false);
+          setDeletingUser(null);
+        }}
+        onConfirm={confirmDeleteUser}
+        confirmMode="simple"
+        title="Delete user"
+        itemName={deletingUser || ''}
+        itemType="user"
+        theme={currentTheme}
+      />
     </Container>
   );
 };

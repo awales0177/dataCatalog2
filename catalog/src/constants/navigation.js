@@ -14,7 +14,7 @@ import {
   Settings as SettingsIcon,
 } from '@mui/icons-material';
 
-/** Basket SVG used by Agora query UI (matches UUX dh). */
+/** Basket SVG used by query workbench UI (matches UUX dh). */
 export const BasketIcon = ({ style }) => (
   <svg
     fill="none"
@@ -34,6 +34,9 @@ export const BasketIcon = ({ style }) => (
 
 export const drawerWidth = 280;
 export const collapsedDrawerWidth = 72;
+
+/** Shown beside the lotus mark when the sidebar is expanded (desktop or mobile drawer). */
+export const SIDEBAR_APP_TITLE = 'APP NAME';
 
 /** Floating sidebar: inset from viewport (px) — UUX dh */
 export const sidebarFloatInset = 16;
@@ -74,7 +77,6 @@ export const menuItems = [
     path: '/toolkit',
     icon: <FiTool />,
     id: 'toolkit',
-    beta: true
   },
   {
     name: 'Data Teams',
@@ -100,7 +102,6 @@ export const menuItems = [
     path: '/domains',
     icon: <MdDomain />,
     id: 'domains',
-    beta: true
   },
   {
     name: 'Glossary',

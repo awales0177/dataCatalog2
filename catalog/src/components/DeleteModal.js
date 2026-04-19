@@ -18,37 +18,40 @@ const DeleteModal = ({
   itemName,
   itemType = 'item',
   confirmationText = null,
+  /** 'typed' requires matching phrase; 'simple' is Cancel / Delete only. */
+  confirmMode = 'typed',
   theme,
   children
 }) => {
   const [confirmation, setConfirmation] = useState('');
   const [canDelete, setCanDelete] = useState(false);
 
-  // Default confirmation text if not provided
   const defaultConfirmationText = confirmationText || `delete ${itemName}`;
 
   useEffect(() => {
     if (open) {
       setConfirmation('');
-      setCanDelete(false);
+      setCanDelete(confirmMode === 'simple');
     }
-  }, [open]);
+  }, [open, confirmMode]);
 
   useEffect(() => {
-    setCanDelete(confirmation === defaultConfirmationText);
-  }, [confirmation, defaultConfirmationText]);
+    if (confirmMode === 'simple') {
+      setCanDelete(true);
+    } else {
+      setCanDelete(confirmation === defaultConfirmationText);
+    }
+  }, [confirmation, defaultConfirmationText, confirmMode]);
 
   const handleClose = () => {
     setConfirmation('');
-    setCanDelete(false);
     onClose();
   };
 
   const handleConfirm = () => {
-    if (canDelete) {
-      onConfirm();
-      handleClose();
-    }
+    if (!canDelete) return;
+    onConfirm();
+    handleClose();
   };
 
   return (
@@ -87,7 +90,7 @@ const DeleteModal = ({
         </Box>
         
         <Typography sx={{ mb: 2 }}>
-          You are about to delete the {itemType}: <strong>"{itemName}"</strong>
+          You are about to delete the {itemType}: <strong>&quot;{itemName}&quot;</strong>
         </Typography>
         
         {children && (
@@ -96,27 +99,31 @@ const DeleteModal = ({
           </Box>
         )}
         
-        <Typography sx={{ mb: 2, fontWeight: 'bold' }}>
-          To confirm deletion, type exactly: <strong>{defaultConfirmationText}</strong>
-        </Typography>
-        
-        <TextField
-          fullWidth
-          value={confirmation}
-          onChange={(e) => setConfirmation(e.target.value)}
-          placeholder={defaultConfirmationText}
-          sx={{
-            '& .MuiInputLabel-root': { color: theme.textSecondary },
-            '& .MuiOutlinedInput-root': { 
-              color: theme.text,
-              '& fieldset': { borderColor: theme.border },
-              '&:hover fieldset': { borderColor: theme.primary },
-              '&.Mui-focused fieldset': { borderColor: theme.primary }
-            },
-            '& .MuiInputBase-input': { color: theme.text },
-            '& .MuiInputBase-input::placeholder': { color: theme.textSecondary, opacity: 0.7 }
-          }}
-        />
+        {confirmMode === 'typed' && (
+          <>
+            <Typography sx={{ mb: 2, fontWeight: 'bold' }}>
+              To confirm deletion, type exactly: <strong>{defaultConfirmationText}</strong>
+            </Typography>
+            
+            <TextField
+              fullWidth
+              value={confirmation}
+              onChange={(e) => setConfirmation(e.target.value)}
+              placeholder={defaultConfirmationText}
+              sx={{
+                '& .MuiInputLabel-root': { color: theme.textSecondary },
+                '& .MuiOutlinedInput-root': { 
+                  color: theme.text,
+                  '& fieldset': { borderColor: theme.border },
+                  '&:hover fieldset': { borderColor: theme.primary },
+                  '&.Mui-focused fieldset': { borderColor: theme.primary }
+                },
+                '& .MuiInputBase-input': { color: theme.text },
+                '& .MuiInputBase-input::placeholder': { color: theme.textSecondary, opacity: 0.7 }
+              }}
+            />
+          </>
+        )}
       </DialogContent>
       
       <DialogActions>

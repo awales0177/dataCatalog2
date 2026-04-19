@@ -20,7 +20,7 @@ const HomeWorkspaceSection = () => {
   const { currentTheme } = useContext(ThemeContext);
   const { canEdit, isAdmin } = useAuth();
   const {
-    openAgora,
+    openQuery,
     openModeling,
     openStudio,
     openReferenceHub,
@@ -35,9 +35,9 @@ const HomeWorkspaceSection = () => {
         id: 'ws-query',
         name: 'Query engine',
         description:
-          'Explore datasets and run SQL in the Agora workbench (Trino-backed query execution when connected).',
+          'Explore datasets and run SQL in the query workbench (Trino-backed query execution when connected).',
         tileMedia: workspaceTileImg('/trino.png'),
-        action: openAgora,
+        action: openQuery,
         disabled: false,
         comingSoon: false,
       },
@@ -98,7 +98,7 @@ const HomeWorkspaceSection = () => {
     }
 
     return cards;
-  }, [canEditRules, openAgora, openModeling, openStudio, openReferenceHub, openRuleBuilder]);
+  }, [canEditRules, openQuery, openModeling, openStudio, openReferenceHub, openRuleBuilder]);
 
   const handleTileClick = (item) => {
     if (item.disabled || typeof item.action !== 'function') return;

@@ -16,6 +16,7 @@ import {
   Edit as EditIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import { glossaryTermApiRef } from '../utils/catalogModelLookup';
 
 const GlossaryCard = ({ term, currentTheme, dataModels = [], canEdit = false }) => {
   const navigate = useNavigate();
@@ -112,7 +113,7 @@ const GlossaryCard = ({ term, currentTheme, dataModels = [], canEdit = false }) 
                   size="small"
                   onClick={(e) => {
                     e.stopPropagation();
-                    navigate(`/glossary/${term.id}/edit`);
+                    navigate(`/glossary/${glossaryTermApiRef(term)}/edit`);
                   }}
                   sx={{
                     color: currentTheme.textSecondary,

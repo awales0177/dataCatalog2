@@ -242,7 +242,7 @@ const ApplicationsPage = () => {
 
       <Grid container spacing={3}>
         {paginatedApplications.map((application) => (
-          <Grid item xs={12} sm={6} md={4} lg={3} key={application.id}>
+            <Grid item xs={12} sm={6} md={4} lg={3} key={application.uuid || application.id}>
             <ApplicationCard
               application={application}
               currentTheme={currentTheme}

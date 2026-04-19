@@ -1,5 +1,5 @@
-/** Public asset paths — keep in sync with `public/herd.svg` and `public/mg.svg`. */
-export const ORIGIN_MACHINE_SRC = '/mg.svg';
+/** Public asset paths — keep in sync with `public/herd.svg` and `public/system.png`. */
+export const ORIGIN_MACHINE_SRC = '/system.png';
 export const ORIGIN_HERD_SRC = '/herd.svg';
 
 /** @returns {'machine'|'herd'} */

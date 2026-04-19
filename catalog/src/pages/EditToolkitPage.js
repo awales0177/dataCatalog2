@@ -64,6 +64,7 @@ import {
 import {
   looksLikeDatabaseToolkitId,
   normalizeEvalLabels,
+  normalizeTechLinks,
   normalizeTechnologyStatus,
   technologyToApiPayload,
 } from '../utils/toolkitDbPayload';
@@ -71,10 +72,32 @@ import {
   mergeMarkdownTabStateFromTech,
   normalizeMarkdownTabId,
 } from '../utils/toolkitMarkdownTabs';
+import { newUuid7String } from '../utils/catalogUuid7';
 import TeamSelector from '../components/TeamSelector';
 import { maintainerToTeamSelectorSelection } from '../utils/maintainerTeamSelection';
 
 const TOOLKIT_PANE_ID = '__toolkit__';
+
+/** New technologies get a stable uuid for URLs while keeping a readable id for UI keys. */
+function newWorkbenchTechnologyStub(overrides = {}) {
+  const slugId = `tech-${Date.now()}`;
+  const u = newUuid7String();
+  return {
+    id: slugId,
+    uuid: u,
+    name: '',
+    description: '',
+    rank: 1,
+    status: 'production',
+    maintainerTeamId: '',
+    pros: [],
+    cons: [],
+    languages: [],
+    links: [],
+    ...mergeMarkdownTabStateFromTech({}),
+    ...overrides,
+  };
+}
 
 function slugifyTabId(title) {
   let base = String(title)
@@ -101,6 +124,11 @@ function uniqueTabId(base, existingIds) {
 
 const withTechStatus = (t) => {
   const m = mergeMarkdownTabStateFromTech(t);
+  const rawLinks = Array.isArray(t.links)
+    ? t.links
+    : Array.isArray(t.details?.links)
+      ? [...t.details.links]
+      : [];
   return {
     ...t,
     status: normalizeTechnologyStatus(t?.status),
@@ -110,6 +138,7 @@ const withTechStatus = (t) => {
         ? [...t.details.languages]
         : [],
     markdownTabs: m.markdownTabs,
+    links: normalizeTechLinks(rawLinks),
   };
 };
 
@@ -179,18 +208,7 @@ const EditToolkitPage = () => {
           setCanonicalId(null);
           setEditedToolkit(newToolkit);
           setOriginalToolkit(JSON.parse(JSON.stringify(newToolkit)));
-          const initialTech = {
-            id: `tech-${Date.now()}`,
-            name: '',
-            description: '',
-            rank: 1,
-            status: 'production',
-            maintainerTeamId: '',
-            pros: [],
-            cons: [],
-            languages: [],
-            ...mergeMarkdownTabStateFromTech({}),
-          };
+          const initialTech = newWorkbenchTechnologyStub();
           setTechnologies([initialTech]);
           setOriginalTechnologiesJson(JSON.stringify([initialTech]));
           setRightPane(initialTech.id);
@@ -232,18 +250,11 @@ const EditToolkitPage = () => {
                   },
                 ]
               : [
-                  {
-                    id: `tech-${Date.now()}`,
+                  newWorkbenchTechnologyStub({
                     name: toolkit.name || '',
                     description: toolkit.description || '',
                     rank: 1,
-                    status: 'production',
-                    maintainerTeamId: '',
-                    pros: [],
-                    cons: [],
-                    languages: [],
-                    ...mergeMarkdownTabStateFromTech({}),
-                  },
+                  }),
                 ];
             setTechnologies(one);
             setOriginalTechnologiesJson(JSON.stringify(one));
@@ -284,18 +295,7 @@ const EditToolkitPage = () => {
     if (!checked) {
       setTechnologies((prev) => {
         if (prev.length === 0) {
-          const empty = {
-            id: `tech-${Date.now()}`,
-            name: '',
-            description: '',
-            rank: 1,
-            status: 'production',
-            maintainerTeamId: '',
-            pros: [],
-            cons: [],
-            languages: [],
-            ...mergeMarkdownTabStateFromTech({}),
-          };
+          const empty = newWorkbenchTechnologyStub();
           setRightPane(empty.id);
           return [empty];
         }
@@ -364,18 +364,7 @@ const EditToolkitPage = () => {
   const handleAddTechnology = () => {
     if (!isMultiTech) return;
     const maxRank = technologies.reduce((m, t) => Math.max(m, t.rank || 0), 0);
-    const newTech = {
-      id: `tech-${Date.now()}`,
-      name: '',
-      description: '',
-      rank: maxRank + 1,
-      status: 'production',
-      maintainerTeamId: '',
-      pros: [],
-      cons: [],
-      languages: [],
-      ...mergeMarkdownTabStateFromTech({}),
-    };
+    const newTech = newWorkbenchTechnologyStub({ rank: maxRank + 1 });
     setTechnologies((prev) => [...prev, newTech]);
     setRightPane(newTech.id);
   };
@@ -396,6 +385,29 @@ const EditToolkitPage = () => {
     setTechnologies((prev) =>
       prev.map((t) => (t.id === targetId ? fn(t) : t))
     );
+  };
+
+  const addTechLink = () => {
+    mutateSelectedTech((t) => ({
+      ...t,
+      links: [...(t.links || []), { title: '', url: '' }],
+    }));
+  };
+
+  const updateTechLinkAt = (index, field, value) => {
+    mutateSelectedTech((t) => {
+      const links = [...(t.links || [])];
+      if (!links[index]) return t;
+      links[index] = { ...links[index], [field]: value };
+      return { ...t, links };
+    });
+  };
+
+  const removeTechLinkAt = (index) => {
+    mutateSelectedTech((t) => ({
+      ...t,
+      links: (t.links || []).filter((_, i) => i !== index),
+    }));
   };
 
   const toggleProOption = (option) => {
@@ -1273,6 +1285,59 @@ const EditToolkitPage = () => {
               );
             })}
           </Box>
+        </Box>
+
+        <Box sx={{ mt: 2 }}>
+          <Typography variant="subtitle2" sx={{ color: currentTheme.text, mb: 0.5, fontWeight: 600 }}>
+            Links
+          </Typography>
+          <Typography variant="caption" sx={{ color: currentTheme.textSecondary, display: 'block', mb: 1.5 }}>
+            Optional titled links (documentation, repo, runbooks). Shown in the right-hand panel on the workbench.
+            Rows with both title and URL are saved.
+          </Typography>
+          <Stack spacing={1.5}>
+            {(selectedTech.links || []).length === 0 ? (
+              <Typography variant="body2" sx={{ color: currentTheme.textSecondary, fontStyle: 'italic' }}>
+                No links yet — add one below.
+              </Typography>
+            ) : (
+              (selectedTech.links || []).map((row, index) => (
+                <Box
+                  key={`link-${index}`}
+                  sx={{ display: 'flex', gap: 1, alignItems: 'flex-start', flexWrap: 'wrap' }}
+                >
+                  <TextField
+                    size="small"
+                    label="Title"
+                    value={row.title ?? ''}
+                    onChange={(e) => updateTechLinkAt(index, 'title', e.target.value)}
+                    sx={{ ...textFieldSx(currentTheme), flex: '1 1 140px', minWidth: 120 }}
+                  />
+                  <TextField
+                    size="small"
+                    label="URL"
+                    value={row.url ?? ''}
+                    onChange={(e) => updateTechLinkAt(index, 'url', e.target.value)}
+                    placeholder="https://…"
+                    sx={{ ...textFieldSx(currentTheme), flex: '2 1 220px', minWidth: 180 }}
+                  />
+                  <Tooltip title="Remove link">
+                    <IconButton
+                      size="small"
+                      aria-label="Remove link"
+                      onClick={() => removeTechLinkAt(index)}
+                      sx={{ color: currentTheme.textSecondary, mt: 0.5 }}
+                    >
+                      <DeleteOutlineIcon />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+              ))
+            )}
+            <Button variant="outlined" size="small" onClick={addTechLink} startIcon={<AddIcon />}>
+              Add link
+            </Button>
+          </Stack>
         </Box>
 
         <Box sx={{ mt: 2 }}>

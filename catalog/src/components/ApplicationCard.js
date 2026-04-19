@@ -12,13 +12,13 @@ import {
 import {
   Edit as EditIcon,
   OpenInNew as OpenInNewIcon,
-  Link as LinkIcon,
   Email as EmailIcon,
   Factory as FactoryIcon,
   ShoppingBasket as ShoppingBasketIcon,
   Code as CodeIcon,
   Security as SecurityIcon,
   Settings as SettingsIcon,
+  Groups as GroupsIcon,
 } from '@mui/icons-material';
 const ApplicationCard = ({ application, currentTheme, onEdit }) => {
   // Handle link out functionality
@@ -71,141 +71,208 @@ const ApplicationCard = ({ application, currentTheme, onEdit }) => {
   };
   
   const imageSrc = application.image || application.imageUrl || application.logo;
+  const dark = Boolean(currentTheme?.darkMode);
+  const primary = currentTheme.primary;
 
   return (
-    <Card sx={{ height: '100%', cursor: 'default', position: 'relative', overflow: 'hidden' }}>
-      <CardContent sx={{ 
-        display: 'flex', 
+    <Card
+      sx={{
+        height: '100%',
+        cursor: 'default',
+        position: 'relative',
+        overflow: 'hidden',
+        borderRadius: 3,
+        border: `1px solid ${currentTheme.border}`,
+        bgcolor: currentTheme.card,
+        display: 'flex',
         flexDirection: 'column',
-        height: '100%'
-      }}>
+      }}
+    >
+      <CardContent
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100%',
+          flex: 1,
+          p: 2.5,
+          '&:last-child': { pb: 2.5 },
+        }}
+      >
         <Box
           sx={{
             display: 'flex',
             alignItems: 'flex-start',
-            justifyContent: 'space-between',
-            gap: 1.5,
-            mb: 1,
+            gap: 2,
+            mb: 2,
           }}
         >
-          <Typography
-            variant="h6"
-            sx={{ 
-              fontWeight: 600, 
-              color: currentTheme.text,
-              flex: 1,
-              minWidth: 0,
-              wordBreak: 'break-word',
-              lineHeight: 1.3
-            }}
-          >
-            {application.name}
-          </Typography>
+          {imageSrc ? (
+            <Box
+              component="img"
+              src={imageSrc}
+              alt=""
+              sx={{
+                width: 56,
+                height: 56,
+                objectFit: 'cover',
+                borderRadius: '50%',
+                flexShrink: 0,
+                border: `2px solid ${alpha(primary, dark ? 0.35 : 0.28)}`,
+                boxShadow: `0 4px 14px ${alpha(primary, dark ? 0.2 : 0.12)}`,
+                bgcolor: alpha(currentTheme.text, 0.04),
+              }}
+              onError={(e) => {
+                e.target.style.display = 'none';
+              }}
+            />
+          ) : (
+            <Box
+              sx={{
+                width: 56,
+                height: 56,
+                borderRadius: '50%',
+                flexShrink: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                bgcolor: alpha(primary, dark ? 0.14 : 0.1),
+                border: `1px dashed ${alpha(primary, 0.4)}`,
+                color: alpha(primary, 0.85),
+              }}
+              aria-hidden
+            >
+              <GroupsIcon sx={{ fontSize: 28 }} />
+            </Box>
+          )}
 
-          {(imageSrc || (application.roles && application.roles.length > 0)) ? (
-          <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, flexShrink: 0 }}>
-            {imageSrc ? (
-              <Box
-                component="img"
-                src={imageSrc}
-                alt=""
-                sx={{
-                  width: 48,
-                  height: 48,
-                  objectFit: 'cover',
-                  borderRadius: 1,
-                  border: `1px solid ${currentTheme.border}`,
-                  bgcolor: alpha(currentTheme.text, 0.04),
-                }}
-                onError={(e) => {
-                  e.target.style.display = 'none';
-                }}
-              />
-            ) : null}
-          {application.roles && application.roles.length > 0 ? (
-            <Box sx={{ display: 'flex', gap: 0.5, flexShrink: 0 }}>
-              {application.roles.slice(0, 3).map((role, index) => {
-                const IconComponent = getRoleIcon(role);
-                if (!IconComponent) return null;
-                
-                return (
-                  <Tooltip key={index} title={getRoleTooltip(role)} arrow>
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography
+              variant="caption"
+              sx={{
+                display: 'block',
+                color: currentTheme.textSecondary,
+                letterSpacing: '0.06em',
+                fontWeight: 700,
+                fontSize: '0.65rem',
+                lineHeight: 1.2,
+                mb: 0.25,
+                textDecoration: 'none',
+                textTransform: 'uppercase',
+              }}
+            >
+              Data team
+            </Typography>
+            <Typography
+              variant="h6"
+              sx={{
+                fontWeight: 700,
+                color: currentTheme.text,
+                wordBreak: 'break-word',
+                lineHeight: 1.25,
+                mb: 0.75,
+              }}
+            >
+              {application.name}
+            </Typography>
+            {application.roles && application.roles.length > 0 ? (
+              <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', alignItems: 'center' }}>
+                {application.roles.slice(0, 3).map((role, index) => {
+                  const IconComponent = getRoleIcon(role);
+                  if (!IconComponent) return null;
+
+                  return (
+                    <Tooltip key={index} title={getRoleTooltip(role)} arrow>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          width: 28,
+                          height: 28,
+                          borderRadius: 1,
+                          bgcolor: alpha(primary, dark ? 0.18 : 0.12),
+                          color: primary,
+                          border: `1px solid ${alpha(primary, 0.22)}`,
+                        }}
+                      >
+                        <IconComponent sx={{ fontSize: 15 }} />
+                      </Box>
+                    </Tooltip>
+                  );
+                })}
+                {application.roles.length > 3 && (
+                  <Tooltip title={`+${application.roles.length - 3} more roles`} arrow>
                     <Box
                       sx={{
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        width: 24,
-                        height: 24,
-                        borderRadius: '50%',
-                        bgcolor: alpha(currentTheme.primary, 0.1),
-                        color: currentTheme.primary,
+                        minWidth: 28,
+                        height: 28,
+                        px: 0.5,
+                        borderRadius: 1,
+                        bgcolor: alpha(currentTheme.textSecondary, 0.08),
+                        color: currentTheme.textSecondary,
+                        fontSize: '0.7rem',
+                        fontWeight: 700,
+                        border: `1px solid ${alpha(currentTheme.border, 0.8)}`,
                       }}
                     >
-                      <IconComponent sx={{ fontSize: 14 }} />
+                      +{application.roles.length - 3}
                     </Box>
                   </Tooltip>
-                );
-              })}
-              {application.roles.length > 3 && (
-                <Tooltip title={`+${application.roles.length - 3} more roles`} arrow>
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      width: 24,
-                      height: 24,
-                      borderRadius: '50%',
-                      bgcolor: alpha(currentTheme.textSecondary, 0.1),
-                      color: currentTheme.textSecondary,
-                      fontSize: '0.75rem',
-                      fontWeight: 600,
-                    }}
-                  >
-                    +{application.roles.length - 3}
-                  </Box>
-                </Tooltip>
-              )}
-            </Box>
-          ) : null}
+                )}
+              </Box>
+            ) : null}
           </Box>
-          ) : null}
         </Box>
 
-        <Typography variant="body2" sx={{ color: currentTheme.textSecondary, mb: 2 }}>
+        <Typography
+          variant="body2"
+          sx={{
+            color: currentTheme.textSecondary,
+            mb: 2,
+            lineHeight: 1.55,
+            display: '-webkit-box',
+            WebkitLineClamp: 4,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
+          }}
+        >
           {application.description}
         </Typography>
 
-        {/* Domain chips */}
         {application.domains && application.domains.length > 0 && (
-          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
+          <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', mb: 1 }}>
             {application.domains.map((domain) => (
               <Chip
                 key={domain}
                 label={domain}
                 size="small"
+                variant="outlined"
                 sx={{
-                  bgcolor: alpha(currentTheme.primary, 0.1),
-                  color: currentTheme.primary,
-                  fontWeight: 500,
+                  borderColor: alpha(primary, 0.35),
+                  color: currentTheme.text,
+                  bgcolor: alpha(primary, dark ? 0.06 : 0.04),
+                  fontWeight: 600,
+                  fontSize: '0.7rem',
                 }}
               />
             ))}
           </Box>
         )}
 
+        <Box sx={{ flex: 1, minHeight: 8 }} />
 
-        {/* Spacer to push action buttons to bottom */}
-        <Box sx={{ flex: 1 }} />
-
-        {/* Action buttons in bottom right */}
-        <Box sx={{ 
-          display: 'flex', 
-          justifyContent: 'flex-end', 
-          gap: 1,
-          mt: 2
-        }}>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            gap: 0.75,
+            pt: 2,
+            mt: 'auto',
+          }}
+        >
           {hasEmail && (
             <Tooltip title="Send Email">
               <IconButton
@@ -246,7 +313,7 @@ const ApplicationCard = ({ application, currentTheme, onEdit }) => {
             <Tooltip title="Edit Application">
               <IconButton
                 size="small"
-                onClick={() => onEdit(application.id)}
+                onClick={() => onEdit(application.uuid || application.id)}
                 sx={{ 
                   bgcolor: alpha(currentTheme.primary, 0.1),
                   color: currentTheme.primary,

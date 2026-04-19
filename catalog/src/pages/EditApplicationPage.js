@@ -22,6 +22,7 @@ import {
 import { useNavigate, useParams } from 'react-router-dom';
 import { ThemeContext } from '../contexts/ThemeContext';
 import { fetchData, createApplication, updateApplication, deleteApplication } from '../services/api';
+import { findApplication, applicationApiRef } from '../utils/catalogModelLookup';
 import DomainSelector from '../components/DomainSelector';
 import RoleSelector from '../components/RoleSelector';
 
@@ -70,7 +71,7 @@ const EditApplicationPage = () => {
         } else {
           // Load existing application
           const data = await fetchData('applications');
-          const app = data.applications.find(a => a.id.toString() === id);
+          const app = findApplication(data.applications, id);
           if (!app) {
             setSnackbar({ open: true, message: 'Application not found', severity: 'error' });
             navigate('/applications');
@@ -133,7 +134,7 @@ const EditApplicationPage = () => {
 
   const handleDelete = async () => {
     try {
-      await deleteApplication(editedApplication.id);
+      await deleteApplication(applicationApiRef(editedApplication));
       setSnackbar({ open: true, message: 'Application deleted successfully', severity: 'success' });
       
       // Navigate back to applications page after a short delay

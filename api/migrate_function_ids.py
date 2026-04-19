@@ -3,9 +3,10 @@
 Migration script to replace function IDs with UUIDs in toolkit.json
 """
 import json
-import uuid
 import os
 from pathlib import Path
+
+from catalog_uuid import new_uuid_str
 
 # Path to toolkit.json
 TOOLKIT_FILE = Path(__file__).parent / '_data' / 'toolkit.json'
@@ -27,7 +28,7 @@ def migrate_function_ids():
     
     for function in functions:
         old_id = function['id']
-        new_id = str(uuid.uuid4())
+        new_id = new_uuid_str()
         function['id'] = new_id
         id_mappings[old_id] = new_id
         print(f"  Migrated: {old_id} -> {new_id}")

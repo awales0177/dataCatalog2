@@ -8,6 +8,7 @@ import {
   fetchModels,
 } from '../services/api';
 import { menuItems } from '../constants/navigation';
+import { WORKBENCH_PATHS, isWorkbenchPath } from '../constants/workbenchPaths';
 
 export const useAppState = () => {
   const location = useLocation();
@@ -56,12 +57,12 @@ export const useAppState = () => {
     if (path === '/applications' || path.startsWith('/applications/')) return 'applications';
     if (path === '/toolkit' || path.startsWith('/toolkit/')) return 'toolkit';
     if (path === '/policies' || path.startsWith('/policies/')) return 'policies';
-    if (path === '/reference' || path.startsWith('/reference/')) return 'reference';
     if (path === '/glossary' || path.startsWith('/glossary/')) return 'glossary';
     if (path === '/rules' || path.startsWith('/rules/')) return 'rules';
     if (path === '/statistics') return 'statistics';
     if (path === '/settings') return 'settings';
     if (path === '/users') return 'users';
+    if (isWorkbenchPath(path)) return 'workbench';
     return 'other';
   };
 
@@ -88,19 +89,26 @@ export const useAppState = () => {
       title = 'Function Details';
     } else if (path === '/policies') {
       title = 'Data Standards';
-    } else if (path === '/reference') {
-      title = 'Reference Data';
     } else if (path === '/settings') {
       title = 'Settings';
     } else if (path === '/rules') {
       title = 'Data Quality Rules';
     } else if (path.startsWith('/models/')) {
-      const shortName = path.split('/').pop().toUpperCase();
-      title = shortName;
+      const seg = path.split('/')[2] || '';
+      const decoded = decodeURIComponent(seg);
+      title = /^[0-9a-f]{8}-[0-9a-f]{4}-/i.test(decoded) ? 'Data model' : decoded.toUpperCase();
     } else if (path.startsWith('/agreements/')) {
       title = 'Product Agreement Details';
-    } else if (path.startsWith('/reference/')) {
-      title = 'Reference Data Details';
+    } else if (path === WORKBENCH_PATHS.query) {
+      title = 'Query workbench';
+    } else if (path === WORKBENCH_PATHS.modeling) {
+      title = 'Data modeling';
+    } else if (path === WORKBENCH_PATHS.studio) {
+      title = 'Modeling studio';
+    } else if (path === WORKBENCH_PATHS.ruleBuilder) {
+      title = 'Rule builder';
+    } else if (path === WORKBENCH_PATHS.referenceData) {
+      title = 'Reference data hub';
     }
 
     document.title = title;
@@ -287,7 +295,7 @@ export const useAppState = () => {
     
     // Collapse if we're exactly 2 levels deep (e.g., /models/CUST)
     // OR if we're in edit mode (e.g., /models/CUST/edit, /applications/edit/123, /policies/edit/456)
-    // OR if we're in detail view (e.g., /toolkit/function/123, /toolkit/container/123, /toolkit/infrastructure/123, /reference/456)
+    // OR if we're in detail view (e.g., /toolkit/function/123, /toolkit/container/123, /toolkit/infrastructure/123)
     if (pathSegments.length === 2 || 
         (pathSegments.length === 3 && pathSegments[2] === 'edit') ||
         (pathSegments.length === 3 && pathSegments[1] === 'edit') ||
@@ -297,8 +305,7 @@ export const useAppState = () => {
         (pathSegments.length === 3 && pathSegments[1] === 'container') ||
         (pathSegments.length === 3 && pathSegments[1] === 'infrastructure') ||
         (pathSegments.length === 4 && pathSegments[1] === 'container' && pathSegments[3] === 'edit') ||
-        (pathSegments.length === 4 && pathSegments[1] === 'infrastructure' && pathSegments[3] === 'edit') ||
-        (pathSegments.length === 3 && pathSegments[1] === 'reference')) {
+        (pathSegments.length === 4 && pathSegments[1] === 'infrastructure' && pathSegments[3] === 'edit')) {
       setIsDrawerCollapsed(true);
     } else {
       setIsDrawerCollapsed(false);

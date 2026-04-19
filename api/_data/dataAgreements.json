@@ -67,7 +67,8 @@
           ]
         }
       ],
-      "lastUpdated": "2025-08-17 01:01:29"
+      "lastUpdated": "2025-08-17 01:01:29",
+      "uuid": "42c9ed7b-f3a7-4297-8764-b441d5c35daf"
     },
     {
       "id": "contract-001",
@@ -146,7 +147,8 @@
           ]
         }
       ],
-      "lastUpdated": "2025-08-17 01:33:26"
+      "lastUpdated": "2025-08-17 01:33:26",
+      "uuid": "db3b8710-8c52-4e21-b00d-fd3de512ff25"
     },
     {
       "id": "temp_1755130484850",
@@ -219,7 +221,8 @@
         }
       ],
       "lastUpdated": "2025-08-17 01:43:16",
-      "nextUpdate": ""
+      "nextUpdate": "",
+      "uuid": "7e288e42-5060-41dc-8466-e95858702c57"
     },
     {
       "id": "contract-004",
@@ -277,7 +280,8 @@
           ]
         }
       ],
-      "lastUpdated": "2025-08-17 22:14:42"
+      "lastUpdated": "2025-08-17 22:14:42",
+      "uuid": "e9f02cf9-1cda-4a44-aa4b-62ee0f8a73b5"
     },
     {
       "id": "contract-005",
@@ -351,7 +355,8 @@
           ]
         }
       ],
-      "lastUpdated": "2025-08-17 22:17:47"
+      "lastUpdated": "2025-08-17 22:17:47",
+      "uuid": "524664ae-8a83-4c0a-b98d-5e7659b0fcc7"
     },
     {
       "id": "contract-006",
@@ -424,7 +429,8 @@
           ]
         }
       ],
-      "lastUpdated": "2025-08-17 22:19:11"
+      "lastUpdated": "2025-08-17 22:19:11",
+      "uuid": "adc4e1a9-1b57-42e9-9980-9efe0c34565c"
     },
     {
       "id": "contract-002",
@@ -499,7 +505,8 @@
           ]
         }
       ],
-      "lastUpdated": "2025-08-17 22:22:18"
+      "lastUpdated": "2025-08-17 22:22:18",
+      "uuid": "40e21c56-9091-47cb-8ae9-300bf336c651"
     },
     {
       "id": "contract-003",
@@ -573,7 +580,8 @@
           ]
         }
       ],
-      "lastUpdated": "2025-08-20 22:24:38"
+      "lastUpdated": "2025-08-20 22:24:38",
+      "uuid": "8f242415-74d1-4f81-b360-8315f1f188eb"
     },
     {
       "id": "contract-009",
@@ -658,7 +666,8 @@
         "goog3",
         "goog4",
         "goog5"
-      ]
+      ],
+      "uuid": "df315085-4fce-4c20-85f5-6a36a8dec644"
     },
     {
       "id": "agreement-001",
@@ -829,11 +838,12 @@
             }
           ]
         }
-      ]
+      ],
+      "uuid": "6f5a5a54-203d-4ed3-b715-59d911923dec"
     },
     {
       "id": "contract-007",
-      "name": "Content Managemen",
+      "name": "Content Management",
       "description": "Product agreement for content validation and publishing",
       "status": "in_progress",
       "specificationMaintainer": "Content Management Team",
@@ -898,7 +908,7 @@
           ]
         }
       ],
-      "lastUpdated": "2026-04-18 23:36:05",
+      "lastUpdated": "2026-04-19 01:06:31",
       "dataPolicies": [
         "retention_policy_001",
         "access_policy_001",
@@ -999,8 +1009,22 @@
               "newValue": "[Catalog]"
             }
           ]
+        },
+        {
+          "version": "2.0.0",
+          "timestamp": "2026-04-19T05:06:31.611Z",
+          "updatedBy": "user",
+          "changeDescription": "Updated name",
+          "fieldChanges": [
+            {
+              "field": "name",
+              "oldValue": "Content Managemen",
+              "newValue": "Content Management"
+            }
+          ]
         }
-      ]
+      ],
+      "uuid": "c84bb883-9a9e-4d5d-8dce-f0fbf07e432c"
     }
   ]
 }

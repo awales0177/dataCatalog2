@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { useLocation } from 'react-router-dom';
 import {
   Dialog,
   DialogTitle,
@@ -20,10 +19,8 @@ import { ThemeContext } from '../../contexts/ThemeContext';
 import { fetchModels } from '../../services/api';
 import ModelRuleBuilder from '../../components/ModelRuleBuilder';
 import { fontStackSans } from '../../theme/theme';
-import { RULE_BUILDER_MODEL_SHORT_NAME_KEY } from '../../constants/workbenchPaths';
 
 const RuleBuilderModal = ({ open, onClose, currentTheme, darkMode }) => {
-  const location = useLocation();
   const { currentTheme: contextTheme } = useContext(ThemeContext);
   const theme = currentTheme || contextTheme;
 
@@ -32,8 +29,6 @@ const RuleBuilderModal = ({ open, onClose, currentTheme, darkMode }) => {
   const [modelsLoading, setModelsLoading] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerValue, setPickerValue] = useState('');
-
-  const presetModelShort = location.state?.[RULE_BUILDER_MODEL_SHORT_NAME_KEY];
 
   useEffect(() => {
     if (!open) {
@@ -44,7 +39,7 @@ const RuleBuilderModal = ({ open, onClose, currentTheme, darkMode }) => {
     }
     setSelectedModel(null);
     setPickerValue('');
-    setPickerOpen(!presetModelShort);
+    setPickerOpen(true);
     let cancelled = false;
     setModelsLoading(true);
     fetchModels()
@@ -60,21 +55,7 @@ const RuleBuilderModal = ({ open, onClose, currentTheme, darkMode }) => {
     return () => {
       cancelled = true;
     };
-  }, [open, presetModelShort]);
-
-  useEffect(() => {
-    if (!open || modelsLoading || !models.length) return;
-    const sn = presetModelShort;
-    if (!sn || typeof sn !== 'string' || !String(sn).trim()) return;
-    const needle = String(sn).trim().toLowerCase();
-    const m = models.find((x) => String(x.shortName || '').trim().toLowerCase() === needle);
-    if (m) {
-      setSelectedModel(m);
-      setPickerOpen(false);
-    } else {
-      setPickerOpen(true);
-    }
-  }, [open, models, modelsLoading, presetModelShort]);
+  }, [open]);
 
   const sortedModels = [...models].sort((a, b) =>
     (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }),

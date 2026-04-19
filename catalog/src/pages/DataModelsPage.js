@@ -49,6 +49,7 @@ import { fontStackSans } from '../theme/theme';
 import { useCatalogPreferences } from '../contexts/CatalogPreferencesContext';
 import StickyPageIntro from '../components/StickyPageIntro';
 import PageWithFixedHeader from '../components/PageWithFixedHeader';
+import { modelApiRef } from '../utils/catalogModelLookup';
 
 const ITEMS_PER_PAGE_GRID = 12;
 const ITEMS_PER_PAGE_TABLE = 20;
@@ -672,18 +673,18 @@ const DataModelsPage = () => {
                           : currentTheme.textSecondary;
                   const domains = Array.isArray(model.domain) ? model.domain : [];
                   const openModel = async () => {
-                    const sn = model.shortName;
-                    if (!sn) return;
-                    const sessionKey = `model_clicked_${sn.toLowerCase()}`;
+                    const ref = modelApiRef(model);
+                    if (!ref) return;
+                    const sessionKey = `model_clicked_${String(ref).toLowerCase()}`;
                     if (!sessionStorage.getItem(sessionKey)) {
                       try {
-                        await trackModelClick(sn);
+                        await trackModelClick(ref);
                         sessionStorage.setItem(sessionKey, 'true');
                       } catch {
                         /* ignore */
                       }
                     }
-                    navigate(`/models/${encodeURIComponent(sn.toLowerCase())}`);
+                    navigate(`/models/${encodeURIComponent(ref)}`);
                   };
                   return (
                     <TableRow

@@ -28,8 +28,9 @@ import { fetchData } from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { normalizeTechnologyStatus } from '../utils/toolkitStatus';
+import { workbenchPath, workbenchCanonicalRef } from '../utils/toolkitWorkbench';
 
-const TECH_STATUS_ORDER = ['development', 'production', 'evaluated'];
+const TECH_STATUS_ORDER = ['production', 'development', 'evaluated'];
 
 function toolkitCardStatusChips(toolkit) {
   const techs = toolkit?.technologies || [];
@@ -60,10 +61,6 @@ const RESOURCE_KIND_LABEL = {
   package: 'Package',
   container: 'Container',
 };
-
-/** dataCatalog2 routes use /toolkit/toolkit/:id for workbenches (not UUX /toolkit/:id). */
-const workbenchDetailPath = (toolkitId) =>
-  `/toolkit/toolkit/${encodeURIComponent(String(toolkitId))}`;
 
 const resourceDetailPath = (kind, item) => {
   const pid = item?.id || item?.name;
@@ -213,12 +210,12 @@ const ToolkitPage = () => {
   );
 
   const renderToolkitCard = (toolkit) => {
-    const handleCardClick = () => navigate(workbenchDetailPath(toolkit.id));
+    const handleCardClick = () => navigate(workbenchPath(workbenchCanonicalRef(toolkit)));
     const statusKeys = toolkitCardStatusChips(toolkit);
 
     return (
       <Card
-        key={`tk-${toolkit.id}`}
+        key={`tk-${toolkit.uuid || toolkit.id}`}
         onClick={handleCardClick}
         sx={{ height: '100%', cursor: 'pointer', overflow: 'hidden' }}
       >

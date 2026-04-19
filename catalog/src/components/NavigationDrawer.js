@@ -33,6 +33,7 @@ import {
   sidebarFloatInset,
   sidebarBottomLift,
   sidebarBorderRadius,
+  SIDEBAR_APP_TITLE,
 } from '../constants/navigation';
 import { useAuth } from '../contexts/AuthContext';
 import { useWorkbenchModals } from '../contexts/WorkbenchModalsContext';
@@ -40,6 +41,7 @@ import Logo from './Logo';
 import { portalColors } from '../theme/portalTokens';
 import { getSidebarDisable, getHomeCarouselDisable } from '../utils/disableConfig';
 import { WORKBENCH_CAROUSEL_ITEMS } from '../constants/workbenchCarousel';
+import { isWorkbenchPath } from '../constants/workbenchPaths';
 import packageJson from '../../package.json';
 
 const NavigationDrawer = ({
@@ -59,9 +61,7 @@ const NavigationDrawer = ({
   const navigate = useNavigate();
   const { user, currentRole, isAdmin, canEdit } = useAuth();
   const {
-    agoraOpen,
-    modelingOpen,
-    openAgora,
+    openQuery,
     openModeling,
     openRuleBuilder,
     openReferenceHub,
@@ -69,8 +69,8 @@ const NavigationDrawer = ({
   const canEditRules = Boolean(canEdit?.() || isAdmin?.());
 
   const getWorkbenchCarouselHandler = (item) => {
-    if (item.action === 'agora') {
-      return () => openAgora();
+    if (item.action === 'query') {
+      return () => openQuery();
     }
     if (item.action === 'modeling') {
       return () => openModeling();
@@ -88,8 +88,10 @@ const NavigationDrawer = ({
   const sidebarFlags = (id) => getSidebarDisable(id);
 
   const isDark = Boolean(currentTheme?.darkMode);
-  const pageSurface =
-    currentTheme.background || (isDark ? '#0f0f0f' : '#f5f5f5');
+  /** Main content uses `background`; sidebar uses elevated `card` in dark mode for contrast. */
+  const pageSurface = isDark
+    ? currentTheme.card || currentTheme.background || '#1e1e1e'
+    : currentTheme.background || '#f5f5f5';
   const SIDEBAR_TEXT = isDark ? currentTheme.text : '#1e293b';
   const SIDEBAR_TEXT_MUTED = isDark ? currentTheme.textSecondary : '#64748b';
   const SIDEBAR_BORDER = isDark
@@ -146,10 +148,11 @@ const NavigationDrawer = ({
 
   const renderMenuItem = (item, { mobileLabels = false, showLabels = false } = {}) => {
     const labelsOn = Boolean(mobileLabels || showLabels);
-    const isSelected =
-      item.path === '/'
+    const workbenchActive = item.id === 'workspaces' && isWorkbenchPath(location.pathname);
+    const isSelected = workbenchActive
+      || (item.path === '/'
         ? location.pathname === item.path || location.pathname === ''
-        : location.pathname === item.path || location.pathname.startsWith(`${item.path}/`);
+        : location.pathname === item.path || location.pathname.startsWith(`${item.path}/`));
     const { disabled: navDis, comingSoon: navSoon } = sidebarFlags(item.id);
     const tip = navDis
       ? navSoon
@@ -502,7 +505,23 @@ const NavigationDrawer = ({
           '& img': { height: mobileLabels ? 32 : 28, width: 'auto' },
         }}
       >
-        <Logo currentTheme={currentTheme} />
+        <Logo currentTheme={currentTheme}>
+          {(mobileLabels || !isDrawerCollapsed) && (
+            <Typography
+              variant="subtitle1"
+              component="span"
+              noWrap
+              sx={{
+                fontWeight: 700,
+                letterSpacing: '0.06em',
+                color: SIDEBAR_TEXT,
+                minWidth: 0,
+              }}
+            >
+              {SIDEBAR_APP_TITLE}
+            </Typography>
+          )}
+        </Logo>
       </Box>
       <List
         sx={{

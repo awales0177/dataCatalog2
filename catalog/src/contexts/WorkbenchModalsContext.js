@@ -2,88 +2,119 @@ import React, {
   createContext,
   useCallback,
   useContext,
+  useLayoutEffect,
   useMemo,
   useState,
 } from 'react';
-import { AgoraModal } from '../pages/agora';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { QueryModal } from '../pages/query';
 import { ModelingModal } from '../pages/modeling';
 import { RuleBuilderModal } from '../pages/rulebuilder';
 import ReferenceDataHubModal from '../components/ReferenceDataHubModal';
+import {
+  WORKBENCH_PATHS,
+  buildWorkbenchEnterState,
+  getWorkbenchExitPath,
+  workbenchModalFlagsFromPath,
+} from '../constants/workbenchPaths';
 
 const WorkbenchModalsContext = createContext(null);
 
 export function WorkbenchModalsProvider({ children, currentTheme, darkMode }) {
-  const [agoraOpen, setAgoraOpen] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const [queryOpen, setQueryOpen] = useState(false);
   const [modelingOpen, setModelingOpen] = useState(false);
   const [ruleBuilderOpen, setRuleBuilderOpen] = useState(false);
   const [referenceHubOpen, setReferenceHubOpen] = useState(false);
 
-  const splitAgoraAndModeling = Boolean(agoraOpen && modelingOpen);
+  useLayoutEffect(() => {
+    const flags = workbenchModalFlagsFromPath(location.pathname);
+    setQueryOpen(flags.queryOpen);
+    setModelingOpen(flags.modelingOpen);
+    setRuleBuilderOpen(flags.ruleBuilderOpen);
+    setReferenceHubOpen(flags.referenceHubOpen);
+  }, [location.pathname]);
 
-  const openAgora = useCallback(() => {
-    setAgoraOpen(true);
-  }, []);
+  const splitQueryAndModeling = Boolean(queryOpen && modelingOpen);
+
+  const openQuery = useCallback(() => {
+    if (location.pathname === WORKBENCH_PATHS.query) return;
+    navigate(WORKBENCH_PATHS.query, { state: buildWorkbenchEnterState(location) });
+  }, [navigate, location]);
 
   const openModeling = useCallback(() => {
-    setModelingOpen(true);
-  }, []);
+    if (location.pathname === WORKBENCH_PATHS.modeling) return;
+    navigate(WORKBENCH_PATHS.modeling, { state: buildWorkbenchEnterState(location) });
+  }, [navigate, location]);
 
   const openStudio = useCallback(() => {
-    setAgoraOpen(true);
-    setModelingOpen(true);
-  }, []);
+    if (location.pathname === WORKBENCH_PATHS.studio) return;
+    navigate(WORKBENCH_PATHS.studio, { state: buildWorkbenchEnterState(location) });
+  }, [navigate, location]);
 
   const openRuleBuilder = useCallback(() => {
-    setRuleBuilderOpen(true);
-  }, []);
+    if (location.pathname === WORKBENCH_PATHS.ruleBuilder) return;
+    navigate(WORKBENCH_PATHS.ruleBuilder, { state: buildWorkbenchEnterState(location) });
+  }, [navigate, location]);
 
   const openReferenceHub = useCallback(() => {
-    setReferenceHubOpen(true);
-  }, []);
+    if (location.pathname === WORKBENCH_PATHS.referenceData) return;
+    navigate(WORKBENCH_PATHS.referenceData, { state: buildWorkbenchEnterState(location) });
+  }, [navigate, location]);
 
-  const closeAgora = useCallback(() => {
-    setAgoraOpen(false);
-  }, []);
+  const closeQuery = useCallback(() => {
+    if (location.pathname === WORKBENCH_PATHS.studio) {
+      navigate(WORKBENCH_PATHS.modeling, { replace: true, state: location.state });
+      return;
+    }
+    navigate(getWorkbenchExitPath(location), { replace: true });
+  }, [location, navigate]);
 
   const closeModeling = useCallback(() => {
-    setModelingOpen(false);
-  }, []);
+    if (location.pathname === WORKBENCH_PATHS.studio) {
+      navigate(WORKBENCH_PATHS.query, { replace: true, state: location.state });
+      return;
+    }
+    navigate(getWorkbenchExitPath(location), { replace: true });
+  }, [location, navigate]);
 
   const closeRuleBuilder = useCallback(() => {
-    setRuleBuilderOpen(false);
-  }, []);
+    navigate(getWorkbenchExitPath(location), { replace: true });
+  }, [location, navigate]);
 
   const closeReferenceHub = useCallback(() => {
-    setReferenceHubOpen(false);
-  }, []);
+    navigate(getWorkbenchExitPath(location), { replace: true });
+  }, [location, navigate]);
 
   const value = useMemo(
     () => ({
-      agoraOpen,
+      queryOpen,
       modelingOpen,
       ruleBuilderOpen,
       referenceHubOpen,
-      openAgora,
+      openQuery,
       openModeling,
       openStudio,
       openRuleBuilder,
       openReferenceHub,
-      closeAgora,
+      closeQuery,
       closeModeling,
       closeRuleBuilder,
       closeReferenceHub,
     }),
     [
-      agoraOpen,
+      queryOpen,
       modelingOpen,
       ruleBuilderOpen,
       referenceHubOpen,
-      openAgora,
+      openQuery,
       openModeling,
       openStudio,
       openRuleBuilder,
       openReferenceHub,
-      closeAgora,
+      closeQuery,
       closeModeling,
       closeRuleBuilder,
       closeReferenceHub,
@@ -93,13 +124,13 @@ export function WorkbenchModalsProvider({ children, currentTheme, darkMode }) {
   return (
     <WorkbenchModalsContext.Provider value={value}>
       {children}
-      <AgoraModal
-        open={agoraOpen}
-        onClose={closeAgora}
+      <QueryModal
+        open={queryOpen}
+        onClose={closeQuery}
         currentTheme={currentTheme}
         darkMode={darkMode}
-        splitMode={splitAgoraAndModeling}
-        onOpenModeling={openModeling}
+        splitMode={splitQueryAndModeling}
+        onOpenModeling={openStudio}
         modelingOpen={modelingOpen}
       />
       <ModelingModal
@@ -107,9 +138,9 @@ export function WorkbenchModalsProvider({ children, currentTheme, darkMode }) {
         onClose={closeModeling}
         currentTheme={currentTheme}
         darkMode={darkMode}
-        splitMode={splitAgoraAndModeling}
-        onOpenAgora={openAgora}
-        agoraOpen={agoraOpen}
+        splitMode={splitQueryAndModeling}
+        onOpenQuery={openStudio}
+        queryOpen={queryOpen}
       />
       <RuleBuilderModal
         open={Boolean(ruleBuilderOpen)}

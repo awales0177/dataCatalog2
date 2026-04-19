@@ -20,6 +20,16 @@ import {
 import { ThemeContext } from '../contexts/ThemeContext';
 import { fetchData } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+import {
+  findWorkbenchToolkit,
+  findWorkbenchTechnology,
+  workbenchPath,
+  workbenchCanonicalRef,
+  workbenchTechnologyCanonicalRef,
+  workbenchTechnologyPath,
+  workbenchTechnologyCreatePath,
+} from '../utils/toolkitWorkbench';
+import { newUuid7String } from '../utils/catalogUuid7';
 
 const EditToolkitTechnologyPage = () => {
   const { toolkitId, technologyId } = useParams();
@@ -29,17 +39,18 @@ const EditToolkitTechnologyPage = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
-  
+
   const [editedTech, setEditedTech] = useState(null);
   const [originalTech, setOriginalTech] = useState(null);
   const [toolkitData, setToolkitData] = useState(null);
+  const [canonicalToolkitId, setCanonicalToolkitId] = useState(null);
 
   const isNewTech = !technologyId || technologyId === 'create';
 
   useEffect(() => {
     if (!canEdit()) {
       setSnackbar({ open: true, message: 'You do not have permission to edit technologies', severity: 'error' });
-      navigate(`/toolkit/toolkit/${toolkitId}`);
+      navigate(workbenchPath(toolkitId));
       return;
     }
 
@@ -47,19 +58,36 @@ const EditToolkitTechnologyPage = () => {
       try {
         const data = await fetchData('toolkit');
         const toolkits = data.toolkit?.toolkits || [];
-        const foundToolkit = toolkits.find(t => t.id === toolkitId);
-        
-        if (!foundToolkit) {
+        const resolvedTk = findWorkbenchToolkit(toolkits, toolkitId);
+
+        if (!resolvedTk?.toolkit) {
           setSnackbar({ open: true, message: `Toolkit with ID ${toolkitId} not found`, severity: 'error' });
           navigate('/toolkit');
           return;
         }
 
+        const foundToolkit = resolvedTk.toolkit;
+        const tkCan = resolvedTk.canonicalId;
         setToolkitData(foundToolkit);
+        setCanonicalToolkitId(tkCan);
+
+        if (String(toolkitId) !== String(tkCan)) {
+          if (isNewTech) {
+            navigate(workbenchTechnologyCreatePath(tkCan), { replace: true });
+            return;
+          }
+          const resTech = findWorkbenchTechnology(foundToolkit, technologyId);
+          if (resTech) {
+            navigate(workbenchTechnologyPath(tkCan, resTech.canonicalId), { replace: true });
+            return;
+          }
+        }
 
         if (isNewTech) {
+          const nid = newUuid7String();
           const newTech = {
             id: `tech-${Date.now()}`,
+            uuid: nid,
             name: '',
             description: '',
             rank: (foundToolkit.technologies?.length || 0) + 1,
@@ -67,28 +95,33 @@ const EditToolkitTechnologyPage = () => {
           setEditedTech(newTech);
           setOriginalTech({ ...newTech });
         } else {
-          const tech = foundToolkit.technologies?.find(t => t.id === technologyId);
-          
-          if (tech) {
-            // Load from localStorage if available
-            const storageKey = `toolkit_${toolkitId}_tech_${technologyId}`;
-            const savedTech = localStorage.getItem(storageKey);
-            const techData = savedTech ? JSON.parse(savedTech) : tech;
-            
-            // Only keep name, description, and rank
-            const simplifiedTech = {
-              id: techData.id,
-              name: techData.name || '',
-              description: techData.description || '',
-              rank: techData.rank || 1,
-            };
-            
-            setEditedTech(simplifiedTech);
-            setOriginalTech(simplifiedTech);
-          } else {
+          const resTech = findWorkbenchTechnology(foundToolkit, technologyId);
+          if (!resTech?.technology) {
             setSnackbar({ open: true, message: `Technology with ID ${technologyId} not found`, severity: 'error' });
-            navigate(`/toolkit/toolkit/${toolkitId}`);
+            navigate(workbenchPath(tkCan));
+            return;
           }
+          const tech = resTech.technology;
+          const techCan = resTech.canonicalId;
+          if (String(technologyId) !== String(techCan)) {
+            navigate(workbenchTechnologyPath(tkCan, techCan), { replace: true });
+            return;
+          }
+
+          const storageKey = `toolkit_${tkCan}_tech_${techCan}`;
+          const savedTech = localStorage.getItem(storageKey);
+          const techData = savedTech ? JSON.parse(savedTech) : tech;
+
+          const simplifiedTech = {
+            id: techData.id,
+            uuid: techData.uuid || tech.uuid,
+            name: techData.name || '',
+            description: techData.description || '',
+            rank: techData.rank || 1,
+          };
+
+          setEditedTech(simplifiedTech);
+          setOriginalTech(simplifiedTech);
         }
       } catch (error) {
         console.error('Error loading technology:', error);
@@ -102,12 +135,11 @@ const EditToolkitTechnologyPage = () => {
   }, [toolkitId, technologyId, isNewTech, navigate, canEdit]);
 
   const handleFieldChange = (field, value) => {
-    setEditedTech(prev => ({
+    setEditedTech((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
-
 
   const hasChanges = () => {
     return JSON.stringify(editedTech) !== JSON.stringify(originalTech);
@@ -121,21 +153,27 @@ const EditToolkitTechnologyPage = () => {
 
     setSaving(true);
     try {
-      // Save technology data to localStorage (only name, description, rank)
-      const storageKey = `toolkit_${toolkitId}_tech_${editedTech.id}`;
+      const tkRef = canonicalToolkitId || workbenchCanonicalRef(toolkitData);
+      const techRef = workbenchTechnologyCanonicalRef(editedTech);
+      const storageKey = `toolkit_${tkRef}_tech_${techRef}`;
       const techToSave = {
         id: editedTech.id,
+        uuid: editedTech.uuid,
         name: editedTech.name,
         description: editedTech.description,
         rank: editedTech.rank,
       };
       localStorage.setItem(storageKey, JSON.stringify(techToSave));
 
-      setSnackbar({ open: true, message: isNewTech ? 'Technology created successfully!' : 'Technology updated successfully!', severity: 'success' });
+      setSnackbar({
+        open: true,
+        message: isNewTech ? 'Technology created successfully!' : 'Technology updated successfully!',
+        severity: 'success',
+      });
       setOriginalTech({ ...editedTech });
-      
+
       setTimeout(() => {
-        navigate(`/toolkit/toolkit/${toolkitId}`);
+        navigate(workbenchPath(tkRef));
       }, 500);
     } catch (error) {
       console.error('Error saving technology:', error);
@@ -145,9 +183,9 @@ const EditToolkitTechnologyPage = () => {
   };
 
   const handleCancel = () => {
-    navigate(`/toolkit/toolkit/${toolkitId}`);
+    const tkRef = canonicalToolkitId || toolkitId;
+    navigate(workbenchPath(tkRef));
   };
-
 
   if (loading) {
     return (
@@ -159,169 +197,78 @@ const EditToolkitTechnologyPage = () => {
     );
   }
 
-  if (!editedTech) {
-    return (
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Alert severity="error" sx={{ bgcolor: currentTheme.card, color: currentTheme.text }}>
-          Technology not found
-        </Alert>
-      </Container>
-    );
-  }
-
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
-      {/* Header */}
-      <Box sx={{ mb: 4 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-          <Button
-            variant="outlined"
-            startIcon={<ArrowBackIcon />}
-            onClick={handleCancel}
-            sx={{
-              borderColor: currentTheme.border,
-              color: currentTheme.text,
-              '&:hover': {
-                borderColor: currentTheme.primary,
-                bgcolor: alpha(currentTheme.primary, 0.1)
-              }
-            }}
-          >
-            Back to Toolkit
+      <Paper elevation={2} sx={{ p: 4, bgcolor: currentTheme.paper, border: `1px solid ${currentTheme.border}` }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+          <Button startIcon={<ArrowBackIcon />} onClick={handleCancel} sx={{ mr: 2, color: currentTheme.text }}>
+            Back
           </Button>
-        </Box>
-        
-        <Box>
-          <Typography variant="h4" sx={{ color: currentTheme.text, fontWeight: 600, mb: 1 }}>
-            {isNewTech ? 'Create Technology' : `Edit Technology - ${editedTech.name}`}
-          </Typography>
-          <Typography variant="body1" sx={{ color: currentTheme.textSecondary }}>
-            {isNewTech ? 'Add a new technology to this toolkit' : 'Edit technology details'}
+          <Typography variant="h5" sx={{ color: currentTheme.text, fontWeight: 600 }}>
+            {isNewTech ? 'New technology' : 'Edit technology'}
           </Typography>
         </Box>
-      </Box>
 
-      {/* Form */}
-      <Paper
-        elevation={0}
-        sx={{
-          p: 4,
-          bgcolor: currentTheme.card,
-          border: `1px solid ${currentTheme.border}`,
-          borderRadius: 2,
-        }}
-      >
         <Grid container spacing={3}>
-          <Grid item xs={12} md={6}>
+          <Grid item xs={12}>
             <TextField
               fullWidth
-              label="Name *"
-              value={editedTech.name || ''}
+              label="Name"
+              value={editedTech?.name || ''}
               onChange={(e) => handleFieldChange('name', e.target.value)}
-              required
               sx={{
-                '& .MuiOutlinedInput-root': {
-                  color: currentTheme.text,
-                  '& fieldset': { borderColor: currentTheme.border },
-                  '&:hover fieldset': { borderColor: currentTheme.primary },
-                  '&.Mui-focused fieldset': { borderColor: currentTheme.primary }
-                },
-                '& .MuiInputLabel-root': { color: currentTheme.textSecondary }
+                '& .MuiOutlinedInput-root': { color: currentTheme.text },
+                '& .MuiInputLabel-root': { color: currentTheme.textSecondary },
               }}
             />
           </Grid>
-
-          <Grid item xs={12} md={6}>
-            <TextField
-              fullWidth
-              label="Rank"
-              type="number"
-              value={editedTech.rank || ''}
-              onChange={(e) => handleFieldChange('rank', parseInt(e.target.value) || 1)}
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  color: currentTheme.text,
-                  '& fieldset': { borderColor: currentTheme.border },
-                  '&:hover fieldset': { borderColor: currentTheme.primary },
-                  '&.Mui-focused fieldset': { borderColor: currentTheme.primary }
-                },
-                '& .MuiInputLabel-root': { color: currentTheme.textSecondary }
-              }}
-            />
-          </Grid>
-
           <Grid item xs={12}>
             <TextField
               fullWidth
               multiline
               rows={4}
-              label="Description *"
-              value={editedTech.description || ''}
+              label="Description"
+              value={editedTech?.description || ''}
               onChange={(e) => handleFieldChange('description', e.target.value)}
-              required
               sx={{
-                '& .MuiOutlinedInput-root': {
-                  color: currentTheme.text,
-                  '& fieldset': { borderColor: currentTheme.border },
-                  '&:hover fieldset': { borderColor: currentTheme.primary },
-                  '&.Mui-focused fieldset': { borderColor: currentTheme.primary }
-                },
-                '& .MuiInputLabel-root': { color: currentTheme.textSecondary }
+                '& .MuiOutlinedInput-root': { color: currentTheme.text },
+                '& .MuiInputLabel-root': { color: currentTheme.textSecondary },
+              }}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              type="number"
+              label="Rank"
+              value={editedTech?.rank ?? 1}
+              onChange={(e) => handleFieldChange('rank', Number(e.target.value))}
+              sx={{
+                '& .MuiOutlinedInput-root': { color: currentTheme.text },
+                '& .MuiInputLabel-root': { color: currentTheme.textSecondary },
               }}
             />
           </Grid>
         </Grid>
 
-        {/* Action Buttons */}
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 4, pt: 3, borderTop: `1px solid ${currentTheme.border}` }}>
-          <Button
-            variant="outlined"
-            onClick={handleCancel}
-            disabled={saving}
-            sx={{
-              borderColor: currentTheme.border,
-              color: currentTheme.text,
-              '&:hover': {
-                borderColor: currentTheme.primary,
-                bgcolor: alpha(currentTheme.primary, 0.1)
-              }
-            }}
-          >
-            Cancel
-          </Button>
+        <Box sx={{ mt: 4, display: 'flex', gap: 2 }}>
           <Button
             variant="contained"
             startIcon={<SaveIcon />}
             onClick={handleSave}
             disabled={saving || !hasChanges()}
-            sx={{
-              bgcolor: currentTheme.primary,
-              color: currentTheme.background,
-              '&:hover': {
-                bgcolor: currentTheme.primaryHover || currentTheme.primary,
-              },
-              '&:disabled': {
-                bgcolor: alpha(currentTheme.primary, 0.3),
-              }
-            }}
+            sx={{ bgcolor: currentTheme.primary }}
           >
-            {saving ? 'Saving...' : isNewTech ? 'Create Technology' : 'Save Changes'}
+            Save
+          </Button>
+          <Button onClick={handleCancel} sx={{ color: currentTheme.textSecondary }}>
+            Cancel
           </Button>
         </Box>
       </Paper>
 
-      {/* Snackbar */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        <Alert
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
-          severity={snackbar.severity}
-          sx={{ width: '100%', bgcolor: currentTheme.card, color: currentTheme.text }}
-        >
+      <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={() => setSnackbar({ ...snackbar, open: false })}>
+        <Alert severity={snackbar.severity} onClose={() => setSnackbar({ ...snackbar, open: false })}>
           {snackbar.message}
         </Alert>
       </Snackbar>

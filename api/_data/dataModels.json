@@ -25,7 +25,7 @@
       "meta": {
         "tier": "gold",
         "verified": false,
-        "clickCount": 10
+        "clickCount": 11
       },
       "changelog": [
         {
@@ -62,7 +62,7 @@
         "documentation": "https://docs.example.com/customer-data-model",
         "rules": "https://docs.example.com/customer-data-model",
         "tools": {
-          "Kubeflow": "/toolkit/toolkit/ee5f0f3e-665b-4152-8405-b1534c05575a/technology/tech-1776539315008"
+          "Kubeflow": "/toolkit/ee5f0f3e-665b-4152-8405-b1534c05575a/technology/e7564a71-c9e5-469a-b2f9-a78c2aee4652"
         },
         "git": "https://git.example.com/customer-data-model",
         "validation": "https://docs.example.com/customer-data-model"
@@ -177,7 +177,8 @@
             }
           ]
         }
-      ]
+      ],
+      "uuid": "2d73f1fa-d917-4912-9dcb-7623226a3b8f"
     },
     {
       "id": 2,
@@ -313,7 +314,8 @@
             }
           ]
         }
-      ]
+      ],
+      "uuid": "016f2ebb-6fe3-4996-85eb-20968607395f"
     },
     {
       "id": 3,
@@ -389,7 +391,8 @@
         "Shipping Service",
         "Analytics Service",
         "Business Intelligence"
-      ]
+      ],
+      "uuid": "7af78169-3b80-4a81-b3e8-5cd672f554ad"
     },
     {
       "id": 4,
@@ -449,7 +452,8 @@
             }
           ]
         }
-      ]
+      ],
+      "uuid": "5838a29c-e633-46ea-b6c3-56daa921d236"
     },
     {
       "id": 5,
@@ -487,7 +491,8 @@
         },
         "git": "https://git.example.com/marketing-campaign-data",
         "validation": "https://validation.example.com/marketing-campaign-data"
-      }
+      },
+      "uuid": "7a63620e-d95d-4417-bb18-43a3a5ae884c"
     },
     {
       "id": 6,
@@ -520,7 +525,8 @@
         },
         "git": "https://git.example.com/supplier-information",
         "validation": "https://validation.example.com/supplier-information"
-      }
+      },
+      "uuid": "34c5f1bb-b471-4d37-9130-bf5ae4fc7ed8"
     },
     {
       "id": 7,
@@ -552,7 +558,8 @@
         },
         "git": "https://git.example.com/healthcare-facility-management",
         "validation": "https://validation.example.com/healthcare-facility-management"
-      }
+      },
+      "uuid": "ddda04f9-861e-4bae-899e-3d5c13425bda"
     },
     {
       "id": 8,
@@ -589,7 +596,8 @@
       "users": [
         "Payment Service",
         "Order Service"
-      ]
+      ],
+      "uuid": "e76294a5-f489-43d0-9351-b42b46fd89d6"
     },
     {
       "id": 9,
@@ -621,7 +629,8 @@
         },
         "git": "https://git.example.com/transportation-network",
         "validation": "https://validation.example.com/transportation-network"
-      }
+      },
+      "uuid": "0a13a110-5e02-46a2-88cf-ffefea16bc91"
     },
     {
       "id": 10,
@@ -654,7 +663,8 @@
         },
         "git": "https://git.example.com/utility-consumption",
         "validation": "https://validation.example.com/utility-consumption"
-      }
+      },
+      "uuid": "cf8550a1-0285-41f0-b8fa-dd531900ff32"
     },
     {
       "id": 11,
@@ -686,7 +696,8 @@
         },
         "git": "https://git.example.com/housing-development",
         "validation": "https://validation.example.com/housing-development"
-      }
+      },
+      "uuid": "c4ab230e-4a68-4f95-b5d2-0c7472b12276"
     },
     {
       "id": 12,
@@ -719,7 +730,8 @@
         },
         "git": "https://git.example.com/social-services-programs",
         "validation": "https://validation.example.com/social-services-programs"
-      }
+      },
+      "uuid": "dfa2c871-7548-48fa-961a-7fc248b5c310"
     },
     {
       "id": 13,
@@ -751,7 +763,8 @@
         },
         "git": "https://git.example.com/recreation-facilities",
         "validation": "https://validation.example.com/recreation-facilities"
-      }
+      },
+      "uuid": "1ee9c8b5-3c5b-4999-bd84-f9a26b12f6aa"
     },
     {
       "id": 14,
@@ -760,8 +773,7 @@
       "version": "1.4.0",
       "description": "Cultural event and program management",
       "extendedDescription": "The Cultural Programs model provides a framework for managing cultural events and programs. It includes schemas for event planning, scheduling, and resource management. The model supports program development, audience engagement, and impact assessment. It includes features for ticketing, marketing, and volunteer management. The model also handles integration with social media platforms, content management systems, and analytics tools.",
-      "lastUpdated": "2024-03-07",
-      "owner": "Cultural Affairs Team",
+      "lastUpdated": "2026-04-19 00:24:37",
       "specMaintainer": "Sophia Chen",
       "maintainerEmail": "sophia.chen@example.com",
       "domain": [
@@ -772,7 +784,7 @@
       "meta": {
         "tier": "silver",
         "verified": true,
-        "clickCount": 1
+        "clickCount": 2
       },
       "resources": {
         "code": "https://github.com/org/cultural-programs",
@@ -784,7 +796,24 @@
         },
         "git": "https://git.example.com/cultural-programs",
         "validation": "https://validation.example.com/cultural-programs"
-      }
+      },
+      "markdowns": [
+        {
+          "id": "md_1776572668359",
+          "title": "README",
+          "content": "test"
+        }
+      ],
+      "versionHistory": [
+        {
+          "version": "1.4.0",
+          "timestamp": "2024-03-07",
+          "updatedBy": "System",
+          "changeDescription": "Initial model load",
+          "changedFields": []
+        }
+      ],
+      "uuid": "c63fbc68-4bf1-4395-98de-04fa5e456dd2"
     },
     {
       "id": 15,
@@ -822,7 +851,8 @@
         "Frontend Service",
         "API Gateway",
         "Client Services"
-      ]
+      ],
+      "uuid": "2f26c2b8-7dd3-43b0-b329-e35b313b195d"
     },
     {
       "id": 16,
@@ -871,7 +901,8 @@
           "changeDescription": "Initial model load",
           "changedFields": []
         }
-      ]
+      ],
+      "uuid": "ff72f84c-1b8b-4a21-b103-06ec0452028a"
     },
     {
       "id": 17,
@@ -899,7 +930,8 @@
         "tools": "",
         "git": "https://git.example.com/tourism-services",
         "validation": "https://validation.example.com/tourism-services"
-      }
+      },
+      "uuid": "c09040c3-c9d4-45a4-a947-594ec7697840"
     },
     {
       "id": 18,
@@ -931,14 +963,16 @@
         },
         "git": "https://git.example.com/infrastructure-management",
         "validation": "https://validation.example.com/infrastructure-management"
-      }
+      },
+      "uuid": "ddae9930-f43a-43ce-97f4-3bd36d62a097"
     },
     {
       "id": 19,
       "shortName": "TEST",
       "name": "Test Model",
       "description": "Test Description",
-      "lastUpdated": "2025-09-09 03:50:20"
+      "lastUpdated": "2025-09-09 03:50:20",
+      "uuid": "e6ab335d-97c4-4461-9228-a36f90c27a64"
     }
   ]
 }

@@ -65,6 +65,7 @@ import {
 } from '@mui/icons-material';
 import { formatDate } from '../utils/themeUtils';
 import { fetchAgreements, fetchModels } from '../services/api';
+import { modelApiRef } from '../utils/catalogModelLookup';
 import { agreementFieldsConfig } from '../config/agreementFields';
 import FieldInfoIcon from '../components/FieldInfoIcon';
 
@@ -530,7 +531,9 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
     const loadAgreementAndModel = async () => {
       try {
         const data = await fetchAgreements();
-        const agreement = data.agreements.find(c => c.id === id);
+        const agreement = data.agreements.find(
+          (c) => String(c.uuid || '') === String(id) || String(c.id) === String(id),
+        );
         if (!agreement) {
           setError('Agreement not found');
           return;
@@ -728,7 +731,6 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
                 <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
                   Version Health
                 </Typography>
-                <FieldInfoIcon fieldId="productAgreement.versionHealth" />
                 {versionDiff.isBehind && (
                   <Tooltip title={
                     `Version differences: ${versionDiff.versionDetails.map(detail => 
@@ -780,7 +782,6 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
                 <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
                   Model Versions Delivered
                 </Typography>
-                <FieldInfoIcon fieldId="productAgreement.modelVersionsDelivered" iconSize={14} />
               </Box>
               <Typography variant="body2" sx={{ color: currentTheme.text }}>
                 {versionDiff.versions.map(v => `v${v}`).join(', ')}
@@ -791,7 +792,6 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
                 <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
                   Latest Model Version
                 </Typography>
-                <FieldInfoIcon fieldId="productAgreement.latestModelVersion" iconSize={14} />
               </Box>
               <Typography variant="body2" sx={{ color: currentTheme.text }}>
                 v{versionDiff.modelVersion}
@@ -817,7 +817,6 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
               <Typography variant="h6" sx={{ color: currentTheme.text }}>
                 Data Flow
               </Typography>
-              <FieldInfoIcon fieldId="productAgreement.section.dataFlow" iconSize={18} />
             </Box>
             <Box sx={{ 
               display: 'flex',
@@ -832,7 +831,6 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
                   <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
                     Producer
                   </Typography>
-                  <FieldInfoIcon fieldId="productAgreement.flow.producer" />
                 </Box>
                 <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                   {(() => {
@@ -900,7 +898,6 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
                   <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
                     Model
                   </Typography>
-                  <FieldInfoIcon fieldId="productAgreement.flow.model" />
                 </Box>
                 <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                   <Typography variant="h6" sx={{ color: currentTheme.text, userSelect: 'text' }}>
@@ -918,7 +915,6 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
                   <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
                     Consumer
                   </Typography>
-                  <FieldInfoIcon fieldId="productAgreement.flow.consumer" />
                 </Box>
                 {(() => {
                   const consumerInfo = parseDataConsumer(agreement.dataConsumer);
@@ -991,7 +987,6 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
               <Typography variant="h6" sx={{ color: currentTheme.text }}>
                 Roles & Responsibilities
               </Typography>
-              <FieldInfoIcon fieldId="productAgreement.section.roles" iconSize={18} />
             </Box>
             <TableContainer>
               <Table>
@@ -1002,7 +997,6 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
                         <Typography component="span" variant="body2" sx={{ color: currentTheme.textSecondary, fontWeight: 600 }}>
                           Role
                         </Typography>
-                        <FieldInfoIcon fieldId="productAgreement.table.role" iconSize={14} />
                       </Box>
                     </TableCell>
                     <TableCell sx={{ color: currentTheme.textSecondary, borderBottom: `1px solid ${currentTheme.border}` }}>
@@ -1010,7 +1004,6 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
                         <Typography component="span" variant="body2" sx={{ color: currentTheme.textSecondary, fontWeight: 600 }}>
                           Team
                         </Typography>
-                        <FieldInfoIcon fieldId="productAgreement.table.team" iconSize={14} />
                       </Box>
                     </TableCell>
                   </TableRow>
@@ -1166,7 +1159,6 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
               <Typography variant="h6" sx={{ color: currentTheme.text }}>
                 TODO
               </Typography>
-              <FieldInfoIcon fieldId="productAgreement.section.todo" iconSize={18} />
             </Box>
             <Box sx={{ mb: 2 }}>
               <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary, mb: 1 }}>
@@ -1241,7 +1233,6 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
                     <Typography variant="h6" sx={{ color: currentTheme.text }}>
                       Changelog
                     </Typography>
-                    <FieldInfoIcon fieldId="productAgreement.section.changelog" iconSize={18} />
                   </Box>
                 </AccordionSummary>
                 <AccordionDetails sx={{ px: 0 }}>
@@ -1337,7 +1328,6 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
                   <Typography variant="h6" sx={{ color: currentTheme.text }}>
                     Version History
                   </Typography>
-                  <FieldInfoIcon fieldId="productAgreement.section.versionHistory" iconSize={18} />
                 </Box>
               </AccordionSummary>
               <AccordionDetails sx={{ px: 0 }}>
@@ -1471,7 +1461,7 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
               <Tooltip title="View Data Specification">
                 <IconButton
                   component={Link}
-                  to={`/models/${agreement.modelShortName.toLowerCase()}`}
+                  to={`/models/${encodeURIComponent(modelApiRef(model))}`}
                   sx={{
                     position: 'absolute',
                     top: 12,
@@ -1493,7 +1483,6 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
               <Typography variant="h6" sx={{ color: currentTheme.text }}>
                 Agreement Information
               </Typography>
-              <FieldInfoIcon fieldId="productAgreement.section.agreementInfo" iconSize={18} />
             </Box>
             
             <Box sx={{ mb: 2 }}>
@@ -1501,7 +1490,6 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
                 <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
                   Agreement Version
                 </Typography>
-                <FieldInfoIcon fieldId="productAgreement.agreementVersion" />
               </Box>
               <Typography variant="body1" sx={{ color: currentTheme.text }}>
                 v{agreement.contractVersion}
@@ -1513,7 +1501,6 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
                 <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
                   Model Name
                 </Typography>
-                <FieldInfoIcon fieldId="productAgreement.modelName" />
               </Box>
               <Typography variant="body1" sx={{ color: currentTheme.text }}>
                 {agreement.modelShortName || 'No Model Associated'}
@@ -1525,7 +1512,6 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
                 <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
                   Model Version Delivered
                 </Typography>
-                <FieldInfoIcon fieldId="productAgreement.modelVersionDelivered" />
               </Box>
               <Typography variant="body1" sx={{ color: currentTheme.text }}>
                 {Array.isArray(agreement.deliveredVersion) 
@@ -1539,7 +1525,6 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
                 <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
                   File Format
                 </Typography>
-                <FieldInfoIcon fieldId="productAgreement.fileFormat" />
               </Box>
               <Typography variant="body1" sx={{ color: currentTheme.text }}>
                 {agreement.fileFormat || 'Not specified'}
@@ -1551,7 +1536,6 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
                 <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
                   Delivery Frequency
                 </Typography>
-                <FieldInfoIcon fieldId="productAgreement.deliveryFrequency" />
               </Box>
               <List dense sx={{ bgcolor: 'transparent', borderRadius: 1, p: 0.5, pl: 0, ml: '-12px' }}>
                 {Array.isArray(agreement.deliveryFrequency) ? agreement.deliveryFrequency.map((freq, index) => {
@@ -1591,7 +1575,6 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
                 <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
                   Location
                 </Typography>
-                <FieldInfoIcon fieldId="productAgreement.location" />
               </Box>
               <List dense sx={{ bgcolor: 'transparent', borderRadius: 1, p: 0.5, pl: 0, ml: '-12px' }}>
                 {(() => {
@@ -1688,7 +1671,6 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
                 <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
                   Start Date
                 </Typography>
-                <FieldInfoIcon fieldId="productAgreement.startDate" />
               </Box>
               <Typography variant="body1" sx={{ color: currentTheme.text }}>
                 {formatDate(agreement.startDate)}
@@ -1702,7 +1684,6 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
                 <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
                   End Date
                 </Typography>
-                <FieldInfoIcon fieldId="productAgreement.endDate" />
               </Box>
               <Typography variant="body1" sx={{ color: currentTheme.text }}>
                 {agreement.endDate ? formatDate(agreement.endDate) : 'Not specified'}
@@ -1716,7 +1697,6 @@ const ProductAgreementDetailPage = ({ currentTheme }) => {
                 <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
                   Last Updated
                 </Typography>
-                <FieldInfoIcon fieldId="productAgreement.lastUpdated" />
               </Box>
               <Typography variant="body1" sx={{ color: currentTheme.text }}>
                 {formatDate(agreement.lastUpdated)}

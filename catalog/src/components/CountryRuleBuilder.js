@@ -45,6 +45,7 @@ import {
   Description as DescriptionIcon
 } from '@mui/icons-material';
 import { ThemeContext } from '../contexts/ThemeContext';
+import DeleteModal from './DeleteModal';
 import { 
   getAllCountryRules,
   getRulesForCountry,
@@ -133,6 +134,7 @@ const CountryRuleBuilder = ({ onBack }) => {
   const [editingRule, setEditingRule] = useState(null);
   const [ruleDialogOpen, setRuleDialogOpen] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [countryRuleDeleteTarget, setCountryRuleDeleteTarget] = useState(null);
   const [availableFunctions, setAvailableFunctions] = useState([]);
   const [countryRuleCounts, setCountryRuleCounts] = useState({});
   const [mapError, setMapError] = useState(false);
@@ -315,15 +317,19 @@ const CountryRuleBuilder = ({ onBack }) => {
     setRuleDialogOpen(true);
   };
 
-  const handleDeleteRule = async (ruleId) => {
-    if (!window.confirm('Are you sure you want to delete this rule?')) return;
-    
+  const requestDeleteCountryRule = (rule) => {
+    if (!rule?.id) return;
+    setCountryRuleDeleteTarget(rule);
+  };
+
+  const confirmDeleteCountryRule = async () => {
+    const ruleId = countryRuleDeleteTarget?.id;
+    if (!ruleId) return;
     try {
       setLoading(true);
       await deleteCountryRule(ruleId);
       setSnackbar({ open: true, message: 'Country rule deleted successfully', severity: 'success' });
       loadRules();
-      // Reload country counts for heat map
       const allRulesData = await getAllCountryRules();
       const allRules = allRulesData?.rules || [];
       const counts = {};
@@ -1029,7 +1035,7 @@ const CountryRuleBuilder = ({ onBack }) => {
                           <Tooltip title="Delete">
                             <IconButton
                               edge="end"
-                              onClick={() => handleDeleteRule(rule.id)}
+                              onClick={() => requestDeleteCountryRule(rule)}
                               sx={{ 
                                 color: currentTheme?.textSecondary,
                                 '&:hover': {
@@ -1471,6 +1477,17 @@ const CountryRuleBuilder = ({ onBack }) => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <DeleteModal
+        open={Boolean(countryRuleDeleteTarget)}
+        onClose={() => setCountryRuleDeleteTarget(null)}
+        onConfirm={confirmDeleteCountryRule}
+        confirmMode="simple"
+        title="Delete country rule"
+        itemName={countryRuleDeleteTarget?.name?.trim() || `Rule ${countryRuleDeleteTarget?.id ?? ''}`}
+        itemType="rule"
+        theme={currentTheme}
+      />
 
       {/* Snackbar */}
       <Snackbar

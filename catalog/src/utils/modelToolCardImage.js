@@ -1,7 +1,8 @@
 import { TOOLKIT_LANGUAGE_OPTIONS } from '../data/toolkitEvalIcons';
 import { findWorkbenchToolkit } from './toolkitWorkbench';
 
-const WB_TECH_RE = /^\/toolkit\/toolkit\/([^/]+)\/technology\/([^/?#]+)/;
+const WB_TECH_RE =
+  /^\/toolkit\/(?:(?:toolkit|workbench)\/)?([^/]+)\/technology\/([^/?#]+)/;
 
 export function parseWorkbenchTechnologyUrl(url) {
   if (typeof url !== 'string') return null;
@@ -19,8 +20,8 @@ export function resolveModelToolTechnology(toolkits, toolName, url) {
     const resolved = findWorkbenchToolkit(toolkits, parsed.toolkitId);
     if (resolved?.toolkit) {
       const tk = resolved.toolkit;
-      const tech = (tk.technologies || []).find((t) => String(t.id) === String(parsed.technologyId));
-      if (tech) return { technology: tech, toolkit: tk };
+      const resTech = findWorkbenchTechnology(tk, parsed.technologyId);
+      if (resTech?.technology) return { technology: resTech.technology, toolkit: tk };
     }
   }
 

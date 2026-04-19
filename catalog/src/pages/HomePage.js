@@ -101,7 +101,7 @@ const HomePage = () => {
         m.summary?.toLowerCase().includes(query)
       )
       .slice(0, 5)
-      .map(m => ({ ...m, type: 'model', displayName: m.name || m.shortName, id: m.shortName || m.id }));
+      .map(m => ({ ...m, type: 'model', displayName: m.name || m.shortName, id: m.uuid || m.shortName || m.id }));
 
     return { models };
   }, [searchQuery]);
@@ -119,7 +119,7 @@ const HomePage = () => {
 
   const handleNavigate = (item) => {
     if (item.type === 'model') {
-      navigate(`/models/${item.id}`);
+      navigate(`/models/${encodeURIComponent(item.id)}`);
     }
   };
 
@@ -127,7 +127,7 @@ const HomePage = () => {
     switch (item.type) {
       case 'model':
         const model = (Array.isArray(modelsData) ? modelsData : (modelsData.models || []))
-          .find(m => (m.shortName || m.id) === item.id);
+          .find(m => (m.uuid || m.shortName || m.id) === item.id);
         if (!model) return null;
         return (
           <Grid item xs={12} sm={6} md={4} lg={3} key={`model-${item.id}`}>

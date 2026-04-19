@@ -35,6 +35,13 @@ export function modelMarkdownsForDisplay(model) {
   return normalizeModelMarkdowns(model?.markdowns).filter((t) => t.title || t.content.trim());
 }
 
+/** Route to full-page markdown editor for a model tab (matches toolkit README pattern). */
+export function dataModelMarkdownEditPath(modelRef, tabId) {
+  const sn = encodeURIComponent(String(modelRef || '').trim());
+  const tid = encodeURIComponent(String(tabId || '').trim());
+  return `/models/${sn}/markdown/${tid}`;
+}
+
 /** Shared prose styles for ReactMarkdown (matches glossary / toolkit). */
 export function modelMarkdownProseSx(currentTheme) {
   const darkMode = currentTheme.darkMode;

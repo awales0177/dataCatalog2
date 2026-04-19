@@ -28,6 +28,7 @@ import {
 } from '@mui/icons-material';
 import { ThemeContext } from '../contexts/ThemeContext';
 import { fetchData, createDataPolicy, updateDataPolicy, deleteDataPolicy } from '../services/api';
+import { findDataPolicy, dataPolicyApiRef } from '../utils/catalogModelLookup';
 import DeleteModal from '../components/DeleteModal';
 import TeamSelector from '../components/TeamSelector';
 
@@ -76,7 +77,7 @@ const EditDataPolicyPage = () => {
 
 
           
-          const policy = policies.find(p => p.id === id);
+          const policy = findDataPolicy(policies, id);
 
           
           if (policy) {
@@ -128,7 +129,7 @@ const EditDataPolicyPage = () => {
         await createDataPolicy(editedPolicy);
         setSnackbar({ open: true, message: 'Standard created successfully', severity: 'success' });
       } else {
-        await updateDataPolicy(editedPolicy.id, editedPolicy);
+        await updateDataPolicy(dataPolicyApiRef(editedPolicy), editedPolicy);
         setSnackbar({ open: true, message: 'Standard updated successfully', severity: 'success' });
       }
       navigate('/policies');
@@ -143,7 +144,7 @@ const EditDataPolicyPage = () => {
   const handleDelete = async () => {
     setDeleting(true);
     try {
-      await deleteDataPolicy(editedPolicy.id);
+      await deleteDataPolicy(dataPolicyApiRef(editedPolicy));
       setSnackbar({ open: true, message: 'Standard deleted successfully', severity: 'success' });
       navigate('/policies');
     } catch (error) {

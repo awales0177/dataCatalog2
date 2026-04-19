@@ -1,5 +1,6 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import ToolkitLegacyWorkbenchRedirect from './routes/ToolkitLegacyWorkbenchRedirect';
 import {
   Box,
   CssBaseline,
@@ -15,8 +16,6 @@ import HomePage from './pages/HomePage';
 import WorkspacesPage from './pages/WorkspacesPage';
 import ApplicationsPage from './pages/ApplicationsPage';
 import EditApplicationPage from './pages/EditApplicationPage';
-import ReferenceDataPage from './pages/ReferenceDataPage';
-import EditReferenceDataPage from './pages/EditReferenceDataPage';
 import DataModelDetailPage from './pages/DataModelDetailPage';
 import GlossaryPage from './pages/GlossaryPage';
 import EditGlossaryPage from './pages/EditGlossaryPage';
@@ -25,9 +24,9 @@ import ToolkitTechnologyMarkdownPage from './pages/ToolkitTechnologyMarkdownPage
 import EditToolkitTechnologyPage from './pages/EditToolkitTechnologyPage';
 import EditToolkitPage from './pages/EditToolkitPage';
 import EditDataModelDetailPage from './pages/EditDataModelDetailPage';
+import DataModelMarkdownPage from './pages/DataModelMarkdownPage';
 import ProductAgreementDetailPage from './pages/ProductAgreementDetailPage';
 import EditAgreementPage from './pages/EditAgreementPage';
-import ReferenceDataDetailPage from './pages/ReferenceDataDetailPage';
 import ToolkitPage from './pages/ToolkitPage';
 import ToolkitFunctionDetailPage from './pages/ToolkitFunctionDetailPage';
 import ToolkitSopDetailPage from './pages/ToolkitSopDetailPage';
@@ -52,6 +51,7 @@ import NavigationDrawer from './components/NavigationDrawer';
 import ProtectedRoute from './components/ProtectedRoute';
 import GlobalSearch from './components/GlobalSearch';
 import MainGlassHeader from './components/MainGlassHeader';
+import InfoSidebar from './components/InfoSidebar';
 
 // Import theme and hooks
 import { theme, addGoogleFonts } from './theme/theme';
@@ -83,6 +83,8 @@ function AppContent() {
     handleDrawerCollapse,
     handleThemeToggle,
     handleSidebarVisibilityToggle,
+    infoSidebarOpen,
+    handleInfoSidebarToggle,
   } = useAppState();
   
   const [searchOpen, setSearchOpen] = React.useState(false);
@@ -124,9 +126,6 @@ function AppContent() {
       },
     });
   }, [darkMode, currentTheme]);
-
-  // Check if we're on the splash page (deprecated - keeping for backward compatibility)
-  const isSplashPage = false;
 
   // Keyboard shortcut for search (Ctrl+K or Cmd+K)
   React.useEffect(() => {
@@ -174,20 +173,17 @@ function AppContent() {
       }}>
         <CssBaseline />
         
-        {/* Sidebar Navigation - Only show if not on splash page */}
-        {!isSplashPage && (
-          <NavigationDrawer
-            currentTheme={currentTheme}
-            mobileOpen={mobileOpen}
-            onDrawerToggle={handleDrawerToggle}
-            isDrawerCollapsed={isDrawerCollapsed}
-            onDrawerCollapse={handleDrawerCollapse}
-            menuData={menuData}
-            avatarColor={avatarColor}
-            sidebarVisibilityMode={sidebarVisibilityMode}
-            onSidebarVisibilityToggle={handleSidebarVisibilityToggle}
-          />
-        )}
+        <NavigationDrawer
+          currentTheme={currentTheme}
+          mobileOpen={mobileOpen}
+          onDrawerToggle={handleDrawerToggle}
+          isDrawerCollapsed={isDrawerCollapsed}
+          onDrawerCollapse={handleDrawerCollapse}
+          menuData={menuData}
+          avatarColor={avatarColor}
+          sidebarVisibilityMode={sidebarVisibilityMode}
+          onSidebarVisibilityToggle={handleSidebarVisibilityToggle}
+        />
 
         {/* Main: single scroll for the whole column (header bands + page body) */}
         <Box
@@ -229,6 +225,7 @@ function AppContent() {
             onThemeToggle={handleThemeToggle}
             onOpenSearch={() => setSearchOpen(true)}
             onDrawerToggle={handleDrawerToggle}
+            onInfoSidebarToggle={handleInfoSidebarToggle}
             scrollContainerRef={mainScrollRef}
           />
           <Box
@@ -253,6 +250,31 @@ function AppContent() {
             <Route path="/workspaces" element={
               <ProtectedRoute>
                 <WorkspacesPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/workbench/query" element={
+              <ProtectedRoute>
+                <HomePage />
+              </ProtectedRoute>
+            } />
+            <Route path="/workbench/modeling" element={
+              <ProtectedRoute>
+                <HomePage />
+              </ProtectedRoute>
+            } />
+            <Route path="/workbench/studio" element={
+              <ProtectedRoute>
+                <HomePage />
+              </ProtectedRoute>
+            } />
+            <Route path="/workbench/rule-builder" element={
+              <ProtectedRoute>
+                <HomePage />
+              </ProtectedRoute>
+            } />
+            <Route path="/workbench/reference-data" element={
+              <ProtectedRoute>
+                <HomePage />
               </ProtectedRoute>
             } />
             <Route path="/models" element={
@@ -285,16 +307,6 @@ function AppContent() {
                 <DataPoliciesPage />
               </ProtectedRoute>
             } />
-            <Route path="/reference" element={
-              <ProtectedRoute>
-                <ReferenceDataPage />
-              </ProtectedRoute>
-            } />
-            <Route path="/priority-queue" element={<ProtectedRoute><Navigate to="/" replace /></ProtectedRoute>} />
-            <Route path="/pipelines" element={<ProtectedRoute><Navigate to="/" replace /></ProtectedRoute>} />
-            <Route path="/pipelines/datasets/:id" element={<ProtectedRoute><Navigate to="/" replace /></ProtectedRoute>} />
-            <Route path="/data-products" element={<ProtectedRoute><Navigate to="/" replace /></ProtectedRoute>} />
-            <Route path="/data-products/:id" element={<ProtectedRoute><Navigate to="/" replace /></ProtectedRoute>} />
             <Route path="/glossary" element={
               <ProtectedRoute>
                 <GlossaryPage />
@@ -354,16 +366,8 @@ function AppContent() {
                 <EditToolkitPage />
               </ProtectedRoute>
             } />
-            <Route path="/toolkit/toolkit/:toolkitId" element={
-              <ProtectedRoute>
-                <ToolkitDetailPage />
-              </ProtectedRoute>
-            } />
-            <Route path="/toolkit/toolkit/:toolkitId/edit" element={
-              <ProtectedRoute requiredRole="editor">
-                <EditToolkitPage />
-              </ProtectedRoute>
-            } />
+            <Route path="/toolkit/workbench/:toolkitId/*" element={<ToolkitLegacyWorkbenchRedirect />} />
+            <Route path="/toolkit/toolkit/:toolkitId/*" element={<ToolkitLegacyWorkbenchRedirect />} />
             <Route path="/toolkit/package/new" element={
               <ProtectedRoute requiredRole="editor">
                 <EditToolkitPackagePage />
@@ -424,16 +428,6 @@ function AppContent() {
                 <EditDataPolicyPage />
               </ProtectedRoute>
             } />
-            <Route path="/reference/create" element={
-              <ProtectedRoute requiredRole="editor">
-                <EditReferenceDataPage currentTheme={currentTheme} />
-              </ProtectedRoute>
-            } />
-            <Route path="/reference/:id/edit" element={
-              <ProtectedRoute requiredRole="editor">
-                <EditReferenceDataPage currentTheme={currentTheme} />
-              </ProtectedRoute>
-            } />
             <Route path="/glossary/create" element={
               <ProtectedRoute requiredRole="editor">
                 <EditGlossaryPage />
@@ -449,30 +443,33 @@ function AppContent() {
                 <GlossaryMarkdownPage />
               </ProtectedRoute>
             } />
-            <Route path="/data-products/:id/markdown" element={<ProtectedRoute><Navigate to="/" replace /></ProtectedRoute>} />
-            <Route path="/datasets/:id/markdown" element={<ProtectedRoute><Navigate to="/" replace /></ProtectedRoute>} />
-            <Route path="/toolkit/toolkit/:toolkitId/technology/:technologyId/readme/:readmeType" element={
+            <Route path="/toolkit/:toolkitId/technology/:technologyId/readme/:readmeType" element={
               <ProtectedRoute requiredRole="editor">
                 <ToolkitTechnologyMarkdownPage />
               </ProtectedRoute>
             } />
-            <Route path="/toolkit/toolkit/:toolkitId/technology/:technologyId" element={
+            <Route path="/toolkit/:toolkitId/technology/:technologyId" element={
               <ProtectedRoute requiredRole="editor">
                 <EditToolkitTechnologyPage />
               </ProtectedRoute>
             } />
-            <Route path="/toolkit/toolkit/:toolkitId/technology/create" element={
+            <Route path="/toolkit/:toolkitId/technology/create" element={
               <ProtectedRoute requiredRole="editor">
                 <EditToolkitTechnologyPage />
               </ProtectedRoute>
             } />
-            <Route path="/reference/:id" element={
+            <Route path="/toolkit/:toolkitId/edit" element={
+              <ProtectedRoute requiredRole="editor">
+                <EditToolkitPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/toolkit/:toolkitId" element={
               <ProtectedRoute>
-                <ReferenceDataDetailPage currentTheme={currentTheme} />
+                <ToolkitDetailPage />
               </ProtectedRoute>
             } />
             <Route 
-              path="/models/:shortName" 
+              path="/models/:modelId" 
               element={
                 <ProtectedRoute>
                   <DataModelDetailPage 
@@ -482,7 +479,7 @@ function AppContent() {
               } 
             />
             <Route 
-              path="/models/:shortName/edit" 
+              path="/models/:modelId/edit" 
               element={
                 <ProtectedRoute requiredRole="editor">
                   <EditDataModelDetailPage 
@@ -490,6 +487,14 @@ function AppContent() {
                   />
                 </ProtectedRoute>
               } 
+            />
+            <Route
+              path="/models/:modelId/markdown/:tabId"
+              element={
+                <ProtectedRoute requiredRole="editor">
+                  <DataModelMarkdownPage />
+                </ProtectedRoute>
+              }
             />
             <Route 
               path="/agreements/create" 
@@ -532,6 +537,12 @@ function AppContent() {
           </Routes>
           </Box>
         </Box>
+
+        <InfoSidebar
+          open={infoSidebarOpen}
+          onClose={handleInfoSidebarToggle}
+          currentTheme={currentTheme}
+        />
 
         {/* Global Search Dialog */}
         <GlobalSearch 

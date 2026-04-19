@@ -46,6 +46,7 @@ import remarkGfm from 'remark-gfm';
 import remarkEmoji from 'remark-emoji';
 import MermaidDiagram from '../components/MermaidDiagram';
 import GlossaryCard from '../components/GlossaryCard';
+import { glossaryTermApiRef, glossaryTermsEqual } from '../utils/catalogModelLookup';
 
 const GlossaryPage = () => {
   const { currentTheme, darkMode } = useContext(ThemeContext);
@@ -509,13 +510,13 @@ const GlossaryPage = () => {
             ) : (
               <Grid container spacing={2}>
                 {filteredData.map((term) => (
-                  <Grid item xs={12} key={term.id || term.term}>
+                  <Grid item xs={12} key={term.uuid || term.id || term.term}>
                     <Box
                       onClick={() => handleTermClick(term)}
                       sx={{
                         cursor: 'pointer',
                         '& .MuiCard-root': {
-                          border: selectedTerm?.id === term.id ? `2px solid ${currentTheme.primary}` : `1px solid ${currentTheme.border}`,
+                          border: glossaryTermsEqual(selectedTerm, term) ? `2px solid ${currentTheme.primary}` : `1px solid ${currentTheme.border}`,
                           transition: 'all 0.2s ease-in-out',
                         }
                       }}
@@ -561,7 +562,7 @@ const GlossaryPage = () => {
                 <Tooltip title="Edit Markdown">
                   <IconButton
                     size="small"
-                    onClick={() => navigate(`/glossary/${selectedTerm.id}/markdown`)}
+                    onClick={() => navigate(`/glossary/${glossaryTermApiRef(selectedTerm)}/markdown`)}
                     sx={{
                       color: currentTheme.textSecondary,
                       '&:hover': {

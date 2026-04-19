@@ -92,6 +92,11 @@ export const FIELD_REGISTRY = {
     description:
       'Operational context for this technology: who maintains it, where it runs, when it was last updated, and which version is in use.',
   },
+  'toolkit.technology.links': {
+    label: 'Links',
+    description:
+      'Curated links with custom titles (for example documentation or runbooks), edited on the toolkit page and shown in this panel.',
+  },
 
   // —— Toolkit catalog items (infrastructure, container, function, etc.) ——
   'catalog.item.provider': {

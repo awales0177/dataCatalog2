@@ -45,13 +45,15 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkEmoji from 'remark-emoji';
 import MermaidDiagram from '../components/MermaidDiagram';
-import { modelMarkdownsForDisplay, modelMarkdownProseSx } from '../utils/modelMarkdowns';
+import { modelMarkdownsForDisplay, modelMarkdownProseSx, dataModelMarkdownEditPath } from '../utils/modelMarkdowns';
 import { fontStackSans } from '../theme/theme';
 import FieldInfoIcon from '../components/FieldInfoIcon';
+import { useAuth } from '../contexts/AuthContext';
 import {
   resolveModelToolTechnology,
   getTechnologyCardImage,
 } from '../utils/modelToolCardImage';
+import { findCatalogModel, modelApiRef } from '../utils/catalogModelLookup';
 
 /** Short line for tool cards (hostname or path, truncated). */
 function toolLinkCaption(url) {
@@ -136,14 +138,15 @@ function AgreementMiniCard({ agreement, currentTheme, navigate }) {
         />
       }
       trailing={<ChevronRightIcon sx={{ fontSize: 22 }} />}
-      onClick={() => navigate(`/agreements/${agreement.id}`)}
+      onClick={() => navigate(`/agreements/${encodeURIComponent(agreement.uuid || agreement.id)}`)}
     />
   );
 }
 
 const DataModelDetailPage = ({ currentTheme }) => {
-  const { shortName } = useParams();
+  const { modelId } = useParams();
   const navigate = useNavigate();
+  const { canEdit } = useAuth();
   const [model, setModel] = React.useState(null);
   const [agreements, setAgreements] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
@@ -171,8 +174,6 @@ const DataModelDetailPage = ({ currentTheme }) => {
       try {
         const modelData = await fetchData('models', { forceRefresh: true });
         if (cancelled) return;
-        const agreementsData = await fetchAgreementsByModel(shortName, { forceRefresh: true });
-        if (cancelled) return;
         const applicationsData = await fetchData('applications', { forceRefresh: true });
         if (cancelled) return;
 
@@ -183,10 +184,14 @@ const DataModelDetailPage = ({ currentTheme }) => {
           throw new Error('Invalid models response');
         }
 
-        const sn = (shortName || '').toLowerCase();
-        const foundModel = modelsList.find((m) => m?.shortName && m.shortName.toLowerCase() === sn);
+        const foundModel = findCatalogModel(modelsList, modelId);
 
         if (foundModel) {
+          const agreementsData = await fetchAgreementsByModel(modelApiRef(foundModel), {
+            forceRefresh: true,
+          });
+          if (cancelled) return;
+
           setModel(foundModel);
           setAgreements(agreementsData.agreements || []);
 
@@ -201,7 +206,7 @@ const DataModelDetailPage = ({ currentTheme }) => {
 
           setRulesListLoading(true);
           try {
-            const rulesData = await getRulesForModel(foundModel.shortName);
+            const rulesData = await getRulesForModel(modelApiRef(foundModel));
             if (cancelled) return;
             const list = rulesData.rules || [];
             setModelRulesList(list);
@@ -238,7 +243,7 @@ const DataModelDetailPage = ({ currentTheme }) => {
     return () => {
       cancelled = true;
     };
-  }, [shortName]);
+  }, [modelId]);
 
   const markdownTabs = model ? modelMarkdownsForDisplay(model) : [];
   const hasTools =
@@ -304,7 +309,7 @@ const DataModelDetailPage = ({ currentTheme }) => {
 
   React.useEffect(() => {
     setDocTabIndex(0);
-  }, [shortName]);
+  }, [modelId]);
 
   React.useEffect(() => {
     setDocTabIndex((i) => Math.min(i, Math.max(0, docTabCount - 1)));
@@ -410,7 +415,7 @@ const DataModelDetailPage = ({ currentTheme }) => {
         {/* Edit Mode Toggle */}
         <Tooltip title="Edit Model">
           <IconButton
-            onClick={() => navigate(`/models/${model.shortName}/edit`)}
+            onClick={() => navigate(`/models/${encodeURIComponent(modelApiRef(model))}/edit`)}
             sx={{
               color: currentTheme.primary,
               bgcolor: alpha(currentTheme.primary, 0.1),
@@ -445,7 +450,6 @@ const DataModelDetailPage = ({ currentTheme }) => {
               <Typography variant="h6" sx={{ color: currentTheme.text }}>
                 Description
               </Typography>
-              <FieldInfoIcon fieldId="dataModel.section.description" iconSize={18} />
             </Box>
             <Typography variant="body1" sx={{ color: currentTheme.textSecondary, mb: 3 }}>
               {model.extendedDescription || model.description}
@@ -460,7 +464,6 @@ const DataModelDetailPage = ({ currentTheme }) => {
                       <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
                         Domains
                       </Typography>
-                      <FieldInfoIcon fieldId="dataModel.section.domains" />
                     </Box>
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                       {model.domain.map((domain, index) => (
@@ -489,7 +492,6 @@ const DataModelDetailPage = ({ currentTheme }) => {
                       <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
                         Reference Data
                       </Typography>
-                      <FieldInfoIcon fieldId="dataModel.section.referenceData" />
                     </Box>
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                       {model.referenceData.map((ref, index) => (
@@ -519,7 +521,6 @@ const DataModelDetailPage = ({ currentTheme }) => {
                     <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
                       Users
                     </Typography>
-                    <FieldInfoIcon fieldId="dataModel.section.users" />
                   </Box>
                   <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                     {model.users.map((user, index) => (
@@ -614,7 +615,6 @@ const DataModelDetailPage = ({ currentTheme }) => {
                 <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
                   Latest Version
                 </Typography>
-                <FieldInfoIcon fieldId="dataModel.spec.latestVersion" />
               </Box>
               <Typography variant="body1" sx={{ color: currentTheme.text }}>
                 {model.version}
@@ -672,7 +672,6 @@ const DataModelDetailPage = ({ currentTheme }) => {
                 <Typography variant="subtitle2" sx={{ color: currentTheme.textSecondary }}>
                   Last Updated
                 </Typography>
-                <FieldInfoIcon fieldId="dataModel.spec.lastUpdated" />
               </Box>
               <Typography variant="body1" sx={{ color: currentTheme.text }}>
                 {formatDate(model.lastUpdated)}
@@ -866,26 +865,56 @@ const DataModelDetailPage = ({ currentTheme }) => {
           overflow: 'hidden',
         }}
       >
-        <Tabs
-          value={docTabSafe}
-          onChange={(_, v) => setDocTabIndex(v)}
-          variant="scrollable"
-          scrollButtons="auto"
+        <Box
           sx={{
+            display: 'flex',
+            alignItems: 'center',
             borderBottom: `1px solid ${currentTheme.border}`,
-            px: 1,
-            '& .MuiTab-root': { textTransform: 'none', minHeight: 48 },
+            pr: 0.5,
           }}
         >
-          {markdownTabs.map((t) => (
-            <Tab key={t.id} label={t.title} />
-          ))}
-          {hasTools && <Tab label="Tools" />}
-          <Tab label={`Rules${ruleCount > 0 ? ` (${ruleCount})` : ''}`} />
-          {hasAgreements && <Tab label="Product agreements" />}
-          {hasReleaseNotes && <Tab label="Release notes" />}
-          <Tab label="Version history" />
-        </Tabs>
+          <Tabs
+            value={docTabSafe}
+            onChange={(_, v) => setDocTabIndex(v)}
+            variant="scrollable"
+            scrollButtons="auto"
+            sx={{
+              flex: 1,
+              minWidth: 0,
+              borderBottom: 'none',
+              px: 1,
+              '& .MuiTab-root': { textTransform: 'none', minHeight: 48 },
+            }}
+          >
+            {markdownTabs.map((t) => (
+              <Tab key={t.id} label={t.title} />
+            ))}
+            {hasTools && <Tab label="Tools" />}
+            <Tab label={`Rules${ruleCount > 0 ? ` (${ruleCount})` : ''}`} />
+            {hasAgreements && <Tab label="Product agreements" />}
+            {hasReleaseNotes && <Tab label="Release notes" />}
+            <Tab label="Version history" />
+          </Tabs>
+          {mdTabCount > 0 && docTabSafe < mdTabCount && canEdit?.() && (
+            <Tooltip title="Edit this tab’s markdown">
+              <IconButton
+                size="small"
+                aria-label="Edit documentation markdown"
+                onClick={() => {
+                  const id = markdownTabs[docTabSafe]?.id;
+                  if (id) navigate(dataModelMarkdownEditPath(modelApiRef(model), id));
+                }}
+                sx={{
+                  flexShrink: 0,
+                  color: currentTheme.textSecondary,
+                  '&:hover': { color: currentTheme.primary },
+                }}
+              >
+                <EditIcon />
+              </IconButton>
+            </Tooltip>
+          )}
+        </Box>
 
         <Box sx={{ p: 3 }}>
           {docTabSafe < mdTabCount && (
@@ -1012,7 +1041,7 @@ const DataModelDetailPage = ({ currentTheme }) => {
                 rules={sortedModelRules}
                 loading={rulesListLoading}
                 readOnly
-                expandResetKey={model.shortName}
+                expandResetKey={modelApiRef(model)}
                 currentTheme={currentTheme}
                 darkMode={currentTheme.darkMode}
                 applications={applications}

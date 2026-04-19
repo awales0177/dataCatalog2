@@ -495,7 +495,6 @@ const ToolkitContainerDetailPage = () => {
                   <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
                     Type
                   </Typography>
-                  <FieldInfoIcon fieldId="catalog.item.type" iconSize={14} />
                 </Box>
                 <Typography variant="body2" sx={{ color: currentTheme.text }}>
                   {containerData.type || 'docker'}
@@ -506,7 +505,6 @@ const ToolkitContainerDetailPage = () => {
                   <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
                     Category
                   </Typography>
-                  <FieldInfoIcon fieldId="catalog.item.category" iconSize={14} />
                 </Box>
                 <Typography variant="body2" sx={{ color: currentTheme.text }}>
                   {containerData.category}
@@ -517,7 +515,6 @@ const ToolkitContainerDetailPage = () => {
                   <Typography variant="caption" sx={{ color: currentTheme.textSecondary }}>
                     Last Updated
                   </Typography>
-                  <FieldInfoIcon fieldId="catalog.item.lastUpdated" iconSize={14} />
                 </Box>
                 <Typography variant="body2" sx={{ color: currentTheme.text }}>
                   {formatDate(containerData.lastUpdated)}

@@ -12,8 +12,6 @@ import logging
 import threading
 import time
 from time import perf_counter
-import uuid
-
 # Import authentication modules
 from auth import get_current_user_optional, require_editor_or_admin, require_admin, UserRole
 from endpoints.auth import router as auth_router
@@ -24,6 +22,7 @@ from services.catalog_rule_id import (
     normalize_rule_zone,
 )
 from services.python_introspection_service import python_introspection_service
+from catalog_uuid import new_uuid_str
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -42,6 +41,20 @@ performance_metrics = {
         "response_times": []
     }
 }
+
+def _toolkit_component_matches(comp: Dict[str, Any], ref: str) -> bool:
+    """Match toolkit list item by uuid (preferred) or legacy id."""
+    if not comp or ref is None or str(ref).strip() == "":
+        return False
+    r = str(ref).strip()
+    rl = r.lower()
+    if str(comp.get("id", "")) == r:
+        return True
+    u = comp.get("uuid")
+    if u is not None and str(u).lower() == rl:
+        return True
+    return False
+
 
 def log_performance(endpoint: str, start_time: float, github_request: bool = False):
     """Log performance metrics for an API request."""
@@ -89,6 +102,67 @@ def get_performance_stats():
         }
     
     return stats
+
+
+def matches_uuid_or_legacy_id(entity: Dict[str, Any], ref: str) -> bool:
+    """True if ref matches entity uuid (preferred) or legacy primary id."""
+    ref = (ref or "").strip()
+    if not ref:
+        return False
+    uid = str(entity.get("uuid", "") or "").strip()
+    if uid and uid.lower() == ref.lower():
+        return True
+    eid = entity.get("id")
+    if eid is not None and str(eid).lower() == ref.lower():
+        return True
+    return False
+
+
+def model_search_doc_id(model: Dict[str, Any]) -> str:
+    """Search index document id for a data model."""
+    u = model.get("uuid")
+    if u:
+        return str(u)
+    return str(model.get("shortName") or model.get("id", ""))
+
+
+def resolve_model_short_name(models_data: Dict[str, Any], model_ref: str) -> Optional[str]:
+    """Return canonical shortName for a model uuid/id/shortName ref, or None."""
+    idx = find_model_index(models_data, model_ref)
+    if idx is None:
+        return None
+    return models_data["models"][idx].get("shortName")
+
+
+def find_model_index(models_data: Dict[str, Any], identifier: str) -> Optional[int]:
+    ident = (identifier or "").strip()
+    if not ident:
+        return None
+    models = models_data.get("models", [])
+    for i, m in enumerate(models):
+        uid = str(m.get("uuid", "") or "").strip()
+        if uid and uid.lower() == ident.lower():
+            return i
+    try:
+        n = int(ident)
+        for i, m in enumerate(models):
+            if m.get("id") == n:
+                return i
+    except ValueError:
+        pass
+    for i, m in enumerate(models):
+        sn = (m.get("shortName") or "").strip()
+        if sn.lower() == ident.lower():
+            return i
+    return None
+
+
+def agreement_search_doc_id(agreement: Dict[str, Any]) -> str:
+    u = agreement.get("uuid")
+    if u:
+        return str(u)
+    return str(agreement.get("id", ""))
+
 
 # API Documentation
 app = FastAPI(
@@ -808,18 +882,19 @@ async def get_agreements_by_model(model_short_name: str):
         agreements_data = read_json_file(JSON_FILES['dataAgreements'])
         model_data = read_json_file(JSON_FILES['models'])
 
-        # Find the model by short name (case-insensitive)
-        model = next((m for m in model_data['models'] if m['shortName'].lower() == model_short_name.lower()), None)
-        if not model:
+        idx = find_model_index(model_data, model_short_name)
+        if idx is None:
             raise HTTPException(
-                status_code=404, 
-                detail=f"Model with short name '{model_short_name}' not found"
+                status_code=404,
+                detail=f"Model '{model_short_name}' not found"
             )
+        model = model_data['models'][idx]
+        msn = model.get('shortName', '')
 
         # Filter agreements by model shortName
         filtered_agreements = [
             agreement for agreement in agreements_data['agreements']
-            if agreement.get('modelShortName', '').lower() == model_short_name.lower()
+            if agreement.get('modelShortName', '').lower() == msn.lower()
         ]
         
         # Add debugging information
@@ -832,6 +907,7 @@ async def get_agreements_by_model(model_short_name: str):
         return {
             "model": {
                 "id": model['id'],
+                "uuid": model.get('uuid'),
                 "shortName": model['shortName'],
                 "name": model['name']
             },
@@ -883,6 +959,7 @@ async def create_model(request: CreateModelRequest, current_user: dict = Depends
         # Create the new model from the request
         new_model = {
             'id': new_id,
+            'uuid': new_uuid_str(),
             'shortName': request.shortName,
             'name': request.name,
             'description': request.description,
@@ -908,13 +985,14 @@ async def create_model(request: CreateModelRequest, current_user: dict = Depends
         logger.info(f"Created new model in local file {local_file_path}")
         
         # Update search index
-        update_search_index("models", "add", new_model, str(new_id))
+        update_search_index("models", "add", new_model, model_search_doc_id(new_model))
         
         logger.info(f"Model {request.shortName} created successfully with ID {new_id}")
         
         return {
             "message": "Model created successfully",
             "shortName": request.shortName,
+            "uuid": new_model['uuid'],
             "id": new_id,
             "created": True
         }
@@ -926,13 +1004,13 @@ async def create_model(request: CreateModelRequest, current_user: dict = Depends
             detail=f"Error creating model: {str(e)}"
         )
 
-@app.delete("/api/models/{short_name}")
-async def delete_model(short_name: str, current_user: dict = Depends(require_editor_or_admin)):
+@app.delete("/api/models/{model_ref}")
+async def delete_model(model_ref: str, current_user: dict = Depends(require_editor_or_admin)):
     """
-    Delete a data model by its short name.
+    Delete a data model by uuid (preferred), numeric id, or short name.
     
     Args:
-        short_name (str): The short name of the model to delete
+        model_ref (str): Model uuid, id, or short name
         
     Returns:
         dict: Success message and deleted model info
@@ -941,26 +1019,22 @@ async def delete_model(short_name: str, current_user: dict = Depends(require_edi
         HTTPException: If the model is not found or deletion fails
     """
     try:
-        logger.info(f"Delete request for model: {short_name}")
+        logger.info(f"Delete request for model: {model_ref}")
         
         # Read current models data
         models_data = read_json_file(JSON_FILES['models'])
         
-        # Find the model to delete
-        model_to_delete = None
-        for model in models_data['models']:
-            if model['shortName'].lower() == short_name.lower():
-                model_to_delete = model
-                break
-        
-        if not model_to_delete:
+        del_idx = find_model_index(models_data, model_ref)
+        if del_idx is None:
             raise HTTPException(
                 status_code=404,
-                detail=f"Model with shortName '{short_name}' not found"
+                detail=f"Model '{model_ref}' not found"
             )
+        model_to_delete = models_data['models'][del_idx]
+        doc_id = model_search_doc_id(model_to_delete)
         
         # Remove the model from the array
-        models_data['models'] = [m for m in models_data['models'] if m['shortName'].lower() != short_name.lower()]
+        models_data['models'] = [m for m in models_data['models'] if m is not model_to_delete]
         
         # Save the updated data to local file
         local_file_path = JSON_FILES['models']
@@ -968,13 +1042,14 @@ async def delete_model(short_name: str, current_user: dict = Depends(require_edi
         logger.info(f"Model deleted from local file {local_file_path}")
         
         # Update search index
-        update_search_index("models", "delete", item_id=short_name)
+        update_search_index("models", "delete", item_id=doc_id)
         
-        logger.info(f"Model {short_name} deleted successfully")
+        logger.info(f"Model {model_ref} deleted successfully")
         
         return {
             "message": "Model deleted successfully",
-            "shortName": short_name,
+            "shortName": model_to_delete.get('shortName'),
+            "uuid": model_to_delete.get('uuid'),
             "deleted": True
         }
         
@@ -985,13 +1060,13 @@ async def delete_model(short_name: str, current_user: dict = Depends(require_edi
             detail=f"Error deleting model: {str(e)}"
         )
 
-@app.post("/api/models/{short_name}/click")
-async def track_model_click(short_name: str):
+@app.post("/api/models/{model_ref}/click")
+async def track_model_click(model_ref: str):
     """
     Track a click on a data model card and increment the click counter.
     
     Args:
-        short_name (str): The short name of the model to track
+        model_ref (str): Model uuid, id, or short name
         
     Returns:
         dict: Success message and updated click count
@@ -1000,22 +1075,17 @@ async def track_model_click(short_name: str):
         HTTPException: If the model is not found
     """
     try:
-        logger.info(f"Click tracking request for model: {short_name}")
+        logger.info(f"Click tracking request for model: {model_ref}")
         
         # Read current models data
         models_data = read_json_file(JSON_FILES['models'])
         
-        # Find the model to update
-        model_index = None
-        for i, model in enumerate(models_data['models']):
-            if model['shortName'].lower() == short_name.lower():
-                model_index = i
-                break
+        model_index = find_model_index(models_data, model_ref)
         
         if model_index is None:
             raise HTTPException(
                 status_code=404,
-                detail=f"Model with short name '{short_name}' not found"
+                detail=f"Model '{model_ref}' not found"
             )
         
         # Get the current model
@@ -1035,30 +1105,31 @@ async def track_model_click(short_name: str):
         # Save the updated data to local file
         local_file_path = JSON_FILES['models']
         write_json_file(local_file_path, models_data)
-        logger.info(f"Updated click count for model {short_name} to {model['meta']['clickCount']}")
+        logger.info(f"Updated click count for model {model_ref} to {model['meta']['clickCount']}")
         
         return {
             "message": "Click tracked successfully",
-            "shortName": short_name,
+            "shortName": model.get('shortName'),
+            "uuid": model.get('uuid'),
             "clickCount": model['meta']['clickCount']
         }
         
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error tracking click for model {short_name}: {str(e)}")
+        logger.error(f"Error tracking click for model {model_ref}: {str(e)}")
         raise HTTPException(
             status_code=500,
             detail=f"Error tracking click: {str(e)}"
         )
 
-@app.put("/api/models/{short_name}")
-async def update_model(short_name: str, request: UpdateModelRequest, current_user: dict = Depends(require_editor_or_admin)):
+@app.put("/api/models/{model_ref}")
+async def update_model(model_ref: str, request: UpdateModelRequest, current_user: dict = Depends(require_editor_or_admin)):
     """
-    Update a data model by its short name.
+    Update a data model by uuid (preferred), numeric id, or short name.
     
     Args:
-        short_name (str): The short name of the model to update
+        model_ref (str): Model uuid, id, or short name
         request (UpdateModelRequest): The updated model data
         
     Returns:
@@ -1068,22 +1139,17 @@ async def update_model(short_name: str, request: UpdateModelRequest, current_use
         HTTPException: If the model is not found or update fails
     """
     try:
-        logger.info(f"Update request for model: {short_name}")
+        logger.info(f"Update request for model: {model_ref}")
         
         # Read current models data
         models_data = read_json_file(JSON_FILES['models'])
         
-        # Find the model to update
-        model_index = None
-        for i, model in enumerate(models_data['models']):
-            if model['shortName'].lower() == short_name.lower():
-                model_index = i
-                break
+        model_index = find_model_index(models_data, model_ref)
         
         if model_index is None:
             raise HTTPException(
                 status_code=404,
-                detail=f"Model with short name '{short_name}' not found"
+                detail=f"Model '{model_ref}' not found"
             )
         
         # Update the model
@@ -1146,7 +1212,7 @@ async def update_model(short_name: str, request: UpdateModelRequest, current_use
         logger.info(f"Model update details:")
         logger.info(f"  Old shortName: {old_short_name}")
         logger.info(f"  New shortName: {new_short_name}")
-        logger.info(f"  Request shortName: {short_name}")
+        logger.info(f"  Request model_ref: {model_ref}")
         logger.info(f"  Model data keys: {list(request.modelData.keys())}")
         logger.info(f"  shortName in modelData: {request.modelData.get('shortName', 'NOT_PRESENT')}")
         logger.info(f"  shortName will be: {new_short_name}")
@@ -1164,22 +1230,23 @@ async def update_model(short_name: str, request: UpdateModelRequest, current_use
         logger.info(f"Updated local file {local_file_path}")
         
         # Update search index
-        update_search_index("models", "update", updated_model, short_name)
+        update_search_index("models", "update", updated_model, model_search_doc_id(updated_model))
         
         # No cache to clear - always fresh data
         logger.info("No caching - data will be fresh on next request")
         
-        logger.info(f"Model {short_name} updated successfully")
+        logger.info(f"Model {model_ref} updated successfully")
         
         return {
             "message": "Model updated successfully",
-            "shortName": short_name,
+            "shortName": updated_model.get('shortName'),
+            "uuid": updated_model.get('uuid'),
             "updated": True,
             "lastUpdated": updated_model['lastUpdated']
         }
         
     except Exception as e:
-        logger.error(f"Error updating model {short_name}: {str(e)}")
+        logger.error(f"Error updating model {model_ref}: {str(e)}")
         raise HTTPException(
             status_code=500,
             detail=f"Error updating model: {str(e)}"
@@ -1318,6 +1385,7 @@ async def create_agreement(request: Dict[str, Any], current_user: dict = Depends
         # Add lastUpdated timestamp and assign the generated ID
         new_agreement = request.copy()
         new_agreement['id'] = new_id
+        new_agreement['uuid'] = new_uuid_str()
         new_agreement['lastUpdated'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         
         agreements_data['agreements'].append(new_agreement)
@@ -1325,7 +1393,7 @@ async def create_agreement(request: Dict[str, Any], current_user: dict = Depends
         write_json_file(local_file_path, agreements_data)
         
         # Update search index
-        update_search_index("dataAgreements", "add", new_agreement, new_id)
+        update_search_index("dataAgreements", "add", new_agreement, agreement_search_doc_id(new_agreement))
         
         logger.info(f"Created new agreement in local file {local_file_path}")
         logger.info(f"Agreement {new_id} created successfully")
@@ -1333,6 +1401,7 @@ async def create_agreement(request: Dict[str, Any], current_user: dict = Depends
         return {
             "message": "Agreement created successfully",
             "id": new_id,
+            "uuid": new_agreement['uuid'],
             "created": True
         }
     except Exception as e:
@@ -1361,12 +1430,12 @@ async def update_agreement(agreement_id: str, request: Dict[str, Any], current_u
         # Find the agreement to update
         agreement_to_update = None
         for agreement in agreements_data['agreements']:
-            if agreement['id'].lower() == agreement_id.lower():
+            if matches_uuid_or_legacy_id(agreement, agreement_id):
                 agreement_to_update = agreement
                 break
         
         if not agreement_to_update:
-            raise HTTPException(status_code=404, detail=f"Agreement with ID '{agreement_id}' not found")
+            raise HTTPException(status_code=404, detail=f"Agreement '{agreement_id}' not found")
         
         # Update the agreement
         updated_agreement = agreement_to_update.copy()
@@ -1375,8 +1444,8 @@ async def update_agreement(agreement_id: str, request: Dict[str, Any], current_u
         
         # Replace the old agreement with the updated one
         agreements_data['agreements'] = [
-            a for a in agreements_data['agreements'] 
-            if a['id'].lower() != agreement_id.lower()
+            a for a in agreements_data['agreements']
+            if not matches_uuid_or_legacy_id(a, agreement_id)
         ]
         agreements_data['agreements'].append(updated_agreement)
         
@@ -1384,7 +1453,7 @@ async def update_agreement(agreement_id: str, request: Dict[str, Any], current_u
         write_json_file(local_file_path, agreements_data)
         
         # Update search index
-        update_search_index("dataAgreements", "update", updated_agreement, agreement_id)
+        update_search_index("dataAgreements", "update", updated_agreement, agreement_search_doc_id(updated_agreement))
         
         logger.info(f"Agreement updated in local file {local_file_path}")
         logger.info(f"Agreement {agreement_id} updated successfully")
@@ -1475,23 +1544,23 @@ async def delete_agreement(agreement_id: str, current_user: dict = Depends(requi
         
         agreement_to_delete = None
         for agreement in agreements_data['agreements']:
-            if agreement['id'].lower() == agreement_id.lower():
+            if matches_uuid_or_legacy_id(agreement, agreement_id):
                 agreement_to_delete = agreement
                 break
         
         if not agreement_to_delete:
-            raise HTTPException(status_code=404, detail=f"Agreement with ID '{agreement_id}' not found")
+            raise HTTPException(status_code=404, detail=f"Agreement '{agreement_id}' not found")
         
         agreements_data['agreements'] = [
-            a for a in agreements_data['agreements'] 
-            if a['id'].lower() != agreement_id.lower()
+            a for a in agreements_data['agreements']
+            if not matches_uuid_or_legacy_id(a, agreement_id)
         ]
         
         local_file_path = JSON_FILES['dataAgreements']
         write_json_file(local_file_path, agreements_data)
         
         # Update search index
-        update_search_index("dataAgreements", "delete", item_id=agreement_id)
+        update_search_index("dataAgreements", "delete", item_id=agreement_search_doc_id(agreement_to_delete))
         
         logger.info(f"Agreement deleted from local file {local_file_path}")
         logger.info(f"Agreement {agreement_id} deleted successfully")
@@ -1740,6 +1809,7 @@ async def create_glossary_term(request: Dict[str, Any], current_user: dict = Dep
         # Add lastUpdated timestamp and assign the generated ID
         new_term = request.copy()
         new_term['id'] = new_id
+        new_term['uuid'] = new_uuid_str()
         if not new_term.get('lastUpdated'):
             new_term['lastUpdated'] = datetime.now().strftime('%Y-%m-%d')
         
@@ -1756,6 +1826,7 @@ async def create_glossary_term(request: Dict[str, Any], current_user: dict = Dep
         return {
             "message": "Glossary term created successfully",
             "id": new_id,
+            "uuid": new_term['uuid'],
             "created": True
         }
     except HTTPException:
@@ -1786,23 +1857,24 @@ async def update_glossary_term(term_id: str, request: Dict[str, Any], current_us
         # Find the glossary term to update
         term_to_update = None
         for term in glossary_data.get('terms', []):
-            if term.get('id', '').lower() == term_id.lower():
+            if matches_uuid_or_legacy_id(term, term_id):
                 term_to_update = term
                 break
         
         if not term_to_update:
-            raise HTTPException(status_code=404, detail=f"Glossary term with ID '{term_id}' not found")
+            raise HTTPException(status_code=404, detail=f"Glossary term '{term_id}' not found")
         
         # Update the glossary term
         updated_term = term_to_update.copy()
         updated_term.update(request)
-        updated_term['id'] = term_id  # Ensure ID doesn't change
+        updated_term['id'] = term_to_update['id']
+        updated_term['uuid'] = term_to_update.get('uuid')
         updated_term['lastUpdated'] = datetime.now().strftime('%Y-%m-%d')
         
         # Replace the old term with the updated one
         glossary_data['terms'] = [
-            t for t in glossary_data.get('terms', []) 
-            if t.get('id', '').lower() != term_id.lower()
+            t for t in glossary_data.get('terms', [])
+            if not matches_uuid_or_legacy_id(t, term_id)
         ]
         glossary_data['terms'].append(updated_term)
         
@@ -1843,16 +1915,16 @@ async def delete_glossary_term(term_id: str, current_user: dict = Depends(requir
         
         term_to_delete = None
         for term in glossary_data.get('terms', []):
-            if term.get('id', '').lower() == term_id.lower():
+            if matches_uuid_or_legacy_id(term, term_id):
                 term_to_delete = term
                 break
         
         if not term_to_delete:
-            raise HTTPException(status_code=404, detail=f"Glossary term with ID '{term_id}' not found")
+            raise HTTPException(status_code=404, detail=f"Glossary term '{term_id}' not found")
         
         glossary_data['terms'] = [
-            t for t in glossary_data.get('terms', []) 
-            if t.get('id', '').lower() != term_id.lower()
+            t for t in glossary_data.get('terms', [])
+            if not matches_uuid_or_legacy_id(t, term_id)
         ]
         
         local_file_path = JSON_FILES['glossary']
@@ -1898,7 +1970,7 @@ async def create_application(application: Dict[str, Any], current_user: dict = D
         # Preserve full payload from client (roles, email, image, etc.); assign server id
         incoming = dict(application)
         incoming.pop("id", None)
-        new_application = {**incoming, "id": new_id}
+        new_application = {**incoming, "id": new_id, "uuid": new_uuid_str()}
         
         applications_data['applications'].append(new_application)
         
@@ -1911,6 +1983,7 @@ async def create_application(application: Dict[str, Any], current_user: dict = D
         return {
             "message": "Application created successfully",
             "id": new_id,
+            "uuid": new_application["uuid"],
             "application": new_application
         }
     except Exception as e:
@@ -1918,12 +1991,12 @@ async def create_application(application: Dict[str, Any], current_user: dict = D
         raise HTTPException(status_code=500, detail=f"Error creating application: {str(e)}")
 
 @app.put("/api/applications/{application_id}")
-async def update_application(application_id: int, application: Dict[str, Any], current_user: dict = Depends(require_editor_or_admin)):
+async def update_application(application_id: str, application: Dict[str, Any], current_user: dict = Depends(require_editor_or_admin)):
     """
     Update an existing application by its ID.
     
     Args:
-        application_id (int): The ID of the application to update
+        application_id (str): Application uuid or legacy numeric id
         application (dict): The updated application data
         
     Returns:
@@ -1939,17 +2012,19 @@ async def update_application(application_id: int, application: Dict[str, Any], c
         # Find the application to update
         app_to_update = None
         for i, app in enumerate(applications_data['applications']):
-            if app['id'] == application_id:
+            if matches_uuid_or_legacy_id(app, str(application_id)):
                 app_to_update = i
                 break
         
         if app_to_update is None:
-            raise HTTPException(status_code=404, detail=f"Application with ID {application_id} not found")
+            raise HTTPException(status_code=404, detail=f"Application '{application_id}' not found")
         
         # Merge so optional fields (image, email, roles, etc.) persist
         existing = applications_data['applications'][app_to_update]
         body = dict(application)
-        body["id"] = application_id
+        body["id"] = existing["id"]
+        if existing.get("uuid"):
+            body["uuid"] = existing["uuid"]
         applications_data['applications'][app_to_update] = {**existing, **body}
         
         local_file_path = JSON_FILES['applications']
@@ -1958,22 +2033,24 @@ async def update_application(application_id: int, application: Dict[str, Any], c
         logger.info(f"Application updated in local file {local_file_path}")
         logger.info(f"Application {application_id} updated successfully")
         
+        updated = applications_data['applications'][app_to_update]
         return {
             "message": "Application updated successfully",
-            "id": application_id,
-            "application": applications_data['applications'][app_to_update]
+            "id": updated["id"],
+            "uuid": updated.get("uuid"),
+            "application": updated
         }
     except Exception as e:
         logger.error(f"Error updating application: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error updating application: {str(e)}")
 
 @app.delete("/api/applications/{application_id}")
-async def delete_application(application_id: int, current_user: dict = Depends(require_editor_or_admin)):
+async def delete_application(application_id: str, current_user: dict = Depends(require_editor_or_admin)):
     """
     Delete an application by its ID.
     
     Args:
-        application_id (int): The ID of the application to delete
+        application_id (str): Application uuid or legacy numeric id
         
     Returns:
         dict: Success message and deleted application info
@@ -1987,16 +2064,16 @@ async def delete_application(application_id: int, current_user: dict = Depends(r
         
         app_to_delete = None
         for app in applications_data['applications']:
-            if app['id'] == application_id:
+            if matches_uuid_or_legacy_id(app, str(application_id)):
                 app_to_delete = app
                 break
         
         if not app_to_delete:
-            raise HTTPException(status_code=404, detail=f"Application with ID {application_id} not found")
+            raise HTTPException(status_code=404, detail=f"Application '{application_id}' not found")
         
         applications_data['applications'] = [
-            app for app in applications_data['applications'] 
-            if app['id'] != application_id
+            app for app in applications_data['applications']
+            if not matches_uuid_or_legacy_id(app, str(application_id))
         ]
         
         local_file_path = JSON_FILES['applications']
@@ -2007,7 +2084,8 @@ async def delete_application(application_id: int, current_user: dict = Depends(r
         
         return {
             "message": "Application deleted successfully",
-            "id": application_id,
+            "id": app_to_delete.get("id"),
+            "uuid": app_to_delete.get("uuid"),
             "deleted": True
         }
     except Exception as e:
@@ -2052,12 +2130,13 @@ async def create_toolkit_component(component: Dict[str, Any], current_user: dict
         if component_type == 'toolkits':
             if not (component.get('name') or '').strip():
                 raise HTTPException(status_code=400, detail="Toolkit name is required")
-            new_id = str(uuid.uuid4())
+            new_id = new_uuid_str()
             technologies = component.get('technologies', [])
             if not isinstance(technologies, list):
                 technologies = []
             new_component = {
                 "id": new_id,
+                "uuid": new_id,
                 "name": component.get('name', ''),
                 "displayName": component.get('displayName', component.get('name', '')),
                 "description": component.get('description', ''),
@@ -2096,7 +2175,7 @@ async def create_toolkit_component(component: Dict[str, Any], current_user: dict
                 raise HTTPException(status_code=400, detail=f"Function with name '{function_name}' already exists")
             
             # Generate UUID for function ID
-            new_id = str(uuid.uuid4())
+            new_id = new_uuid_str()
         else:
             # Generate new ID for containers / terraform only
             existing_ids = [item.get('id', '') for item in toolkit_data['toolkit'][component_type] if item.get('id')]
@@ -2116,9 +2195,13 @@ async def create_toolkit_component(component: Dict[str, Any], current_user: dict
             
             new_id = f"{prefix}{max_num + 1:03d}"
         
+        # Functions use UUID as id; containers/terraform keep legacy id plus a distinct uuid for URLs
+        component_uuid = new_uuid_str() if component_type in ("containers", "terraform") else new_id
+
         # Create new component with ID
         new_component = {
             "id": new_id,
+            "uuid": component_uuid,
             "name": component.get('name', ''),
             "displayName": component.get('displayName', component.get('name', '')),
             "description": component.get('description', ''),
@@ -2263,7 +2346,7 @@ async def update_toolkit_package(
             
             # Generate UUID for new packages
             if is_new_package:
-                package_uuid = str(uuid.uuid4())
+                package_uuid = new_uuid_str()
             else:
                 package_uuid = package_id
             
@@ -2340,10 +2423,10 @@ async def update_toolkit_component(component_type: str, component_id: str, compo
         if 'toolkit' not in toolkit_data or component_type not in toolkit_data['toolkit']:
             raise HTTPException(status_code=404, detail="Toolkit data not found")
         
-        # Find the component to update
+        # Find the component to update (uuid or legacy id)
         comp_to_update = None
         for i, comp in enumerate(toolkit_data['toolkit'][component_type]):
-            if comp['id'] == component_id:
+            if _toolkit_component_matches(comp, component_id):
                 comp_to_update = i
                 break
         
@@ -2365,6 +2448,7 @@ async def update_toolkit_component(component_type: str, component_id: str, compo
                 if key in component:
                     updated_component[key] = component[key]
             updated_component['id'] = existing_component['id']
+            updated_component['uuid'] = existing_component.get('uuid') or existing_component['id']
             updated_component['lastUpdated'] = datetime.now().isoformat()
             if 'clickCount' in existing_component:
                 updated_component['clickCount'] = existing_component['clickCount']
@@ -2583,7 +2667,7 @@ async def delete_toolkit_component(component_type: str, component_id: str, curre
         
         comp_to_delete = None
         for comp in toolkit_data['toolkit'][component_type]:
-            if comp['id'] == component_id:
+            if _toolkit_component_matches(comp, component_id):
                 comp_to_delete = comp
                 break
         
@@ -2591,8 +2675,8 @@ async def delete_toolkit_component(component_type: str, component_id: str, curre
             raise HTTPException(status_code=404, detail=f"Component with ID {component_id} not found")
         
         toolkit_data['toolkit'][component_type] = [
-            comp for comp in toolkit_data['toolkit'][component_type] 
-            if comp['id'] != component_id
+            comp for comp in toolkit_data['toolkit'][component_type]
+            if not _toolkit_component_matches(comp, component_id)
         ]
         
         local_file_path = JSON_FILES['toolkit']
@@ -2632,6 +2716,9 @@ def create_policy(policy: Dict[str, Any], current_user: dict = Depends(require_e
         if not policy.get('id'):
             policy['id'] = f"{policy.get('type', 'policy')}_{policy.get('name', 'unknown').lower().replace(' ', '_')}_{int(time.time())}"
         
+        if not policy.get('uuid'):
+            policy['uuid'] = new_uuid_str()
+        
         # Add timestamp
         policy['lastUpdated'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         
@@ -2664,17 +2751,23 @@ def update_policy(policy_id: str, policy: Dict[str, Any], current_user: dict = D
         # Find existing policy
         existing_policy = None
         for i, p in enumerate(policies_data['policies']):
-            if p['id'] == policy_id:
+            if matches_uuid_or_legacy_id(p, policy_id):
                 existing_policy = i
                 break
         
         if existing_policy is None:
-            raise HTTPException(status_code=404, detail=f"Policy with ID {policy_id} not found")
+            raise HTTPException(status_code=404, detail=f"Policy '{policy_id}' not found")
         
         # Update timestamp
         policy['lastUpdated'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         
-        # Update the policy
+        # Update the policy (preserve stable ids)
+        prev = policies_data['policies'][existing_policy]
+        policy['id'] = prev['id']
+        if prev.get('uuid'):
+            policy['uuid'] = prev['uuid']
+        elif not policy.get('uuid'):
+            policy['uuid'] = new_uuid_str()
         policies_data['policies'][existing_policy] = policy
         
         # Write to file
@@ -2685,7 +2778,8 @@ def update_policy(policy_id: str, policy: Dict[str, Any], current_user: dict = D
         
         return {
             "message": "Policy updated successfully",
-            "id": policy_id,
+            "id": policy['id'],
+            "uuid": policy.get('uuid'),
             "policy": policy
         }
     except HTTPException:
@@ -2705,12 +2799,12 @@ def delete_policy(policy_id: str, current_user: dict = Depends(require_editor_or
         # Find and remove policy
         original_length = len(policies_data['policies'])
         policies_data['policies'] = [
-            p for p in policies_data['policies'] 
-            if p['id'] != policy_id
+            p for p in policies_data['policies']
+            if not matches_uuid_or_legacy_id(p, policy_id)
         ]
         
         if len(policies_data['policies']) == original_length:
-            raise HTTPException(status_code=404, detail=f"Policy with ID {policy_id} not found")
+            raise HTTPException(status_code=404, detail=f"Policy '{policy_id}' not found")
         
         # Write to file
         local_file_path = JSON_FILES['policies']
@@ -2968,13 +3062,16 @@ async def get_rules_for_model(model_short_name: str):
             logger.warning("Rules file missing 'rules' key, returning empty rules")
             return {"rules": []}
         
+        models_data = read_json_file(JSON_FILES['models'])
+        msn = resolve_model_short_name(models_data, model_short_name) or model_short_name
+        
         # Filter rules by model
         model_rules = [
             rule for rule in rules_data.get('rules', [])
-            if rule.get('modelShortName', '').lower() == model_short_name.lower()
+            if rule.get('modelShortName', '').lower() == msn.lower()
         ]
         
-        logger.info(f"Found {len(model_rules)} rules for model {model_short_name}")
+        logger.info(f"Found {len(model_rules)} rules for model {msn}")
         return {
             "rules": model_rules,
             "count": len(model_rules)
@@ -3197,7 +3294,7 @@ async def create_country_rule(request: Dict[str, Any], current_user: dict = Depe
             rules_data = {"rules": []}
         
         # Generate UUID as ID
-        new_id = str(uuid.uuid4())
+        new_id = new_uuid_str()
         
         # Add lastUpdated timestamp and assign the generated ID
         # Remove form state fields that shouldn't be saved
@@ -3409,10 +3506,13 @@ async def get_rule_count(model_short_name: str):
             logger.warning("Rules file missing 'rules' key, returning count 0")
             return {"count": 0}
         
+        models_data = read_json_file(JSON_FILES['models'])
+        msn = resolve_model_short_name(models_data, model_short_name) or model_short_name
+        
         # Filter rules by model and count
         model_rules = [
             rule for rule in rules_data.get('rules', [])
-            if rule.get('modelShortName', '').lower() == model_short_name.lower()
+            if rule.get('modelShortName', '').lower() == msn.lower()
         ]
         
         return {"count": len(model_rules)}
@@ -3435,16 +3535,16 @@ async def get_rule_coverage(model_short_name: str):
         # Get model data to understand structure
         try:
             models_data = read_json_file(JSON_FILES['models'])
-            model = next(
-                (m for m in models_data.get('models', []) if m.get('shortName', '').lower() == model_short_name.lower()),
-                None
-            )
+            midx = find_model_index(models_data, model_short_name)
+            model = models_data["models"][midx] if midx is not None else None
         except Exception as e:
             logger.warning(f"Error reading models file: {str(e)}")
             model = None
         
+        msn = model.get("shortName") if model else model_short_name
+        
         if not model:
-            logger.warning(f"Model with short name '{model_short_name}' not found")
+            logger.warning(f"Model '{model_short_name}' not found")
             # Don't raise error, just return empty coverage
         
         # Get rules for this model
@@ -3461,7 +3561,7 @@ async def get_rule_coverage(model_short_name: str):
         
         model_rules = [
             rule for rule in rules_data.get('rules', [])
-            if rule.get('modelShortName', '').lower() == model_short_name.lower()
+            if rule.get('modelShortName', '').lower() == msn.lower()
         ]
         
         # Calculate coverage
@@ -3480,7 +3580,7 @@ async def get_rule_coverage(model_short_name: str):
         # Extract objects and columns from model (if available in resources or schema)
         # For now, we'll return what we have
         coverage = {
-            "modelShortName": model_short_name,
+            "modelShortName": msn,
             "totalRules": len(model_rules),
             "taggedObjects": list(tagged_objects),
             "taggedColumns": list(tagged_columns),

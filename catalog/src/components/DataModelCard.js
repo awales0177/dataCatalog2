@@ -17,6 +17,7 @@ import {
 import { calculateModelScore, getModelQualityColor } from '../utils/modelScoreUtils';
 import { GoVerified } from "react-icons/go";
 import { trackModelClick } from '../services/api';
+import { modelApiRef } from '../utils/catalogModelLookup';
 
 // DataModelCard component for displaying individual data model information
 const DataModelCard = ({ model, currentTheme }) => {
@@ -50,16 +51,17 @@ const DataModelCard = ({ model, currentTheme }) => {
   const tierColor = getTierColor(model.meta?.tier);
 
   const handleCardClick = async () => {
-    if (!model.shortName) return;
+    const ref = modelApiRef(model);
+    if (!ref) return;
     
     // Check if this model has already been clicked in this session
-    const sessionKey = `model_clicked_${model.shortName.toLowerCase()}`;
+    const sessionKey = `model_clicked_${String(ref).toLowerCase()}`;
     const alreadyClicked = sessionStorage.getItem(sessionKey);
     
     // Only track the click if it hasn't been clicked in this session
     if (!alreadyClicked) {
       try {
-        const result = await trackModelClick(model.shortName);
+        const result = await trackModelClick(ref);
         if (result && result.clickCount !== undefined) {
           setClickCount(result.clickCount);
           // Mark as clicked in this session
@@ -72,7 +74,7 @@ const DataModelCard = ({ model, currentTheme }) => {
     }
     
     // Navigate to the detail page
-    navigate(`/models/${model.shortName.toLowerCase()}`);
+    navigate(`/models/${encodeURIComponent(ref)}`);
   };
 
   return (

@@ -134,22 +134,39 @@ export const fetchAgreements = async (options = {}) => {
   return data;
 };
 
-export const fetchAgreementsByModel = async (modelShortName, options = {}) => {
-  // Use the same cache as the main agreements data for consistency
+export const fetchAgreementsByModel = async (modelRef, options = {}) => {
+  // modelRef: model uuid (preferred) or shortName — API resolves either
+  const ref = String(modelRef ?? '');
   if (!options.forceRefresh) {
     const cachedData = cacheService.get('dataAgreements');
-    if (cachedData && cachedData.agreements) {
-      // Filter the cached data by model
-      const filteredAgreements = cachedData.agreements.filter(
-        agreement => agreement.modelShortName && 
-        agreement.modelShortName.toLowerCase() === modelShortName.toLowerCase()
-      );
-      return { agreements: filteredAgreements };
+    const cachedModels = cacheService.get('models');
+    if (cachedData?.agreements) {
+      let msn = null;
+      if (cachedModels) {
+        const list = cachedModels.models || cachedModels;
+        const arr = Array.isArray(list) ? list : [];
+        const m = arr.find((mm) => {
+          if (!mm) return false;
+          if (mm.uuid && String(mm.uuid).toLowerCase() === ref.toLowerCase()) return true;
+          if (mm.shortName && mm.shortName.toLowerCase() === ref.toLowerCase()) return true;
+          return String(mm.id) === ref;
+        });
+        msn = m?.shortName;
+      }
+      const key = (msn || ref).toLowerCase();
+      const useCache = msn != null || !cachedModels;
+      if (useCache) {
+        const filteredAgreements = cachedData.agreements.filter(
+          (agreement) =>
+            agreement.modelShortName && agreement.modelShortName.toLowerCase() === key
+        );
+        return { agreements: filteredAgreements };
+      }
     }
   }
 
   try {
-    const url = `${API_URL}/agreements/by-model/${modelShortName}`;
+    const url = `${API_URL}/agreements/by-model/${encodeURIComponent(ref)}`;
     
     const response = await fetch(url);
     
@@ -207,9 +224,9 @@ export const createModel = async (modelData) => {
   }
 };
 
-export const deleteModel = async (shortName) => {
+export const deleteModel = async (modelRef) => {
   try {
-    const response = await fetch(`${API_URL}/models/${shortName}`, {
+    const response = await fetch(`${API_URL}/models/${encodeURIComponent(modelRef)}`, {
       method: 'DELETE',
       headers: getAuthHeaders()
     });
@@ -231,16 +248,16 @@ export const deleteModel = async (shortName) => {
   }
 };
 
-export const updateModel = async (shortName, modelData, options = {}) => {
+export const updateModel = async (modelRef, modelData, options = {}) => {
   try {
-    const response = await fetch(`${API_URL}/models/${shortName}`, {
+    const response = await fetch(`${API_URL}/models/${encodeURIComponent(modelRef)}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
         ...getAuthHeaders()
       },
       body: JSON.stringify({
-        shortName: shortName,
+        shortName: modelRef,
         modelData: modelData,
         updateAssociatedLinks: options.updateAssociatedLinks !== undefined ? options.updateAssociatedLinks : true
       }),
@@ -268,9 +285,9 @@ export const updateModel = async (shortName, modelData, options = {}) => {
   }
 };
 
-export const trackModelClick = async (shortName) => {
+export const trackModelClick = async (modelRef) => {
   try {
-    const response = await fetch(`${API_URL}/models/${shortName}/click`, {
+    const response = await fetch(`${API_URL}/models/${encodeURIComponent(modelRef)}/click`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -320,7 +337,7 @@ export const createAgreement = async (agreementData) => {
 
 export const updateAgreement = async (agreementId, agreementData) => {
   try {
-    const response = await fetch(`${API_URL}/agreements/${agreementId}`, {
+    const response = await fetch(`${API_URL}/agreements/${encodeURIComponent(agreementId)}`, {
       method: 'PUT',
       headers: { 
         'Content-Type': 'application/json',
@@ -342,7 +359,7 @@ export const updateAgreement = async (agreementId, agreementData) => {
 
 export const deleteAgreement = async (agreementId) => {
   try {
-    const response = await fetch(`${API_URL}/agreements/${agreementId}`, {
+    const response = await fetch(`${API_URL}/agreements/${encodeURIComponent(agreementId)}`, {
       method: 'DELETE',
       headers: getAuthHeaders()
     });
@@ -446,7 +463,7 @@ export const createGlossaryTerm = async (glossaryData) => {
 
 export const updateGlossaryTerm = async (termId, glossaryData) => {
   try {
-    const response = await fetch(`${API_URL}/glossary/${termId}`, {
+    const response = await fetch(`${API_URL}/glossary/${encodeURIComponent(termId)}`, {
       method: 'PUT',
       headers: { 
         'Content-Type': 'application/json',
@@ -466,32 +483,9 @@ export const updateGlossaryTerm = async (termId, glossaryData) => {
   }
 };
 
-export const updateDataProduct = async (productId, productData) => {
-  try {
-    const response = await fetch(`${API_URL}/data-products/${productId}`, {
-      method: 'PUT',
-      headers: { 
-        'Content-Type': 'application/json',
-        ...getAuthHeaders()
-      },
-      body: JSON.stringify(productData),
-    });
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
-    }
-    const result = await response.json();
-    cacheService.invalidateByPrefix('data-products');
-    cacheService.invalidateByPrefix('dataProducts');
-    return result;
-  } catch (error) {
-    throw error;
-  }
-};
-
 export const deleteGlossaryTerm = async (termId) => {
   try {
-    const response = await fetch(`${API_URL}/glossary/${termId}`, {
+    const response = await fetch(`${API_URL}/glossary/${encodeURIComponent(termId)}`, {
       method: 'DELETE',
       headers: getAuthHeaders()
     });
@@ -532,7 +526,7 @@ export const createApplication = async (applicationData) => {
 
 export const updateApplication = async (applicationId, applicationData) => {
   try {
-    const response = await fetch(`${API_URL}/applications/${applicationId}`, {
+    const response = await fetch(`${API_URL}/applications/${encodeURIComponent(applicationId)}`, {
       method: 'PUT',
       headers: { 
         'Content-Type': 'application/json',
@@ -554,7 +548,7 @@ export const updateApplication = async (applicationId, applicationData) => {
 
 export const deleteApplication = async (applicationId) => {
   try {
-    const response = await fetch(`${API_URL}/applications/${applicationId}`, {
+    const response = await fetch(`${API_URL}/applications/${encodeURIComponent(applicationId)}`, {
       method: 'DELETE',
       headers: getAuthHeaders()
     });
@@ -595,14 +589,17 @@ export const createToolkitComponent = async (componentData) => {
 
 export const updateToolkitComponent = async (componentType, componentId, componentData) => {
   try {
-    const response = await fetch(`${API_URL}/toolkit/${componentType}/${componentId}`, {
-      method: 'PUT',
-      headers: { 
-        'Content-Type': 'application/json',
-        ...getAuthHeaders()
+    const response = await fetch(
+      `${API_URL}/toolkit/${encodeURIComponent(componentType)}/${encodeURIComponent(componentId)}`,
+      {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify(componentData),
       },
-      body: JSON.stringify(componentData),
-    });
+    );
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
@@ -617,10 +614,13 @@ export const updateToolkitComponent = async (componentType, componentId, compone
 
 export const deleteToolkitComponent = async (componentType, componentId) => {
   try {
-    const response = await fetch(`${API_URL}/toolkit/${componentType}/${componentId}`, {
-      method: 'DELETE',
-      headers: getAuthHeaders()
-    });
+    const response = await fetch(
+      `${API_URL}/toolkit/${encodeURIComponent(componentType)}/${encodeURIComponent(componentId)}`,
+      {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+      },
+    );
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
@@ -695,12 +695,15 @@ export const deleteToolkitPackage = async (packageId) => {
 
 export const trackToolkitComponentClick = async (componentType, componentId) => {
   try {
-    const response = await fetch(`${API_URL}/toolkit/${componentType}/${componentId}/click`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
+    const response = await fetch(
+      `${API_URL}/toolkit/${encodeURIComponent(componentType)}/${encodeURIComponent(componentId)}/click`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
       },
-    });
+    );
 
     if (!response.ok) {
       const errorData = await response.json();
@@ -772,7 +775,7 @@ export const createDataPolicy = async (policyData) => {
 
 export const updateDataPolicy = async (policyId, policyData) => {
   try {
-    const response = await fetch(`${API_URL}/policies/${policyId}`, {
+    const response = await fetch(`${API_URL}/policies/${encodeURIComponent(policyId)}`, {
       method: 'PUT',
       headers: { 
         'Content-Type': 'application/json',
@@ -794,7 +797,7 @@ export const updateDataPolicy = async (policyId, policyData) => {
 
 export const deleteDataPolicy = async (policyId) => {
   try {
-    const response = await fetch(`${API_URL}/policies/${policyId}`, {
+    const response = await fetch(`${API_URL}/policies/${encodeURIComponent(policyId)}`, {
       method: 'DELETE',
       headers: getAuthHeaders()
     });
@@ -1041,7 +1044,7 @@ export const assignRuleToModel = async (libraryRuleId, modelShortName) => {
 
 export const getRulesForModel = async (modelShortName, options = {}) => {
   try {
-    const response = await fetch(`${API_URL}/rules/${modelShortName}`, {
+    const response = await fetch(`${API_URL}/rules/${encodeURIComponent(modelShortName)}`, {
       headers: getAuthHeaders()
     });
     if (!response.ok) {
@@ -1200,7 +1203,7 @@ export const deleteCountryRule = async (ruleId) => {
 
 export const getRuleCountForModel = async (modelShortName, options = {}) => {
   try {
-    const response = await fetch(`${API_URL}/rules/${modelShortName}/count`, {
+    const response = await fetch(`${API_URL}/rules/${encodeURIComponent(modelShortName)}/count`, {
       headers: getAuthHeaders()
     });
     if (!response.ok) {
@@ -1286,7 +1289,7 @@ export const deleteRule = async (ruleId) => {
 
 export const getRuleCoverage = async (modelShortName) => {
   try {
-    const response = await fetch(`${API_URL}/rules/${modelShortName}/coverage`, {
+    const response = await fetch(`${API_URL}/rules/${encodeURIComponent(modelShortName)}/coverage`, {
       headers: getAuthHeaders()
     });
     if (!response.ok) {
@@ -1332,16 +1335,6 @@ export const fetchDatasetById = async (datasetId, options = {}) => {
   }
 };
 
-export const fetchPipelines = async (options = {}) => {
-  try {
-    const data = await fetchData('pipelines', options);
-    return data.pipelines || data || [];
-  } catch (error) {
-    console.error('Error fetching pipelines:', error);
-    throw error;
-  }
-};
-
 /** POST /api/feedback — optional backend; used by reference hub / catalog shell. */
 export const submitFeedback = async ({ userId, feedbackText }) => {
   const response = await fetch(`${API_URL}/feedback`, {
@@ -1374,12 +1367,12 @@ export const submitFeedback = async ({ userId, feedbackText }) => {
 };
 
 /**
- * Natural language → SQL for Agora. Backend may omit /agora/nl-query; caller can fall back client-side.
+ * Natural language → SQL for query workbench. Backend may omit /query/nl-query; caller can fall back client-side.
  */
 export const fetchNaturalLanguageQuery = async (question, tableName, schema, model) => {
   const body = { question, tableName, schema };
   if (model) body.model = model;
-  const response = await fetch(`${API_URL}/agora/nl-query`, {
+    const response = await fetch(`${API_URL}/query/nl-query`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

@@ -611,7 +611,7 @@ const ModelRulesTable = ({
                         <Tooltip title="Delete">
                           <IconButton
                             size="small"
-                            onClick={() => onDeleteRule(rule.id)}
+                            onClick={() => onDeleteRule(rule)}
                             sx={{ color: currentTheme?.textSecondary }}
                           >
                             <DeleteIcon fontSize="small" />

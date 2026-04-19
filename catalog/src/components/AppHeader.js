@@ -13,7 +13,6 @@ import {
   Home as HomeIcon,
   GitHub as GitHubIcon,
   Info as InfoIcon,
-  AutoMode as AutoModeIcon,
   People as PeopleIcon,
   Search as SearchIcon,
 } from '@mui/icons-material';
@@ -22,13 +21,12 @@ import { useAuth } from '../contexts/AuthContext';
 import Logo from './Logo';
 import GlobalSearch from './GlobalSearch';
 
-const AppHeader = ({ 
-  currentTheme, 
-  darkMode, 
-  onDrawerToggle, 
-  onThemeToggle, 
-  onInfoSidebarToggle, 
-  isSplashPage 
+const AppHeader = ({
+  currentTheme,
+  darkMode,
+  onDrawerToggle,
+  onThemeToggle,
+  onInfoSidebarToggle,
 }) => {
   const { isAuthenticated, isAdmin } = useAuth();
   const navigate = useNavigate();
@@ -72,7 +70,7 @@ const AppHeader = ({
         
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           {/* Search Button - Only show if authenticated */}
-          {isAuthenticated() && !isSplashPage && (
+          {isAuthenticated() && (
             <Tooltip title="Global Search (Ctrl+K)">
               <IconButton
                 onClick={() => setSearchOpen(true)}
@@ -88,10 +86,10 @@ const AppHeader = ({
             </Tooltip>
           )}
           
-          <Tooltip title={isSplashPage ? "Explore" : "Home"}>
+          <Tooltip title="Home">
             <IconButton
               component="a"
-              href={isSplashPage ? "/models" : "/"}
+              href="/"
               sx={{
                 color: currentTheme.text,
                 '&:hover': {
@@ -99,7 +97,7 @@ const AppHeader = ({
                 },
               }}
             >
-              {isSplashPage ? <AutoModeIcon /> : <HomeIcon />}
+              <HomeIcon />
             </IconButton>
           </Tooltip>
           <Tooltip title="Information">

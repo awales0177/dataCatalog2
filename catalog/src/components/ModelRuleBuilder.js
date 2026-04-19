@@ -48,6 +48,7 @@ import {
   deleteRule,
   fetchData,
 } from '../services/api';
+import { modelApiRef } from '../utils/catalogModelLookup';
 import TeamSelector from './TeamSelector';
 import { maintainerToTeamSelectorSelection } from '../utils/maintainerTeamSelection';
 import { ruleTagsList, normalizeTagList } from '../utils/ruleTags';
@@ -55,6 +56,7 @@ import { RULE_STAGE_OPTIONS, normalizeRuleStage } from '../utils/ruleStage';
 import { RULE_ZONE_OPTIONS, normalizeRuleZone, ruleZoneLabel } from '../utils/ruleZone';
 import { fontStackSans } from '../theme/theme';
 import ModelRulesTable from './ModelRulesTable';
+import DeleteModal from './DeleteModal';
 
 /** API may still return legacy types; UI only offers these two. */
 const RULE_TYPE_OPTIONS = [
@@ -160,6 +162,7 @@ const ModelRuleBuilder = ({
   const [catalogAssocLineageIds, setCatalogAssocLineageIds] = useState(() => new Set());
   /** Confirm removing catalog lineage from current model (uncheck "On model"). */
   const [dissociateDialog, setDissociateDialog] = useState(null);
+  const [ruleDeleteTarget, setRuleDeleteTarget] = useState(null);
   const [applications, setApplications] = useState([]);
 
   // Rule form state
@@ -226,7 +229,7 @@ const ModelRuleBuilder = ({
   }, [libraryMasterRows]);
 
   const catalogEntryCanAssociate = (entry) => {
-    if (!selectedModel?.shortName || !entry) return false;
+    if (!modelApiRef(selectedModel) || !entry) return false;
     return !lineageIdsOnSelectedModel.has(entry.lineageId);
   };
 
@@ -287,7 +290,7 @@ const ModelRuleBuilder = ({
     if (!selectedModel) return;
     try {
       setLoading(true);
-      const data = await getRulesForModel(selectedModel.shortName);
+      const data = await getRulesForModel(modelApiRef(selectedModel));
       setRules(data.rules || []);
     } catch (error) {
       console.error('Error loading rules:', error);
@@ -342,10 +345,10 @@ const ModelRuleBuilder = ({
   };
 
   const handleAssociateFromMasterRow = async (ruleId) => {
-    if (!selectedModel?.shortName || !ruleId) return;
+    if (!modelApiRef(selectedModel) || !ruleId) return;
     try {
       setLibraryLoading(true);
-      await assignRuleToModel(ruleId, selectedModel.shortName);
+      await assignRuleToModel(ruleId, modelApiRef(selectedModel));
       setSnackbar({ open: true, message: 'Rule associated with this model', severity: 'success' });
       setCatalogAssocLineageIds(new Set());
       setLibraryAttachOpen(false);
@@ -363,7 +366,7 @@ const ModelRuleBuilder = ({
   };
 
   const handleBatchAssociateFromCatalog = async () => {
-    if (!selectedModel?.shortName) return;
+    if (!modelApiRef(selectedModel)) return;
     const entries = Array.from(catalogAssocLineageIds)
       .map((lid) => catalogLineageEntries.find((e) => String(e.lineageId) === String(lid)))
       .filter((e) => e && catalogEntryCanAssociate(e));
@@ -381,7 +384,7 @@ const ModelRuleBuilder = ({
     try {
       for (const entry of entries) {
         try {
-          await assignRuleToModel(entry.representative.id, selectedModel.shortName);
+          await assignRuleToModel(entry.representative.id, modelApiRef(selectedModel));
           ok++;
         } catch (err) {
           console.error(err);
@@ -459,7 +462,7 @@ const ModelRuleBuilder = ({
       description: '',
       documentation: '',
       maintainer: '',
-      modelShortName: selectedModel.shortName,
+      modelShortName: modelApiRef(selectedModel),
       tags: [],
       ruleType: 'validation',
       stage: 'bronze',
@@ -479,7 +482,7 @@ const ModelRuleBuilder = ({
       description: rule.description || '',
       documentation: rule.documentation || '',
       maintainer: rule.maintainer || '',
-      modelShortName: rule.modelShortName || selectedModel.shortName,
+      modelShortName: rule.modelShortName || modelApiRef(selectedModel),
       tags: ruleTagsList(rule),
       ruleType: normalizeRuleType(rule.ruleType || 'validation'),
       stage: normalizeRuleStage(rule.stage),
@@ -499,7 +502,7 @@ const ModelRuleBuilder = ({
         description: rule.description || '',
         documentation: rule.documentation || '',
         maintainer: rule.maintainer || '',
-        modelShortName: rule.modelShortName || selectedModel.shortName,
+        modelShortName: rule.modelShortName || modelApiRef(selectedModel),
         tags: ruleTagsList(rule),
         ruleType: normalizeRuleType(rule.ruleType || 'validation'),
         stage: normalizeRuleStage(rule.stage),
@@ -517,7 +520,7 @@ const ModelRuleBuilder = ({
       description: rule.description || '',
       documentation: rule.documentation || '',
       maintainer: rule.maintainer || '',
-      modelShortName: rule.modelShortName || selectedModel.shortName,
+      modelShortName: rule.modelShortName || modelApiRef(selectedModel),
       tags: ruleTagsList(rule),
       ruleType: normalizeRuleType(rule.ruleType || 'validation'),
       stage: normalizeRuleStage(rule.stage),
@@ -528,10 +531,14 @@ const ModelRuleBuilder = ({
     setRuleDialogOpen(true);
   };
 
-  const handleDeleteRule = async (ruleId) => {
-    if (associationOnly) return;
-    if (!window.confirm('Are you sure you want to delete this rule?')) return;
-    
+  const requestDeleteRule = (rule) => {
+    if (associationOnly || !rule?.id) return;
+    setRuleDeleteTarget(rule);
+  };
+
+  const confirmDeleteRule = async () => {
+    const ruleId = ruleDeleteTarget?.id;
+    if (!ruleId) return;
     try {
       setLoading(true);
       await deleteRule(ruleId);
@@ -564,7 +571,7 @@ const ModelRuleBuilder = ({
         description: ruleForm.description,
         documentation: ruleForm.documentation || '',
         maintainer: (ruleForm.maintainer || '').trim(),
-        modelShortName: ruleForm.modelShortName || selectedModel?.shortName,
+        modelShortName: ruleForm.modelShortName || modelApiRef(selectedModel),
         ruleType: normalizeRuleType(ruleForm.ruleType),
         stage: normalizeRuleStage(ruleForm.stage),
         ruleZone: normalizeRuleZone(ruleForm.ruleZone),
@@ -856,7 +863,7 @@ const ModelRuleBuilder = ({
             associationOnly={associationOnly}
             denseModal={inModal}
             onEditRule={handleEditRule}
-            onDeleteRule={!associationOnly ? handleDeleteRule : undefined}
+            onDeleteRule={!associationOnly ? requestDeleteRule : undefined}
             onOpenParentRule={!associationOnly ? handleOpenParentOnlyRule : undefined}
           />
         )}
@@ -1581,8 +1588,10 @@ const ModelRuleBuilder = ({
                                 />
                               ) : null}
                               {entry.modelsWithLineage.map((m) => {
+                                const ref = modelApiRef(selectedModel);
                                 const onCurrent =
-                                  Boolean(selectedModel?.shortName) && m === selectedModel.shortName;
+                                  Boolean(selectedModel) &&
+                                  (m === selectedModel.shortName || (ref && m === ref));
                                 return (
                                   <Chip
                                     key={m}
@@ -1737,6 +1746,17 @@ const ModelRuleBuilder = ({
           <AddIcon />
         </Fab>
       )}
+
+      <DeleteModal
+        open={Boolean(ruleDeleteTarget)}
+        onClose={() => setRuleDeleteTarget(null)}
+        onConfirm={confirmDeleteRule}
+        confirmMode="simple"
+        title="Delete rule"
+        itemName={ruleDeleteTarget?.name?.trim() || `Rule ${ruleDeleteTarget?.id ?? ''}`}
+        itemType="rule"
+        theme={currentTheme}
+      />
 
       {/* Snackbar */}
       <Snackbar

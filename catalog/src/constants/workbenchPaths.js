@@ -1,18 +1,32 @@
 /**
- * URL paths for full-screen Workbench modals (Agora, Modeler, Rule builder, Reference data).
- * Use these for navigate() so links are shareable and the browser back button works.
+ * Shareable URLs for workbench modals (query, modeling, split studio, rule builder, RDH).
+ * Synced with {@link WorkbenchModalsProvider} via pathname.
  */
 
-/**
- * Pass on `navigate(WORKBENCH_PATHS.ruleBuilder, { state: { ... } })` so RuleBuilderModal
- * opens directly on that model (skips picker when the short name matches).
- */
-export const RULE_BUILDER_MODEL_SHORT_NAME_KEY = 'ruleBuilderModelShortName';
-
-/** Where to return when closing a workbench route (set when entering). */
 export const WORKBENCH_RETURN_TO_KEY = 'workbenchReturnTo';
 
-/** Safe in-app path after leaving workbench; never another workbench URL. */
+export const WORKBENCH_PATHS = {
+  query: '/workbench/query',
+  modeling: '/workbench/modeling',
+  /** Query + modeling side-by-side on wide screens */
+  studio: '/workbench/studio',
+  ruleBuilder: '/workbench/rule-builder',
+  referenceData: '/workbench/reference-data',
+};
+
+/** Valid middle segment for `/workbench/:segment` */
+export const WORKBENCH_ALLOWED_KEYS = new Set([
+  'query',
+  'modeling',
+  'studio',
+  'rule-builder',
+  'reference-data',
+]);
+
+export function isWorkbenchPath(pathname) {
+  return typeof pathname === 'string' && pathname.startsWith('/workbench/');
+}
+
 export function normalizeWorkbenchReturnPath(path) {
   if (typeof path !== 'string' || !path.startsWith('/') || path.startsWith('//')) return '/';
   if (path.startsWith('/workbench/')) return '/';
@@ -20,15 +34,13 @@ export function normalizeWorkbenchReturnPath(path) {
   return (hash >= 0 ? path.slice(0, hash) : path) || '/';
 }
 
-/** Path to navigate to when closing workbench (from `location.state`). */
 export function getWorkbenchExitPath(location) {
-  return normalizeWorkbenchReturnPath(location?.state?.[WORKBENCH_RETURN_TO_KEY]);
+  const raw = location?.state?.[WORKBENCH_RETURN_TO_KEY];
+  return normalizeWorkbenchReturnPath(typeof raw === 'string' ? raw : '/') || '/';
 }
 
 /**
- * Merge into `navigate(workbenchPath, { state })` when opening a workbench.
- * @param {import('react-router-dom').Location} location
- * @param {Record<string, unknown>} [extraState] e.g. `{ [RULE_BUILDER_MODEL_SHORT_NAME_KEY]: 'sn' }`
+ * Merge into `navigate(workbenchPath, { state })` when opening a workbench from a normal catalog page.
  */
 export function buildWorkbenchEnterState(location, extraState = null) {
   const pathname = location?.pathname || '/';
@@ -48,55 +60,25 @@ export function buildWorkbenchEnterState(location, extraState = null) {
   return base;
 }
 
-export const WORKBENCH_PATHS = {
-  agora: '/workbench/agora',
-  modeling: '/workbench/modeling',
-  /** Agora + Modeler side-by-side on wide screens */
-  studio: '/workbench/studio',
-  ruleBuilder: '/workbench/rule-builder',
-  referenceData: '/workbench/reference-data',
-};
-
-/** Valid `workbenchKey` segment for `/workbench/:workbenchKey` */
-export const WORKBENCH_ALLOWED_KEYS = new Set([
-  'agora',
-  'modeling',
-  'studio',
-  'rule-builder',
-  'reference-data',
-]);
-
-export function workbenchModalStateFromPath(pathname) {
+export function workbenchModalFlagsFromPath(pathname) {
   const base = {
-    agoraOpen: false,
+    queryOpen: false,
     modelingOpen: false,
     ruleBuilderOpen: false,
+    referenceHubOpen: false,
   };
-  if (pathname === WORKBENCH_PATHS.studio) {
-    return { ...base, agoraOpen: true, modelingOpen: true };
+  switch (pathname) {
+    case WORKBENCH_PATHS.studio:
+      return { ...base, queryOpen: true, modelingOpen: true };
+    case WORKBENCH_PATHS.query:
+      return { ...base, queryOpen: true };
+    case WORKBENCH_PATHS.modeling:
+      return { ...base, modelingOpen: true };
+    case WORKBENCH_PATHS.ruleBuilder:
+      return { ...base, ruleBuilderOpen: true };
+    case WORKBENCH_PATHS.referenceData:
+      return { ...base, referenceHubOpen: true };
+    default:
+      return base;
   }
-  if (pathname === WORKBENCH_PATHS.agora) return { ...base, agoraOpen: true };
-  if (pathname === WORKBENCH_PATHS.modeling) return { ...base, modelingOpen: true };
-  if (pathname === WORKBENCH_PATHS.ruleBuilder) return { ...base, ruleBuilderOpen: true };
-  return base;
-}
-
-export function workbenchOpenAgora(currentPath) {
-  if (currentPath === WORKBENCH_PATHS.modeling) return WORKBENCH_PATHS.studio;
-  return WORKBENCH_PATHS.agora;
-}
-
-export function workbenchOpenModeling(currentPath) {
-  if (currentPath === WORKBENCH_PATHS.agora) return WORKBENCH_PATHS.studio;
-  return WORKBENCH_PATHS.modeling;
-}
-
-export function workbenchCloseAgora(currentPath) {
-  if (currentPath === WORKBENCH_PATHS.studio) return WORKBENCH_PATHS.modeling;
-  return '/';
-}
-
-export function workbenchCloseModeling(currentPath) {
-  if (currentPath === WORKBENCH_PATHS.studio) return WORKBENCH_PATHS.agora;
-  return '/';
 }

@@ -18,6 +18,28 @@ export function looksLikeDatabaseToolkitId(id) {
 }
 
 /** Keep only strings that match a preset label (case-insensitive). */
+/** Valid { title, url } pairs for workbench technology links (non-empty after trim). */
+export function normalizeTechLinks(arr) {
+  const raw = Array.isArray(arr) ? arr : [];
+  const out = [];
+  for (const x of raw) {
+    const title = String(x?.title ?? '').trim();
+    const url = String(x?.url ?? '').trim();
+    if (!title || !url) continue;
+    out.push({ title, url });
+  }
+  return out;
+}
+
+/** Safe href for user-entered URLs (add https if no scheme). */
+export function technologyLinkHref(url) {
+  const u = String(url ?? '').trim();
+  if (!u) return '';
+  if (/^https?:\/\//i.test(u)) return u;
+  if (/^\/\//.test(u)) return `https:${u}`;
+  return `https://${u}`;
+}
+
 export function normalizeEvalLabels(arr, optionList) {
   const raw = Array.isArray(arr) ? arr : [];
   const out = [];
@@ -83,12 +105,20 @@ export function buildTechnologyDetails(t) {
     if (langs.length) d.languages = langs;
     else delete d.languages;
   }
+
+  if (Array.isArray(t.links)) {
+    const links = normalizeTechLinks(t.links);
+    if (links.length) d.links = links;
+    else delete d.links;
+  }
+
   return d;
 }
 
 export function technologyToApiPayload(t) {
   const out = {
     id: t.id,
+    ...(t.uuid ? { uuid: t.uuid } : {}),
     name: t.name,
     description: t.description,
     rank: Number(t.rank) || 1,

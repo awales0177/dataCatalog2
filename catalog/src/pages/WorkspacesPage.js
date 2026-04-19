@@ -16,8 +16,10 @@ const WorkspacesPage = () => {
             Workspaces
           </Typography>
           <Typography variant="body1" sx={{ color: currentTheme.textSecondary, maxWidth: 720 }}>
-            Launch the same workbench modals as in DH: query engine (Agora), data modeling, modeling studio (split
-            view), reference data hub, and rule builder for data quality rules (editors).
+            Launch the same workbench modals as in DH: query workbench, data modeling, modeling studio (split
+            view), reference data hub, and rule builder for data quality rules (editors). Opening a tool updates the
+            URL under <code style={{ fontSize: '0.9em' }}>/workbench/…</code> so you can bookmark or share a direct
+            link.
           </Typography>
         </StickyPageIntro>
       }

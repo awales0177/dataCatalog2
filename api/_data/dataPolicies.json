@@ -52,7 +52,8 @@
         "customer-data"
       ],
       "lastUpdated": "2025-11-12 19:23:11",
-      "externalLink": "https://www.google.com"
+      "externalLink": "https://www.google.com",
+      "uuid": "fad2dd67-18b3-4006-bd16-0ba5ccf1ae52"
     },
     {
       "id": "quality_policy_001",
@@ -112,7 +113,8 @@
         "standards",
         "monitoring"
       ],
-      "lastUpdated": "2024-01-15 10:30:00"
+      "lastUpdated": "2024-01-15 10:30:00",
+      "uuid": "b4dc8ac3-902d-4656-bb5b-2c1ca77f883b"
     },
     {
       "id": "access_policy_001",
@@ -181,7 +183,8 @@
         "security",
         "authentication"
       ],
-      "lastUpdated": "2024-01-15 10:30:00"
+      "lastUpdated": "2024-01-15 10:30:00",
+      "uuid": "72d86761-06f9-49f0-9455-3d59d1fc26b6"
     },
     {
       "id": "compliance_policy_001",
@@ -254,7 +257,8 @@
         "regulations",
         "audit"
       ],
-      "lastUpdated": "2024-01-15 10:30:00"
+      "lastUpdated": "2024-01-15 10:30:00",
+      "uuid": "35269227-b65a-41ac-8b54-d8a082e5b06c"
     }
   ]
 }

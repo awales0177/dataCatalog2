@@ -26,6 +26,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Link,
 } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
@@ -35,12 +36,15 @@ import {
   Edit as EditIcon,
   ThumbUp as ThumbUpIcon,
   ThumbDown as ThumbDownIcon,
+  OpenInNew as OpenInNewIcon,
 } from '@mui/icons-material';
 import { ThemeContext } from '../contexts/ThemeContext';
 import { fetchData, updateToolkitComponent } from '../services/api';
 import {
   looksLikeDatabaseToolkitId,
+  normalizeTechLinks,
   normalizeTechnologyStatus,
+  technologyLinkHref,
   technologyToApiPayload,
 } from '../utils/toolkitDbPayload';
 import {
@@ -359,6 +363,13 @@ const ToolkitDetailPage = () => {
                 : Array.isArray(t.details?.languages)
                   ? [...t.details.languages]
                   : [],
+              links: normalizeTechLinks(
+                Array.isArray(t.links)
+                  ? t.links
+                  : Array.isArray(t.details?.links)
+                    ? t.details.links
+                    : [],
+              ),
             }))
             .sort((a, b) => a.rank - b.rank);
           setTechnologies(sortedTechs);
@@ -724,7 +735,7 @@ const ToolkitDetailPage = () => {
                 Technologies ({technologies.length})
               </Typography>
               <Typography variant="body2" sx={{ color: currentTheme.textSecondary, mt: 0.5 }}>
-                Development and production first (by rank); evaluated below. Edit the workbench to add technologies.
+                Production and development (by rank), then evaluated. Edit the workbench to add technologies.
               </Typography>
             </Box>
             
@@ -836,21 +847,22 @@ const ToolkitDetailPage = () => {
                                   return (
                                     <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center', ml: 0.5 }}>
                                       {techIcons.pros.slice(0, 5).map((iconData, iconIndex) => (
-                                        <Box
-                                          key={`list-pros-${tech.id}-${iconIndex}`}
-                                          component="img"
-                                          src={iconData.icon}
-                                          alt={iconData.label}
-                                          sx={{
-                                            width: iconData.size === 'large' ? 24 : 20,
-                                            height: iconData.size === 'large' ? 24 : 20,
-                                            objectFit: 'contain',
-                                            filter: iconData.invert && darkMode ? 'invert(1)' : 'none',
-                                          }}
-                                          onError={(e) => {
-                                            e.target.style.display = 'none';
-                                          }}
-                                        />
+                                        <Tooltip key={`list-pros-${tech.id}-${iconIndex}`} title={iconData.label} arrow>
+                                          <Box
+                                            component="img"
+                                            src={iconData.icon}
+                                            alt={iconData.label}
+                                            sx={{
+                                              width: iconData.size === 'large' ? 24 : 20,
+                                              height: iconData.size === 'large' ? 24 : 20,
+                                              objectFit: 'contain',
+                                              filter: iconData.invert && darkMode ? 'invert(1)' : 'none',
+                                            }}
+                                            onError={(e) => {
+                                              e.target.style.display = 'none';
+                                            }}
+                                          />
+                                        </Tooltip>
                                       ))}
                                       {techIcons.pros.length > 5 && (
                                         <Typography variant="caption" sx={{ color: currentTheme.textSecondary, ml: 0.5 }}>
@@ -930,8 +942,8 @@ const ToolkitDetailPage = () => {
 
                   return (
                     <>
-                      {renderTechList(developmentTechs, 'Development', '#ff9800')}
                       {renderTechList(productionTechs, 'Production', currentTheme.primary)}
+                      {renderTechList(developmentTechs, 'Development', '#ff9800')}
                       {renderTechList(evaluatedTechs, 'Evaluated', '#4caf50')}
                     </>
                   );
@@ -988,21 +1000,10 @@ const ToolkitDetailPage = () => {
                                 <Typography variant="caption" sx={{ color: currentTheme.textSecondary, fontWeight: 700 }}>
                                   Pros
                                 </Typography>
-                                <FieldInfoIcon fieldId="toolkit.technology.evalPros" iconSize={14} />
                               </Box>
-                              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'flex-start' }}>
+                              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
                                 {techIcons.pros.map((iconData, iconIndex) => (
-                                  <Box
-                                    key={`pros-${iconIndex}`}
-                                    sx={{
-                                      width: 56,
-                                      flexShrink: 0,
-                                      display: 'flex',
-                                      flexDirection: 'column',
-                                      alignItems: 'flex-start',
-                                      gap: 0.5,
-                                    }}
-                                  >
+                                  <Tooltip key={`pros-${iconIndex}`} title={iconData.label} arrow placement="top">
                                     <Box
                                       sx={{
                                         width: 40,
@@ -1015,6 +1016,7 @@ const ToolkitDetailPage = () => {
                                         alignItems: 'center',
                                         justifyContent: 'center',
                                         transition: 'all 0.2s ease',
+                                        cursor: 'default',
                                         '&:hover': {
                                           transform: 'scale(1.1)',
                                           boxShadow: `0 2px 8px ${currentTheme.shadow}`,
@@ -1024,7 +1026,7 @@ const ToolkitDetailPage = () => {
                                       <Box
                                         component="img"
                                         src={iconData.icon}
-                                        alt={iconData.label}
+                                        alt=""
                                         sx={{
                                           width: iconData.size === 'large' ? 50 : '100%',
                                           height: iconData.size === 'large' ? 50 : '100%',
@@ -1032,28 +1034,11 @@ const ToolkitDetailPage = () => {
                                           filter: iconData.invert && darkMode ? 'invert(1)' : 'none',
                                         }}
                                         onError={(e) => {
-                                          // Hide if image doesn't load
                                           e.target.style.display = 'none';
                                         }}
                                       />
                                     </Box>
-                                    <Typography
-                                      variant="caption"
-                                      sx={{ 
-                                        color: currentTheme.textSecondary,
-                                        fontSize: '0.65rem',
-                                        width: '100%',
-                                        textAlign: 'left',
-                                        lineHeight: 1.25,
-                                        wordBreak: 'break-word',
-                                        overflowWrap: 'break-word',
-                                        pr: 0.5,
-                                        pb: 0.25,
-                                      }}
-                                    >
-                                      {iconData.label}
-                                    </Typography>
-                                  </Box>
+                                  </Tooltip>
                                 ))}
                               </Box>
                             </Box>
@@ -1066,21 +1051,10 @@ const ToolkitDetailPage = () => {
                                 <Typography variant="caption" sx={{ color: currentTheme.textSecondary, fontWeight: 700 }}>
                                   Cons
                                 </Typography>
-                                <FieldInfoIcon fieldId="toolkit.technology.evalCons" iconSize={14} />
                               </Box>
-                              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'flex-start' }}>
+                              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
                                 {techIcons.cons.map((iconData, iconIndex) => (
-                                  <Box
-                                    key={`cons-${iconIndex}`}
-                                    sx={{
-                                      width: 56,
-                                      flexShrink: 0,
-                                      display: 'flex',
-                                      flexDirection: 'column',
-                                      alignItems: 'flex-start',
-                                      gap: 0.5,
-                                    }}
-                                  >
+                                  <Tooltip key={`cons-${iconIndex}`} title={iconData.label} arrow placement="top">
                                     <Box
                                       sx={{
                                         width: 40,
@@ -1093,6 +1067,7 @@ const ToolkitDetailPage = () => {
                                         alignItems: 'center',
                                         justifyContent: 'center',
                                         transition: 'all 0.2s ease',
+                                        cursor: 'default',
                                         '&:hover': {
                                           transform: 'scale(1.1)',
                                           boxShadow: `0 2px 8px ${currentTheme.shadow}`,
@@ -1102,7 +1077,7 @@ const ToolkitDetailPage = () => {
                                       <Box
                                         component="img"
                                         src={iconData.icon}
-                                        alt={iconData.label}
+                                        alt=""
                                         sx={{
                                           width: iconData.size === 'large' ? 50 : '100%',
                                           height: iconData.size === 'large' ? 50 : '100%',
@@ -1110,28 +1085,11 @@ const ToolkitDetailPage = () => {
                                           filter: iconData.invert && darkMode ? 'invert(1)' : 'none',
                                         }}
                                         onError={(e) => {
-                                          // Hide if image doesn't load
                                           e.target.style.display = 'none';
                                         }}
                                       />
                                     </Box>
-                                    <Typography 
-                                      variant="caption" 
-                                      sx={{ 
-                                        color: currentTheme.textSecondary,
-                                        fontSize: '0.65rem',
-                                        width: '100%',
-                                        textAlign: 'left',
-                                        lineHeight: 1.25,
-                                        wordBreak: 'break-word',
-                                        overflowWrap: 'break-word',
-                                        pr: 0.5,
-                                        pb: 0.25,
-                                      }}
-                                    >
-                                      {iconData.label}
-                                    </Typography>
-                                  </Box>
+                                  </Tooltip>
                                 ))}
                               </Box>
                             </Box>
@@ -1144,7 +1102,6 @@ const ToolkitDetailPage = () => {
                                 <Typography variant="caption" sx={{ color: currentTheme.textSecondary, fontWeight: 700 }}>
                                   Languages
                                 </Typography>
-                                <FieldInfoIcon fieldId="toolkit.technology.languages" iconSize={14} />
                               </Box>
                               <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'flex-start' }}>
                                 {techIcons.languages.map((iconData, iconIndex) => (
@@ -1244,7 +1201,6 @@ const ToolkitDetailPage = () => {
                             <Typography variant="caption" sx={{ color: currentTheme.textSecondary, fontWeight: 500 }}>
                               Maintainer:
                             </Typography>
-                            <FieldInfoIcon fieldId="toolkit.technology.maintainer" iconSize={14} />
                           </Box>
                           <Typography variant="caption" sx={{ color: currentTheme.text }}>
                             {maintainerDisplayForTech(selectedTech)}
@@ -1257,7 +1213,6 @@ const ToolkitDetailPage = () => {
                             <Typography variant="caption" sx={{ color: currentTheme.textSecondary, fontWeight: 500 }}>
                               Deployed to:
                             </Typography>
-                            <FieldInfoIcon fieldId="toolkit.technology.deployedTo" iconSize={14} />
                           </Box>
                           <Typography variant="caption" sx={{ color: currentTheme.text }}>
                             {selectedTech.deployedTo || selectedTech.deployment || 'N/A'}
@@ -1270,7 +1225,6 @@ const ToolkitDetailPage = () => {
                             <Typography variant="caption" sx={{ color: currentTheme.textSecondary, fontWeight: 500 }}>
                               Last updated:
                             </Typography>
-                            <FieldInfoIcon fieldId="toolkit.technology.lastUpdated" iconSize={14} />
                           </Box>
                           <Typography variant="caption" sx={{ color: currentTheme.text }}>
                             {selectedTech.lastUpdated || selectedTech.lastModified || 'N/A'}
@@ -1283,12 +1237,124 @@ const ToolkitDetailPage = () => {
                             <Typography variant="caption" sx={{ color: currentTheme.textSecondary, fontWeight: 500 }}>
                               Version:
                             </Typography>
-                            <FieldInfoIcon fieldId="toolkit.technology.version" iconSize={14} />
                           </Box>
                           <Typography variant="caption" sx={{ color: currentTheme.text }}>
                             {selectedTech.version || 'N/A'}
                           </Typography>
                         </Box>
+
+                        {Array.isArray(selectedTech.links) && selectedTech.links.length > 0 ? (
+                          <Box
+                            sx={{
+                              mt: 1.5,
+                              pt: 1.5,
+                              borderTop: `1px solid ${alpha(currentTheme.border, 0.45)}`,
+                            }}
+                          >
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, mb: 1 }}>
+                              <Typography variant="caption" sx={{ color: currentTheme.textSecondary, fontWeight: 700 }}>
+                                Links
+                              </Typography>
+                              <FieldInfoIcon fieldId="toolkit.technology.links" iconSize={14} />
+                            </Box>
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: 1,
+                              }}
+                            >
+                              {selectedTech.links.map((item, idx) => {
+                                const href = technologyLinkHref(item.url);
+                                return (
+                                  <Tooltip
+                                    key={`${item.title}-${item.url}-${idx}`}
+                                    title={
+                                      <Box component="span" sx={{ display: 'block', maxWidth: 320 }}>
+                                        <Box component="span" sx={{ fontWeight: 600, display: 'block' }}>
+                                          {item.title}
+                                        </Box>
+                                        <Box
+                                          component="span"
+                                          sx={{
+                                            display: 'block',
+                                            opacity: 0.9,
+                                            fontSize: '0.75rem',
+                                            wordBreak: 'break-all',
+                                            mt: 0.5,
+                                          }}
+                                        >
+                                          {href}
+                                        </Box>
+                                      </Box>
+                                    }
+                                    placement="left"
+                                    arrow
+                                  >
+                                    <Link
+                                      href={href}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      underline="none"
+                                      sx={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 1.25,
+                                        px: 1.25,
+                                        py: 1,
+                                        borderRadius: 2,
+                                        border: `1px solid ${currentTheme.border}`,
+                                        bgcolor: currentTheme.darkMode
+                                          ? alpha('#fff', 0.04)
+                                          : alpha(currentTheme.primary, 0.06),
+                                        color: currentTheme.text,
+                                        textDecoration: 'none',
+                                        transition: 'background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease',
+                                        boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+                                        '&:hover': {
+                                          borderColor: alpha(currentTheme.primary, 0.55),
+                                          bgcolor: alpha(currentTheme.primary, currentTheme.darkMode ? 0.14 : 0.1),
+                                          boxShadow: `0 2px 8px ${alpha(currentTheme.primary, 0.12)}`,
+                                          '& .tech-link-icon': {
+                                            color: currentTheme.primary,
+                                          },
+                                        },
+                                        '&:focus-visible': {
+                                          outline: `2px solid ${alpha(currentTheme.primary, 0.6)}`,
+                                          outlineOffset: 2,
+                                        },
+                                      }}
+                                    >
+                                      <OpenInNewIcon
+                                        className="tech-link-icon"
+                                        sx={{
+                                          fontSize: 18,
+                                          color: currentTheme.textSecondary,
+                                          flexShrink: 0,
+                                          transition: 'color 0.15s ease',
+                                        }}
+                                      />
+                                      <Typography
+                                        variant="body2"
+                                        sx={{
+                                          fontWeight: 600,
+                                          flex: 1,
+                                          minWidth: 0,
+                                          lineHeight: 1.35,
+                                          overflow: 'hidden',
+                                          textOverflow: 'ellipsis',
+                                          whiteSpace: 'nowrap',
+                                        }}
+                                      >
+                                        {item.title}
+                                      </Typography>
+                                    </Link>
+                                  </Tooltip>
+                                );
+                              })}
+                            </Box>
+                          </Box>
+                        ) : null}
                       </Box>
                     </Box>
                   </Box>

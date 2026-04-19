@@ -25,7 +25,6 @@ import {
   Description as AgreementIcon,
   Folder as DomainIcon,
   Apps as ApplicationIcon,
-  LibraryBooks as ReferenceIcon,
   Build as ToolkitIcon,
   Policy as PolicyIcon,
   MenuBook as LexiconIcon,
@@ -75,7 +74,6 @@ const GlobalSearch = ({ open, onClose, currentTheme, darkMode }) => {
       'dataAgreements': <AgreementIcon />,
       'domains': <DomainIcon />,
       'applications': <ApplicationIcon />,
-      'reference': <ReferenceIcon />,
       'toolkit': <ToolkitIcon />,
       'policies': <PolicyIcon />,
       'lexicon': <LexiconIcon />,
@@ -90,7 +88,6 @@ const GlobalSearch = ({ open, onClose, currentTheme, darkMode }) => {
       'dataAgreements': 'Agreement',
       'domains': 'Domain',
       'applications': 'Application',
-      'reference': 'Reference Data',
       'toolkit': 'Toolkit',
       'policies': 'Data Standard',
       'lexicon': 'Lexicon',
@@ -105,7 +102,6 @@ const GlobalSearch = ({ open, onClose, currentTheme, darkMode }) => {
       'dataAgreements': 'secondary',
       'domains': 'success',
       'applications': 'info',
-      'reference': 'warning',
       'toolkit': 'error',
       'policies': 'default',
       'lexicon': 'primary'
@@ -125,58 +121,59 @@ const GlobalSearch = ({ open, onClose, currentTheme, darkMode }) => {
     let id;
     switch (type) {
       case 'models':
-        // For models, prioritize shortName over id
-        id = item.shortName || item.id || item.name;
-        return `/models/${id}`;
+        id = item.uuid || item.shortName || item.id || item.name;
+        return `/models/${encodeURIComponent(id)}`;
       case 'dataAgreements':
-        id = item.id || item.shortName || item.name;
-        return `/agreements/${id}`;
+        id = item.uuid || item.id || item.shortName || item.name;
+        return `/agreements/${encodeURIComponent(id)}`;
       case 'domains':
         return `/domains`;
       case 'applications':
         return `/applications`;
-      case 'reference':
-        id = item.id || item.shortName || item.name;
-        return `/reference/${id}`;
       case 'glossary':
-        // Glossary items link to glossary page (could be enhanced to link to specific term)
-        return `/glossary`;
+        id = item.uuid || item.id;
+        return id ? `/glossary/${encodeURIComponent(id)}/edit` : `/glossary`;
       case 'toolkit':
         // For toolkit, check if it's a function, container, or infrastructure and route accordingly
-        id = item.id || item.shortName || item.name;
+        id = item.uuid || item.id || item.shortName || item.name;
+        if (item._toolkit_type === 'toolkits') {
+          return id ? `/toolkit/${encodeURIComponent(id)}` : `/toolkit`;
+        }
         // Check for _toolkit_type field added by search service
         if (item._toolkit_type === 'containers') {
-          return `/toolkit/container/${id}`;
+          return `/toolkit/container/${encodeURIComponent(id)}`;
         } else if (item._toolkit_type === 'functions') {
-          return `/toolkit/function/${id}`;
-        } else if (item._toolkit_type === 'infrastructure') {
-          return `/toolkit/infrastructure/${id}`;
+          return `/toolkit/function/${encodeURIComponent(id)}`;
+        } else if (item._toolkit_type === 'infrastructure' || item._toolkit_type === 'terraform') {
+          return `/toolkit/infrastructure/${encodeURIComponent(id)}`;
         }
         // Fallback: Check for container-specific fields
         if (item.dockerfile || item.dockerCompose) {
-          return `/toolkit/container/${id}`;
+          return `/toolkit/container/${encodeURIComponent(id)}`;
         }
         // Fallback: Check for infrastructure-specific fields
         if (item.mainTf || item.variablesTf || item.outputsTf || item.provider) {
-          return `/toolkit/infrastructure/${id}`;
+          return `/toolkit/infrastructure/${encodeURIComponent(id)}`;
         }
         // Fallback: Check for function-specific fields (code, parameters, language)
         if (item.code || item.parameters || item.language) {
-          return `/toolkit/function/${id}`;
+          return `/toolkit/function/${encodeURIComponent(id)}`;
         }
         // Fallback to type field if present
         if (item.type === 'functions') {
-          return `/toolkit/function/${id}`;
+          return `/toolkit/function/${encodeURIComponent(id)}`;
         } else if (item.type === 'containers') {
-          return `/toolkit/container/${id}`;
+          return `/toolkit/container/${encodeURIComponent(id)}`;
         } else if (item.type === 'infrastructure') {
-          return `/toolkit/infrastructure/${id}`;
+          return `/toolkit/infrastructure/${encodeURIComponent(id)}`;
         }
         return `/toolkit`;
-      case 'policies':
-        return `/policies`;
+      case 'policies': {
+        const pid = item.uuid || item.id;
+        return pid ? `/policies/edit/${encodeURIComponent(pid)}` : `/policies`;
+      }
       case 'lexicon':
-        return `/lexicon`;
+        return `/glossary`;
       default:
         id = item.id || item.shortName || item.name;
         return '/';
@@ -198,7 +195,8 @@ const GlobalSearch = ({ open, onClose, currentTheme, darkMode }) => {
     // Don't clear results immediately - let them show until new results arrive
     try {
       const data = await globalSearch(searchQuery, { limit: 20 });
-      setResults(data.results || []);
+      const raw = data.results || [];
+      setResults(raw.filter((r) => r.type !== 'reference'));
       setHasSearched(true);
       // Clear skeleton when results arrive
       setShowSkeleton(false);

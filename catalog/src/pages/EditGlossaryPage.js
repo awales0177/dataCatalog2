@@ -22,6 +22,7 @@ import {
 } from '@mui/icons-material';
 import { ThemeContext } from '../contexts/ThemeContext';
 import { fetchData, createGlossaryTerm, updateGlossaryTerm, deleteGlossaryTerm } from '../services/api';
+import { findGlossaryTerm, glossaryTermApiRef } from '../utils/catalogModelLookup';
 import DeleteModal from '../components/DeleteModal';
 
 const EditGlossaryPage = () => {
@@ -66,7 +67,7 @@ const EditGlossaryPage = () => {
           setOriginalTerm({ ...newTerm });
         } else {
           const terms = glossaryData.terms || [];
-          const term = terms.find(t => t.id === id);
+          const term = findGlossaryTerm(terms, id);
           
           if (term) {
             setEditedTerm({ ...term });
@@ -120,7 +121,7 @@ const EditGlossaryPage = () => {
         await createGlossaryTerm(editedTerm);
         setSnackbar({ open: true, message: 'Glossary term created successfully', severity: 'success' });
       } else {
-        await updateGlossaryTerm(editedTerm.id, editedTerm);
+        await updateGlossaryTerm(glossaryTermApiRef(originalTerm), editedTerm);
         setSnackbar({ open: true, message: 'Glossary term updated successfully', severity: 'success' });
       }
       navigate('/glossary');
@@ -135,7 +136,7 @@ const EditGlossaryPage = () => {
   const handleDelete = async () => {
     setDeleting(true);
     try {
-      await deleteGlossaryTerm(editedTerm.id);
+      await deleteGlossaryTerm(glossaryTermApiRef(originalTerm));
       setSnackbar({ open: true, message: 'Glossary term deleted successfully', severity: 'success' });
       navigate('/glossary');
     } catch (error) {

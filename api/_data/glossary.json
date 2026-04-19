@@ -7,7 +7,8 @@
       "category": "Data Management",
       "documentation": "https://docs.example.com/data-products",
       "lastUpdated": "2025-12-06",
-      "markdown": "# 🚀 **Data Product**\n*A sleek, modern project that does something awesome*\n\n![Status](https://img.shields.io/badge/status-active-brightgreen.svg)\n![License](https://img.shields.io/badge/license-MIT-blue.svg)\n![Build](https://img.shields.io/badge/build-passing-success.svg)\n\n---\n\n## ✨ Features\n\n- ⚡ **Fast & lightweight**\n- 🎨 **Clean architecture**\n- 🧩 **Modular design**\n- 📦 **Easy to integrate**\n- 🔍 **Great for metadata, ETL, or catalog projects**\n\n---\n\n## 📁 Project Structure\n\n\n---\n\n## 📊 Example Table (Tech Stack)\n\n| Category       | Tools / Technologies |\n|----------------|----------------------|\n| 🖥️ Frontend    | React, Vite, Tailwind |\n| ⚙️ Backend     | FastAPI, Python, Node |\n| ☁️ Cloud       | AWS (EKS, S3, Lambda) |\n| 🗄️ Data Layer  | Postgres, DuckDB, Dremio |\n| 🔧 DevOps      | Docker, ArgoCD, Helm |\n\n---\n\n## 🛠 Installation\n\n```bash\ngit clone https://github.com/your/repo.git\ncd repo\nnpm install\nnpm run dev\n"
+      "markdown": "# \ud83d\ude80 **Data Product**\n*A sleek, modern project that does something awesome*\n\n![Status](https://img.shields.io/badge/status-active-brightgreen.svg)\n![License](https://img.shields.io/badge/license-MIT-blue.svg)\n![Build](https://img.shields.io/badge/build-passing-success.svg)\n\n---\n\n## \u2728 Features\n\n- \u26a1 **Fast & lightweight**\n- \ud83c\udfa8 **Clean architecture**\n- \ud83e\udde9 **Modular design**\n- \ud83d\udce6 **Easy to integrate**\n- \ud83d\udd0d **Great for metadata, ETL, or catalog projects**\n\n---\n\n## \ud83d\udcc1 Project Structure\n\n\n---\n\n## \ud83d\udcca Example Table (Tech Stack)\n\n| Category       | Tools / Technologies |\n|----------------|----------------------|\n| \ud83d\udda5\ufe0f Frontend    | React, Vite, Tailwind |\n| \u2699\ufe0f Backend     | FastAPI, Python, Node |\n| \u2601\ufe0f Cloud       | AWS (EKS, S3, Lambda) |\n| \ud83d\uddc4\ufe0f Data Layer  | Postgres, DuckDB, Dremio |\n| \ud83d\udd27 DevOps      | Docker, ArgoCD, Helm |\n\n---\n\n## \ud83d\udee0 Installation\n\n```bash\ngit clone https://github.com/your/repo.git\ncd repo\nnpm install\nnpm run dev\n",
+      "uuid": "b57a2d83-da8f-4558-b7a9-5f8af42a5b97"
     },
     {
       "id": "glossary-004",
@@ -16,7 +17,8 @@
       "category": "",
       "taggedModels": [],
       "documentation": "",
-      "lastUpdated": "2025-12-11"
+      "lastUpdated": "2025-12-11",
+      "uuid": "e4a078be-ac8d-48d4-8e72-0f5c6dba8533"
     },
     {
       "id": "glossary-005",
@@ -25,7 +27,8 @@
       "category": "",
       "taggedModels": [],
       "documentation": "",
-      "lastUpdated": "2025-12-11"
+      "lastUpdated": "2025-12-11",
+      "uuid": "7b18a983-1627-4744-bcb5-ed2983f3292a"
     },
     {
       "id": "glossary-001",
@@ -38,7 +41,8 @@
       "documentation": "https://docs.example.com/data-catalog",
       "link": "https://example.com/data-catalog",
       "lastUpdated": "2025-12-10",
-      "markdown": "Hi"
+      "markdown": "Hi",
+      "uuid": "41127e80-3a7c-49e2-aebf-037be6125d5b"
     },
     {
       "id": "glossary-003",
@@ -47,7 +51,8 @@
       "category": "Data Governance",
       "documentation": "https://docs.example.com/data-lineage",
       "lastUpdated": "2026-02-01",
-      "markdown": "# 🚙 Vehicle Inventory Data Product (inventory.csv)\n\n## Overview\n\n`inventory.csv` is a governed **data product** representing the current and historical inventory of vehicles available for sale.  \nIt provides a consistent, queryable view of vehicle availability, condition, and pricing readiness across sellers.\n\nThis dataset is designed to act as a **source of truth for inventory state**, supporting analytics, reporting, and downstream sales pipelines.\n\n---\n\n## Product Details\n\nProduct Name: Vehicle Inventory  \nFile Name: inventory.csv  \nProduct Type: Analytical / Operational Dataset  \nData Domain: Automotive / Inventory  \nFormat: CSV  \nGranularity: One row per vehicle  \nUpdate Frequency: Batch / Near-Real-Time  \nOwner: Data Engineering  \nStatus: Active  \n\n---\n\n## Schema\n\n| Column Name | Type | Description |\n|------------|------|-------------|\n| Inventory_ID | String | Unique identifier for the inventory record |\n| Car_Name | String | Vehicle make and model |\n| Year | Integer | Year of manufacture |\n| Listed_Price | Float | Current listed price |\n| Condition | String | New, Used, Certified |\n| Fuel_Type | String | Petrol, Diesel, CNG, Electric |\n| Transmission | String | Manual or Automatic |\n| Mileage_Kms | Integer | Total kilometers driven |\n| Availability_Status | String | Available, Reserved, Sold |\n| Last_Updated | Timestamp | Last inventory update time |\n\n---\n\n## Intended Use Cases\n\n- Inventory availability tracking\n- Pricing and markdown analysis\n- Vehicle lifecycle monitoring\n- Supply and demand analytics\n- Operational dashboards\n\n---\n\n## Data Quality Notes\n\n- `Inventory_ID` is unique and non-null.\n- `Availability_Status` reflects the latest known state.\n- Mileage values are non-negative.\n- Late updates may occur for sold or reserved vehicles.\n\n---\n\n## Governance and Contracts\n\n- This dataset follows schema-on-write principles.\n- All schema changes require versioning.\n- Downstream consumers must not infer fields beyond those documented.\n- Time fields are standardized to UTC.\n\n---\n\n## Lineage and Relationships\n\n```mermaid\nflowchart LR\n    A[Source Dealership Systems] --> B[inventory.csv]\n    B --> C[Sales Transactions]\n    B --> D[Pricing Analytics]\n    B --> E[Inventory Dashboards]\n"
+      "markdown": "# \ud83d\ude99 Vehicle Inventory Data Product (inventory.csv)\n\n## Overview\n\n`inventory.csv` is a governed **data product** representing the current and historical inventory of vehicles available for sale.  \nIt provides a consistent, queryable view of vehicle availability, condition, and pricing readiness across sellers.\n\nThis dataset is designed to act as a **source of truth for inventory state**, supporting analytics, reporting, and downstream sales pipelines.\n\n---\n\n## Product Details\n\nProduct Name: Vehicle Inventory  \nFile Name: inventory.csv  \nProduct Type: Analytical / Operational Dataset  \nData Domain: Automotive / Inventory  \nFormat: CSV  \nGranularity: One row per vehicle  \nUpdate Frequency: Batch / Near-Real-Time  \nOwner: Data Engineering  \nStatus: Active  \n\n---\n\n## Schema\n\n| Column Name | Type | Description |\n|------------|------|-------------|\n| Inventory_ID | String | Unique identifier for the inventory record |\n| Car_Name | String | Vehicle make and model |\n| Year | Integer | Year of manufacture |\n| Listed_Price | Float | Current listed price |\n| Condition | String | New, Used, Certified |\n| Fuel_Type | String | Petrol, Diesel, CNG, Electric |\n| Transmission | String | Manual or Automatic |\n| Mileage_Kms | Integer | Total kilometers driven |\n| Availability_Status | String | Available, Reserved, Sold |\n| Last_Updated | Timestamp | Last inventory update time |\n\n---\n\n## Intended Use Cases\n\n- Inventory availability tracking\n- Pricing and markdown analysis\n- Vehicle lifecycle monitoring\n- Supply and demand analytics\n- Operational dashboards\n\n---\n\n## Data Quality Notes\n\n- `Inventory_ID` is unique and non-null.\n- `Availability_Status` reflects the latest known state.\n- Mileage values are non-negative.\n- Late updates may occur for sold or reserved vehicles.\n\n---\n\n## Governance and Contracts\n\n- This dataset follows schema-on-write principles.\n- All schema changes require versioning.\n- Downstream consumers must not infer fields beyond those documented.\n- Time fields are standardized to UTC.\n\n---\n\n## Lineage and Relationships\n\n```mermaid\nflowchart LR\n    A[Source Dealership Systems] --> B[inventory.csv]\n    B --> C[Sales Transactions]\n    B --> D[Pricing Analytics]\n    B --> E[Inventory Dashboards]\n",
+      "uuid": "65ce39b1-de54-4c18-abbe-3ea7e8c40fda"
     },
     {
       "id": "glossary-006",
@@ -57,7 +62,8 @@
       "taggedModels": [],
       "documentation": "",
       "lastUpdated": "2026-02-16",
-      "markdown": "```mermaid\nflowchart LR\n    User[User] --> Frontend[Frontend App]\n    Frontend --> API[Backend API]\n    API --> DB[(Database)]\n    DB --> API\n    API --> Frontend\n    Frontend --> User\n```\n"
+      "markdown": "```mermaid\nflowchart LR\n    User[User] --> Frontend[Frontend App]\n    Frontend --> API[Backend API]\n    API --> DB[(Database)]\n    DB --> API\n    API --> Frontend\n    Frontend --> User\n```\n",
+      "uuid": "13fa517b-df64-4acc-aebf-0746d9793475"
     }
   ]
 }
