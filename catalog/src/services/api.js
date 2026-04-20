@@ -18,12 +18,22 @@ const getSyncApiUrl = () => {
   return '/api';
 };
 
+/** Avoid probing `api.localhost` etc. — usually nothing listens there; same-origin `/api` + Vite proxy is correct. */
+const shouldProbeDedicatedApiHost = (hostname) => {
+  const h = String(hostname || '').toLowerCase();
+  if (h === 'localhost' || h === '127.0.0.1' || h === '[::1]') return false;
+  return true;
+};
+
 const determineApiUrl = async () => {
   const fromEnv = envApiBase();
   if (fromEnv) return fromEnv;
   if (typeof window === 'undefined') return 'http://127.0.0.1:8000/api';
 
   const h = window.location.hostname;
+  if (!shouldProbeDedicatedApiHost(h)) {
+    return '/api';
+  }
   // Dedicated API host: routes in this repo are always under `/api/...`
   const subRoot = `${window.location.protocol}//api.${h.replace(/^api\./, '')}`.replace(/\/$/, '');
   const subWithApi = `${subRoot}/api`;
@@ -35,7 +45,7 @@ const determineApiUrl = async () => {
       const ct = response.headers.get('content-type') || '';
       if (ct.includes('application/json')) return subWithApi;
     }
-  } catch (error) {
+  } catch {
     // fall through to same-origin /api
   }
 

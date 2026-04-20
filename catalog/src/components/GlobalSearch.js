@@ -32,6 +32,12 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { globalSearch, getSearchSuggestions, getSearchStats } from '../services/api';
+import {
+  getSearchResultPath,
+  getSearchResultTitle,
+  getSearchResultDescription,
+  getSearchTypeLabel,
+} from '../utils/catalogSearchNavigation';
 
 const GlobalSearch = ({ open, onClose, currentTheme, darkMode }) => {
   const [query, setQuery] = useState('');
@@ -82,20 +88,6 @@ const GlobalSearch = ({ open, onClose, currentTheme, darkMode }) => {
     return iconMap[type] || <SearchIcon />;
   };
 
-  const getTypeLabel = (type) => {
-    const labelMap = {
-      'models': 'Data Model',
-      'dataAgreements': 'Agreement',
-      'domains': 'Domain',
-      'applications': 'Application',
-      'toolkit': 'Toolkit',
-      'policies': 'Data Standard',
-      'lexicon': 'Lexicon',
-      'glossary': 'Glossary'
-    };
-    return labelMap[type] || type;
-  };
-
   const getTypeColor = (type) => {
     const colorMap = {
       'models': 'primary',
@@ -107,77 +99,6 @@ const GlobalSearch = ({ open, onClose, currentTheme, darkMode }) => {
       'lexicon': 'primary'
     };
     return colorMap[type] || 'default';
-  };
-
-  const getItemTitle = (item) => {
-    return String(item.name || item.shortName || item.title || item.term || item.id || 'Untitled');
-  };
-
-  const getItemDescription = (item) => {
-    return String(item.description || item.extendedDescription || item.definition || item.status || '');
-  };
-
-  const getItemPath = (item, type) => {
-    let id;
-    switch (type) {
-      case 'models':
-        id = item.uuid || item.shortName || item.id || item.name;
-        return `/models/${encodeURIComponent(id)}`;
-      case 'dataAgreements':
-        id = item.uuid || item.id || item.shortName || item.name;
-        return `/agreements/${encodeURIComponent(id)}`;
-      case 'domains':
-        return `/domains`;
-      case 'applications':
-        return `/applications`;
-      case 'glossary':
-        id = item.uuid || item.id;
-        return id ? `/glossary/${encodeURIComponent(id)}/edit` : `/glossary`;
-      case 'toolkit':
-        // For toolkit, check if it's a function, container, or infrastructure and route accordingly
-        id = item.uuid || item.id || item.shortName || item.name;
-        if (item._toolkit_type === 'toolkits') {
-          return id ? `/toolkit/${encodeURIComponent(id)}` : `/toolkit`;
-        }
-        // Check for _toolkit_type field added by search service
-        if (item._toolkit_type === 'containers') {
-          return `/toolkit/container/${encodeURIComponent(id)}`;
-        } else if (item._toolkit_type === 'functions') {
-          return `/toolkit/function/${encodeURIComponent(id)}`;
-        } else if (item._toolkit_type === 'infrastructure' || item._toolkit_type === 'terraform') {
-          return `/toolkit/infrastructure/${encodeURIComponent(id)}`;
-        }
-        // Fallback: Check for container-specific fields
-        if (item.dockerfile || item.dockerCompose) {
-          return `/toolkit/container/${encodeURIComponent(id)}`;
-        }
-        // Fallback: Check for infrastructure-specific fields
-        if (item.mainTf || item.variablesTf || item.outputsTf || item.provider) {
-          return `/toolkit/infrastructure/${encodeURIComponent(id)}`;
-        }
-        // Fallback: Check for function-specific fields (code, parameters, language)
-        if (item.code || item.parameters || item.language) {
-          return `/toolkit/function/${encodeURIComponent(id)}`;
-        }
-        // Fallback to type field if present
-        if (item.type === 'functions') {
-          return `/toolkit/function/${encodeURIComponent(id)}`;
-        } else if (item.type === 'containers') {
-          return `/toolkit/container/${encodeURIComponent(id)}`;
-        } else if (item.type === 'infrastructure') {
-          return `/toolkit/infrastructure/${encodeURIComponent(id)}`;
-        }
-        return `/toolkit`;
-      case 'policies': {
-        const pid = item.uuid || item.id;
-        return pid ? `/policies/edit/${encodeURIComponent(pid)}` : `/policies`;
-      }
-      case 'lexicon':
-        return `/glossary`;
-      default:
-        id = item.id || item.shortName || item.name;
-        return '/';
-    }
   };
 
   const handleSearch = async (searchQuery) => {
@@ -196,7 +117,7 @@ const GlobalSearch = ({ open, onClose, currentTheme, darkMode }) => {
     try {
       const data = await globalSearch(searchQuery, { limit: 20 });
       const raw = data.results || [];
-      setResults(raw.filter((r) => r.type !== 'reference'));
+      setResults(raw.filter((r) => r._search_type !== 'reference'));
       setHasSearched(true);
       // Clear skeleton when results arrive
       setShowSkeleton(false);
@@ -267,7 +188,7 @@ const GlobalSearch = ({ open, onClose, currentTheme, darkMode }) => {
   };
 
   const handleItemClick = (item, type) => {
-    const path = getItemPath(item, type);
+    const path = getSearchResultPath(item, type);
     navigate(path);
     onClose();
   };
@@ -334,15 +255,15 @@ const GlobalSearch = ({ open, onClose, currentTheme, darkMode }) => {
       <DialogTitle sx={{ pb: 1, color: currentTheme?.text || '#000000' }}>
         <Box display="flex" alignItems="center" justifyContent="space-between">
           <Box display="flex" alignItems="center" gap={1}>
-            <SearchIcon sx={{ color: currentTheme?.primary || '#3498db' }} />
+            <SearchIcon sx={{ color: currentTheme?.primary || '#37ABBF' }} />
             <Typography variant="h6" sx={{ color: currentTheme?.text || '#000000' }}>Global Search</Typography>
             {searchStats && (
               <Chip
                 size="small"
                 label={`${searchStats.total_documents} items indexed`}
                 sx={{
-                  color: currentTheme?.primary || '#3498db',
-                  borderColor: currentTheme?.primary || '#3498db'
+                  color: currentTheme?.primary || '#37ABBF',
+                  borderColor: currentTheme?.primary || '#37ABBF'
                 }}
                 variant="outlined"
               />
@@ -384,10 +305,10 @@ const GlobalSearch = ({ open, onClose, currentTheme, darkMode }) => {
                   borderColor: currentTheme?.border || 'rgba(0, 0, 0, 0.08)',
                 },
                 '&:hover fieldset': {
-                  borderColor: currentTheme?.primary || '#3498db',
+                  borderColor: currentTheme?.primary || '#37ABBF',
                 },
                 '&.Mui-focused fieldset': {
-                  borderColor: currentTheme?.primary || '#3498db',
+                  borderColor: currentTheme?.primary || '#37ABBF',
                 },
               },
               '& .MuiInputBase-input::placeholder': {
@@ -452,11 +373,11 @@ const GlobalSearch = ({ open, onClose, currentTheme, darkMode }) => {
             <List>
               {results.map((item, index) => {
                 const type = item._search_type;
-                const title = getItemTitle(item);
-                const description = getItemDescription(item);
+                const title = getSearchResultTitle(item);
+                const description = getSearchResultDescription(item);
                 const score = item._search_score;
                 const matchedTerms = item._matched_terms || [];
-                const path = getItemPath(item, type);
+                const path = getSearchResultPath(item, type);
 
                 return (
                   <React.Fragment key={`${type}-${item._search_id}-${index}`}>
@@ -471,7 +392,7 @@ const GlobalSearch = ({ open, onClose, currentTheme, darkMode }) => {
                         }
                       }}
                     >
-                      <ListItemIcon sx={{ color: currentTheme?.primary || '#3498db' }}>
+                      <ListItemIcon sx={{ color: currentTheme?.primary || '#37ABBF' }}>
                         {getTypeIcon(type)}
                       </ListItemIcon>
                       <ListItemText
@@ -482,10 +403,10 @@ const GlobalSearch = ({ open, onClose, currentTheme, darkMode }) => {
                             </Typography>
                             <Chip
                               size="small"
-                              label={getTypeLabel(type)}
+                              label={getSearchTypeLabel(type)}
                               sx={{
-                                color: currentTheme?.primary || '#3498db',
-                                borderColor: currentTheme?.primary || '#3498db'
+                                color: currentTheme?.primary || '#37ABBF',
+                                borderColor: currentTheme?.primary || '#37ABBF'
                               }}
                               variant="outlined"
                             />

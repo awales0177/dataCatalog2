@@ -1499,20 +1499,20 @@ const EditDataModelDetailPage = () => {
                       <Box sx={{ 
               mb: 3, 
               p: 2, 
-              bgcolor: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.1)' : 'rgba(33, 150, 243, 0.08)', 
+              bgcolor: currentTheme.darkMode ? 'rgba(55, 171, 191, 0.1)' : 'rgba(55, 171, 191, 0.08)', 
               borderRadius: 1, 
               border: '1px solid', 
-              borderColor: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.3)' : 'rgba(33, 150, 243, 0.2)',
+              borderColor: currentTheme.darkMode ? 'rgba(55, 171, 191, 0.3)' : 'rgba(55, 171, 191, 0.2)',
               backdropFilter: currentTheme.darkMode ? 'blur(10px)' : 'blur(5px)'
             }}>
             <Typography variant="body2" sx={{ 
-              color: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.9)' : 'info.dark', 
+              color: currentTheme.darkMode ? 'rgba(55, 171, 191, 0.9)' : 'info.dark', 
               fontWeight: 'bold' 
             }}>
               ℹ️ Required Fields
             </Typography>
             <Typography variant="caption" sx={{ 
-              color: currentTheme.darkMode ? 'rgba(33, 150, 243, 0.8)' : 'info.dark', 
+              color: currentTheme.darkMode ? 'rgba(55, 171, 191, 0.8)' : 'info.dark', 
               display: 'block', 
               mt: 0.5 
             }}>

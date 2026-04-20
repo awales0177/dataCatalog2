@@ -20,7 +20,7 @@ import { ThemeContext } from '../../contexts/ThemeContext';
 const LOCKED_DOMAIN_NAMES = ['Tax'];
 
 const FolderLogo = ({ expanded, theme }) => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={expanded ? (theme?.primary || '#0891b2') : '#ff9500'} strokeWidth="2">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={expanded ? (theme?.primary || '#37ABBF') : '#ff9500'} strokeWidth="2">
     <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
   </svg>
 );
@@ -164,7 +164,7 @@ const QueryExplorerTree = ({
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 4 }}>
-        <CircularProgress size={24} sx={{ color: theme?.primary || '#0891b2' }} />
+        <CircularProgress size={24} sx={{ color: theme?.primary || '#37ABBF' }} />
       </Box>
     );
   }
@@ -254,7 +254,7 @@ const QueryExplorerTree = ({
                                   color: theme?.textSecondary,
                                   '&:hover': { bgcolor: darkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' },
                                   '&.Mui-selected': {
-                                    bgcolor: theme?.primary ? `${theme.primary}20` : 'rgba(25, 118, 210, 0.12)',
+                                    bgcolor: theme?.primary ? `${theme.primary}20` : 'rgba(55, 171, 191, 0.12)',
                                     color: theme?.primary,
                                   },
                                 }}

@@ -331,7 +331,7 @@ const ReferenceDataHubModal = ({ open, onClose }) => {
     whiteSpace: 'nowrap',
     '&:hover': {
       borderColor: theme?.primary,
-      bgcolor: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(8, 145, 178, 0.08)',
+      bgcolor: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(11, 135, 180, 0.08)',
     },
   };
 
@@ -340,10 +340,10 @@ const ReferenceDataHubModal = ({ open, onClose }) => {
       bgcolor: darkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
     },
     '&.Mui-selected': {
-      bgcolor: darkMode ? alpha(theme?.primary || '#d4d4d4', 0.14) : alpha(theme?.primary || '#0891b2', 0.1),
+      bgcolor: darkMode ? alpha(theme?.primary || '#d4d4d4', 0.14) : alpha(theme?.primary || '#0b87b4', 0.1),
       borderLeft: `3px solid ${theme?.primary}`,
       '&:hover': {
-        bgcolor: darkMode ? alpha(theme?.primary || '#d4d4d4', 0.2) : alpha(theme?.primary || '#0891b2', 0.14),
+        bgcolor: darkMode ? alpha(theme?.primary || '#d4d4d4', 0.2) : alpha(theme?.primary || '#0b87b4', 0.14),
       },
     },
   };
@@ -564,7 +564,7 @@ const ReferenceDataHubModal = ({ open, onClose }) => {
                         p: 1.25,
                         borderRadius: 1,
                         border: `1px solid ${border}`,
-                        bgcolor: darkMode ? alpha(theme?.primary || '#d4d4d4', 0.06) : alpha(theme?.primary || '#0891b2', 0.04),
+                        bgcolor: darkMode ? alpha(theme?.primary || '#d4d4d4', 0.06) : alpha(theme?.primary || '#0b87b4', 0.04),
                       }}
                     >
                       <Typography variant="caption" sx={{ color: theme?.textSecondary, fontWeight: 600, display: 'block', mb: 0.35 }}>

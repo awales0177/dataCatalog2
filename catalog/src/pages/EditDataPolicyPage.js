@@ -50,7 +50,7 @@ const EditDataPolicyPage = () => {
   const statuses = [
     { value: 'draft', label: 'Draft', color: '#ff9800' },
     { value: 'active', label: 'Active', color: '#4caf50' },
-    { value: 'review', label: 'Under Review', color: '#2196f3' },
+    { value: 'review', label: 'Under Review', color: '#37ABBF' },
     { value: 'expired', label: 'Expired', color: '#f44336' }
   ];
 

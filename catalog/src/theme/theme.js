@@ -1,4 +1,5 @@
-import { createTheme } from '@mui/material';
+import { createTheme, alpha } from '@mui/material/styles';
+import { portalColors } from './portalTokens';
 
 /** Monospace stack for code / readme tabs (Toolkit detail matches UUX dh). */
 export const fontStackMono =
@@ -7,8 +8,16 @@ export const fontStackMono =
 /** Sans stack (data models table / dh parity). */
 export const fontStackSans = '"Inter", "Helvetica", "Arial", sans-serif';
 
-// Create theme with Inter font
+// Create theme with Inter font; default MUI primary/info are blue — use portal teal.
 export const theme = createTheme({
+  palette: {
+    primary: { main: portalColors.accent, dark: portalColors.accentHover },
+    info: {
+      main: portalColors.accent,
+      dark: portalColors.accentHover,
+      light: alpha(portalColors.accent, 0.14),
+    },
+  },
   typography: {
     fontFamily: fontStackSans,
     h1: {

@@ -8,7 +8,7 @@ export const agreementFieldsConfig = {
     jsonKey: "network",
     options: [
       { value: "internet", label: "Internet", color: "#4caf50" },
-      { value: "intranet", label: "Intranet", color: "#2196f3" }
+      { value: "intranet", label: "Intranet", color: "#37ABBF" }
     ]
   }
 };

@@ -6,7 +6,7 @@ import {
   CssBaseline,
   CircularProgress,
 } from '@mui/material';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { ThemeProvider, createTheme, alpha } from '@mui/material/styles';
 
 // Import components
 import DataModelsPage from './pages/DataModelsPage';
@@ -122,6 +122,11 @@ function AppContent() {
         success: { main: currentTheme.success },
         warning: { main: currentTheme.warning },
         error: { main: currentTheme.error },
+        info: {
+          main: currentTheme.primary,
+          dark: currentTheme.primaryHover,
+          light: alpha(currentTheme.primary, darkMode ? 0.22 : 0.14),
+        },
       },
       components: {
         ...catalogMuiCardOverrides(),

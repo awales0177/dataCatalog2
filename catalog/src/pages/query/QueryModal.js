@@ -143,7 +143,7 @@ const QueryModal = ({
                     px: 1.25,
                     '&:hover': {
                       borderColor: theme?.primary,
-                      bgcolor: darkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(8, 145, 178, 0.08)',
+                      bgcolor: darkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(11, 135, 180, 0.08)',
                     },
                   }}
                 >

@@ -845,7 +845,7 @@ const RulesMasterList = () => {
                   icon={<LocalOfferIcon sx={{ fontSize: 14 }} />}
                   label={option}
                   sx={{
-                    bgcolor: darkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(8, 145, 178, 0.1)',
+                    bgcolor: darkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(11, 135, 180, 0.1)',
                     color: currentTheme?.text,
                   }}
                 />

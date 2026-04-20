@@ -39,7 +39,7 @@ export const graphPatterns = {
       name: "Gradual Increase",
       description: "Steadily increasing usage over time",
       formula: (x) => 20 + x * 40 + Math.sin(x * Math.PI * 5) * 10 + (Math.random() - 0.5) * 8,
-      color: "#3498db", // Blue
+      color: "#37ABBF", // Catalog accent (dashboard)
       category: "increasing"
     },
     {

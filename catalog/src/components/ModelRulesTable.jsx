@@ -152,9 +152,9 @@ const ModelRulesTable = ({
         border: darkMode ? 'rgba(76, 175, 80, 0.5)' : '#4caf50',
       },
       transformation: {
-        bgcolor: darkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(8, 145, 178, 0.1)',
-        color: darkMode ? (currentTheme?.primary || '#e5e5e5') : '#0891b2',
-        border: darkMode ? 'rgba(255, 255, 255, 0.35)' : '#0891b2',
+        bgcolor: darkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(11, 135, 180, 0.1)',
+        color: darkMode ? (currentTheme?.primary || '#e5e5e5') : '#0b87b4',
+        border: darkMode ? 'rgba(255, 255, 255, 0.35)' : '#0b87b4',
       },
       business: {
         bgcolor: darkMode ? 'rgba(156, 39, 176, 0.2)' : 'rgba(156, 39, 176, 0.1)',

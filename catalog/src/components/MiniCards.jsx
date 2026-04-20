@@ -52,7 +52,7 @@ export default function MiniCard({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          bgcolor: alpha(currentTheme?.primary || '#1976d2', darkMode ? 0.2 : 0.12),
+          bgcolor: alpha(currentTheme?.primary || '#37ABBF', darkMode ? 0.2 : 0.12),
           color: currentTheme?.primary,
           overflow: 'hidden',
         }}

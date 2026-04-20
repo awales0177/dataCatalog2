@@ -244,7 +244,7 @@ const ReferenceExcelImportModal = ({
               bgcolor: dragOver
                 ? darkMode
                   ? alpha(theme?.primary || '#d4d4d4', 0.12)
-                  : alpha(theme?.primary || '#0891b2', 0.08)
+                  : alpha(theme?.primary || '#0b87b4', 0.08)
                 : darkMode
                   ? 'rgba(255,255,255,0.03)'
                   : 'rgba(15,23,42,0.03)',

@@ -79,7 +79,7 @@ function formatMappingTablesSubtitle(m, maxLen = 80) {
 function createTableDragPreview(tableName, { darkMode, primary, textColor }) {
   const wrap = document.createElement('div');
   wrap.setAttribute('data-modeling-drag-ghost', '1');
-  const accent = primary || '#0891b2';
+  const accent = primary || '#0b87b4';
   Object.assign(wrap.style, {
     position: 'fixed',
     left: '-9999px',
@@ -248,7 +248,7 @@ const ModelingModal = ({
     (e, payload, displayName) => {
       e.dataTransfer.setData(DRAG_TYPE, JSON.stringify(payload));
       e.dataTransfer.effectAllowed = 'copy';
-      const primary = theme?.primary || '#0891b2';
+      const primary = theme?.primary || '#0b87b4';
       const textColor = darkMode ? '#f4f4f5' : '#18181b';
       let preview;
       try {
@@ -483,7 +483,7 @@ const ModelingModal = ({
                     px: 1.25,
                     '&:hover': {
                       borderColor: theme?.primary,
-                      bgcolor: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(8, 145, 178, 0.08)',
+                      bgcolor: darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(11, 135, 180, 0.08)',
                     },
                   }}
                 >
@@ -660,8 +660,8 @@ const ModelingModal = ({
                                       pl: 1.5,
                                       borderRadius: 1,
                                       '&.Mui-selected': {
-                                        bgcolor: darkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(8, 145, 178,0.12)',
-                                        '&:hover': { bgcolor: darkMode ? 'rgba(255, 255, 255, 0.12)' : 'rgba(8, 145, 178,0.18)' },
+                                        bgcolor: darkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(11, 135, 180,0.12)',
+                                        '&:hover': { bgcolor: darkMode ? 'rgba(255, 255, 255, 0.12)' : 'rgba(11, 135, 180,0.18)' },
                                       },
                                     }}
                                   >
@@ -705,7 +705,7 @@ const ModelingModal = ({
               minWidth: 0,
               bgcolor: darkMode ? '#121214' : theme?.background,
               borderLeft: dropHighlight
-                ? `3px solid ${theme?.primary || '#0891b2'}`
+                ? `3px solid ${theme?.primary || '#0b87b4'}`
                 : darkMode
                   ? '1px solid rgba(255,255,255,0.06)'
                   : 'none',
@@ -733,7 +733,7 @@ const ModelingModal = ({
                 sx={{
                   p: 4,
                   textAlign: 'center',
-                  border: `2px dashed ${dropHighlight ? theme?.primary || '#0891b2' : darkMode ? 'rgba(255, 255, 255, 0.28)' : theme?.border || '#c4c4c4'}`,
+                  border: `2px dashed ${dropHighlight ? theme?.primary || '#0b87b4' : darkMode ? 'rgba(255, 255, 255, 0.28)' : theme?.border || '#c4c4c4'}`,
                   borderRadius: 2,
                   bgcolor: darkMode ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0,0,0,0.02)',
                   transition: 'border-color 0.2s, background-color 0.2s',
@@ -746,7 +746,7 @@ const ModelingModal = ({
             ) : (
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <Typography variant="caption" sx={{ color: darkMode ? 'rgba(255,255,255,0.5)' : theme?.textSecondary }}>
-                  Dataset: <strong style={{ color: theme?.primary || '#0891b2' }}>{String(modelItems[0]?.datasetId ?? '')}</strong>
+                  Dataset: <strong style={{ color: theme?.primary || '#0b87b4' }}>{String(modelItems[0]?.datasetId ?? '')}</strong>
                   {' · '}
                   Drop more tables here (same dataset only)
                 </Typography>
@@ -821,7 +821,7 @@ const ModelingModal = ({
                           borderColor: darkMode ? 'rgba(255, 255, 255, 0.35)' : undefined,
                         },
                         '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                          borderColor: theme?.primary || '#0891b2',
+                          borderColor: theme?.primary || '#0b87b4',
                         },
                       }}
                     >

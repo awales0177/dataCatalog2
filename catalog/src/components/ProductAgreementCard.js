@@ -24,7 +24,7 @@ const ProductAgreementCard = ({ agreement, currentTheme, applications = [] }) =>
       case 'active':
         return '#4caf50';
       case 'in_progress':
-        return '#2196f3';
+        return '#37ABBF';
       case 'in_review':
         return '#ff9800';
       case 'expired':

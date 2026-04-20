@@ -118,7 +118,7 @@ const CountryRuleBuilder = ({ onBack }) => {
     background: '#fff', 
     card: '#f5f5f5', 
     border: '#ddd', 
-    primary: '#2196f3', 
+    primary: '#37ABBF', 
     textSecondary: '#666' 
   };
   const darkMode = themeDarkMode || false;
@@ -383,9 +383,9 @@ const CountryRuleBuilder = ({ onBack }) => {
         border: darkMode ? 'rgba(76, 175, 80, 0.5)' : '#4caf50'
       },
       'transformation': {
-        bgcolor: darkMode ? 'rgba(33, 150, 243, 0.2)' : 'rgba(33, 150, 243, 0.1)',
-        color: darkMode ? '#64b5f6' : '#1565c0',
-        border: darkMode ? 'rgba(33, 150, 243, 0.5)' : '#2196f3'
+        bgcolor: darkMode ? 'rgba(55, 171, 191, 0.2)' : 'rgba(55, 171, 191, 0.1)',
+        color: darkMode ? '#37ABBF' : '#2a8a9a',
+        border: darkMode ? 'rgba(55, 171, 191, 0.5)' : '#37ABBF'
       },
       'business': {
         bgcolor: darkMode ? 'rgba(156, 39, 176, 0.2)' : 'rgba(156, 39, 176, 0.1)',
@@ -585,7 +585,7 @@ const CountryRuleBuilder = ({ onBack }) => {
                         return darkMode ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.02)';
                       }
                       
-                      const primaryHex = currentTheme?.primary || '#2196f3';
+                      const primaryHex = currentTheme?.primary || '#37ABBF';
                       const r = parseInt(primaryHex.slice(1, 3), 16);
                       const g = parseInt(primaryHex.slice(3, 5), 16);
                       const b = parseInt(primaryHex.slice(5, 7), 16);
@@ -997,8 +997,8 @@ const CountryRuleBuilder = ({ onBack }) => {
                                 sx={{ 
                                   color: currentTheme?.textSecondary,
                                   '&:hover': {
-                                    bgcolor: darkMode ? 'rgba(33, 150, 243, 0.2)' : 'rgba(33, 150, 243, 0.1)',
-                                    color: darkMode ? '#64b5f6' : '#1565c0'
+                                    bgcolor: darkMode ? 'rgba(55, 171, 191, 0.2)' : 'rgba(55, 171, 191, 0.1)',
+                                    color: darkMode ? '#37ABBF' : '#2a8a9a'
                                   }
                                 }}
                               >
@@ -1013,8 +1013,8 @@ const CountryRuleBuilder = ({ onBack }) => {
                               sx={{ 
                                 color: currentTheme?.textSecondary,
                                 '&:hover': {
-                                  bgcolor: darkMode ? 'rgba(33, 150, 243, 0.2)' : 'rgba(33, 150, 243, 0.1)',
-                                  color: darkMode ? '#64b5f6' : '#1565c0'
+                                  bgcolor: darkMode ? 'rgba(55, 171, 191, 0.2)' : 'rgba(55, 171, 191, 0.1)',
+                                  color: darkMode ? '#37ABBF' : '#2a8a9a'
                                 }
                               }}
                             >

@@ -345,10 +345,10 @@ const QueryEngine = ({ selectedContext, currentTheme, darkMode, minimal = false 
           onClick={handleRun}
           disabled={running || isLocked}
           sx={{
-            bgcolor: theme?.primary || '#0891b2',
+            bgcolor: theme?.primary || '#0b87b4',
             color: '#fff',
             textTransform: 'none',
-            '&:hover': { bgcolor: theme?.primaryHover || theme?.primaryDark || '#0e7490', opacity: 0.9 },
+            '&:hover': { bgcolor: theme?.primaryHover || theme?.primaryDark || '#086f92', opacity: 0.9 },
           }}
         >
           {running ? 'Running…' : 'Run'}

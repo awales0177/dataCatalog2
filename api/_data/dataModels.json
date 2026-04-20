@@ -546,7 +546,8 @@
       ],
       "meta": {
         "tier": "gold",
-        "verified": true
+        "verified": true,
+        "clickCount": 1
       },
       "resources": {
         "code": "https://github.com/org/healthcare-facility-management",

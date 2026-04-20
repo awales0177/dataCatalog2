@@ -24,7 +24,7 @@ export function ruleZoneLabel(zone) {
 /** Distinct chip accents per zone. */
 export function ruleZoneColor(zone) {
   const z = normalizeRuleZone(zone);
-  if (z === 'schema') return '#1565c0';
+  if (z === 'schema') return '#2a8a9a';
   if (z === 'product') return '#6a1b9a';
   if (z === 'other') return '#546e7a';
   return '#2e7d32';

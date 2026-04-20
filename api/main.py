@@ -322,6 +322,7 @@ DATA_TYPE_KEYS = {
     "policies": "policies",
     "zones": "zones",
     "glossary": "terms",
+    "rules": "rules",
     "datasets": "datasets",
     "pipelines": "pipelines",
     "data-products": "products",
@@ -857,12 +858,38 @@ def get_count(file_name: str):
     """Get the count of items in a specific data file."""
     logger.info(f"Count request for {file_name} - Using {'passthrough' if PASSTHROUGH_MODE else 'direct'} mode")
     data = get_cached_data(file_name) if not PASSTHROUGH_MODE else fetch_from_github(file_name)
+    # statistics.json is analytics metadata (not a single list) — expose totalViews for nav badges
+    if file_name == "statistics" and isinstance(data, dict):
+        total = data.get("totalViews")
+        if total is not None:
+            try:
+                return {"count": int(total)}
+            except (TypeError, ValueError):
+                pass
+        return {"count": 0}
+
+    # toolkit.json: nested buckets (functions, containers, …) — same shape as search_service flattening
+    if file_name == "toolkit" and isinstance(data, dict):
+        tk = data.get("toolkit")
+        if isinstance(tk, dict):
+            n = 0
+            for category in ("functions", "containers", "infrastructure", "terraform", "toolkits"):
+                arr = tk.get(category)
+                if isinstance(arr, list):
+                    n += len(arr)
+            return {"count": n}
+        return {"count": 0}
+
     key = DATA_TYPE_KEYS.get(file_name)
-    
+
     if not key or key not in data:
         raise HTTPException(status_code=500, detail=f"Invalid data structure for {file_name}")
-    
-    return {"count": len(data[key])}
+
+    items = data[key]
+    if not isinstance(items, list):
+        raise HTTPException(status_code=500, detail=f"Invalid data structure for {file_name}: expected list at {key}")
+
+    return {"count": len(items)}
 
 @app.get("/api/agreements/by-model/{model_short_name}")
 async def get_agreements_by_model(model_short_name: str):

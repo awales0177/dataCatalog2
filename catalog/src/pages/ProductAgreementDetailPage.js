@@ -136,8 +136,8 @@ const ProductAgreementDetailPage = () => {
           label={producer}
           size="small"
           sx={{
-            bgcolor: alpha('#2196f3', 0.1),
-            color: '#2196f3',
+            bgcolor: alpha('#37ABBF', 0.1),
+            color: '#37ABBF',
             fontWeight: 500,
             fontSize: '0.875rem',
             height: 28,
@@ -159,8 +159,8 @@ const ProductAgreementDetailPage = () => {
             label={party}
             size="small"
             sx={{
-              bgcolor: isProducerParty ? alpha('#2196f3', 0.1) : alpha('#4caf50', 0.1),
-              color: isProducerParty ? '#2196f3' : '#4caf50',
+              bgcolor: isProducerParty ? alpha('#37ABBF', 0.1) : alpha('#4caf50', 0.1),
+              color: isProducerParty ? '#37ABBF' : '#4caf50',
               fontWeight: 500,
               fontSize: '0.875rem',
               height: 28,
@@ -283,7 +283,7 @@ const ProductAgreementDetailPage = () => {
              lowerText.includes('upgrade') || 
              lowerText.includes('refactor') || 
              lowerText.includes('optimize')) {
-      return { icon: RefreshIcon, color: '#2196f3' }; // Blue
+      return { icon: RefreshIcon, color: '#37ABBF' }; // Blue
     } 
     // Delete/Remove related keywords
     else if (lowerText.includes('delete') || 
@@ -594,7 +594,7 @@ const ProductAgreementDetailPage = () => {
       case 'active':
         return '#4caf50';
       case 'in_progress':
-        return '#2196f3';
+        return '#37ABBF';
       case 'in_review':
         return '#ff9800';
       case 'expired':
@@ -893,9 +893,49 @@ const ProductAgreementDetailPage = () => {
                   </Typography>
                 </Box>
                 <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                  <Typography variant="h6" sx={{ color: currentTheme.text, userSelect: 'text' }}>
-                    {agreement.modelShortName || 'No Model Associated'}
-                  </Typography>
+                  {(() => {
+                    const modelRef = model ? modelApiRef(model) : agreement.modelShortName;
+                    if (!modelRef) {
+                      return (
+                        <Typography variant="h6" sx={{ color: currentTheme.text, userSelect: 'text' }}>
+                          No Model Associated
+                        </Typography>
+                      );
+                    }
+                    return (
+                      <Tooltip title="View data model">
+                        <Box
+                          sx={{
+                            width: '100%',
+                            px: 2,
+                            py: 1,
+                            borderRadius: 1,
+                            bgcolor: 'transparent',
+                            transition: 'background 0.2s',
+                            userSelect: 'text',
+                            cursor: 'pointer',
+                            '&:hover': {
+                              bgcolor:
+                                currentTheme.hoverBackground ||
+                                (currentTheme.darkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'),
+                            },
+                          }}
+                          onClick={() => navigate(`/models/${encodeURIComponent(modelRef)}`)}
+                        >
+                          <Typography
+                            variant="h6"
+                            sx={{
+                              color: currentTheme.text,
+                              fontWeight: 600,
+                              userSelect: 'text',
+                            }}
+                          >
+                            {agreement.modelShortName || modelRef}
+                          </Typography>
+                        </Box>
+                      </Tooltip>
+                    );
+                  })()}
                 </Box>
               </Box>
 

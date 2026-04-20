@@ -471,19 +471,19 @@ const ToolkitFunctionDetailPage = () => {
                                 variant="body2" 
                                 sx={{ 
                                   color: (param.type === 'string' || param.type === 'boolean') && param.allowedValues.length <= 5 
-                                    ? '#2196f3' 
+                                    ? '#37ABBF' 
                                     : currentTheme.text,
                                   fontFamily: 'monospace', 
                                   fontSize: '0.875rem',
                                   fontWeight: (param.type === 'string' || param.type === 'boolean') && param.allowedValues.length <= 5 ? 600 : 400,
                                   bgcolor: (param.type === 'string' || param.type === 'boolean') && param.allowedValues.length <= 5 
-                                    ? alpha('#2196f3', 0.05) 
+                                    ? alpha('#37ABBF', 0.05) 
                                     : 'transparent',
                                   px: 1,
                                   py: 0.25,
                                   borderRadius: 0.5,
                                   border: (param.type === 'string' || param.type === 'boolean') && param.allowedValues.length <= 5 
-                                    ? `1px solid ${alpha('#2196f3', 0.2)}` 
+                                    ? `1px solid ${alpha('#37ABBF', 0.2)}` 
                                     : 'none',
                                 }}
                               >

@@ -415,7 +415,7 @@ const GlossaryPage = () => {
                       sx={{
                         height: 24,
                         fontSize: '0.75rem',
-                        bgcolor: darkMode ? 'rgba(33, 150, 243, 0.2)' : 'rgba(33, 150, 243, 0.1)',
+                        bgcolor: darkMode ? 'rgba(55, 171, 191, 0.2)' : 'rgba(55, 171, 191, 0.1)',
                         color: currentTheme.text,
                         '& .MuiChip-deleteIcon': {
                           color: currentTheme.textSecondary,

@@ -25,9 +25,9 @@ const DatasetCard = ({ dataset, onClick, currentTheme, pipelineNames }) => {
         return '#f44336'; // Red
       case 'in queue':
       case 'queue':
-        return '#2196f3'; // Blue
+        return '#37ABBF'; // Blue
       case 'backlog':
-        return '#2196f3'; // Blue
+        return '#37ABBF'; // Blue
       default:
         return '#9e9e9e'; // Gray
     }
