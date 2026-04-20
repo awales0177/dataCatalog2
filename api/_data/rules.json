@@ -212,10 +212,69 @@
       "id": "bronze_value_002",
       "maintainer": "Payment Gateway",
       "modelShortName": "FIN",
-      "parentRuleId": null,
+      "parentRuleId": "bronze_value_001",
       "libraryRuleId": "bronze_value_002",
-      "lastUpdated": "2026-04-19 22:07:59",
+      "lastUpdated": "2026-04-19 22:09:41",
+      "createdBy": "bypass_user",
+      "updatedBy": "bypass_user"
+    },
+    {
+      "name": "Cross-cutting documentation",
+      "description": "Catch-all metadata and documentation checks.",
+      "documentation": "",
+      "ruleType": "validation",
+      "stage": "bronze",
+      "ruleZone": "other",
+      "enabled": true,
+      "tags": [
+        "docs"
+      ],
+      "modelShortName": "FIN",
+      "id": "bronze_other_001",
+      "libraryRuleId": "bronze_other_001",
+      "parentRuleId": null,
+      "lastUpdated": "2026-04-19 22:11:51",
       "createdBy": "bypass_user"
+    },
+    {
+      "name": "Product: metric aggregates",
+      "description": "Transformation rules for product analytics fields.",
+      "documentation": "",
+      "ruleType": "transformation",
+      "stage": "gold",
+      "ruleZone": "product",
+      "enabled": true,
+      "tags": [
+        "product",
+        "cust"
+      ],
+      "modelShortName": "FIN",
+      "id": "gold_product_001",
+      "libraryRuleId": "gold_product_001",
+      "parentRuleId": "bronze_value_001",
+      "lastUpdated": "2026-04-19 22:11:58",
+      "createdBy": "bypass_user",
+      "updatedBy": "bypass_user"
+    },
+    {
+      "name": "Schema: keys and types",
+      "description": "Validate schema contracts for the customer model.",
+      "documentation": "",
+      "ruleType": "validation",
+      "stage": "silver",
+      "ruleZone": "schema",
+      "enabled": true,
+      "tags": [
+        "schema",
+        "cust"
+      ],
+      "modelShortName": "FIN",
+      "id": "silver_schema_001",
+      "libraryRuleId": "silver_schema_001",
+      "parentRuleId": "bronze_value_001",
+      "lastUpdated": "2026-04-19 22:12:02",
+      "createdBy": "bypass_user",
+      "updatedBy": "bypass_user"
     }
   ]
 }

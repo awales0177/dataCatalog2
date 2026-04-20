@@ -4,6 +4,7 @@ import { ThemeContext } from '../contexts/ThemeContext';
 import { catalogInteractivePaperSx } from '../theme/catalogSurfaces';
 import { useAuth } from '../contexts/AuthContext';
 import { useWorkbenchModals } from '../contexts/WorkbenchModalsContext';
+import { getHomeCarouselDisable } from '../utils/disableConfig';
 
 /** Matches UUX dh home workspace tiles; opens the same workbench modals. */
 const TILE_IMG_SX = {
@@ -38,8 +39,7 @@ const HomeWorkspaceSection = () => {
           'Explore datasets and run SQL in the query workbench (Trino-backed query execution when connected).',
         tileMedia: workspaceTileImg('/trino.png'),
         action: openQuery,
-        disabled: false,
-        comingSoon: false,
+        ...getHomeCarouselDisable('query'),
       },
       {
         id: 'ws-modeling',
@@ -47,8 +47,7 @@ const HomeWorkspaceSection = () => {
         description: 'Browse catalog datasets and compose models in the modeling workbench.',
         tileMedia: workspaceTileImg('/modeling-svgrepo-com.svg'),
         action: openModeling,
-        disabled: false,
-        comingSoon: false,
+        ...getHomeCarouselDisable('modeling'),
       },
       {
         id: 'ws-studio',
@@ -71,8 +70,7 @@ const HomeWorkspaceSection = () => {
           </Box>
         ),
         action: openStudio,
-        disabled: false,
-        comingSoon: false,
+        ...getHomeCarouselDisable('studio'),
       },
       {
         id: 'ws-reference',
@@ -80,8 +78,7 @@ const HomeWorkspaceSection = () => {
         description: 'Reference datasets, domains, and Excel import in the reference data hub.',
         tileMedia: workspaceTileImg('/rd.png'),
         action: openReferenceHub,
-        disabled: false,
-        comingSoon: false,
+        ...getHomeCarouselDisable('referenceHub'),
       },
     ];
 
@@ -92,8 +89,7 @@ const HomeWorkspaceSection = () => {
         description: 'Author and manage data quality rules for your models.',
         tileMedia: workspaceTileImg('/builder.svg'),
         action: openRuleBuilder,
-        disabled: false,
-        comingSoon: false,
+        ...getHomeCarouselDisable('rules'),
       });
     }
 

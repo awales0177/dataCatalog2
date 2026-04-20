@@ -14,6 +14,7 @@ import {
   TableHead,
   TableRow,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import {
   Edit as EditIcon,
   Delete as DeleteIcon,
@@ -107,6 +108,41 @@ const ModelRulesTable = ({
   const orderedRules = useMemo(() => buildOrderedRules(rules), [rules]);
   const depthByRuleId = useMemo(() => buildDepthByRuleId(rules), [rules]);
   const rulesById = useMemo(() => Object.fromEntries(rules.map((r) => [r.id, r])), [rules]);
+
+  /** Per depth level: draw vertical rail when ancestor has younger siblings (tree lines when expanded). */
+  const treeLinePrefixesByRuleId = useMemo(() => {
+    const byParentId = new Map();
+    for (const r of rules) {
+      const pk = r.parentRuleId != null ? String(r.parentRuleId) : '';
+      if (!byParentId.has(pk)) byParentId.set(pk, []);
+      byParentId.get(pk).push(r);
+    }
+    for (const sibs of byParentId.values()) {
+      sibs.sort((a, b) =>
+        (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }),
+      );
+    }
+    const isLastChild = (r) => {
+      const pk = r.parentRuleId != null ? String(r.parentRuleId) : '';
+      const sibs = byParentId.get(pk) || [];
+      return sibs.length > 0 && String(sibs[sibs.length - 1].id) === String(r.id);
+    };
+
+    const m = new Map();
+    for (const r of rules) {
+      const chain = [];
+      let pid = r.parentRuleId;
+      while (pid) {
+        const p = rulesById[pid];
+        if (!p) break;
+        chain.push(p);
+        pid = p.parentRuleId;
+      }
+      chain.reverse();
+      m.set(String(r.id), chain.map((anc) => !isLastChild(anc)));
+    }
+    return m;
+  }, [rules, rulesById]);
 
   const ruleHasChildren = useMemo(() => {
     const s = new Set();
@@ -376,6 +412,8 @@ const ModelRulesTable = ({
                 '& .MuiChip-icon': { fontSize: 14, marginLeft: '4px' },
                 '& .MuiChip-label': { px: 0.75, overflow: 'hidden', textOverflow: 'ellipsis' },
               };
+              const treePrefixes = treeLinePrefixesByRuleId.get(String(rule.id)) || [];
+              const lineColor = alpha(currentTheme?.border || '#888888', darkMode ? 0.55 : 0.7);
               return (
                 <TableRow
                   key={rule.id}
@@ -411,30 +449,80 @@ const ModelRulesTable = ({
                       <Box sx={{ width: 34, height: 34 }} />
                     )}
                   </TableCell>
-                  <TableCell sx={{ py: 1, pl: 1 + depth * 2, maxWidth: 360 }}>
-                    <Typography variant="body2" sx={{ color: currentTheme?.text, fontWeight: 600 }}>
-                      {rule.name}
-                    </Typography>
-                    {rule.description ? (
-                      <Typography
-                        variant="body2"
-                        component="div"
-                        title={rule.description}
-                        sx={{
-                          display: '-webkit-box',
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: 'vertical',
-                          overflow: 'hidden',
-                          color: currentTheme?.textSecondary,
-                          fontSize: '0.8125rem',
-                          lineHeight: 1.4,
-                          mt: 0.25,
-                          fontWeight: 400,
-                        }}
-                      >
-                        {rule.description}
-                      </Typography>
-                    ) : null}
+                  <TableCell sx={{ py: 1, pl: 1, maxWidth: 360, verticalAlign: 'top' }}>
+                    <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'stretch', gap: 0.25 }}>
+                      {depth > 0 ? (
+                        <Box
+                          aria-hidden
+                          sx={{
+                            display: 'flex',
+                            flexDirection: 'row',
+                            alignItems: 'stretch',
+                            flexShrink: 0,
+                          }}
+                        >
+                          {treePrefixes.slice(0, -1).map((continueBelow, idx) => (
+                            <Box
+                              key={`${String(rule.id)}-rail-${idx}`}
+                              sx={{
+                                width: 14,
+                                flexShrink: 0,
+                                borderLeft: continueBelow ? `2px solid ${lineColor}` : '2px solid transparent',
+                                boxSizing: 'border-box',
+                              }}
+                            />
+                          ))}
+                          <Box
+                            sx={{
+                              width: 14,
+                              flexShrink: 0,
+                              position: 'relative',
+                              alignSelf: 'stretch',
+                              minHeight: 30,
+                            }}
+                          >
+                            <Box
+                              sx={{
+                                position: 'absolute',
+                                left: 0,
+                                top: '0.55rem',
+                                width: 11,
+                                height: 11,
+                                borderLeft: `2px solid ${lineColor}`,
+                                borderBottom: `2px solid ${lineColor}`,
+                                borderBottomLeftRadius: 3,
+                                boxSizing: 'border-box',
+                              }}
+                            />
+                          </Box>
+                        </Box>
+                      ) : null}
+                      <Box sx={{ minWidth: 0, flex: 1, pt: 0.125 }}>
+                        <Typography variant="body2" sx={{ color: currentTheme?.text, fontWeight: 600 }}>
+                          {rule.name}
+                        </Typography>
+                        {rule.description ? (
+                          <Typography
+                            variant="body2"
+                            component="div"
+                            title={rule.description}
+                            sx={{
+                              display: '-webkit-box',
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: 'vertical',
+                              overflow: 'hidden',
+                              color: currentTheme?.textSecondary,
+                              fontSize: '0.8125rem',
+                              lineHeight: 1.4,
+                              mt: 0.25,
+                              fontWeight: 400,
+                            }}
+                          >
+                            {rule.description}
+                          </Typography>
+                        ) : null}
+                      </Box>
+                    </Box>
                   </TableCell>
                   <TableCell sx={{ py: 1, maxWidth: 180 }}>
                     {rule.id ? (

@@ -17,6 +17,7 @@ import {
   getWorkbenchExitPath,
   workbenchModalFlagsFromPath,
 } from '../constants/workbenchPaths';
+import { getHomeCarouselDisable } from '../utils/disableConfig';
 import { ThemeContext } from './ThemeContext';
 
 const WorkbenchModalsContext = createContext(null);
@@ -32,36 +33,58 @@ export function WorkbenchModalsProvider({ children }) {
   const [referenceHubOpen, setReferenceHubOpen] = useState(false);
 
   useLayoutEffect(() => {
-    const flags = workbenchModalFlagsFromPath(location.pathname);
+    const path = location.pathname;
+    if (path === WORKBENCH_PATHS.query && getHomeCarouselDisable('query').disabled) {
+      navigate(getWorkbenchExitPath(location), { replace: true });
+      return;
+    }
+    if (path === WORKBENCH_PATHS.modeling && getHomeCarouselDisable('modeling').disabled) {
+      navigate(getWorkbenchExitPath(location), { replace: true });
+      return;
+    }
+    if (path === WORKBENCH_PATHS.studio && getHomeCarouselDisable('studio').disabled) {
+      navigate(getWorkbenchExitPath(location), { replace: true });
+      return;
+    }
+    if (path === WORKBENCH_PATHS.referenceData && getHomeCarouselDisable('referenceHub').disabled) {
+      navigate(getWorkbenchExitPath(location), { replace: true });
+      return;
+    }
+    const flags = workbenchModalFlagsFromPath(path);
     setQueryOpen(flags.queryOpen);
     setModelingOpen(flags.modelingOpen);
     setRuleBuilderOpen(flags.ruleBuilderOpen);
     setReferenceHubOpen(flags.referenceHubOpen);
-  }, [location.pathname]);
+  }, [location.pathname, location, navigate]);
 
   const splitQueryAndModeling = Boolean(queryOpen && modelingOpen);
 
   const openQuery = useCallback(() => {
+    if (getHomeCarouselDisable('query').disabled) return;
     if (location.pathname === WORKBENCH_PATHS.query) return;
     navigate(WORKBENCH_PATHS.query, { state: buildWorkbenchEnterState(location) });
   }, [navigate, location]);
 
   const openModeling = useCallback(() => {
+    if (getHomeCarouselDisable('modeling').disabled) return;
     if (location.pathname === WORKBENCH_PATHS.modeling) return;
     navigate(WORKBENCH_PATHS.modeling, { state: buildWorkbenchEnterState(location) });
   }, [navigate, location]);
 
   const openStudio = useCallback(() => {
+    if (getHomeCarouselDisable('studio').disabled) return;
     if (location.pathname === WORKBENCH_PATHS.studio) return;
     navigate(WORKBENCH_PATHS.studio, { state: buildWorkbenchEnterState(location) });
   }, [navigate, location]);
 
   const openRuleBuilder = useCallback(() => {
+    if (getHomeCarouselDisable('rules').disabled) return;
     if (location.pathname === WORKBENCH_PATHS.ruleBuilder) return;
     navigate(WORKBENCH_PATHS.ruleBuilder, { state: buildWorkbenchEnterState(location) });
   }, [navigate, location]);
 
   const openReferenceHub = useCallback(() => {
+    if (getHomeCarouselDisable('referenceHub').disabled) return;
     if (location.pathname === WORKBENCH_PATHS.referenceData) return;
     navigate(WORKBENCH_PATHS.referenceData, { state: buildWorkbenchEnterState(location) });
   }, [navigate, location]);
