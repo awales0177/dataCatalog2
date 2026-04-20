@@ -1,26 +1,14 @@
-# Development mode
 FROM node:20-alpine
 
-# Set working directory
 WORKDIR /app
 
-# Copy package files
-COPY catalog/package*.json ./catalog/
+COPY catalog/package.json catalog/package-lock.json ./
+RUN npm ci
 
-# Install dependencies
-WORKDIR /app/catalog
-RUN npm install --force
+COPY catalog/ ./
 
-# Copy source code
-WORKDIR /app
-COPY . .
-
-# Expose port 3000 (React dev server default)
-EXPOSE 3000
-
-# Set environment variable to allow external connections
 ENV HOST=0.0.0.0
 
-# Start development server
-WORKDIR /app/catalog
-CMD ["npm", "start"] 
+EXPOSE 3000
+
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "3000"]

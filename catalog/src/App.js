@@ -1,6 +1,5 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import ToolkitLegacyWorkbenchRedirect from './routes/ToolkitLegacyWorkbenchRedirect';
 import {
   Box,
   CssBaseline,
@@ -8,45 +7,46 @@ import {
 } from '@mui/material';
 import { ThemeProvider, createTheme, alpha } from '@mui/material/styles';
 
-// Import components
-import DataModelsPage from './pages/DataModelsPage';
-import ProductAgreementsPage from './pages/ProductAgreementsPage';
-import DataDomainsPage from './pages/DataDomainsPage';
-import HomePage from './pages/HomePage';
-import WorkspacesPage from './pages/WorkspacesPage';
-import ApplicationsPage from './pages/ApplicationsPage';
-import EditApplicationPage from './pages/EditApplicationPage';
-import DataModelDetailPage from './pages/DataModelDetailPage';
-import GlossaryPage from './pages/GlossaryPage';
-import EditGlossaryPage from './pages/EditGlossaryPage';
-import GlossaryMarkdownPage from './pages/GlossaryMarkdownPage';
-import ToolkitTechnologyMarkdownPage from './pages/ToolkitTechnologyMarkdownPage';
-import EditToolkitTechnologyPage from './pages/EditToolkitTechnologyPage';
-import EditToolkitPage from './pages/EditToolkitPage';
-import EditDataModelDetailPage from './pages/EditDataModelDetailPage';
-import DataModelMarkdownPage from './pages/DataModelMarkdownPage';
-import ProductAgreementDetailPage from './pages/ProductAgreementDetailPage';
-import EditAgreementPage from './pages/EditAgreementPage';
-import ToolkitPage from './pages/ToolkitPage';
-import ToolkitFunctionDetailPage from './pages/ToolkitFunctionDetailPage';
-import ToolkitSopDetailPage from './pages/ToolkitSopDetailPage';
-import ToolkitDetailPage from './pages/ToolkitDetailPage';
-import ToolkitPackageDetailPage from './pages/ToolkitPackageDetailPage';
-import ToolkitContainerDetailPage from './pages/ToolkitContainerDetailPage';
-import ToolkitInfrastructureDetailPage from './pages/ToolkitInfrastructureDetailPage';
-import EditToolkitFunctionPage from './pages/EditToolkitFunctionPage';
-import EditToolkitPackagePage from './pages/EditToolkitPackagePage';
-import EditToolkitContainerPage from './pages/EditToolkitContainerPage';
-import EditToolkitInfrastructurePage from './pages/EditToolkitInfrastructurePage';
-import ImportToolkitPage from './pages/ImportToolkitPage';
-import DataPoliciesPage from './pages/DataPoliciesPage';
-import EditDataPolicyPage from './pages/EditDataPolicyPage';
-import RolePage from './pages/RolePage';
-import UnauthorizedPage from './pages/UnauthorizedPage';
-import UserManagementPage from './pages/UserManagementPage';
-import StatisticsPage from './pages/StatisticsPage';
-import SettingsPage from './pages/SettingsPage';
-import RuleBuilderPage from './pages/RuleBuilderPage';
+const HomePage = lazy(() => import('./pages/HomePage'));
+const DataModelsPage = lazy(() => import('./pages/DataModelsPage'));
+const ProductAgreementsPage = lazy(() => import('./pages/ProductAgreementsPage'));
+const DataDomainsPage = lazy(() => import('./pages/DataDomainsPage'));
+const WorkspacesPage = lazy(() => import('./pages/WorkspacesPage'));
+const ApplicationsPage = lazy(() => import('./pages/ApplicationsPage'));
+const EditApplicationPage = lazy(() => import('./pages/EditApplicationPage'));
+const DataModelDetailPage = lazy(() => import('./pages/DataModelDetailPage'));
+const GlossaryPage = lazy(() => import('./pages/GlossaryPage'));
+const EditGlossaryPage = lazy(() => import('./pages/EditGlossaryPage'));
+const GlossaryMarkdownPage = lazy(() => import('./pages/GlossaryMarkdownPage'));
+const ToolkitTechnologyMarkdownPage = lazy(() => import('./pages/ToolkitTechnologyMarkdownPage'));
+const EditToolkitTechnologyPage = lazy(() => import('./pages/EditToolkitTechnologyPage'));
+const EditToolkitPage = lazy(() => import('./pages/EditToolkitPage'));
+const EditDataModelDetailPage = lazy(() => import('./pages/EditDataModelDetailPage'));
+const DataModelMarkdownPage = lazy(() => import('./pages/DataModelMarkdownPage'));
+const ProductAgreementDetailPage = lazy(() => import('./pages/ProductAgreementDetailPage'));
+const EditAgreementPage = lazy(() => import('./pages/EditAgreementPage'));
+const ToolkitPage = lazy(() => import('./pages/ToolkitPage'));
+const ToolkitFunctionDetailPage = lazy(() => import('./pages/ToolkitFunctionDetailPage'));
+const ToolkitSopDetailPage = lazy(() => import('./pages/ToolkitSopDetailPage'));
+const ToolkitDetailPage = lazy(() => import('./pages/ToolkitDetailPage'));
+const ToolkitPackageDetailPage = lazy(() => import('./pages/ToolkitPackageDetailPage'));
+const ToolkitContainerDetailPage = lazy(() => import('./pages/ToolkitContainerDetailPage'));
+const ToolkitInfrastructureDetailPage = lazy(() => import('./pages/ToolkitInfrastructureDetailPage'));
+const EditToolkitFunctionPage = lazy(() => import('./pages/EditToolkitFunctionPage'));
+const EditToolkitPackagePage = lazy(() => import('./pages/EditToolkitPackagePage'));
+const EditToolkitContainerPage = lazy(() => import('./pages/EditToolkitContainerPage'));
+const EditToolkitInfrastructurePage = lazy(() => import('./pages/EditToolkitInfrastructurePage'));
+const ImportToolkitPage = lazy(() => import('./pages/ImportToolkitPage'));
+const DataPoliciesPage = lazy(() => import('./pages/DataPoliciesPage'));
+const EditDataPolicyPage = lazy(() => import('./pages/EditDataPolicyPage'));
+const RolePage = lazy(() => import('./pages/RolePage'));
+const UnauthorizedPage = lazy(() => import('./pages/UnauthorizedPage'));
+const UserManagementPage = lazy(() => import('./pages/UserManagementPage'));
+const StatisticsPage = lazy(() => import('./pages/StatisticsPage'));
+const SettingsPage = lazy(() => import('./pages/SettingsPage'));
+const RuleBuilderPage = lazy(() => import('./pages/RuleBuilderPage'));
+const ToolkitLegacyWorkbenchRedirect = lazy(() => import('./routes/ToolkitLegacyWorkbenchRedirect'));
+
 import NavigationDrawer from './components/NavigationDrawer';
 import ProtectedRoute from './components/ProtectedRoute';
 import GlobalSearch from './components/GlobalSearch';
@@ -245,6 +245,22 @@ function AppContent() {
               }),
               pr: (t) => t.spacing(3),
             }}
+          >
+          <Suspense
+            fallback={
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  minHeight: '45vh',
+                  width: '100%',
+                  py: 6,
+                }}
+              >
+                <CircularProgress sx={{ color: currentTheme.primary }} />
+              </Box>
+            }
           >
           <Routes>
             <Route path="/role" element={<RolePage />} />
@@ -534,6 +550,7 @@ function AppContent() {
               } 
             />
           </Routes>
+          </Suspense>
           </Box>
         </Box>
 

@@ -24,12 +24,12 @@ import {
   Tabs,
   Tab,
   CircularProgress,
+  Skeleton,
 } from '@mui/material';
 import Masonry from '@mui/lab/Masonry';
 import {
   Search as SearchIcon,
   Close as CloseIcon,
-  PushPin as PinIcon,
   PinDrop as PinDropIcon,
   Add as AddIcon,
   Storage as StorageIcon,
@@ -43,17 +43,10 @@ import {
 } from '@mui/icons-material';
 import { ThemeContext } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
-import DataModelCard from '../components/DataModelCard';
-import ProductAgreementCard from '../components/ProductAgreementCard';
-import DomainCard from '../components/DomainCard';
-import ApplicationCard from '../components/ApplicationCard';
-import GlossaryCard from '../components/GlossaryCard';
-import DataPolicyCard from '../components/DataPolicyCard';
-import ToolkitPinnedCard, { findToolkitItemForPin } from '../components/ToolkitPinnedCard';
+import HomePinnedMasonryItem from '../components/HomePinnedMasonryItem';
 import StickyPageIntro from '../components/StickyPageIntro';
 import PageWithFixedHeader from '../components/PageWithFixedHeader';
-import { catalogStaticPaperSx, catalogInteractivePaperSx } from '../theme/catalogSurfaces';
-import modelsData from '../data/models.json';
+import { catalogStaticPaperSx } from '../theme/catalogSurfaces';
 import { globalSearch, fetchAgreements, fetchDomains, fetchData } from '../services/api';
 import {
   getSearchResultPath,
@@ -123,25 +116,15 @@ const EMPTY_PIN_CATALOG = {
   apiModels: [],
 };
 
-function entityMatchesPinId(entity, pinId) {
-  if (!entity) return false;
-  const pid = String(pinId);
-  return ['uuid', 'id', 'shortName', 'name', 'term'].some((k) => {
-    const v = entity[k];
-    if (v == null) return false;
-    const s = String(v);
-    return s === pid || encodeURIComponent(s) === pid;
-  });
-}
-
-function lexiconTermForGlossaryCard(lex) {
-  return {
-    ...lex,
-    term: lex.term,
-    definition: lex.definition,
-    category: Array.isArray(lex.domains) && lex.domains.length ? lex.domains[0] : undefined,
-    taggedModels: [],
-  };
+function readInitialPinnedItems() {
+  try {
+    const stored = localStorage.getItem(PINNED_STORAGE_KEY);
+    if (!stored) return [];
+    const parsed = JSON.parse(stored);
+    return parsed.map(migrateLegacyPin).filter(Boolean);
+  } catch {
+    return [];
+  }
 }
 
 const HomePage = () => {
@@ -149,7 +132,8 @@ const HomePage = () => {
   const { currentTheme } = useContext(ThemeContext);
   const { canEdit } = useAuth();
   const [pinCatalog, setPinCatalog] = useState(EMPTY_PIN_CATALOG);
-  const [pinnedItems, setPinnedItems] = useState([]);
+  const [pinnedItems, setPinnedItems] = useState(readInitialPinnedItems);
+  const [pinCatalogLoading, setPinCatalogLoading] = useState(() => readInitialPinnedItems().length > 0);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState(0);
@@ -158,70 +142,163 @@ const HomePage = () => {
   const searchTimeoutRef = useRef(null);
 
   useEffect(() => {
-    const stored = localStorage.getItem(PINNED_STORAGE_KEY);
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        const migrated = parsed.map(migrateLegacyPin).filter(Boolean);
-        if (migrated.length !== parsed.length) {
-          localStorage.setItem(PINNED_STORAGE_KEY, JSON.stringify(migrated));
-        }
-        setPinnedItems(migrated);
-      } catch (e) {
-        console.error('Error loading pinned items:', e);
+    try {
+      const stored = localStorage.getItem(PINNED_STORAGE_KEY);
+      if (!stored) return;
+      const parsed = JSON.parse(stored);
+      const migrated = parsed.map(migrateLegacyPin).filter(Boolean);
+      if (migrated.length !== parsed.length) {
+        localStorage.setItem(PINNED_STORAGE_KEY, JSON.stringify(migrated));
       }
+    } catch (e) {
+      console.error('Error migrating pinned items:', e);
     }
   }, []);
 
+  const pinDataNeeds = useMemo(() => {
+    const types = new Set();
+    pinnedItems.forEach((p) => {
+      if (p.searchType) types.add(p.searchType);
+    });
+    return {
+      agreements: types.has('dataAgreements'),
+      applications: types.has('dataAgreements') || types.has('applications'),
+      domains: types.has('domains'),
+      policies: types.has('policies'),
+      glossary: types.has('glossary'),
+      lexicon: types.has('lexicon'),
+      toolkit: types.has('toolkit'),
+      models: types.has('models') || types.has('glossary') || types.has('lexicon'),
+    };
+  }, [pinnedItems]);
+
   useEffect(() => {
     let cancelled = false;
+    const n = pinDataNeeds;
+    if (!Object.values(n).some(Boolean)) {
+      setPinCatalog(EMPTY_PIN_CATALOG);
+      setPinCatalogLoading(false);
+      return undefined;
+    }
+
+    setPinCatalogLoading(true);
     (async () => {
       try {
-        const [
-          agreementData,
-          appData,
-          domainsData,
-          policiesData,
-          glossaryData,
-          lexiconData,
-          toolkitData,
-          modelsApiData,
-        ] = await Promise.all([
-          fetchAgreements().catch(() => ({ agreements: [] })),
-          fetchData('applications').catch(() => ({ applications: [] })),
-          fetchDomains().catch(() => ({ domains: [] })),
-          fetchData('policies').catch(() => ({ policies: [] })),
-          fetchData('glossary').catch(() => ({ terms: [] })),
-          fetchData('lexicon').catch(() => ({ terms: [] })),
-          fetchData('toolkit').catch(() => null),
-          fetchData('models').catch(() => ({ models: [] })),
-        ]);
+        const tasks = [];
+        if (n.agreements) {
+          tasks.push(
+            fetchAgreements()
+              .catch(() => ({ agreements: [] }))
+              .then((d) => ['agreements', d])
+          );
+        }
+        if (n.applications) {
+          tasks.push(
+            fetchData('applications')
+              .catch(() => ({ applications: [] }))
+              .then((d) => ['applications', d])
+          );
+        }
+        if (n.domains) {
+          tasks.push(
+            fetchDomains()
+              .catch(() => ({ domains: [] }))
+              .then((d) => ['domains', d])
+          );
+        }
+        if (n.policies) {
+          tasks.push(
+            fetchData('policies')
+              .catch(() => ({ policies: [] }))
+              .then((d) => ['policies', d])
+          );
+        }
+        if (n.glossary) {
+          tasks.push(
+            fetchData('glossary')
+              .catch(() => ({ terms: [] }))
+              .then((d) => ['glossary', d])
+          );
+        }
+        if (n.lexicon) {
+          tasks.push(
+            fetchData('lexicon')
+              .catch(() => ({ terms: [] }))
+              .then((d) => ['lexicon', d])
+          );
+        }
+        if (n.toolkit) {
+          tasks.push(
+            fetchData('toolkit')
+              .catch(() => null)
+              .then((d) => ['toolkit', d])
+          );
+        }
+        if (n.models) {
+          tasks.push(
+            fetchData('models')
+              .catch(() => ({ models: [] }))
+              .then((d) => ['models', d])
+          );
+        }
+
+        const settled = await Promise.all(tasks);
         if (cancelled) return;
-        const rawModels = modelsApiData?.models ?? modelsApiData;
-        const apiModels = Array.isArray(rawModels) ? rawModels : [];
-        setPinCatalog({
-          agreements: agreementData.agreements || [],
-          applications: appData.applications || [],
-          domains: domainsData.domains || [],
-          policies: policiesData.policies || [],
-          glossaryTerms: glossaryData.terms || [],
-          lexiconTerms: lexiconData.terms || [],
-          toolkit: toolkitData,
-          apiModels,
-        });
+
+        const next = {
+          agreements: [],
+          applications: [],
+          domains: [],
+          policies: [],
+          glossaryTerms: [],
+          lexiconTerms: [],
+          toolkit: null,
+          apiModels: [],
+        };
+        for (const [key, data] of settled) {
+          switch (key) {
+            case 'agreements':
+              next.agreements = data.agreements || [];
+              break;
+            case 'applications':
+              next.applications = data.applications || [];
+              break;
+            case 'domains':
+              next.domains = data.domains || [];
+              break;
+            case 'policies':
+              next.policies = data.policies || [];
+              break;
+            case 'glossary':
+              next.glossaryTerms = data.terms || [];
+              break;
+            case 'lexicon':
+              next.lexiconTerms = data.terms || [];
+              break;
+            case 'toolkit':
+              next.toolkit = data;
+              break;
+            case 'models': {
+              const raw = data?.models ?? data;
+              next.apiModels = Array.isArray(raw) ? raw : [];
+              break;
+            }
+            default:
+              break;
+          }
+        }
+        setPinCatalog(next);
       } catch {
         if (!cancelled) setPinCatalog(EMPTY_PIN_CATALOG);
+      } finally {
+        if (!cancelled) setPinCatalogLoading(false);
       }
     })();
+
     return () => {
       cancelled = true;
     };
-  }, []);
-
-  const savePinnedItems = useCallback((items) => {
-    localStorage.setItem(PINNED_STORAGE_KEY, JSON.stringify(items));
-    setPinnedItems(items);
-  }, []);
+  }, [pinDataNeeds]);
 
   const isPinned = useCallback(
     (id, searchType) =>
@@ -229,16 +306,19 @@ const HomePage = () => {
     [pinnedItems]
   );
 
-  const handlePin = useCallback(
-    (pin) => {
-      if (isPinned(pin.id, pin.searchType)) return;
-      savePinnedItems([...pinnedItems, pin]);
-      setSearchOpen(false);
-      setSearchQuery('');
-      setSearchResults([]);
-    },
-    [isPinned, pinnedItems, savePinnedItems]
-  );
+  const handlePin = useCallback((pin) => {
+    setPinnedItems((prev) => {
+      if (prev.some((item) => String(item.id) === String(pin.id) && item.searchType === pin.searchType)) {
+        return prev;
+      }
+      const next = [...prev, pin];
+      localStorage.setItem(PINNED_STORAGE_KEY, JSON.stringify(next));
+      return next;
+    });
+    setSearchOpen(false);
+    setSearchQuery('');
+    setSearchResults([]);
+  }, []);
 
   const handlePinFromSearchHit = useCallback(
     (hit) => {
@@ -259,11 +339,15 @@ const HomePage = () => {
     [handlePin]
   );
 
-  const handleUnpin = (id, searchType) => {
-    savePinnedItems(
-      pinnedItems.filter((item) => !(String(item.id) === String(id) && item.searchType === searchType))
-    );
-  };
+  const handleUnpin = useCallback((id, searchType) => {
+    setPinnedItems((prev) => {
+      const next = prev.filter(
+        (item) => !(String(item.id) === String(id) && item.searchType === searchType)
+      );
+      localStorage.setItem(PINNED_STORAGE_KEY, JSON.stringify(next));
+      return next;
+    });
+  }, []);
 
   useEffect(() => {
     if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
@@ -318,190 +402,14 @@ const HomePage = () => {
     return groupedPins[key] || [];
   }, [activeTab, tabKeys, groupedPins, pinnedItems]);
 
-  const openPinned = (pin) => {
-    if (pin.path) navigate(pin.path);
-  };
+  const openPinned = useCallback(
+    (pin) => {
+      if (pin.path) navigate(pin.path);
+    },
+    [navigate]
+  );
 
-  const renderPinnedItem = (item) => {
-    const pinKey = `${item.searchType}-${item.id}`;
-    const unpin = (e) => {
-      e.stopPropagation();
-      handleUnpin(item.id, item.searchType);
-    };
-
-    const pinShell = (child) => (
-      <Box key={pinKey} sx={{ position: 'relative', overflow: 'visible', width: '100%' }}>
-        <IconButton
-          size="small"
-          onClick={unpin}
-          aria-label="Unpin"
-          sx={{
-            position: 'absolute',
-            bottom: 12,
-            right: -16,
-            zIndex: 20,
-            bgcolor: currentTheme.primary,
-            width: 32,
-            height: 32,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            borderRadius: '4px 0 0 4px',
-            boxShadow: `0 2px 8px ${alpha(currentTheme.primary, 0.3)}`,
-            clipPath: 'polygon(0 0, calc(100% - 8px) 0, 100% 50%, calc(100% - 8px) 100%, 0 100%)',
-            '&:hover': {
-              bgcolor: currentTheme.primaryHover,
-              boxShadow: `0 2px 12px ${alpha(currentTheme.primary, 0.4)}`,
-            },
-          }}
-        >
-          <PinIcon sx={{ color: 'white', fontSize: 18 }} />
-        </IconButton>
-        <Box
-          sx={{
-            '& .MuiCard-root': { height: 'auto' },
-          }}
-        >
-          {child}
-        </Box>
-      </Box>
-    );
-
-    if (item.searchType === 'models') {
-      const staticList = Array.isArray(modelsData) ? modelsData : modelsData.models || [];
-      const model =
-        staticList.find((m) => String(m.uuid || m.shortName || m.id) === String(item.id)) ||
-        pinCatalog.apiModels.find((m) => entityMatchesPinId(m, item.id));
-      if (model) {
-        return pinShell(<DataModelCard model={model} currentTheme={currentTheme} />);
-      }
-    }
-
-    if (item.searchType === 'dataAgreements') {
-      const agreement = pinCatalog.agreements.find((a) => entityMatchesPinId(a, item.id));
-      if (agreement) {
-        return pinShell(
-          <ProductAgreementCard
-            agreement={agreement}
-            currentTheme={currentTheme}
-            applications={pinCatalog.applications}
-          />
-        );
-      }
-    }
-
-    if (item.searchType === 'domains') {
-      const domain = pinCatalog.domains.find(
-        (d) => entityMatchesPinId(d, item.id) || String(d.name) === String(item.name)
-      );
-      if (domain) {
-        return pinShell(
-          <DomainCard domain={domain} onClick={() => openPinned(item)} currentTheme={currentTheme} />
-        );
-      }
-    }
-
-    if (item.searchType === 'applications') {
-      const application = pinCatalog.applications.find((a) => entityMatchesPinId(a, item.id));
-      if (application) {
-        const target =
-          item.path && item.path !== '/applications'
-            ? item.path
-            : `/applications/edit/${encodeURIComponent(application.uuid || application.id)}`;
-        return pinShell(
-          <Box onClick={() => navigate(target)} sx={{ cursor: 'pointer' }}>
-            <ApplicationCard application={application} currentTheme={currentTheme} />
-          </Box>
-        );
-      }
-    }
-
-    if (item.searchType === 'policies') {
-      const policy = pinCatalog.policies.find((p) => entityMatchesPinId(p, item.id));
-      if (policy) {
-        return pinShell(
-          <Box onClick={() => openPinned(item)} sx={{ cursor: 'pointer' }}>
-            <DataPolicyCard
-              policy={policy}
-              currentTheme={currentTheme}
-              sx={{ height: 'auto', minHeight: 0 }}
-            />
-          </Box>
-        );
-      }
-    }
-
-    if (item.searchType === 'glossary') {
-      const term = pinCatalog.glossaryTerms.find((t) => entityMatchesPinId(t, item.id));
-      if (term) {
-        return pinShell(
-          <Box onClick={() => openPinned(item)} sx={{ cursor: 'pointer' }}>
-            <GlossaryCard
-              term={term}
-              currentTheme={currentTheme}
-              dataModels={pinCatalog.apiModels}
-              canEdit={canEdit()}
-            />
-          </Box>
-        );
-      }
-    }
-
-    if (item.searchType === 'lexicon') {
-      const lex = pinCatalog.lexiconTerms.find((t) => entityMatchesPinId(t, item.id));
-      if (lex) {
-        return pinShell(
-          <Box onClick={() => openPinned(item)} sx={{ cursor: 'pointer' }}>
-            <GlossaryCard
-              term={lexiconTermForGlossaryCard(lex)}
-              currentTheme={currentTheme}
-              dataModels={pinCatalog.apiModels}
-              canEdit={false}
-            />
-          </Box>
-        );
-      }
-    }
-
-    if (item.searchType === 'toolkit') {
-      const tkItem = findToolkitItemForPin(pinCatalog.toolkit, item);
-      if (tkItem) {
-        return pinShell(<ToolkitPinnedCard pin={item} item={tkItem} currentTheme={currentTheme} />);
-      }
-    }
-
-    return pinShell(
-      <Paper
-        elevation={0}
-        onClick={() => openPinned(item)}
-        sx={{
-          p: 2,
-          minHeight: 140,
-          cursor: 'pointer',
-          position: 'relative',
-          ...catalogInteractivePaperSx(currentTheme),
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-          <Box sx={{ color: currentTheme.primary, display: 'flex', alignItems: 'center' }}>
-            {getTypeIcon(item.searchType)}
-          </Box>
-          <Chip
-            size="small"
-            label={getSearchTypeLabel(item.searchType)}
-            variant="outlined"
-            sx={{ borderColor: currentTheme.primary, color: currentTheme.primary }}
-          />
-        </Box>
-        <Typography variant="subtitle1" sx={{ color: currentTheme.text, fontWeight: 600, mb: 0.5 }}>
-          {item.name}
-        </Typography>
-        <Typography variant="caption" sx={{ color: currentTheme.textSecondary, wordBreak: 'break-all' }}>
-          {item.path}
-        </Typography>
-      </Paper>
-    );
-  };
+  const canEditGlossary = canEdit();
 
   const resultsByType = useMemo(() => {
     const m = {};
@@ -580,9 +488,31 @@ const HomePage = () => {
               Use the + button to search the catalog and pin models, agreements, toolkit items, and more
             </Typography>
           </Paper>
+        ) : pinCatalogLoading ? (
+          <Masonry columns={{ xs: 1, sm: 2, md: 3, lg: 4 }} spacing={3}>
+            {itemsToShow.map((_, i) => (
+              <Box key={`pin-skel-${i}`} sx={{ width: '100%' }}>
+                <Skeleton
+                  variant="rounded"
+                  height={200}
+                  sx={{ borderRadius: 2, bgcolor: alpha(currentTheme.text, 0.08) }}
+                />
+              </Box>
+            ))}
+          </Masonry>
         ) : (
           <Masonry columns={{ xs: 1, sm: 2, md: 3, lg: 4 }} spacing={3}>
-            {itemsToShow.map((item) => renderPinnedItem(item)).filter(Boolean)}
+            {itemsToShow.map((item) => (
+              <HomePinnedMasonryItem
+                key={`${item.searchType}-${item.id}`}
+                item={item}
+                pinCatalog={pinCatalog}
+                currentTheme={currentTheme}
+                onUnpin={handleUnpin}
+                onOpenPinned={openPinned}
+                canEditGlossary={canEditGlossary}
+              />
+            ))}
           </Masonry>
         )}
 
