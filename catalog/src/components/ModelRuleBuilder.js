@@ -35,7 +35,6 @@ import {
   Save as SaveIcon,
   ArrowBack as ArrowBackIcon,
   LocalOffer as LocalOfferIcon,
-  AssignmentTurnedIn as AssignIcon,
   Search as SearchIcon,
 } from '@mui/icons-material';
 import { ThemeContext } from '../contexts/ThemeContext';
@@ -208,10 +207,8 @@ const ModelRuleBuilder = ({
     const entries = [];
     for (const [lineageId, { rules: groupRules }] of byLineage) {
       const modelsSet = new Set();
-      let hasLibrary = false;
       for (const r of groupRules) {
-        if (isLibraryRule(r)) hasLibrary = true;
-        else if (r.modelShortName) modelsSet.add(r.modelShortName);
+        if (!isLibraryRule(r) && r.modelShortName) modelsSet.add(r.modelShortName);
       }
       const representative =
         groupRules.find(isLibraryRule) ||
@@ -222,7 +219,6 @@ const ModelRuleBuilder = ({
         lineageId,
         representative,
         modelsWithLineage: Array.from(modelsSet).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' })),
-        hasLibrary,
       });
     }
     return entries;
@@ -252,7 +248,6 @@ const ModelRuleBuilder = ({
         if (normalizeRuleZone(r.ruleZone).includes(q)) return true;
         if (ruleZoneLabel(r.ruleZone).toLowerCase().includes(q)) return true;
         if (e.modelsWithLineage.some((m) => m.toLowerCase().includes(q))) return true;
-        if (e.hasLibrary && 'library'.includes(q)) return true;
         return ruleTagsList(r).some((t) => t.toLowerCase().includes(q));
       });
     }
@@ -302,18 +297,6 @@ const ModelRuleBuilder = ({
     }
   };
 
-  const masterById = useMemo(
-    () => Object.fromEntries(libraryMasterRows.map((r) => [r.id, r])),
-    [libraryMasterRows],
-  );
-
-  const parentLabelMaster = (rule) => {
-    const pid = rule.parentRuleId;
-    if (!pid) return '—';
-    const p = masterById[pid];
-    return p?.name || String(pid).slice(0, 8);
-  };
-
   const openLibraryAttach = async () => {
     setLibraryAttachOpen(true);
     setMasterListSearch('');
@@ -341,27 +324,6 @@ const ModelRuleBuilder = ({
       setLibraryMasterRows(Array.isArray(data.rules) ? data.rules : []);
     } catch (e) {
       console.error(e);
-    }
-  };
-
-  const handleAssociateFromMasterRow = async (ruleId) => {
-    if (!modelApiRef(selectedModel) || !ruleId) return;
-    try {
-      setLibraryLoading(true);
-      await assignRuleToModel(ruleId, modelApiRef(selectedModel));
-      setSnackbar({ open: true, message: 'Rule associated with this model', severity: 'success' });
-      setCatalogAssocLineageIds(new Set());
-      setLibraryAttachOpen(false);
-      loadRules();
-    } catch (error) {
-      console.error('Error assigning rule:', error);
-      setSnackbar({
-        open: true,
-        message: error.message || 'Failed to associate rule',
-        severity: 'error',
-      });
-    } finally {
-      setLibraryLoading(false);
     }
   };
 
@@ -429,8 +391,9 @@ const ModelRuleBuilder = ({
     }
     try {
       setLibraryLoading(true);
+      const msn = modelApiRef(selectedModel);
       for (const id of dissociateDialog.orderedRuleIds) {
-        await deleteRule(id);
+        await deleteRule(id, { modelShortName: msn });
       }
       setSnackbar({ open: true, message: 'Rule removed from this model', severity: 'success' });
       setDissociateDialog(null);
@@ -541,7 +504,12 @@ const ModelRuleBuilder = ({
     if (!ruleId) return;
     try {
       setLoading(true);
-      await deleteRule(ruleId);
+      await deleteRule(ruleId, {
+        modelShortName:
+          ruleDeleteTarget.modelShortName != null && String(ruleDeleteTarget.modelShortName).trim() !== ''
+            ? ruleDeleteTarget.modelShortName
+            : modelApiRef(selectedModel) || '',
+      });
       setSnackbar({ open: true, message: 'Rule deleted successfully', severity: 'success' });
       loadRules();
     } catch (error) {
@@ -559,6 +527,11 @@ const ModelRuleBuilder = ({
       if ((associationOnly || ruleDialogParentOnly) && editingRule) {
         await updateRule(editingRule.id, {
           parentRuleId: ruleForm.parentRuleId ? ruleForm.parentRuleId : null,
+          modelShortName:
+            ruleForm.modelShortName ||
+            editingRule.modelShortName ||
+            modelApiRef(selectedModel) ||
+            '',
         });
         setSnackbar({ open: true, message: 'Parent rule updated', severity: 'success' });
         closeRuleDialog();
@@ -631,6 +604,44 @@ const ModelRuleBuilder = ({
     };
   };
 
+  const rulesToolbarRow = (
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'baseline',
+        justifyContent: 'space-between',
+        gap: 1,
+        flexWrap: 'wrap',
+        mb: 2,
+      }}
+    >
+      <Typography
+        variant={inModal ? 'subtitle1' : 'h6'}
+        sx={{ fontWeight: 600, color: currentTheme?.text }}
+      >
+        {inModal ? 'Rules' : `Rules (${rules.length})`}
+      </Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+        <Button
+          variant="outlined"
+          size="small"
+          onClick={openLibraryAttach}
+          disabled={loading}
+          sx={{
+            textTransform: 'none',
+            borderColor: currentTheme?.border,
+            color: currentTheme?.text,
+          }}
+        >
+          Associate to model
+        </Button>
+        <Typography variant="caption" sx={{ color: currentTheme?.textSecondary }}>
+          {rules.length} rule{rules.length === 1 ? '' : 's'}
+        </Typography>
+      </Box>
+    </Box>
+  );
+
   return (
     <Box
       sx={
@@ -690,7 +701,7 @@ const ModelRuleBuilder = ({
               isOptionEqualToValue={(a, b) => String(a?.id) === String(b?.id)}
               getOptionLabel={(m) => {
                 if (!m) return '';
-                return m.shortName ? `${m.name} (${m.shortName})` : m.name || '';
+                return m.shortName ? `${m.name || ''} · ${m.shortName}` : m.name || '';
               }}
               filterOptions={(options, state) => {
                 const q = state.inputValue.trim().toLowerCase();
@@ -702,13 +713,28 @@ const ModelRuleBuilder = ({
                 });
               }}
               renderOption={(props, m) => (
-                <Box component="li" {...props} sx={{ textAlign: 'left' }}>
+                <Box
+                  component="li"
+                  {...props}
+                  sx={{
+                    textAlign: 'left',
+                    display: 'flex',
+                    alignItems: 'baseline',
+                    gap: 1.5,
+                    flexWrap: 'wrap',
+                  }}
+                >
                   <Typography variant="body2" sx={{ fontWeight: 600, color: currentTheme?.text }}>
                     {m.name}
                   </Typography>
-                  <Typography variant="caption" sx={{ color: currentTheme?.textSecondary, fontFamily: fontStackSans }}>
-                    {m.shortName}
-                  </Typography>
+                  {m.shortName ? (
+                    <Typography
+                      variant="caption"
+                      sx={{ color: currentTheme?.textSecondary, fontFamily: fontStackSans }}
+                    >
+                      {m.shortName}
+                    </Typography>
+                  ) : null}
                 </Box>
               )}
               renderInput={(params) => (
@@ -775,25 +801,26 @@ const ModelRuleBuilder = ({
             : {}
         }
       >
-      {!showModelSwitcher && (
-      <Box sx={{ mb: 3 }}>
-        <Button
-          onClick={onBack}
-          sx={{ mb: 1, color: currentTheme?.textSecondary }}
-        >
-          ← Back to Model Selection
-        </Button>
-        <Typography variant="h4" sx={{ color: currentTheme?.text }}>
-          Rule Builder: {selectedModel?.name}
-        </Typography>
-        <Typography variant="body2" sx={{ color: currentTheme?.textSecondary, fontFamily: fontStackSans }}>
-          {selectedModel?.shortName}
-        </Typography>
-      </Box>
-      )}
+        {!showModelSwitcher && (
+          <Box sx={{ mb: 3 }}>
+            <Button
+              onClick={onBack}
+              sx={{ mb: 1, color: currentTheme?.textSecondary }}
+            >
+              ← Back to Model Selection
+            </Button>
+            <Typography variant="h4" sx={{ color: currentTheme?.text }}>
+              Rule Builder: {selectedModel?.name}
+            </Typography>
+            <Typography variant="body2" sx={{ color: currentTheme?.textSecondary, fontFamily: fontStackSans }}>
+              {selectedModel?.shortName}
+            </Typography>
+          </Box>
+        )}
+        {inModal ? rulesToolbarRow : null}
       </Box>
 
-      {/* Rules List */}
+      {/* Rules list: in the modal, only the table scrolls so button hover is not clipped by overflow */}
       <Box
         sx={
           inModal
@@ -808,43 +835,34 @@ const ModelRuleBuilder = ({
             : {}
         }
       >
-      <Box sx={{ mb: inModal ? 2 : 3 }}>
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'baseline',
-            justifyContent: 'space-between',
-            gap: 1,
-            flexWrap: 'wrap',
-            mb: 2,
-          }}
-        >
-          <Typography
-            variant={inModal ? 'subtitle1' : 'h6'}
-            sx={{ fontWeight: 600, color: currentTheme?.text }}
-          >
-            {inModal ? 'Rules' : `Rules (${rules.length})`}
-          </Typography>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-            <Button
-              variant="outlined"
-              size="small"
-              onClick={openLibraryAttach}
-              disabled={loading}
-              sx={{
-                textTransform: 'none',
-                borderColor: currentTheme?.border,
-                color: currentTheme?.text,
-              }}
-            >
-              Associate to model
-            </Button>
-            <Typography variant="caption" sx={{ color: currentTheme?.textSecondary }}>
-              {rules.length} rule{rules.length === 1 ? '' : 's'}
-            </Typography>
+        {!inModal ? (
+          <Box sx={{ mb: 3 }}>
+            {rulesToolbarRow}
+            {loading && rules.length === 0 ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+                <CircularProgress />
+              </Box>
+            ) : (
+              <ModelRulesTable
+                rules={rules}
+                loading={loading}
+                applications={applications}
+                emptyMessage={
+                  associationOnly
+                    ? 'No rules on this model yet. Use Associate to model to copy a rule here (library or from another model), then use Set parent rule on each row to define hierarchy.'
+                    : 'No rules yet. Use Associate to model to copy a rule onto this model, use + to create one, or open Edit on a rule to set its parent and define relationships.'
+                }
+                expandResetKey={selectedModel?.id}
+                readOnly={false}
+                associationOnly={associationOnly}
+                denseModal={inModal}
+                onEditRule={handleEditRule}
+                onDeleteRule={!associationOnly ? requestDeleteRule : undefined}
+                onOpenParentRule={!associationOnly ? handleOpenParentOnlyRule : undefined}
+              />
+            )}
           </Box>
-        </Box>
-        {loading && rules.length === 0 ? (
+        ) : loading && rules.length === 0 ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
             <CircularProgress />
           </Box>
@@ -867,7 +885,6 @@ const ModelRuleBuilder = ({
             onOpenParentRule={!associationOnly ? handleOpenParentOnlyRule : undefined}
           />
         )}
-      </Box>
       </Box>
 
       {inModal && !associationOnly && (
@@ -1480,7 +1497,7 @@ const ModelRuleBuilder = ({
                       Present on
                     </TableCell>
                     <TableCell sx={{ color: currentTheme?.textSecondary, fontWeight: 600, bgcolor: currentTheme?.card }}>
-                      Parent
+                      Rule ID
                     </TableCell>
                     <TableCell sx={{ color: currentTheme?.textSecondary, fontWeight: 600, bgcolor: currentTheme?.card }}>
                       Type
@@ -1488,15 +1505,12 @@ const ModelRuleBuilder = ({
                     <TableCell sx={{ color: currentTheme?.textSecondary, fontWeight: 600, bgcolor: currentTheme?.card }} align="center">
                       On
                     </TableCell>
-                    <TableCell sx={{ color: currentTheme?.textSecondary, fontWeight: 600, bgcolor: currentTheme?.card }} align="right">
-                      Action
-                    </TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {catalogEntriesFilteredSorted.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={7} sx={{ color: currentTheme?.textSecondary, textAlign: 'center', py: 4 }}>
+                      <TableCell colSpan={6} sx={{ color: currentTheme?.textSecondary, textAlign: 'center', py: 4 }}>
                         No rules match your search.
                       </TableCell>
                     </TableRow>
@@ -1579,14 +1593,6 @@ const ModelRuleBuilder = ({
                           <TableCell sx={{ color: currentTheme?.text, fontWeight: 600 }}>{rule.name}</TableCell>
                           <TableCell sx={{ maxWidth: 280 }}>
                             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, alignItems: 'center' }}>
-                              {entry.hasLibrary ? (
-                                <Chip
-                                  size="small"
-                                  label="Library"
-                                  variant="outlined"
-                                  sx={{ borderColor: currentTheme?.border }}
-                                />
-                              ) : null}
                               {entry.modelsWithLineage.map((m) => {
                                 const ref = modelApiRef(selectedModel);
                                 const onCurrent =
@@ -1603,41 +1609,42 @@ const ModelRuleBuilder = ({
                                   />
                                 );
                               })}
-                              {!entry.hasLibrary && entry.modelsWithLineage.length === 0 ? (
+                              {entry.modelsWithLineage.length === 0 ? (
                                 <Typography variant="caption" sx={{ color: currentTheme?.textSecondary }}>
                                   —
                                 </Typography>
                               ) : null}
                             </Box>
                           </TableCell>
-                          <TableCell sx={{ color: currentTheme?.textSecondary }}>{parentLabelMaster(rule)}</TableCell>
+                          <TableCell sx={{ maxWidth: 220 }}>
+                            {rule.id ? (
+                              <Typography
+                                variant="body2"
+                                component="span"
+                                title={String(rule.id)}
+                                sx={{
+                                  fontFamily:
+                                    'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+                                  fontSize: '0.75rem',
+                                  color: currentTheme?.textSecondary,
+                                  wordBreak: 'break-all',
+                                  display: 'block',
+                                }}
+                              >
+                                {rule.id}
+                              </Typography>
+                            ) : (
+                              <Typography variant="caption" sx={{ color: currentTheme?.textSecondary }}>
+                                —
+                              </Typography>
+                            )}
+                          </TableCell>
                           <TableCell sx={{ color: currentTheme?.textSecondary }}>{rule.ruleType || '—'}</TableCell>
                           <TableCell align="center">
                             {rule.enabled !== false ? (
                               <Chip size="small" label="Yes" color="success" variant="outlined" />
                             ) : (
                               <Chip size="small" label="No" variant="outlined" />
-                            )}
-                          </TableCell>
-                          <TableCell align="right" onClick={(e) => e.stopPropagation()}>
-                            {canAssoc ? (
-                              <Tooltip title="Copy this rule onto the current model now">
-                                <IconButton
-                                  size="small"
-                                  disabled={libraryLoading}
-                                  onClick={() => {
-                                    handleAssociateFromMasterRow(rule.id);
-                                  }}
-                                  sx={{ color: currentTheme?.primary }}
-                                  aria-label={`Associate ${rule.name}`}
-                                >
-                                  <AssignIcon fontSize="small" />
-                                </IconButton>
-                              </Tooltip>
-                            ) : (
-                              <Typography variant="caption" sx={{ color: currentTheme?.textSecondary }}>
-                                On this model
-                              </Typography>
                             )}
                           </TableCell>
                         </TableRow>
@@ -1672,7 +1679,18 @@ const ModelRuleBuilder = ({
             variant="contained"
             disabled={libraryLoading || catalogAssocLineageIds.size === 0}
             onClick={handleBatchAssociateFromCatalog}
-            sx={{ textTransform: 'none' }}
+            sx={{
+              textTransform: 'none',
+              color: '#fff',
+              bgcolor: currentTheme?.primary,
+              '&:hover': {
+                color: '#fff',
+                bgcolor: currentTheme?.primaryHover || currentTheme?.primary,
+              },
+              '&:disabled': {
+                color: 'rgba(255,255,255,0.72)',
+              },
+            }}
           >
             {catalogAssocLineageIds.size > 1
               ? `Associate ${catalogAssocLineageIds.size} rules with ${selectedModel?.name || 'model'}`

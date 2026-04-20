@@ -91,7 +91,7 @@ const EditDataPolicyPage = () => {
           } else {
 
             setSnackbar({ open: true, message: `Standard with ID ${id} not found`, severity: 'error' });
-            navigate('/policies');
+            navigate('/standards');
           }
         }
       } catch (error) {
@@ -132,7 +132,7 @@ const EditDataPolicyPage = () => {
         await updateDataPolicy(dataPolicyApiRef(editedPolicy), editedPolicy);
         setSnackbar({ open: true, message: 'Standard updated successfully', severity: 'success' });
       }
-      navigate('/policies');
+      navigate('/standards');
     } catch (error) {
 
       setSnackbar({ open: true, message: 'Error saving standard', severity: 'error' });
@@ -146,7 +146,7 @@ const EditDataPolicyPage = () => {
     try {
       await deleteDataPolicy(dataPolicyApiRef(editedPolicy));
       setSnackbar({ open: true, message: 'Standard deleted successfully', severity: 'success' });
-      navigate('/policies');
+      navigate('/standards');
     } catch (error) {
 
       setSnackbar({ open: true, message: 'Error deleting standard', severity: 'error' });
@@ -157,7 +157,7 @@ const EditDataPolicyPage = () => {
   };
 
   const handleCancel = () => {
-    navigate('/policies');
+    navigate('/standards');
   };
 
   const getStatusColor = (status) => {
@@ -183,7 +183,7 @@ const EditDataPolicyPage = () => {
           <Button
             variant="outlined"
             startIcon={<ArrowBackIcon />}
-            onClick={() => navigate('/policies')}
+            onClick={() => navigate('/standards')}
             sx={{
               borderColor: currentTheme.border,
               color: currentTheme.text,

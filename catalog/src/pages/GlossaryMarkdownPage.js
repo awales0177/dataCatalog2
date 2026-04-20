@@ -1,15 +1,12 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Box, Container, CircularProgress, Snackbar, Alert } from '@mui/material';
-import { ThemeContext } from '../contexts/ThemeContext';
 import { fetchData, updateGlossaryTerm } from '../services/api';
 import { findGlossaryTerm, glossaryTermApiRef } from '../utils/catalogModelLookup';
-import MarkdownEditorLayout from '../components/MarkdownEditorLayout';
+import MarkdownEditorScreen from '../components/MarkdownEditorScreen';
 
 const GlossaryMarkdownPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { currentTheme, darkMode } = useContext(ThemeContext);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
@@ -71,53 +68,31 @@ const GlossaryMarkdownPage = () => {
     navigate('/glossary');
   };
 
-  if (loading) {
-    return (
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
-          <CircularProgress sx={{ color: currentTheme.primary }} />
-        </Box>
-      </Container>
-    );
-  }
+  const closeSnackbar = () => setSnackbar((s) => ({ ...s, open: false }));
 
   return (
-    <>
-      <MarkdownEditorLayout
-        currentTheme={currentTheme}
-        darkMode={darkMode}
-        backButtonLabel="Back to Glossary"
-        onBack={() => navigate('/glossary')}
-        title={`Edit Markdown - ${term?.term || 'Unknown Term'}`}
-        subtitle="Edit markdown content for this glossary term"
-        showPreview={showPreview}
-        onTogglePreview={() => setShowPreview(!showPreview)}
-        markdown={markdown}
-        onMarkdownChange={setMarkdown}
-        placeholder="Enter markdown content here..."
-        saving={saving}
-        hasChanges={hasChanges()}
-        onSave={handleSave}
-        onCancel={handleCancel}
-        saveLabel="Save"
-        savingLabel="Saving..."
-      />
-
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        <Alert
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
-          severity={snackbar.severity}
-          sx={{ width: '100%', bgcolor: currentTheme.card, color: currentTheme.text }}
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
-    </>
+    <MarkdownEditorScreen
+      loading={loading}
+      snackbar={snackbar}
+      onSnackbarClose={closeSnackbar}
+      layout={{
+        backButtonLabel: 'Back to Glossary',
+        onBack: () => navigate('/glossary'),
+        title: `Edit Markdown - ${term?.term || 'Unknown Term'}`,
+        subtitle: 'Edit markdown content for this glossary term',
+        showPreview,
+        onTogglePreview: () => setShowPreview(!showPreview),
+        markdown,
+        onMarkdownChange: setMarkdown,
+        placeholder: 'Enter markdown content here...',
+        saving,
+        hasChanges: hasChanges(),
+        onSave: handleSave,
+        onCancel: handleCancel,
+        saveLabel: 'Save',
+        savingLabel: 'Saving...',
+      }}
+    />
   );
 };
 

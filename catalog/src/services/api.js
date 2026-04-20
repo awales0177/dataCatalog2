@@ -1299,9 +1299,15 @@ export const updateRule = async (ruleId, ruleData) => {
   }
 };
 
-export const deleteRule = async (ruleId) => {
+/** @param {object} [options] - When several catalog rows share the same rule id, pass modelShortName to target one copy (use '' for library / no model). */
+export const deleteRule = async (ruleId, options = {}) => {
   try {
-    const response = await fetch(`${API_URL}/rules/${ruleId}`, {
+    let url = `${API_URL}/rules/${encodeURIComponent(ruleId)}`;
+    if (Object.prototype.hasOwnProperty.call(options, 'modelShortName')) {
+      const v = options.modelShortName;
+      url += `?modelShortName=${encodeURIComponent(v == null ? '' : String(v))}`;
+    }
+    const response = await fetch(url, {
       method: 'DELETE',
       headers: getAuthHeaders()
     });

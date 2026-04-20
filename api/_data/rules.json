@@ -13,8 +13,12 @@
         "baseline"
       ],
       "id": "bronze_value_001",
-      "lastUpdated": "2026-04-18 13:56:21",
-      "createdBy": "bypass_user"
+      "lastUpdated": "2026-04-19 21:59:52",
+      "createdBy": "bypass_user",
+      "maintainer": "Customer Portal",
+      "modelShortName": "",
+      "parentRuleId": null,
+      "updatedBy": "bypass_user"
     },
     {
       "name": "Schema: keys and types",
@@ -76,7 +80,141 @@
       "enabled": true,
       "tags": [],
       "id": "bronze_value_002",
-      "lastUpdated": "2026-04-18 13:58:19",
+      "lastUpdated": "2026-04-19 21:59:58",
+      "createdBy": "bypass_user",
+      "maintainer": "Payment Gateway",
+      "modelShortName": "",
+      "parentRuleId": null,
+      "updatedBy": "bypass_user"
+    },
+    {
+      "name": "Product: metric aggregates",
+      "description": "Transformation rules for product analytics fields.",
+      "documentation": "",
+      "ruleType": "transformation",
+      "stage": "gold",
+      "ruleZone": "product",
+      "enabled": true,
+      "tags": [
+        "product",
+        "cust"
+      ],
+      "modelShortName": "PROD",
+      "libraryRuleId": "gold_product_001",
+      "parentRuleId": null,
+      "id": "gold_product_002",
+      "lastUpdated": "2026-04-19 21:51:22",
+      "createdBy": "bypass_user"
+    },
+    {
+      "name": "New rule",
+      "description": "",
+      "documentation": "",
+      "ruleType": "validation",
+      "stage": "bronze",
+      "ruleZone": "value",
+      "enabled": true,
+      "tags": [],
+      "libraryRuleId": "bronze_value_002",
+      "modelShortName": "PROD",
+      "parentRuleId": null,
+      "id": "bronze_value_003",
+      "lastUpdated": "2026-04-19 21:51:22",
+      "createdBy": "bypass_user"
+    },
+    {
+      "name": "Cross-cutting documentation",
+      "description": "Catch-all metadata and documentation checks.",
+      "documentation": "",
+      "ruleType": "validation",
+      "stage": "bronze",
+      "ruleZone": "other",
+      "enabled": true,
+      "tags": [
+        "docs"
+      ],
+      "modelShortName": "PROD",
+      "libraryRuleId": "bronze_other_001",
+      "parentRuleId": "gold_product_002",
+      "id": "bronze_other_002",
+      "lastUpdated": "2026-04-19 21:51:37",
+      "createdBy": "bypass_user",
+      "updatedBy": "bypass_user"
+    },
+    {
+      "name": "Library: required fields present",
+      "description": "Template rule in the catalog library.",
+      "documentation": "",
+      "ruleType": "validation",
+      "stage": "bronze",
+      "ruleZone": "value",
+      "enabled": true,
+      "tags": [
+        "library",
+        "baseline"
+      ],
+      "libraryRuleId": "bronze_value_001",
+      "modelShortName": "HCF",
+      "parentRuleId": "silver_schema_003",
+      "id": "bronze_value_005",
+      "lastUpdated": "2026-04-19 21:57:06",
+      "createdBy": "bypass_user",
+      "updatedBy": "bypass_user"
+    },
+    {
+      "name": "Schema: keys and types",
+      "description": "Validate schema contracts for the customer model.",
+      "documentation": "",
+      "ruleType": "validation",
+      "stage": "silver",
+      "ruleZone": "schema",
+      "enabled": true,
+      "tags": [
+        "schema",
+        "cust"
+      ],
+      "modelShortName": "HCF",
+      "libraryRuleId": "silver_schema_001",
+      "parentRuleId": null,
+      "id": "silver_schema_003",
+      "lastUpdated": "2026-04-19 21:56:26",
+      "createdBy": "bypass_user"
+    },
+    {
+      "name": "Library: required fields present",
+      "description": "Template rule in the catalog library.",
+      "documentation": "",
+      "ruleType": "validation",
+      "stage": "bronze",
+      "ruleZone": "value",
+      "enabled": true,
+      "tags": [
+        "library",
+        "baseline"
+      ],
+      "id": "bronze_value_001",
+      "maintainer": "Customer Portal",
+      "modelShortName": "FIN",
+      "parentRuleId": null,
+      "libraryRuleId": "bronze_value_001",
+      "lastUpdated": "2026-04-19 22:07:59",
+      "createdBy": "bypass_user"
+    },
+    {
+      "name": "New rule",
+      "description": "",
+      "documentation": "",
+      "ruleType": "validation",
+      "stage": "bronze",
+      "ruleZone": "value",
+      "enabled": true,
+      "tags": [],
+      "id": "bronze_value_002",
+      "maintainer": "Payment Gateway",
+      "modelShortName": "FIN",
+      "parentRuleId": null,
+      "libraryRuleId": "bronze_value_002",
+      "lastUpdated": "2026-04-19 22:07:59",
       "createdBy": "bypass_user"
     }
   ]

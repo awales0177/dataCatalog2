@@ -1,5 +1,5 @@
 import { TOOLKIT_LANGUAGE_OPTIONS } from '../data/toolkitEvalIcons';
-import { findWorkbenchToolkit } from './toolkitWorkbench';
+import { findWorkbenchToolkit, findWorkbenchTechnology } from './toolkitWorkbench';
 
 const WB_TECH_RE =
   /^\/toolkit\/(?:(?:toolkit|workbench)\/)?([^/]+)\/technology\/([^/?#]+)/;

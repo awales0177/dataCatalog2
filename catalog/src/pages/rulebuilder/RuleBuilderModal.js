@@ -253,7 +253,9 @@ const RuleBuilderModal = ({ open, onClose, currentTheme, darkMode }) => {
                 setPickerValue(newValue ? String(newValue.id) : '');
               }}
               isOptionEqualToValue={(a, b) => String(a?.id) === String(b?.id)}
-              getOptionLabel={(m) => (m?.shortName ? `${m.name} (${m.shortName})` : m?.name || '')}
+              getOptionLabel={(m) =>
+                m?.shortName ? `${m.name || ''} · ${m.shortName}` : m?.name || ''
+              }
               filterOptions={(options, state) => {
                 const q = state.inputValue.trim().toLowerCase();
                 if (!q) return options;
@@ -264,16 +266,27 @@ const RuleBuilderModal = ({ open, onClose, currentTheme, darkMode }) => {
                 });
               }}
               renderOption={(props, model) => (
-                <Box component="li" {...props}>
+                <Box
+                  component="li"
+                  {...props}
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'baseline',
+                    gap: 1.5,
+                    flexWrap: 'wrap',
+                  }}
+                >
                   <Typography variant="body1" sx={{ fontWeight: 600, color: theme?.text }}>
                     {model.name}
                   </Typography>
-                  <Typography
-                    variant="caption"
-                    sx={{ color: theme?.textSecondary, fontFamily: fontStackSans, display: 'block' }}
-                  >
-                    {model.shortName}
-                  </Typography>
+                  {model.shortName ? (
+                    <Typography
+                      variant="caption"
+                      sx={{ color: theme?.textSecondary, fontFamily: fontStackSans }}
+                    >
+                      {model.shortName}
+                    </Typography>
+                  ) : null}
                 </Box>
               )}
               renderInput={(params) => (
@@ -329,7 +342,18 @@ const RuleBuilderModal = ({ open, onClose, currentTheme, darkMode }) => {
             variant="contained"
             disabled={!pickerValue || modelsLoading}
             onClick={handleConfirmModel}
-            sx={{ textTransform: 'none' }}
+            sx={{
+              textTransform: 'none',
+              color: '#fff',
+              bgcolor: theme?.primary,
+              '&:hover': {
+                color: '#fff',
+                bgcolor: theme?.primaryHover || theme?.primary,
+              },
+              '&:disabled': {
+                color: 'rgba(255,255,255,0.72)',
+              },
+            }}
           >
             Open editor
           </Button>

@@ -196,7 +196,7 @@ const DataPoliciesPage = () => {
       <Fab
         color="primary"
         aria-label="add new data standard"
-        onClick={() => navigate('/policies/create')}
+        onClick={() => navigate('/standards/create')}
         sx={{
           position: 'fixed',
           bottom: 24,

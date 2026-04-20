@@ -368,7 +368,7 @@ const DataModelsPage = () => {
             Data Models
           </Typography>
           <Typography variant="body1" sx={{ color: currentTheme.textSecondary, maxWidth: 720 }}>
-            Explore and manage your data models. Use grid or table view, sort columns, and filter by domain or tier.
+            Explore and manage your data models.
           </Typography>
         </StickyPageIntro>
       }

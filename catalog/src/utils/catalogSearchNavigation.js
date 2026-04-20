@@ -76,7 +76,7 @@ export function getSearchResultPath(item, type) {
       return `/toolkit`;
     case 'policies': {
       const pid = item.uuid || item.id;
-      return pid ? `/policies/edit/${encodeURIComponent(pid)}` : `/policies`;
+      return pid ? `/standards/edit/${encodeURIComponent(pid)}` : `/standards`;
     }
     case 'lexicon':
       return `/glossary`;

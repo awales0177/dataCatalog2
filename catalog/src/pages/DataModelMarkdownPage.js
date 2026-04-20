@@ -1,16 +1,16 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Box, Container, Button, Snackbar, Alert, CircularProgress } from '@mui/material';
+import { Button, Alert } from '@mui/material';
 import { ThemeContext } from '../contexts/ThemeContext';
 import { fetchData, updateModel } from '../services/api';
 import { normalizeModelMarkdowns } from '../utils/modelMarkdowns';
 import { findCatalogModel, modelApiRef } from '../utils/catalogModelLookup';
-import MarkdownEditorLayout from '../components/MarkdownEditorLayout';
+import MarkdownEditorScreen from '../components/MarkdownEditorScreen';
 
 const DataModelMarkdownPage = () => {
   const { modelId: modelIdParam, tabId: tabIdParam } = useParams();
   const navigate = useNavigate();
-  const { currentTheme, darkMode } = useContext(ThemeContext);
+  const { currentTheme } = useContext(ThemeContext);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
@@ -95,35 +95,24 @@ const DataModelMarkdownPage = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
-          <CircularProgress sx={{ color: currentTheme.primary }} />
-        </Box>
-      </Container>
-    );
-  }
+  const closeSnackbar = () => setSnackbar((s) => ({ ...s, open: false }));
 
-  if (!model) {
-    return (
-      <Container maxWidth="lg" sx={{ py: 4 }}>
+  return (
+    <MarkdownEditorScreen
+      loading={loading}
+      error={!model}
+      errorChildren={
         <Alert severity="error" sx={{ bgcolor: currentTheme.card, color: currentTheme.text }}>
           Model not found
         </Alert>
-      </Container>
-    );
-  }
-
-  return (
-    <>
-      <MarkdownEditorLayout
-        currentTheme={currentTheme}
-        darkMode={darkMode}
-        backButtonLabel="Back to model"
-        onBack={handleCancel}
-        title={`Edit documentation — ${model.name || model.shortName}`}
-        subtitle={
+      }
+      snackbar={snackbar}
+      onSnackbarClose={closeSnackbar}
+      layout={{
+        backButtonLabel: 'Back to model',
+        onBack: handleCancel,
+        title: `Edit documentation — ${model?.name || model?.shortName || ''}`,
+        subtitle: model ? (
           <>
             Tab: <strong style={{ color: currentTheme.text }}>{tabMeta.title || tabMeta.id}</strong>
             {' · '}
@@ -132,43 +121,34 @@ const DataModelMarkdownPage = () => {
               variant="text"
               size="small"
               onClick={() => navigate(`/models/${encodeURIComponent(modelApiRef(model))}/edit`)}
-              sx={{ color: currentTheme.primary, textTransform: 'none', p: 0, minWidth: 0, verticalAlign: 'baseline' }}
+              sx={{
+                color: currentTheme.primary,
+                textTransform: 'none',
+                p: 0,
+                minWidth: 0,
+                verticalAlign: 'baseline',
+              }}
             >
               model edit
             </Button>
             .
           </>
-        }
-        editorToolbarLabel="Markdown"
-        previewToolbarLabel="Preview"
-        showPreview={showPreview}
-        onTogglePreview={() => setShowPreview(!showPreview)}
-        markdown={markdown}
-        onMarkdownChange={setMarkdown}
-        placeholder="Enter markdown…"
-        saving={saving}
-        hasChanges={hasChanges()}
-        onSave={handleSave}
-        onCancel={handleCancel}
-        saveLabel="Save"
-        savingLabel="Saving…"
-      />
-
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        <Alert
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
-          severity={snackbar.severity}
-          sx={{ width: '100%', bgcolor: currentTheme.card, color: currentTheme.text }}
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
-    </>
+        ) : null,
+        editorToolbarLabel: 'Markdown',
+        previewToolbarLabel: 'Preview',
+        showPreview,
+        onTogglePreview: () => setShowPreview(!showPreview),
+        markdown,
+        onMarkdownChange: setMarkdown,
+        placeholder: 'Enter markdown…',
+        saving,
+        hasChanges: hasChanges(),
+        onSave: handleSave,
+        onCancel: handleCancel,
+        saveLabel: 'Save',
+        savingLabel: 'Saving…',
+      }}
+    />
   );
 };
 

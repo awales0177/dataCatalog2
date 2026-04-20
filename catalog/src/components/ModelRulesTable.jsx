@@ -602,8 +602,13 @@ const ModelRulesTable = ({
                             size="small"
                             onClick={() => onEditRule(rule)}
                             sx={{ color: currentTheme?.textSecondary }}
+                            aria-label={associationOnly ? 'Set parent rule' : 'Edit rule'}
                           >
-                            <EditIcon fontSize="small" />
+                            {associationOnly ? (
+                              <AccountTreeIcon fontSize="small" />
+                            ) : (
+                              <EditIcon fontSize="small" />
+                            )}
                           </IconButton>
                         </Tooltip>
                       )}

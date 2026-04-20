@@ -1,5 +1,5 @@
 import React, { Suspense, lazy } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import {
   Box,
   CssBaseline,
@@ -46,6 +46,12 @@ const StatisticsPage = lazy(() => import('./pages/StatisticsPage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 const RuleBuilderPage = lazy(() => import('./pages/RuleBuilderPage'));
 const ToolkitLegacyWorkbenchRedirect = lazy(() => import('./routes/ToolkitLegacyWorkbenchRedirect'));
+
+function PoliciesToStandardsRedirect() {
+  const { pathname, search } = useLocation();
+  const to = `${pathname.replace(/^\/policies/, '/standards')}${search}`;
+  return <Navigate to={to} replace />;
+}
 
 import NavigationDrawer from './components/NavigationDrawer';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -327,7 +333,7 @@ function AppContent() {
                 <ToolkitPage />
               </ProtectedRoute>
             } />
-            <Route path="/policies" element={
+            <Route path="/standards" element={
               <ProtectedRoute>
                 <DataPoliciesPage />
               </ProtectedRoute>
@@ -443,16 +449,17 @@ function AppContent() {
                 <ToolkitInfrastructureDetailPage />
               </ProtectedRoute>
             } />
-            <Route path="/policies/create" element={
+            <Route path="/standards/create" element={
               <ProtectedRoute requiredRole="editor">
                 <EditDataPolicyPage />
               </ProtectedRoute>
             } />
-            <Route path="/policies/edit/:id" element={
+            <Route path="/standards/edit/:id" element={
               <ProtectedRoute requiredRole="editor">
                 <EditDataPolicyPage />
               </ProtectedRoute>
             } />
+            <Route path="/policies/*" element={<PoliciesToStandardsRedirect />} />
             <Route path="/glossary/create" element={
               <ProtectedRoute requiredRole="editor">
                 <EditGlossaryPage />

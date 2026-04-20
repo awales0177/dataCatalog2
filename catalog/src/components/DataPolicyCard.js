@@ -70,7 +70,7 @@ const DataPolicyCard = ({ policy, currentTheme, sx: sxProp }) => {
             size="small"
             onClick={(e) => {
               e.stopPropagation();
-              navigate(`/policies/edit/${policy.uuid || policy.id}`);
+              navigate(`/standards/edit/${policy.uuid || policy.id}`);
             }}
             sx={{
               bgcolor: alpha(currentTheme.primary, 0.1),

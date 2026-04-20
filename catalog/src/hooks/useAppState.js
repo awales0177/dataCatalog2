@@ -56,7 +56,8 @@ export const useAppState = () => {
     if (path === '/domains') return 'domains';
     if (path === '/applications' || path.startsWith('/applications/')) return 'applications';
     if (path === '/toolkit' || path.startsWith('/toolkit/')) return 'toolkit';
-    if (path === '/policies' || path.startsWith('/policies/')) return 'policies';
+    if (path === '/standards' || path.startsWith('/standards/')) return 'standards';
+    if (path === '/policies' || path.startsWith('/policies/')) return 'standards';
     if (path === '/glossary' || path.startsWith('/glossary/')) return 'glossary';
     if (path === '/rules' || path.startsWith('/rules/')) return 'rules';
     if (path === '/statistics') return 'statistics';
@@ -82,13 +83,15 @@ export const useAppState = () => {
     } else if (path === '/domains') {
       title = 'Data Domains';
     } else if (path === '/applications') {
-      title = 'Data Applications';
+      title = 'Data Teams';
     } else if (path === '/toolkit') {
       title = 'Toolkit';
     } else if (path.startsWith('/toolkit/function/')) {
       title = 'Function Details';
-    } else if (path === '/policies') {
+    } else if (path === '/standards') {
       title = 'Data Standards';
+    } else if (path.startsWith('/standards/')) {
+      title = 'Data Standard';
     } else if (path === '/settings') {
       title = 'Settings';
     } else if (path === '/rules') {
@@ -294,7 +297,7 @@ export const useAppState = () => {
     const pathSegments = location.pathname.split('/').filter(segment => segment !== '');
     
     // Collapse if we're exactly 2 levels deep (e.g., /models/CUST)
-    // OR if we're in edit mode (e.g., /models/CUST/edit, /applications/edit/123, /policies/edit/456)
+    // OR if we're in edit mode (e.g., /models/CUST/edit, /applications/edit/123, /standards/edit/456)
     // OR if we're in detail view (e.g., /toolkit/function/123, /toolkit/container/123, /toolkit/infrastructure/123)
     if (pathSegments.length === 2 || 
         (pathSegments.length === 3 && pathSegments[2] === 'edit') ||

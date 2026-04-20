@@ -170,10 +170,8 @@ const RulesMasterList = () => {
     const out = [];
     for (const [lineageId, { rules: groupRules }] of byLineage) {
       const modelsSet = new Set();
-      let hasLibrary = false;
       for (const r of groupRules) {
-        if (isLibraryRule(r)) hasLibrary = true;
-        else if (r.modelShortName) modelsSet.add(r.modelShortName);
+        if (!isLibraryRule(r) && r.modelShortName) modelsSet.add(r.modelShortName);
       }
       const libraryRule = groupRules.find(isLibraryRule) || null;
       const representative =
@@ -184,7 +182,6 @@ const RulesMasterList = () => {
       out.push({
         lineageId,
         representative,
-        hasLibrary,
         modelsWithLineage: Array.from(modelsSet).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' })),
       });
     }
@@ -209,7 +206,6 @@ const RulesMasterList = () => {
       if (normalizeRuleZone(r.ruleZone).includes(q)) return true;
       if (ruleZoneLabel(r.ruleZone).toLowerCase().includes(q)) return true;
       if (entry.modelsWithLineage.some((m) => m.toLowerCase().includes(q))) return true;
-      if (entry.hasLibrary && 'library'.includes(q)) return true;
       return ruleTagsList(r).some((t) => t.toLowerCase().includes(q));
     });
   }, [lineageRows, search, applications]);
@@ -321,7 +317,9 @@ const RulesMasterList = () => {
   const confirmDeleteEditingRule = async () => {
     if (!editingRule?.id) return;
     try {
-      await deleteRule(editingRule.id);
+      await deleteRule(editingRule.id, {
+        modelShortName: isLibraryRule(editingRule) ? '' : editingRule.modelShortName || '',
+      });
       setSnackbar({ open: true, message: 'Rule deleted', severity: 'success' });
       setEditDialogOpen(false);
       setEditingRule(null);
@@ -352,10 +350,8 @@ const RulesMasterList = () => {
         <Typography variant="h4" component="h1" sx={{ color: currentTheme?.text, fontWeight: 700, mb: 1 }}>
           Data Quality Rules
         </Typography>
-        <Typography variant="body1" sx={{ color: currentTheme?.textSecondary, maxWidth: 720 }}>
-          Library rules are not tied to a model. Use <strong>Edit</strong> in the table to change a rule (the library
-          copy when one exists, otherwise the listed model instance). Use the workbench <strong>Rule Builder</strong>{' '}
-          (Workspaces) to copy rules onto a model.
+        <Typography variant="body1" sx={{ color: currentTheme?.textSecondary, width: '100%' }}>
+          Browse and edit library rules and model assignments. Add rules to a model from Workspaces → Rule Builder.
         </Typography>
       </Box>
 
@@ -493,14 +489,6 @@ const RulesMasterList = () => {
                       </TableCell>
                       <TableCell sx={{ maxWidth: 360 }}>
                         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, alignItems: 'center' }}>
-                          {entry.hasLibrary ? (
-                            <Chip
-                              size="small"
-                              label="Library"
-                              variant="outlined"
-                              sx={{ borderColor: currentTheme?.border }}
-                            />
-                          ) : null}
                           {entry.modelsWithLineage.map((m) => (
                             <Chip
                               key={m}
@@ -510,7 +498,7 @@ const RulesMasterList = () => {
                               variant="filled"
                             />
                           ))}
-                          {!entry.hasLibrary && entry.modelsWithLineage.length === 0 ? (
+                          {entry.modelsWithLineage.length === 0 ? (
                             <Typography variant="caption" sx={{ color: currentTheme?.textSecondary }}>
                               —
                             </Typography>

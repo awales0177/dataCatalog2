@@ -92,7 +92,7 @@ export const menuItems = [
   },
   {
     name: 'Data Standards',
-    path: '/policies',
+    path: '/standards',
     icon: <PolicyIcon />,
     id: 'policies',
     beta: true

@@ -581,7 +581,7 @@
       "meta": {
         "tier": "gold",
         "verified": true,
-        "clickCount": 2
+        "clickCount": 3
       },
       "resources": {
         "code": "https://github.com/org/financial-transaction-model",
@@ -752,7 +752,8 @@
       ],
       "meta": {
         "tier": "bronze",
-        "verified": true
+        "verified": true,
+        "clickCount": 1
       },
       "resources": {
         "code": "https://github.com/org/recreation-facilities",

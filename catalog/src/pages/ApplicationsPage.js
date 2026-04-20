@@ -143,10 +143,10 @@ const ApplicationsPage = () => {
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
       <Typography variant="h4" sx={{ mb: 1, color: currentTheme.text }}>
-        Enterprise Data Teams
+        Data Teams
       </Typography>
       <Typography variant="body1" sx={{ mb: 4, color: currentTheme.textSecondary }}>
-        Discover and manage data applications in your data ecosystem. View application details, status, and their relationships with data models and contracts.
+        Discover and manage data teams in your data ecosystem.
       </Typography>
 
       <Box sx={{ mb: 4, display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>

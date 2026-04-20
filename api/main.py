@@ -3057,6 +3057,114 @@ def get_statistics(current_user: dict = Depends(require_admin)):
         raise HTTPException(status_code=500, detail=f"Error getting statistics: {str(e)}")
 
 # Rules Management Endpoints
+
+def _rule_lineage_key(rule: Dict[str, Any]) -> str:
+    """Stable lineage id (matches catalog UI ruleLineageId)."""
+    lr = rule.get("libraryRuleId")
+    if lr is not None and str(lr).strip() != "":
+        return str(lr).strip().lower()
+    return str(rule.get("id") or "").strip().lower()
+
+
+def _canonical_library_rule_ref(source: Dict[str, Any]) -> str:
+    """libraryRuleId to store on a model copy so lineage stays merged in the catalog."""
+    lr = source.get("libraryRuleId")
+    if lr is not None and str(lr).strip() != "":
+        return str(lr).strip()
+    return str(source.get("id") or "").strip()
+
+
+def _norm_rule_model_short(rule: Dict[str, Any]) -> str:
+    return str(rule.get("modelShortName") or "").strip().lower()
+
+
+def _rule_indices_by_id(rules: List[Dict[str, Any]], rule_id: str) -> List[int]:
+    rid = str(rule_id).lower()
+    return [i for i, r in enumerate(rules) if str(r.get("id", "")).lower() == rid]
+
+
+@app.post("/api/rules/assign")
+async def assign_rule_to_model(
+    request: Dict[str, Any],
+    current_user: dict = Depends(require_editor_or_admin),
+):
+    """
+    Clone a catalog rule onto a data model (POST body: libraryRuleId = source rule id, modelShortName).
+    Must be registered before GET /api/rules/{model_short_name} so path 'assign' is not captured as a model name.
+    """
+    try:
+        library_rule_id = request.get("libraryRuleId")
+        model_ref = request.get("modelShortName")
+        if not library_rule_id or not model_ref:
+            raise HTTPException(
+                status_code=400,
+                detail="libraryRuleId and modelShortName are required",
+            )
+
+        try:
+            rules_data = read_json_file(JSON_FILES["rules"])
+        except HTTPException:
+            rules_data = {"rules": []}
+
+        models_data = read_json_file(JSON_FILES["models"])
+        msn = resolve_model_short_name(models_data, str(model_ref).strip())
+        if not msn:
+            raise HTTPException(status_code=400, detail=f"Unknown model: {model_ref}")
+
+        source = None
+        for rule in rules_data.get("rules", []):
+            if str(rule.get("id", "")).lower() == str(library_rule_id).lower():
+                source = rule
+                break
+        if source is None:
+            raise HTTPException(status_code=404, detail="Source rule not found")
+
+        src_lineage = _rule_lineage_key(source)
+        for rule in rules_data.get("rules", []):
+            if str(rule.get("modelShortName", "")).lower() != str(msn).lower():
+                continue
+            if _rule_lineage_key(rule) == src_lineage:
+                raise HTTPException(
+                    status_code=409,
+                    detail="This rule lineage is already on this model",
+                )
+
+        new_rule = {
+            k: v
+            for k, v in source.items()
+            if k not in ["newObjectInput", "newColumnInput", "ruleTypeIdentifier"]
+        }
+        for k in ("lastUpdated", "createdBy", "updatedBy"):
+            new_rule.pop(k, None)
+        new_rule.pop("isLibrary", None)
+        kept_id = str(source.get("id") or "").strip()
+        if not kept_id:
+            raise HTTPException(status_code=400, detail="Source rule has no id")
+        new_rule["id"] = kept_id
+        new_rule["libraryRuleId"] = _canonical_library_rule_ref(source)
+        new_rule["modelShortName"] = msn
+        new_rule["parentRuleId"] = None
+        new_rule["stage"] = normalize_rule_stage(new_rule.get("stage"))
+        new_rule["ruleZone"] = normalize_rule_zone(new_rule.get("ruleZone"))
+        new_rule["lastUpdated"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        new_rule["createdBy"] = current_user.get("username", "unknown")
+
+        rules_data["rules"].append(new_rule)
+        write_json_file(JSON_FILES["rules"], rules_data)
+        logger.info(f"Assigned rule lineage {src_lineage} to model {msn} with id {kept_id}")
+
+        return {
+            "message": "Rule associated with model",
+            "id": kept_id,
+            "assigned": True,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error assigning rule to model: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Error assigning rule to model: {str(e)}")
+
+
 @app.get("/api/rules/{model_short_name}")
 async def get_rules_for_model(model_short_name: str):
     """
@@ -3362,21 +3470,39 @@ async def update_rule(rule_id: str, request: Dict[str, Any], current_user: dict 
         logger.info(f"Update request for model rule: {rule_id}")
         
         rules_data = read_json_file(JSON_FILES['rules'])
-        
-        # Find the rule to update
-        rule_to_update = None
-        for i, rule in enumerate(rules_data.get('rules', [])):
-            if rule.get('id', '').lower() == rule_id.lower():
-                rule_to_update = i
-                break
-        
-        if rule_to_update is None:
+        rules_list = rules_data.get("rules", [])
+        indices = _rule_indices_by_id(rules_list, rule_id)
+        if not indices:
             raise HTTPException(status_code=404, detail=f"Rule with ID '{rule_id}' not found")
-        
+
+        cleaned_request = {k: v for k, v in request.items() if k not in ['newObjectInput', 'newColumnInput', 'ruleTypeIdentifier']}
+        if len(indices) > 1:
+            if "modelShortName" not in cleaned_request:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Multiple rules share this id; include modelShortName in the request body to choose which copy to update.",
+                )
+            msn_raw = cleaned_request.get("modelShortName")
+            want = (
+                str(msn_raw).strip().lower()
+                if msn_raw is not None and str(msn_raw).strip() != ""
+                else ""
+            )
+            rule_to_update = None
+            for i in indices:
+                if _norm_rule_model_short(rules_list[i]) == want:
+                    rule_to_update = i
+                    break
+            if rule_to_update is None:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"No rule with ID '{rule_id}' and the given modelShortName",
+                )
+        else:
+            rule_to_update = indices[0]
+
         # Update the rule
         updated_rule = rules_data['rules'][rule_to_update].copy()
-        # Remove form state fields that shouldn't be saved
-        cleaned_request = {k: v for k, v in request.items() if k not in ['newObjectInput', 'newColumnInput', 'ruleTypeIdentifier']}
         updated_rule.update(cleaned_request)
         updated_rule['id'] = rule_id  # Ensure ID doesn't change
         updated_rule['lastUpdated'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -3457,34 +3583,49 @@ async def update_country_rule(rule_id: str, request: Dict[str, Any], current_use
         raise HTTPException(status_code=500, detail=f"Error updating country rule: {str(e)}")
 
 @app.delete("/api/rules/{rule_id}")
-async def delete_rule(rule_id: str, current_user: dict = Depends(require_editor_or_admin)):
+async def delete_rule(
+    rule_id: str,
+    model_short_name: Optional[str] = Query(None, alias="modelShortName"),
+    current_user: dict = Depends(require_editor_or_admin),
+):
     """
     Delete a model rule by its ID.
-    
-    Args:
-        rule_id (str): The ID of the rule to delete
-        
-    Returns:
-        dict: Success message and deleted rule info
+    When the same id exists on the library (no model) and on models, pass modelShortName to delete one copy
+    (use empty modelShortName for the library row).
     """
     try:
-        logger.info(f"Delete request for model rule: {rule_id}")
+        logger.info(f"Delete request for model rule: {rule_id} modelShortName={model_short_name!r}")
         
         rules_data = read_json_file(JSON_FILES['rules'])
-        
-        rule_to_delete = None
-        for rule in rules_data.get('rules', []):
-            if rule.get('id', '').lower() == rule_id.lower():
-                rule_to_delete = rule
-                break
-        
-        if not rule_to_delete:
+        models_data = read_json_file(JSON_FILES['models'])
+        rules_list = rules_data.get("rules", [])
+        indices = _rule_indices_by_id(rules_list, rule_id)
+        if not indices:
             raise HTTPException(status_code=404, detail=f"Rule with ID '{rule_id}' not found")
-        
-        rules_data['rules'] = [
-            r for r in rules_data.get('rules', [])
-            if r.get('id', '').lower() != rule_id.lower()
-        ]
+
+        if len(indices) == 1:
+            idx = indices[0]
+        else:
+            if model_short_name is None:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Multiple rules share this id; pass modelShortName query parameter (empty for library copy).",
+                )
+            msn_raw = str(model_short_name).strip()
+            if msn_raw == "":
+                matching = [i for i in indices if not str(rules_list[i].get("modelShortName") or "").strip()]
+            else:
+                msn = resolve_model_short_name(models_data, msn_raw) or msn_raw
+                want = msn.strip().lower()
+                matching = [i for i in indices if _norm_rule_model_short(rules_list[i]) == want]
+            if len(matching) != 1:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"No single rule with ID '{rule_id}' and the given modelShortName",
+                )
+            idx = matching[0]
+
+        rules_data["rules"] = [r for j, r in enumerate(rules_list) if j != idx]
         
         local_file_path = JSON_FILES['rules']
         write_json_file(local_file_path, rules_data)

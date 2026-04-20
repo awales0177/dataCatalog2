@@ -40,8 +40,8 @@ const markdownCodeComponent = ({ inline, className, children, ...props }) => {
 };
 
 /**
- * Shared chrome for full-page markdown editors (glossary, model docs, toolkit README).
- * Pages own data loading, save/cancel handlers, and snackbars.
+ * Editor chrome (preview toggle, textarea, actions). For loading spinner + snackbar, route pages use
+ * MarkdownEditorScreen, which wraps this component.
  */
 const MarkdownEditorLayout = ({
   currentTheme,

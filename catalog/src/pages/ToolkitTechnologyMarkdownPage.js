@@ -1,6 +1,6 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Box, Container, Snackbar, Alert, CircularProgress } from '@mui/material';
+import { Alert } from '@mui/material';
 import { ThemeContext } from '../contexts/ThemeContext';
 import { fetchData } from '../services/api';
 import {
@@ -9,12 +9,12 @@ import {
   workbenchPath,
   workbenchTechnologyPath,
 } from '../utils/toolkitWorkbench';
-import MarkdownEditorLayout from '../components/MarkdownEditorLayout';
+import MarkdownEditorScreen from '../components/MarkdownEditorScreen';
 
 const ToolkitTechnologyMarkdownPage = () => {
   const { toolkitId, technologyId, readmeType } = useParams();
   const navigate = useNavigate();
-  const { currentTheme, darkMode } = useContext(ThemeContext);
+  const { currentTheme } = useContext(ThemeContext);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
@@ -114,63 +114,38 @@ const ToolkitTechnologyMarkdownPage = () => {
     return readmeType ? readmeType.charAt(0).toUpperCase() + readmeType.slice(1) : 'README';
   };
 
-  if (loading) {
-    return (
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
-          <CircularProgress sx={{ color: currentTheme.primary }} />
-        </Box>
-      </Container>
-    );
-  }
+  const readmeLabel = getReadmeTypeLabel();
+  const closeSnackbar = () => setSnackbar((s) => ({ ...s, open: false }));
 
-  if (!technology) {
-    return (
-      <Container maxWidth="lg" sx={{ py: 4 }}>
+  return (
+    <MarkdownEditorScreen
+      loading={loading}
+      error={!technology}
+      errorChildren={
         <Alert severity="error" sx={{ bgcolor: currentTheme.card, color: currentTheme.text }}>
           Technology not found
         </Alert>
-      </Container>
-    );
-  }
-
-  return (
-    <>
-      <MarkdownEditorLayout
-        currentTheme={currentTheme}
-        darkMode={darkMode}
-        backButtonLabel="Back to Toolkit"
-        onBack={handleCancel}
-        title={`Edit ${getReadmeTypeLabel()} - ${technology.name || 'Unknown Technology'}`}
-        subtitle={`Edit ${getReadmeTypeLabel().toLowerCase()} markdown content for this technology`}
-        showPreview={showPreview}
-        onTogglePreview={() => setShowPreview(!showPreview)}
-        markdown={markdown}
-        onMarkdownChange={setMarkdown}
-        placeholder="Enter markdown content here..."
-        saving={saving}
-        hasChanges={hasChanges()}
-        onSave={handleSave}
-        onCancel={handleCancel}
-        saveLabel="Save"
-        savingLabel="Saving..."
-      />
-
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        <Alert
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
-          severity={snackbar.severity}
-          sx={{ width: '100%', bgcolor: currentTheme.card, color: currentTheme.text }}
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
-    </>
+      }
+      snackbar={snackbar}
+      onSnackbarClose={closeSnackbar}
+      layout={{
+        backButtonLabel: 'Back to Toolkit',
+        onBack: handleCancel,
+        title: `Edit ${readmeLabel} - ${technology?.name || 'Unknown Technology'}`,
+        subtitle: `Edit ${readmeLabel.toLowerCase()} markdown content for this technology`,
+        showPreview,
+        onTogglePreview: () => setShowPreview(!showPreview),
+        markdown,
+        onMarkdownChange: setMarkdown,
+        placeholder: 'Enter markdown content here...',
+        saving,
+        hasChanges: hasChanges(),
+        onSave: handleSave,
+        onCancel: handleCancel,
+        saveLabel: 'Save',
+        savingLabel: 'Saving...',
+      }}
+    />
   );
 };
 
