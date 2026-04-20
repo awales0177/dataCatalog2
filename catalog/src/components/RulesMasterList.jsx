@@ -346,12 +346,15 @@ const RulesMasterList = () => {
 
   return (
     <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
-      <Box sx={{ mb: 3 }}>
+      <Box sx={{ mb: 3, textAlign: 'center' }}>
         <Typography variant="h4" component="h1" sx={{ color: currentTheme?.text, fontWeight: 700, mb: 1 }}>
           Data Quality Rules
         </Typography>
-        <Typography variant="body1" sx={{ color: currentTheme?.textSecondary, width: '100%' }}>
-          Browse and edit library rules and model assignments. Add rules to a model from Workspaces → Rule Builder.
+        <Typography
+          variant="body1"
+          sx={{ color: currentTheme?.textSecondary, maxWidth: 720, mx: 'auto' }}
+        >
+          Browse and edit library rules and model assignments.
         </Typography>
       </Box>
 

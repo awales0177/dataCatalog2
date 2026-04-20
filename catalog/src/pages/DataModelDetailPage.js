@@ -55,6 +55,7 @@ import {
 } from '../utils/modelToolCardImage';
 import { findCatalogModel, modelApiRef } from '../utils/catalogModelLookup';
 import { ThemeContext } from '../contexts/ThemeContext';
+import { detailPageHeaderEditIconMt } from '../constants/navigation';
 
 /** Short line for tool cards (hostname or path, truncated). */
 function toolLinkCaption(url) {
@@ -419,6 +420,7 @@ const DataModelDetailPage = () => {
           <IconButton
             onClick={() => navigate(`/models/${encodeURIComponent(modelApiRef(model))}/edit`)}
             sx={{
+              mt: detailPageHeaderEditIconMt,
               color: currentTheme.primary,
               bgcolor: alpha(currentTheme.primary, 0.1),
               '&:hover': {

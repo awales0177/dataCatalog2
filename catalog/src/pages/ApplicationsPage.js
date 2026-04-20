@@ -142,12 +142,14 @@ const ApplicationsPage = () => {
 
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
-      <Typography variant="h4" sx={{ mb: 1, color: currentTheme.text }}>
-        Data Teams
-      </Typography>
-      <Typography variant="body1" sx={{ mb: 4, color: currentTheme.textSecondary }}>
-        Discover and manage data teams in your data ecosystem.
-      </Typography>
+      <Box sx={{ textAlign: 'center', mb: 4 }}>
+        <Typography variant="h4" sx={{ mb: 1, color: currentTheme.text }}>
+          Data Teams
+        </Typography>
+        <Typography variant="body1" sx={{ color: currentTheme.textSecondary, maxWidth: 720, mx: 'auto' }}>
+          Discover and manage data teams in your data ecosystem.
+        </Typography>
+      </Box>
 
       <Box sx={{ mb: 4, display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
         <TextField

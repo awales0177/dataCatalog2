@@ -40,6 +40,9 @@ export const SIDEBAR_APP_TITLE = 'APP NAME';
 
 /** Floating sidebar: inset from viewport (px) — UUX dh */
 export const sidebarFloatInset = 16;
+
+/** MUI spacing units: clears the fixed top-right icon tray in MainGlassHeader on detail pages. */
+export const detailPageHeaderEditIconMt = 2.5;
 /** Extra offset below viewport top (was used with app bar;0 when using sidebar-only shell) */
 export const sidebarBottomLift = 0;
 

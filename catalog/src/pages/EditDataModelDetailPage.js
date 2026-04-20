@@ -1485,8 +1485,11 @@ const EditDataModelDetailPage = () => {
             variant="contained"
             onClick={handleSave}
             disabled={!hasChanges || saving}
-            startIcon={saving ? <CircularProgress size={20} /> : <SaveIcon />}
-            sx={{ bgcolor: currentTheme.primary }}
+            startIcon={saving ? <CircularProgress size={20} sx={{ color: 'inherit' }} /> : <SaveIcon />}
+            sx={{
+              bgcolor: currentTheme.primary,
+              '&:hover': { bgcolor: currentTheme.primaryHover },
+            }}
           >
             {saving ? 'Saving...' : modelId === 'new' ? 'Create Model' : 'Save Changes'}
           </Button>

@@ -65,15 +65,37 @@ export function catalogMuiCardOverrides() {
             backgroundImage: 'none',
             backgroundColor: theme.palette.background.paper,
             overflow: 'visible',
-            transition: theme.transitions.create(['box-shadow', 'border-color'], {
-              duration: theme.transitions.duration.short,
-            }),
+            transition: theme.transitions.create(
+              ['box-shadow', 'border-color', 'background-color'],
+              {
+                duration: theme.transitions.duration.short,
+              },
+            ),
             '&:hover': {
               borderColor: theme.palette.primary.main,
               boxShadow: catalogCardHoverShadow(isDark, theme.palette.primary.main),
             },
           };
         },
+      },
+    },
+  };
+}
+
+/** Ease light/dark flips on Paper-based surfaces (Drawer, dialogs, page Papers). */
+export function catalogThemeColorTransitionOverrides() {
+  return {
+    MuiPaper: {
+      styleOverrides: {
+        root: ({ theme }) => ({
+          transition: theme.transitions.create(
+            ['background-color', 'border-color', 'color', 'box-shadow'],
+            {
+              duration: 280,
+              easing: theme.transitions.easing.easeInOut,
+            },
+          ),
+        }),
       },
     },
   };

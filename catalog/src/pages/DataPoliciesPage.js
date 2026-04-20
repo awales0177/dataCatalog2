@@ -123,12 +123,17 @@ const DataPoliciesPage = () => {
 
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
-      <Typography variant="h4" sx={{ mb: 1, color: currentTheme.text }}>
-        Data Standards
-      </Typography>
-      <Typography variant="body1" sx={{ mb: 4, color: currentTheme.textSecondary }}>
-        Manage and monitor data standards including retention, quality, access control, and compliance requirements.
-      </Typography>
+      <Box sx={{ textAlign: 'center', mb: 4 }}>
+        <Typography variant="h4" sx={{ mb: 1, color: currentTheme.text }}>
+          Data Standards
+        </Typography>
+        <Typography
+          variant="body1"
+          sx={{ color: currentTheme.textSecondary, maxWidth: 720, mx: 'auto' }}
+        >
+          Manage and monitor data standards.
+        </Typography>
+      </Box>
 
       {/* Search */}
       <Box sx={{ mb: 4 }}>

@@ -16,7 +16,7 @@ export function normalizeTagList(arr) {
 }
 
 /**
- * Unified rule tags for model & country rules: `tags` plus legacy tagged* fields when still present.
+ * Unified rule tags for model rules: `tags` plus legacy tagged* fields when still present.
  * @param {Record<string, unknown>|null|undefined} rule
  * @returns {string[]}
  */

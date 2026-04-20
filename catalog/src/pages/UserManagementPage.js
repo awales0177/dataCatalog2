@@ -171,15 +171,15 @@ const UserManagementPage = () => {
 
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-        <Box>
-          <Typography variant="h4" sx={{ mb: 1, color: currentTheme.text }}>
-            User Management
-          </Typography>
-          <Typography variant="body1" sx={{ color: currentTheme.textSecondary }}>
-            Manage user access and permissions across DH-TEST
-          </Typography>
-        </Box>
+      <Box sx={{ textAlign: 'center', mb: 2 }}>
+        <Typography variant="h4" sx={{ mb: 1, color: currentTheme.text }}>
+          User Management
+        </Typography>
+        <Typography variant="body1" sx={{ color: currentTheme.textSecondary, maxWidth: 720, mx: 'auto' }}>
+          Manage user access and permissions across DH-TEST
+        </Typography>
+      </Box>
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 4 }}>
         <Button
           variant="contained"
           startIcon={<AddIcon />}

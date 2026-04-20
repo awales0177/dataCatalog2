@@ -307,12 +307,17 @@ const ProductAgreementsPage = () => {
 
   return (
     <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
-      <Typography variant="h4" sx={{ mb: 1, color: currentTheme.text }}>
-        Product Agreements
-      </Typography>
-      <Typography variant="body1" sx={{ mb: 4, color: currentTheme.textSecondary }}>
-        Manage and monitor product agreements grouped by owners. Track agreement status and compliance across your data ecosystem.
-      </Typography>
+      <Box sx={{ textAlign: 'center', mb: 4 }}>
+        <Typography variant="h4" sx={{ mb: 1, color: currentTheme.text }}>
+          Product Agreements
+        </Typography>
+        <Typography
+          variant="body1"
+          sx={{ color: currentTheme.textSecondary, maxWidth: 720, mx: 'auto' }}
+        >
+          Manage and monitor product agreements.
+        </Typography>
+      </Box>
 
       <Box sx={{ mb: 4 }}>
         <TextField

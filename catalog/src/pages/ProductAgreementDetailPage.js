@@ -69,6 +69,7 @@ import { modelApiRef } from '../utils/catalogModelLookup';
 import { agreementFieldsConfig } from '../config/agreementFields';
 import FieldInfoIcon from '../components/FieldInfoIcon';
 import { ThemeContext } from '../contexts/ThemeContext';
+import { detailPageHeaderEditIconMt } from '../constants/navigation';
 
 const ProductAgreementDetailPage = () => {
   const { currentTheme } = React.useContext(ThemeContext);
@@ -694,6 +695,7 @@ const ProductAgreementDetailPage = () => {
           <IconButton
             onClick={() => navigate(`/agreements/${agreement.id}/edit`)}
             sx={{
+              mt: detailPageHeaderEditIconMt,
               color: currentTheme.primary,
               bgcolor: alpha(currentTheme.primary, 0.1),
               '&:hover': {

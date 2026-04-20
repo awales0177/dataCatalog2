@@ -61,7 +61,7 @@ import InfoSidebar from './components/InfoSidebar';
 
 // Import theme and hooks
 import { theme, addGoogleFonts } from './theme/theme';
-import { catalogMuiCardOverrides } from './theme/catalogSurfaces';
+import { catalogMuiCardOverrides, catalogThemeColorTransitionOverrides } from './theme/catalogSurfaces';
 import { useAppState } from './hooks/useAppState';
 import { getRandomColor } from './utils/common';
 import {
@@ -115,6 +115,7 @@ function AppContent() {
         primary: {
           main: currentTheme.primary,
           dark: currentTheme.primaryHover,
+          contrastText: '#ffffff',
         },
         background: {
           default: currentTheme.background,
@@ -132,10 +133,12 @@ function AppContent() {
           main: currentTheme.primary,
           dark: currentTheme.primaryHover,
           light: alpha(currentTheme.primary, darkMode ? 0.22 : 0.14),
+          contrastText: '#ffffff',
         },
       },
       components: {
         ...catalogMuiCardOverrides(),
+        ...catalogThemeColorTransitionOverrides(),
       },
     });
   }, [darkMode, currentTheme]);
@@ -173,7 +176,9 @@ function AppContent() {
   }
 
     return (
-    <ThemeContext.Provider value={{ currentTheme, darkMode, setDarkMode: () => {} }}>
+    <ThemeContext.Provider
+      value={{ currentTheme, darkMode, toggleColorMode: handleThemeToggle }}
+    >
       <ThemeProvider theme={muiTheme}>
       <CatalogPreferencesProvider>
       <WorkbenchModalsProvider>
@@ -188,6 +193,11 @@ function AppContent() {
         right: 0,
         bottom: 0,
         overflow: 'hidden',
+        transition: (t) =>
+          t.transitions.create('background-color', {
+            duration: 280,
+            easing: t.transitions.easing.easeInOut,
+          }),
       }}>
         <CssBaseline />
         
@@ -220,6 +230,11 @@ function AppContent() {
             overflowY: 'auto',
             overflowX: 'clip',
             bgcolor: currentTheme.background,
+            transition: (t) =>
+              t.transitions.create('background-color', {
+                duration: 280,
+                easing: t.transitions.easing.easeInOut,
+              }),
             WebkitOverflowScrolling: 'touch',
             '&::-webkit-scrollbar': {
               width: '8px',

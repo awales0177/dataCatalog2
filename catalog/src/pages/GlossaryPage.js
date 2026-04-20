@@ -221,11 +221,14 @@ const GlossaryPage = () => {
       position: 'relative',
     }}>
       {/* Header */}
-      <Box sx={{ flexShrink: 0 }}>
+      <Box sx={{ flexShrink: 0, textAlign: 'center' }}>
         <Typography variant="h4" sx={{ color: currentTheme.text, mb: 0.5 }}>
           Glossary
         </Typography>
-        <Typography variant="body2" sx={{ color: currentTheme.textSecondary }}>
+        <Typography
+          variant="body2"
+          sx={{ color: currentTheme.textSecondary, maxWidth: 720, mx: 'auto' }}
+        >
           Browse and search glossary terms, definitions, and documentation
         </Typography>
       </Box>

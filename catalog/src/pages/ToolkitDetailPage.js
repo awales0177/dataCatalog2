@@ -39,6 +39,7 @@ import {
   OpenInNew as OpenInNewIcon,
 } from '@mui/icons-material';
 import { ThemeContext } from '../contexts/ThemeContext';
+import { detailPageHeaderEditIconMt } from '../constants/navigation';
 import { fetchData, updateToolkitComponent } from '../services/api';
 import {
   looksLikeDatabaseToolkitId,
@@ -694,6 +695,7 @@ const ToolkitDetailPage = () => {
             <IconButton
               onClick={() => navigate(workbenchEditPath(toolkitId))}
               sx={{
+                mt: detailPageHeaderEditIconMt,
                 color: currentTheme.primary,
                 bgcolor: alpha(currentTheme.primary, 0.1),
                 '&:hover': {

@@ -82,12 +82,17 @@ const DataDomainsPage = () => {
 
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
-      <Typography variant="h4" sx={{ mb: 1, color: currentTheme.text }}>
-        Data Domains
-      </Typography>
-      <Typography variant="body1" sx={{ mb: 4, color: currentTheme.textSecondary }}>
-        Organize and manage your data domains. View domain ownership, relationships, and associated data assets across your organization.
-      </Typography>
+      <Box sx={{ textAlign: 'center', mb: 4 }}>
+        <Typography variant="h4" sx={{ mb: 1, color: currentTheme.text }}>
+          Data Domains
+        </Typography>
+        <Typography
+          variant="body1"
+          sx={{ color: currentTheme.textSecondary, maxWidth: 720, mx: 'auto' }}
+        >
+          Organize and manage your data domains
+        </Typography>
+      </Box>
 
       <Box sx={{ mb: 4 }}>
         <TextField

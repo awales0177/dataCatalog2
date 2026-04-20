@@ -42,6 +42,7 @@ import {
   Edit as EditIcon,
 } from '@mui/icons-material';
 import { ThemeContext } from '../contexts/ThemeContext';
+import { detailPageHeaderEditIconMt } from '../constants/navigation';
 import FieldInfoIcon from '../components/FieldInfoIcon';
 import { fetchData } from '../services/api';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -211,6 +212,7 @@ const ToolkitInfrastructureDetailPage = () => {
               <IconButton
                 onClick={() => navigate(`/toolkit/infrastructure/${infrastructureData.id}/edit`)}
                 sx={{
+                  mt: detailPageHeaderEditIconMt,
                   color: currentTheme.primary,
                   bgcolor: alpha(currentTheme.primary, 0.1),
                   '&:hover': {

@@ -479,7 +479,7 @@
       "meta": {
         "tier": "gold",
         "verified": true,
-        "clickCount": 1
+        "clickCount": 2
       },
       "resources": {
         "code": "https://github.com/org/marketing-campaign-data",
@@ -863,8 +863,7 @@
       "version": "1.1.0",
       "description": "Agricultural program management and tracking",
       "extendedDescription": "The Agricultural Programs model manages comprehensive agricultural program data. It includes schemas for program planning, resource allocation, and progress tracking. The model supports crop management, livestock tracking, and equipment maintenance. It includes features for weather monitoring, soil analysis, and pest control. The model also handles integration with market systems, supply chain platforms, and regulatory compliance tools.",
-      "lastUpdated": "2026-04-18 14:01:53",
-      "owner": "Agriculture Team",
+      "lastUpdated": "2026-04-19 22:21:47",
       "specMaintainer": "Emma Davis",
       "maintainerEmail": "emma.davis@example.com",
       "domain": [
@@ -881,9 +880,8 @@
         "code": "https://github.com/org/agricultural-programs",
         "documentation": "https://docs.example.com/agricultural-programs",
         "tools": {
-          "tool1": "https://docs.example.com/customer-data-model",
-          "tool2": "https://docs.example.com/customer-data-model",
-          "tool3": "https://docs.example.com/customer-data-model"
+          "AWS Textract": "https://aws.amazon.com/textract/",
+          "Kubeflow": "/toolkit/ee5f0f3e-665b-4152-8405-b1534c05575a/technology/e7564a71-c9e5-469a-b2f9-a78c2aee4652"
         },
         "git": "https://git.example.com/agricultural-programs",
         "validation": "https://validation.example.com/agricultural-programs"
@@ -892,7 +890,7 @@
         {
           "id": "md_1776535304963",
           "title": "README",
-          "content": "test"
+          "content": "# 🌾 Agricultural Programs Data Model\n\nWelcome to the **Agricultural Programs Data Model**! This repository defines the structure, governance, and lifecycle of datasets used to support agricultural initiatives, funding programs, and policy analysis.\n\n---\n\n## 📦 Overview\n\nThis data model enables:\n\n- 🌱 Tracking of agricultural programs and initiatives  \n- 👩‍🌾 Management of farmer and participant data  \n- 💰 Monitoring of funding, grants, and subsidies  \n- 📊 Analysis of outcomes and program effectiveness  \n\n---\n\n## 🧱 Core Entities\n\n### 📁 Dataset\n- `dataset_id`\n- `name`\n- `domain`\n- `created_by`\n- `creation_time`\n- `last_updated`\n\n### 🌐 Data Domain\n- `domain_id`\n- `name`\n- `owner`\n- `description`\n\n### 📜 Data Contract\n- `contract_id`\n- `name`\n- `version`\n- `schema_definition`\n- `sla`\n\n### 🚜 Data Product\n- `product_id`\n- `name`\n- `description`\n- `quality_score`\n- `freshness`\n- `owner`\n\n### 🔄 Pipeline\n- `pipeline_id`\n- `name`\n- `schedule`\n- `avg_runtime`\n- `status`\n\n### 🏃 Run\n- `run_id`\n- `pipeline_id`\n- `start_time`\n- `end_time`\n- `status`\n\n---\n\n## 🧭 Data Flow (Medallion Architecture)\n\n```mermaid\nflowchart LR\n    A[🌱 Raw Data - Bronze] --> B[🧼 Cleaned Data - Silver]\n    B --> C[📊 Curated Data - Gold]\n    C --> D[🚜 Data Product]"
         }
       ],
       "versionHistory": [
@@ -902,6 +900,19 @@
           "updatedBy": "System",
           "changeDescription": "Initial model load",
           "changedFields": []
+        },
+        {
+          "version": "1.1.0",
+          "timestamp": "2026-04-20T02:21:47.498Z",
+          "updatedBy": "user",
+          "changeDescription": "Updated resources.tools",
+          "fieldChanges": [
+            {
+              "field": "resources.tools",
+              "oldValue": "{tool1, tool2, tool3}",
+              "newValue": "{AWS Textract, Kubeflow}"
+            }
+          ]
         }
       ],
       "uuid": "ff72f84c-1b8b-4a21-b103-06ec0452028a"

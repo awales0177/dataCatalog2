@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { flushSync } from 'react-dom';
 import { useLocation } from 'react-router-dom';
 import {
   fetchTheme,
@@ -31,6 +32,12 @@ export const useAppState = () => {
     const saved = localStorage.getItem('darkMode');
     return saved ? JSON.parse(saved) : false;
   });
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    document.documentElement.classList.toggle('dark-mode', darkMode);
+    document.body.classList.toggle('dark-mode', darkMode);
+  }, [darkMode]);
   const [themeData, setThemeData] = useState(null);
   const [menuData, setMenuData] = useState({ items: menuItems });
   
@@ -335,8 +342,30 @@ export const useAppState = () => {
 
   const handleThemeToggle = () => {
     const newDarkMode = !darkMode;
-    setDarkMode(newDarkMode);
-    localStorage.setItem('darkMode', JSON.stringify(newDarkMode));
+    const apply = () => {
+      flushSync(() => {
+        setDarkMode(newDarkMode);
+      });
+      try {
+        localStorage.setItem('darkMode', JSON.stringify(newDarkMode));
+      } catch {
+        /* ignore */
+      }
+    };
+
+    const reduceMotion =
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (
+      !reduceMotion &&
+      typeof document !== 'undefined' &&
+      typeof document.startViewTransition === 'function'
+    ) {
+      document.startViewTransition(apply);
+    } else {
+      apply();
+    }
   };
 
   const handleDrawerCollapse = () => {

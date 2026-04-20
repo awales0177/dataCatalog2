@@ -419,11 +419,11 @@ const ToolkitPage = () => {
 
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
-      <Box sx={{ mb: 3 }}>
+      <Box sx={{ mb: 3, textAlign: 'center' }}>
         <Typography variant="h4" component="h1" sx={{ color: currentTheme.text, fontWeight: 700, mb: 1 }}>
           Toolkit
         </Typography>
-        <Typography variant="body1" sx={{ color: currentTheme.textSecondary, maxWidth: 720 }}>
+        <Typography variant="body1" sx={{ color: currentTheme.textSecondary, maxWidth: 720, mx: 'auto' }}>
           Packages and containers for data work.
         </Typography>
       </Box>
