@@ -75,6 +75,7 @@ import {
 import { newUuid7String } from '../utils/catalogUuid7';
 import TeamSelector from '../components/TeamSelector';
 import { maintainerToTeamSelectorSelection } from '../utils/maintainerTeamSelection';
+import { useSyncDocumentTitle } from '../contexts/DocumentTitleContext';
 
 const TOOLKIT_PANE_ID = '__toolkit__';
 
@@ -165,6 +166,8 @@ const EditToolkitPage = () => {
   const [applications, setApplications] = useState([]);
 
   const isNewToolkit = !toolkitId || toolkitId === 'create';
+
+  useSyncDocumentTitle(editedToolkit?.displayName || editedToolkit?.name);
 
   useEffect(() => {
     let cancelled = false;

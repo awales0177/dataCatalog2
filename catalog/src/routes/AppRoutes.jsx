@@ -395,7 +395,7 @@ export default function AppRoutes() {
           }
         />
         <Route
-          path="/toolkit/:toolkitId/technology/:technologyId"
+          path="/toolkit/:toolkitId/technology/:technologyId/edit"
           element={
             <ProtectedRoute requiredRole="editor">
               <EditToolkitTechnologyPage />
@@ -407,6 +407,14 @@ export default function AppRoutes() {
           element={
             <ProtectedRoute requiredRole="editor">
               <EditToolkitTechnologyPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/toolkit/:toolkitId/technology/:technologyId"
+          element={
+            <ProtectedRoute>
+              <ToolkitDetailPage />
             </ProtectedRoute>
           }
         />

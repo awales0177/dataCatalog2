@@ -36,6 +36,7 @@ import {
 import { ThemeContext } from '../contexts/ThemeContext';
 import { fetchData, updateToolkitPackage, importFunctionsFromLibrary, createToolkitComponent } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+import { useSyncDocumentTitle } from '../contexts/DocumentTitleContext';
 
 const EditToolkitPackagePage = () => {
   const { currentTheme } = useContext(ThemeContext);
@@ -63,6 +64,8 @@ const EditToolkitPackagePage = () => {
   const [selectedImportFunctions, setSelectedImportFunctions] = useState(new Set());
   const [, setPendingFunctions] = useState([]); // Functions to be created on save
   const [pendingFunctionMap, setPendingFunctionMap] = useState(new Map()); // Map of temp ID to function object
+
+  useSyncDocumentTitle(editedPackage?.name);
 
   useEffect(() => {
     const loadPackageData = async () => {

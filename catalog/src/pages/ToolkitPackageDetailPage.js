@@ -32,6 +32,7 @@ import { ThemeContext } from '../contexts/ThemeContext';
 import { fetchData, deleteToolkitPackage } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import DeleteModal from '../components/DeleteModal';
+import { useSyncDocumentTitle } from '../contexts/DocumentTitleContext';
 
 const ToolkitPackageDetailPage = () => {
   const { currentTheme } = useContext(ThemeContext);
@@ -43,6 +44,8 @@ const ToolkitPackageDetailPage = () => {
   const [error, setError] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
+
+  useSyncDocumentTitle(packageData?.name);
 
   useEffect(() => {
     const loadPackageData = async () => {

@@ -25,6 +25,7 @@ import { fetchData, createApplication, updateApplication, deleteApplication } fr
 import { findApplication, applicationApiRef } from '../utils/catalogModelLookup';
 import DomainSelector from '../components/DomainSelector';
 import RoleSelector from '../components/RoleSelector';
+import { useSyncDocumentTitle } from '../contexts/DocumentTitleContext';
 
 const EditApplicationPage = () => {
   const { currentTheme } = useContext(ThemeContext);
@@ -41,6 +42,8 @@ const EditApplicationPage = () => {
   const [saving, setSaving] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+  useSyncDocumentTitle(editedApplication?.name);
 
   // Helper function for deep cloning
   const deepClone = (obj) => {

@@ -42,6 +42,7 @@ import {
 } from '@mui/icons-material';
 import { ThemeContext } from '../contexts/ThemeContext';
 import { fetchData, createToolkitComponent, updateToolkitComponent, deleteToolkitComponent, importFunctionsFromLibrary } from '../services/api';
+import { useSyncDocumentTitle } from '../contexts/DocumentTitleContext';
 
 const EditToolkitFunctionPage = () => {
   const { currentTheme } = useContext(ThemeContext);
@@ -64,6 +65,8 @@ const EditToolkitFunctionPage = () => {
   const [importError, setImportError] = useState(null);
   const [importSuggestions, setImportSuggestions] = useState([]);
   const isNewFunction = !functionId || functionId === 'new';
+
+  useSyncDocumentTitle(editedFunction?.displayName || editedFunction?.name);
 
   useEffect(() => {
     const loadFunctionData = async () => {

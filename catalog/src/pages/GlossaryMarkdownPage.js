@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { fetchData, updateGlossaryTerm } from '../services/api';
 import { findGlossaryTerm, glossaryTermApiRef } from '../utils/catalogModelLookup';
 import MarkdownEditorScreen from '../components/MarkdownEditorScreen';
+import { useSyncDocumentTitle } from '../contexts/DocumentTitleContext';
 
 const GlossaryMarkdownPage = () => {
   const { id } = useParams();
@@ -14,6 +15,8 @@ const GlossaryMarkdownPage = () => {
   const [originalMarkdown, setOriginalMarkdown] = useState('');
   const [term, setTerm] = useState(null);
   const [showPreview, setShowPreview] = useState(false);
+
+  useSyncDocumentTitle(term?.term);
 
   useEffect(() => {
     const loadTerm = async () => {

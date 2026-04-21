@@ -4,7 +4,7 @@ import { Box, Card, CardContent, Typography, Chip, alpha } from '@mui/material';
 import { ViewModule as ResourceIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { normalizeTechnologyStatus } from '../utils/toolkitStatus';
-import { workbenchPath, workbenchCanonicalRef } from '../utils/toolkitWorkbench';
+import { workbenchEntryPath } from '../utils/toolkitWorkbench';
 import { getSearchResultPath } from '../utils/catalogSearchNavigation';
 
 const TECH_STATUS_ORDER = ['production', 'development', 'evaluated'];
@@ -41,8 +41,7 @@ function toolkitPathForPin(pin, item) {
   if (pin.path && pin.path !== '/toolkit') return pin.path;
   const sub = pin.toolkitSubtype || inferToolkitSubtypeFromPath(pin.path);
   if (sub === 'toolkits') {
-    const ref = workbenchCanonicalRef(item);
-    return ref ? workbenchPath(ref) : '/toolkit';
+    return workbenchEntryPath(item);
   }
   if (sub === 'package') {
     const pid = item?.id || item?.name;

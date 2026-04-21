@@ -25,6 +25,7 @@ import {
   sidebarContentGap,
 } from './constants/navigation';
 import { ThemeContext } from './contexts/ThemeContext';
+import { DocumentTitleProvider } from './contexts/DocumentTitleContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { WorkbenchModalsProvider } from './contexts/WorkbenchModalsContext';
 import { CatalogPreferencesProvider } from './contexts/CatalogPreferencesContext';
@@ -257,9 +258,11 @@ function App() {
 
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <AppContent />
-      </AuthProvider>
+      <DocumentTitleProvider>
+        <AuthProvider>
+          <AppContent />
+        </AuthProvider>
+      </DocumentTitleProvider>
     </BrowserRouter>
   );
 }

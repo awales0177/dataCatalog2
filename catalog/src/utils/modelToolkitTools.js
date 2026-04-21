@@ -1,4 +1,9 @@
-import { workbenchTechnologyPath, workbenchCanonicalRef, workbenchTechnologyCanonicalRef } from './toolkitWorkbench';
+import {
+  workbenchPath,
+  workbenchTechnologyPath,
+  workbenchCanonicalRef,
+  workbenchTechnologyCanonicalRef,
+} from './toolkitWorkbench';
 
 function isHttpUrl(s) {
   return typeof s === 'string' && /^https?:\/\//i.test(s.trim());
@@ -19,7 +24,13 @@ export function flattenToolkitTechnologyOptions(toolkits) {
       const techName = tech.name || technologyId;
       const doc = typeof tech.documentation === 'string' ? tech.documentation.trim() : '';
       const gh = typeof tech.githubRepo === 'string' ? tech.githubRepo.trim() : '';
-      const url = isHttpUrl(doc) ? doc : isHttpUrl(gh) ? gh : workbenchTechnologyPath(toolkitId, technologyId);
+      const url = isHttpUrl(doc)
+        ? doc
+        : isHttpUrl(gh)
+          ? gh
+          : tk.multipleTechnologies === false
+            ? workbenchPath(toolkitId)
+            : workbenchTechnologyPath(toolkitId, technologyId);
       out.push({
         label: `${toolkitName} — ${techName}`,
         toolkitId,

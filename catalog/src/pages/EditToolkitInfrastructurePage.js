@@ -29,6 +29,7 @@ import {
 } from '@mui/icons-material';
 import { ThemeContext } from '../contexts/ThemeContext';
 import { fetchData, createToolkitComponent, updateToolkitComponent, deleteToolkitComponent } from '../services/api';
+import { useSyncDocumentTitle } from '../contexts/DocumentTitleContext';
 
 const EditToolkitInfrastructurePage = () => {
   const { currentTheme } = useContext(ThemeContext);
@@ -46,6 +47,8 @@ const EditToolkitInfrastructurePage = () => {
   const [newExample, setNewExample] = useState('');
 
   const isNewInfrastructure = !infrastructureId || infrastructureId === 'new';
+
+  useSyncDocumentTitle(editedInfrastructure?.name);
 
   useEffect(() => {
     const loadInfrastructureData = async () => {

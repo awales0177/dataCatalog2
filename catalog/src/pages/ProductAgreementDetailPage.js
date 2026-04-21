@@ -68,6 +68,7 @@ import { agreementFieldsConfig } from '../config/agreementFields';
 import FieldInfoIcon from '../components/FieldInfoIcon';
 import { ThemeContext } from '../contexts/ThemeContext';
 import { detailPageHeaderEditIconMt } from '../constants/navigation';
+import { useSyncDocumentTitle } from '../contexts/DocumentTitleContext';
 
 const ProductAgreementDetailPage = () => {
   const { currentTheme } = React.useContext(ThemeContext);
@@ -78,6 +79,8 @@ const ProductAgreementDetailPage = () => {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState(null);
   const [dataPolicies, setDataPolicies] = React.useState([]);
+
+  useSyncDocumentTitle(agreement?.name);
 
   // Get chips showing consumers or producers based on owner role
   const getRoleChips = () => {

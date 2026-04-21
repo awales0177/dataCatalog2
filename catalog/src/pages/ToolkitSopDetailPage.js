@@ -12,6 +12,7 @@ import {
 import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ThemeContext } from '../contexts/ThemeContext';
+import { useSyncDocumentTitle } from '../contexts/DocumentTitleContext';
 import { fetchData } from '../services/api';
 
 /**
@@ -24,6 +25,8 @@ const ToolkitSopDetailPage = () => {
   const [sop, setSop] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  useSyncDocumentTitle(sop?.title || sop?.name);
 
   useEffect(() => {
     const load = async () => {

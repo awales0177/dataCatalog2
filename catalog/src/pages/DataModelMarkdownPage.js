@@ -6,6 +6,7 @@ import { fetchData, updateModel } from '../services/api';
 import { normalizeModelMarkdowns } from '../utils/modelMarkdowns';
 import { findCatalogModel, modelApiRef } from '../utils/catalogModelLookup';
 import MarkdownEditorScreen from '../components/MarkdownEditorScreen';
+import { useSyncDocumentTitle } from '../contexts/DocumentTitleContext';
 
 const DataModelMarkdownPage = () => {
   const { modelId: modelIdParam, tabId: tabIdParam } = useParams();
@@ -22,6 +23,12 @@ const DataModelMarkdownPage = () => {
 
   const routeModelKey = modelIdParam ? decodeURIComponent(modelIdParam) : '';
   const tabId = tabIdParam ? decodeURIComponent(tabIdParam) : '';
+
+  const docTitle =
+    model?.name && tabMeta?.title
+      ? `${model.name} (${tabMeta.title})`
+      : model?.name;
+  useSyncDocumentTitle(docTitle);
 
   useEffect(() => {
     const load = async () => {

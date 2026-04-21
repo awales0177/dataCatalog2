@@ -29,6 +29,7 @@ import {
 } from '@mui/icons-material';
 import { ThemeContext } from '../contexts/ThemeContext';
 import { fetchData, createToolkitComponent, updateToolkitComponent, deleteToolkitComponent } from '../services/api';
+import { useSyncDocumentTitle } from '../contexts/DocumentTitleContext';
 
 const EditToolkitContainerPage = () => {
   const { currentTheme } = useContext(ThemeContext);
@@ -46,6 +47,8 @@ const EditToolkitContainerPage = () => {
   const [newExample, setNewExample] = useState('');
 
   const isNewContainer = !containerId || containerId === 'new';
+
+  useSyncDocumentTitle(editedContainer?.name);
 
   useEffect(() => {
     const loadContainerData = async () => {

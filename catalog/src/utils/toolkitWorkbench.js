@@ -35,8 +35,29 @@ export function workbenchTechnologyPath(toolkitId, technologyId) {
   return `${base(toolkitId)}/technology/${encodeURIComponent(String(technologyId))}`;
 }
 
+/** Technology editor (name, description, rank). */
+export function workbenchTechnologyEditPath(toolkitId, technologyId) {
+  return `${workbenchTechnologyPath(toolkitId, technologyId)}/edit`;
+}
+
 export function workbenchTechnologyReadmePath(toolkitId, technologyId, readmeType) {
   return `${workbenchTechnologyPath(toolkitId, technologyId)}/readme/${encodeURIComponent(readmeType)}`;
+}
+
+/**
+ * Open a workbench at the first technology when one exists (stable deep link), else toolkit root.
+ * @param {object|string} toolkitOrId — full toolkit (preferred) or canonical id string
+ */
+export function workbenchEntryPath(toolkitOrId) {
+  const isObj = toolkitOrId && typeof toolkitOrId === 'object' && !Array.isArray(toolkitOrId);
+  const tk = isObj ? toolkitOrId : null;
+  const ref = tk ? workbenchCanonicalRef(tk) : workbenchCanonicalRef({ id: toolkitOrId });
+  if (!ref) return '/toolkit';
+  const techs = tk?.technologies || [];
+  if (techs.length === 0) return workbenchPath(ref);
+  if (tk.multipleTechnologies === false) return workbenchPath(ref);
+  const sorted = [...techs].sort((a, b) => (a.rank ?? 0) - (b.rank ?? 0));
+  return workbenchTechnologyPath(ref, workbenchTechnologyCanonicalRef(sorted[0]));
 }
 
 /** Match hub by uuid, primary id, or legacy itemId / item_id slug (for bookmarks). */

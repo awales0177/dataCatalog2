@@ -55,6 +55,7 @@ import {
 } from '../utils/modelToolCardImage';
 import { findCatalogModel, modelApiRef } from '../utils/catalogModelLookup';
 import { ThemeContext } from '../contexts/ThemeContext';
+import { useSyncDocumentTitle } from '../contexts/DocumentTitleContext';
 import { detailPageHeaderEditIconMt } from '../constants/navigation';
 
 /** Short line for tool cards (hostname or path, truncated). */
@@ -161,6 +162,8 @@ const DataModelDetailPage = () => {
   const [rulesListLoading, setRulesListLoading] = React.useState(false);
   const [docTabIndex, setDocTabIndex] = React.useState(0);
   const [toolkitCatalogForTools, setToolkitCatalogForTools] = React.useState([]);
+
+  useSyncDocumentTitle(model?.name);
 
   React.useEffect(() => {
     let cancelled = false;

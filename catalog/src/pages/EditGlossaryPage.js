@@ -24,6 +24,7 @@ import { ThemeContext } from '../contexts/ThemeContext';
 import { fetchData, createGlossaryTerm, updateGlossaryTerm, deleteGlossaryTerm } from '../services/api';
 import { findGlossaryTerm, glossaryTermApiRef } from '../utils/catalogModelLookup';
 import DeleteModal from '../components/DeleteModal';
+import { useSyncDocumentTitle } from '../contexts/DocumentTitleContext';
 
 const EditGlossaryPage = () => {
   const { id } = useParams();
@@ -41,6 +42,8 @@ const EditGlossaryPage = () => {
   const [modelsLoading, setModelsLoading] = useState(true);
 
   const isNewTerm = !id || id === 'create';
+
+  useSyncDocumentTitle(editedTerm?.term);
 
   useEffect(() => {
     const loadTerm = async () => {

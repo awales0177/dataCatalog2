@@ -28,7 +28,7 @@ import { fetchData } from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { normalizeTechnologyStatus } from '../utils/toolkitStatus';
-import { workbenchPath, workbenchCanonicalRef } from '../utils/toolkitWorkbench';
+import { workbenchEntryPath } from '../utils/toolkitWorkbench';
 
 const EMPTY_TOOLKIT_SLICE = [];
 
@@ -221,7 +221,7 @@ const ToolkitPage = () => {
   );
 
   const renderToolkitCard = (toolkit) => {
-    const handleCardClick = () => navigate(workbenchPath(workbenchCanonicalRef(toolkit)));
+    const handleCardClick = () => navigate(workbenchEntryPath(toolkit));
     const statusKeys = toolkitCardStatusChips(toolkit);
 
     return (

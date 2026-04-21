@@ -27,6 +27,7 @@ import {
   Edit as EditIcon,
 } from '@mui/icons-material';
 import { ThemeContext } from '../contexts/ThemeContext';
+import { useSyncDocumentTitle } from '../contexts/DocumentTitleContext';
 import { detailPageHeaderEditIconMt } from '../constants/navigation';
 import FieldInfoIcon from '../components/FieldInfoIcon';
 import { fetchData } from '../services/api';
@@ -40,6 +41,8 @@ const ToolkitFunctionDetailPage = () => {
   const [functionData, setFunctionData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  useSyncDocumentTitle(functionData?.displayName || functionData?.name);
 
   useEffect(() => {
     const loadFunctionData = async () => {

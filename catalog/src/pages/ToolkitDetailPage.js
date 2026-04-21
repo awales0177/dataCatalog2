@@ -35,6 +35,7 @@ import {
   OpenInNew as OpenInNewIcon,
 } from '@mui/icons-material';
 import { ThemeContext } from '../contexts/ThemeContext';
+import { useSyncDocumentTitle } from '../contexts/DocumentTitleContext';
 import { detailPageHeaderEditIconMt } from '../constants/navigation';
 import { fetchData, updateToolkitComponent } from '../services/api';
 import {
@@ -46,9 +47,13 @@ import {
 } from '../utils/toolkitDbPayload';
 import {
   findWorkbenchToolkit,
+  findWorkbenchTechnology,
   workbenchPath,
   workbenchEditPath,
+  workbenchTechnologyPath,
   workbenchTechnologyReadmePath,
+  workbenchTechnologyCanonicalRef,
+  workbenchEntryPath,
 } from '../utils/toolkitWorkbench';
 import { useAuth } from '../contexts/AuthContext';
 import ReactMarkdown from 'react-markdown';
@@ -66,7 +71,7 @@ import FieldInfoIcon from '../components/FieldInfoIcon';
 
 const ToolkitDetailPage = () => {
   const { currentTheme, darkMode } = useContext(ThemeContext);
-  const { toolkitId } = useParams();
+  const { toolkitId, technologyId: technologyIdParam } = useParams();
   const navigate = useNavigate();
   const { canEdit } = useAuth();
   const [toolkitData, setToolkitData] = useState(null);
@@ -91,6 +96,19 @@ const ToolkitDetailPage = () => {
   );
   const readmeTabList = readmeTabs.markdownTabs;
   const readmeTabSlots = readmeTabs.slots;
+
+  const detailDocumentTitle = useMemo(() => {
+    if (!toolkitData) return null;
+    const toolkitName = toolkitData.displayName || toolkitData.name;
+    const multiTech = toolkitData.multipleTechnologies !== false;
+    if (multiTech && selectedTech) {
+      const techName = selectedTech.name != null ? String(selectedTech.name).trim() : '';
+      if (techName) return techName;
+    }
+    return toolkitName || null;
+  }, [toolkitData, selectedTech]);
+
+  useSyncDocumentTitle(detailDocumentTitle);
 
   useEffect(() => {
     if (!selectedTech) return;
@@ -331,7 +349,13 @@ const ToolkitDetailPage = () => {
         const toolkits = data.toolkit?.toolkits || [];
         const resolved = findWorkbenchToolkit(toolkits, toolkitId);
         if (resolved && resolved.canonicalId !== String(toolkitId)) {
-          navigate(workbenchPath(resolved.canonicalId), { replace: true });
+          const tkCan = resolved.canonicalId;
+          const multiTech = resolved.toolkit?.multipleTechnologies !== false;
+          if (multiTech && technologyIdParam && technologyIdParam !== 'create') {
+            navigate(workbenchTechnologyPath(tkCan, technologyIdParam), { replace: true });
+          } else {
+            navigate(workbenchPath(tkCan), { replace: true });
+          }
           return;
         }
         const foundToolkit = resolved?.toolkit ?? null;
@@ -360,10 +384,7 @@ const ToolkitDetailPage = () => {
             }))
             .sort((a, b) => a.rank - b.rank);
           setTechnologies(sortedTechs);
-          if (sortedTechs.length > 0) {
-            setSelectedTech(sortedTechs[0]);
-            setReadmeTab(0);
-          }
+          setSelectedTech(null);
           const initialReactions = {};
           sortedTechs.forEach((tech) => {
             initialReactions[tech.id] = {
@@ -387,7 +408,71 @@ const ToolkitDetailPage = () => {
     if (toolkitId) {
       loadToolkitData();
     }
-  }, [toolkitId, navigate]);
+  }, [toolkitId, technologyIdParam, navigate]);
+
+  useEffect(() => {
+    if (loading || error || !toolkitData || canonicalToolkitId == null) return;
+
+    const tkCan = canonicalToolkitId;
+    const list = technologies;
+    const singleTechWorkbench = toolkitData.multipleTechnologies === false;
+
+    if (singleTechWorkbench) {
+      if (technologyIdParam) {
+        navigate(workbenchPath(tkCan), { replace: true });
+        return;
+      }
+      if (list.length > 0) {
+        const first = [...list].sort((a, b) => a.rank - b.rank)[0];
+        setSelectedTech(first);
+        setReadmeTab(0);
+      } else {
+        setSelectedTech(null);
+      }
+      return;
+    }
+
+    if (technologyIdParam) {
+      const res = findWorkbenchTechnology(toolkitData, technologyIdParam);
+      if (res?.technology) {
+        const { canonicalId } = res;
+        const normalized = list.find(
+          (t) =>
+            workbenchTechnologyCanonicalRef(t) === String(canonicalId) ||
+            String(t.id) === String(res.technology.id),
+        );
+        if (normalized) {
+          setSelectedTech(normalized);
+          setReadmeTab(0);
+          if (String(canonicalId) !== String(technologyIdParam)) {
+            navigate(workbenchTechnologyPath(tkCan, canonicalId), { replace: true });
+          }
+        } else {
+          navigate(workbenchEntryPath(toolkitData), { replace: true });
+        }
+      } else {
+        navigate(workbenchEntryPath(toolkitData), { replace: true });
+      }
+      return;
+    }
+
+    if (list.length > 0) {
+      const first = [...list].sort((a, b) => a.rank - b.rank)[0];
+      navigate(workbenchTechnologyPath(tkCan, workbenchTechnologyCanonicalRef(first)), {
+        replace: true,
+      });
+    } else {
+      setSelectedTech(null);
+    }
+  }, [
+    loading,
+    error,
+    toolkitData,
+    technologies,
+    technologyIdParam,
+    canonicalToolkitId,
+    navigate,
+  ]);
 
   const isEvaluatedTech = (tech) =>
     normalizeTechnologyStatus(tech?.status) === 'evaluated';
@@ -776,19 +861,30 @@ const ToolkitDetailPage = () => {
                       <ListItem
                         button
                         onClick={() => {
-                          setSelectedTech(tech);
-                                    setReadmeTab(0);
+                          navigate(
+                            workbenchTechnologyPath(
+                              canonicalToolkitId || toolkitId,
+                              workbenchTechnologyCanonicalRef(tech),
+                            ),
+                          );
                         }}
-                        selected={selectedTech?.id === tech.id}
+                        selected={
+                          workbenchTechnologyCanonicalRef(selectedTech) ===
+                          workbenchTechnologyCanonicalRef(tech)
+                        }
                         sx={{
                           borderRadius: 2,
                           mb: 0.5,
-                          bgcolor: selectedTech?.id === tech.id 
-                            ? alpha(currentTheme.primary, 0.1) 
-                            : 'transparent',
-                          border: selectedTech?.id === tech.id 
-                            ? `1px solid ${currentTheme.primary}` 
-                            : `1px solid transparent`,
+                          bgcolor:
+                            workbenchTechnologyCanonicalRef(selectedTech) ===
+                            workbenchTechnologyCanonicalRef(tech)
+                              ? alpha(currentTheme.primary, 0.1)
+                              : 'transparent',
+                          border:
+                            workbenchTechnologyCanonicalRef(selectedTech) ===
+                            workbenchTechnologyCanonicalRef(tech)
+                              ? `1px solid ${currentTheme.primary}`
+                              : `1px solid transparent`,
                           '&:hover': {
                             bgcolor: alpha(currentTheme.primary, 0.05),
                             border: `1px solid ${alpha(currentTheme.primary, 0.3)}`,
@@ -1416,7 +1512,7 @@ const ToolkitDetailPage = () => {
                             navigate(
                               workbenchTechnologyReadmePath(
                                 canonicalToolkitId || toolkitId,
-                                selectedTech.id,
+                                workbenchTechnologyCanonicalRef(selectedTech),
                                 readmeType,
                               ),
                             );

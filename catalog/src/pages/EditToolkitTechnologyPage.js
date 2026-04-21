@@ -26,9 +26,11 @@ import {
   workbenchCanonicalRef,
   workbenchTechnologyCanonicalRef,
   workbenchTechnologyPath,
+  workbenchTechnologyEditPath,
   workbenchTechnologyCreatePath,
 } from '../utils/toolkitWorkbench';
 import { newUuid7String } from '../utils/catalogUuid7';
+import { useSyncDocumentTitle } from '../contexts/DocumentTitleContext';
 
 const EditToolkitTechnologyPage = () => {
   const { toolkitId, technologyId } = useParams();
@@ -45,6 +47,8 @@ const EditToolkitTechnologyPage = () => {
   const [canonicalToolkitId, setCanonicalToolkitId] = useState(null);
 
   const isNewTech = !technologyId || technologyId === 'create';
+
+  useSyncDocumentTitle(editedTech?.name);
 
   useEffect(() => {
     if (!canEdit()) {
@@ -77,7 +81,7 @@ const EditToolkitTechnologyPage = () => {
           }
           const resTech = findWorkbenchTechnology(foundToolkit, technologyId);
           if (resTech) {
-            navigate(workbenchTechnologyPath(tkCan, resTech.canonicalId), { replace: true });
+            navigate(workbenchTechnologyEditPath(tkCan, resTech.canonicalId), { replace: true });
             return;
           }
         }
@@ -103,7 +107,7 @@ const EditToolkitTechnologyPage = () => {
           const tech = resTech.technology;
           const techCan = resTech.canonicalId;
           if (String(technologyId) !== String(techCan)) {
-            navigate(workbenchTechnologyPath(tkCan, techCan), { replace: true });
+            navigate(workbenchTechnologyEditPath(tkCan, techCan), { replace: true });
             return;
           }
 
@@ -172,7 +176,10 @@ const EditToolkitTechnologyPage = () => {
       setOriginalTech({ ...editedTech });
 
       setTimeout(() => {
-        navigate(workbenchPath(tkRef));
+        const hubOnly = toolkitData?.multipleTechnologies === false;
+        navigate(
+          isNewTech || hubOnly ? workbenchPath(tkRef) : workbenchTechnologyPath(tkRef, techRef),
+        );
       }, 500);
     } catch (error) {
       console.error('Error saving technology:', error);
@@ -183,7 +190,12 @@ const EditToolkitTechnologyPage = () => {
 
   const handleCancel = () => {
     const tkRef = canonicalToolkitId || toolkitId;
-    navigate(workbenchPath(tkRef));
+    if (isNewTech || toolkitData?.multipleTechnologies === false) {
+      navigate(workbenchPath(tkRef));
+      return;
+    }
+    const techRef = workbenchTechnologyCanonicalRef(editedTech);
+    navigate(techRef ? workbenchTechnologyPath(tkRef, techRef) : workbenchPath(tkRef));
   };
 
   if (loading) {

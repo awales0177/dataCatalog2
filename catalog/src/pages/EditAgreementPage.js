@@ -44,6 +44,7 @@ import ChangelogEditor from '../components/ChangelogEditor';
 import TeamSelector from '../components/TeamSelector';
 import ModelSelector from '../components/ModelSelector';
 import { agreementFieldsConfig } from '../config/agreementFields';
+import { useSyncDocumentTitle } from '../contexts/DocumentTitleContext';
 
 const EditAgreementPage = () => {
   const { currentTheme } = useContext(ThemeContext);
@@ -90,6 +91,8 @@ const EditAgreementPage = () => {
   // Data models state
   const [dataModels, setDataModels] = useState([]);
   const [modelsLoading, setModelsLoading] = useState(true);
+
+  useSyncDocumentTitle(editedAgreement?.name);
 
   const hasChanges = useCallback(() => {
     if (!agreement || !editedAgreement) return false;

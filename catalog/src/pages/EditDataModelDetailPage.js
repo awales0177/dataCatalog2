@@ -56,6 +56,7 @@ import {
 } from '../utils/modelToolkitTools';
 import { findCatalogModel, modelApiRef } from '../utils/catalogModelLookup';
 import { ThemeContext } from '../contexts/ThemeContext';
+import { useSyncDocumentTitle } from '../contexts/DocumentTitleContext';
 
 const EditDataModelDetailPage = () => {
   const { currentTheme } = useContext(ThemeContext);
@@ -91,6 +92,8 @@ const EditDataModelDetailPage = () => {
   const [toolkitCatalogLoading, setToolkitCatalogLoading] = useState(true);
   const [toolkitToolPickerOpen, setToolkitToolPickerOpen] = useState(false);
   const [toolkitToolSearch, setToolkitToolSearch] = useState('');
+
+  useSyncDocumentTitle(editedModel?.name || model?.name);
 
   // Simple back function that goes back one level in the URL path
   const goToViewMode = () => {

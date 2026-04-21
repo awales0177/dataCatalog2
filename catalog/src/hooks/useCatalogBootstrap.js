@@ -8,7 +8,7 @@ import {
   fetchModels,
 } from '../services/api';
 import { menuItems } from '../constants/navigation';
-import { WORKBENCH_PATHS, isWorkbenchPath } from '../constants/workbenchPaths';
+import { isWorkbenchPath } from '../constants/workbenchPaths';
 
 /** Theme/menu loading, nav counts, models list, analytics hooks — no drawer/theme-toggle UI state. */
 export function useCatalogBootstrap() {
@@ -47,55 +47,6 @@ export function useCatalogBootstrap() {
     if (isWorkbenchPath(path)) return 'workbench';
     return 'other';
   };
-
-  useEffect(() => {
-    const path = location.pathname;
-    let title = 'DH-TEST';
-
-    if (path === '/') {
-      title = 'Home';
-    } else if (path === '/workspaces') {
-      title = 'Workspaces';
-    } else if (path === '/models') {
-      title = 'Data Models';
-    } else if (path === '/agreements') {
-      title = 'Product Agreements';
-    } else if (path === '/domains') {
-      title = 'Data Domains';
-    } else if (path === '/applications') {
-      title = 'Data Teams';
-    } else if (path === '/toolkit') {
-      title = 'Toolkit';
-    } else if (path.startsWith('/toolkit/function/')) {
-      title = 'Function Details';
-    } else if (path === '/standards') {
-      title = 'Data Standards';
-    } else if (path.startsWith('/standards/')) {
-      title = 'Data Standard';
-    } else if (path === '/settings') {
-      title = 'Settings';
-    } else if (path === '/rules') {
-      title = 'Data Quality Rules';
-    } else if (path.startsWith('/models/')) {
-      const seg = path.split('/')[2] || '';
-      const decoded = decodeURIComponent(seg);
-      title = /^[0-9a-f]{8}-[0-9a-f]{4}-/i.test(decoded) ? 'Data model' : decoded.toUpperCase();
-    } else if (path.startsWith('/agreements/')) {
-      title = 'Product Agreement Details';
-    } else if (path === WORKBENCH_PATHS.query) {
-      title = 'Query workbench';
-    } else if (path === WORKBENCH_PATHS.modeling) {
-      title = 'Data modeling';
-    } else if (path === WORKBENCH_PATHS.studio) {
-      title = 'Modeling studio';
-    } else if (path === WORKBENCH_PATHS.ruleBuilder) {
-      title = 'Rule builder';
-    } else if (path === WORKBENCH_PATHS.referenceData) {
-      title = 'Reference data hub';
-    }
-
-    document.title = title;
-  }, [location.pathname]);
 
   useEffect(() => {
     const siteVisitKey = 'site_visit_tracked';

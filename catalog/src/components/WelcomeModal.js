@@ -9,11 +9,11 @@ import {
   Box,
 } from '@mui/material';
 
-const SESSION_KEY = 'dh_welcome_modal_seen';
+const STORAGE_KEY = 'dh_welcome_modal_seen';
 
 export function shouldShowWelcomeModal() {
   try {
-    return !sessionStorage.getItem(SESSION_KEY);
+    return !localStorage.getItem(STORAGE_KEY);
   } catch {
     return true;
   }
@@ -21,14 +21,15 @@ export function shouldShowWelcomeModal() {
 
 export function markWelcomeModalSeen() {
   try {
-    sessionStorage.setItem(SESSION_KEY, '1');
+    localStorage.setItem(STORAGE_KEY, '1');
   } catch {
     /* ignore */
   }
 }
 
 /**
- * First-visit-in-session welcome; call only after app shell (theme) is ready.
+ * First-visit welcome (once per browser profile); persisted in localStorage.
+ * Call only after app shell (theme) is ready.
  */
 const WelcomeModal = ({ open, onClose, theme }) => {
   const handleClose = () => {

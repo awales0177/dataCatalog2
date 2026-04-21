@@ -25,6 +25,7 @@ import {
   Delete as DeleteIcon,
 } from '@mui/icons-material';
 import { ThemeContext } from '../contexts/ThemeContext';
+import { useSyncDocumentTitle } from '../contexts/DocumentTitleContext';
 import { fetchData, createDataPolicy, updateDataPolicy, deleteDataPolicy } from '../services/api';
 import { findDataPolicy, dataPolicyApiRef } from '../utils/catalogModelLookup';
 import DeleteModal from '../components/DeleteModal';
@@ -51,6 +52,8 @@ const EditDataPolicyPage = () => {
     { value: 'review', label: 'Under Review', color: '#37ABBF' },
     { value: 'expired', label: 'Expired', color: '#f44336' }
   ];
+
+  useSyncDocumentTitle(editedPolicy?.name);
 
   useEffect(() => {
     const loadPolicy = async () => {

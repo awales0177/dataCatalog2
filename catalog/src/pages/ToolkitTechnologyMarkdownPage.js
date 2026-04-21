@@ -10,6 +10,7 @@ import {
   workbenchTechnologyPath,
 } from '../utils/toolkitWorkbench';
 import MarkdownEditorScreen from '../components/MarkdownEditorScreen';
+import { useSyncDocumentTitle } from '../contexts/DocumentTitleContext';
 
 const ToolkitTechnologyMarkdownPage = () => {
   const { toolkitId, technologyId, readmeType } = useParams();
@@ -24,6 +25,12 @@ const ToolkitTechnologyMarkdownPage = () => {
   const [showPreview, setShowPreview] = useState(false);
   const [canonicalTkId, setCanonicalTkId] = useState(null);
   const [canonicalTechId, setCanonicalTechId] = useState(null);
+
+  const techReadmeTitle =
+    technology?.name && readmeType
+      ? `${technology.name} (${decodeURIComponent(readmeType || '')})`
+      : technology?.name;
+  useSyncDocumentTitle(techReadmeTitle);
 
   useEffect(() => {
     const loadTechnology = async () => {
