@@ -13,6 +13,7 @@ import {
 import { useTheme } from '@mui/material/styles';
 import { Close as CloseIcon } from '@mui/icons-material';
 import { ThemeContext } from '../../contexts/ThemeContext';
+import { getHomeCarouselDisable } from '../../utils/disableConfig';
 import { fetchModels, fetchCatalogDatasets } from '../../services/api';
 import QueryExplorerTree from './QueryExplorerTree';
 import QueryEngine from './QueryEngine';
@@ -20,14 +21,11 @@ import QueryEngine from './QueryEngine';
 const QueryModal = ({
   open,
   onClose,
-  currentTheme,
-  darkMode,
   splitMode = false,
   onOpenModeling,
   modelingOpen = false,
 }) => {
-  const { currentTheme: contextTheme } = useContext(ThemeContext);
-  const theme = currentTheme || contextTheme;
+  const { currentTheme: theme, darkMode } = useContext(ThemeContext);
   const muiTheme = useTheme();
   const isMdUp = useMediaQuery(muiTheme.breakpoints.up('md'));
   const isSplit = Boolean(splitMode) && isMdUp;
@@ -128,7 +126,10 @@ const QueryModal = ({
             <Box component="img" src="/trino.png" alt="Trino" sx={{ height: 48, width: 'auto' }} />
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexShrink: 0 }}>
-            {onOpenModeling && !modelingOpen && (
+            {onOpenModeling &&
+              !modelingOpen &&
+              !getHomeCarouselDisable('studio').disabled &&
+              !getHomeCarouselDisable('modeling').disabled && (
               <Tooltip title="Open Data modeling side-by-side on wide screens">
                 <Button
                   size="small"
@@ -188,16 +189,12 @@ const QueryModal = ({
               loading={loading}
               onSelectTable={setSelectedContext}
               selectedTableKey={selectedContext ? `${selectedContext.domainName}-${selectedContext.dbName}-${selectedContext.table?.id}` : null}
-              currentTheme={theme}
-              darkMode={darkMode}
             />
           </Paper>
           <Box sx={{ flex: 1, overflow: 'auto', p: 2, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
             {selectedContext?.table?.id && selectedContext.table.id !== '_placeholder' ? (
               <QueryEngine
                 selectedContext={selectedContext}
-                currentTheme={theme}
-                darkMode={darkMode}
               />
             ) : (
               <Box

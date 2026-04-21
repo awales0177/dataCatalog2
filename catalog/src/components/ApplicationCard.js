@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useContext } from 'react';
+import { ThemeContext } from '../contexts/ThemeContext';
 import {
   Card,
   CardContent,
@@ -20,7 +21,8 @@ import {
   Settings as SettingsIcon,
   Groups as GroupsIcon,
 } from '@mui/icons-material';
-const ApplicationCard = ({ application, currentTheme, onEdit }) => {
+const ApplicationCard = ({ application, onEdit }) => {
+  const { currentTheme } = useContext(ThemeContext);
   // Handle link out functionality
   const handleLinkOut = (e) => {
     e.stopPropagation(); // Prevent card click

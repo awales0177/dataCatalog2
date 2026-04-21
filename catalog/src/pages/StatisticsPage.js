@@ -8,7 +8,6 @@ import {
   Grid,
   CircularProgress,
   Alert,
-  alpha,
 } from '@mui/material';
 import {
   BarChart,
@@ -23,7 +22,7 @@ import {
   Line,
 } from 'recharts';
 import { ThemeContext } from '../contexts/ThemeContext';
-import { fetchStatistics, trackPageView } from '../services/api';
+import { fetchStatistics } from '../services/api';
 
 const StatisticsPage = () => {
   const { currentTheme } = useContext(ThemeContext);

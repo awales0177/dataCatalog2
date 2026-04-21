@@ -19,7 +19,6 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Alert,
   Tooltip,
 } from '@mui/material';
 import {
@@ -34,12 +33,10 @@ import {
 } from '@mui/icons-material';
 import { ThemeContext } from '../contexts/ThemeContext';
 import DeleteModal from '../components/DeleteModal';
-import { useAuth } from '../contexts/AuthContext';
 import { hashPassword } from '../utils/passwordUtils';
 
 const UserManagementPage = () => {
   const { currentTheme } = useContext(ThemeContext);
-  const { user: currentUser } = useAuth();
   const [users, setUsers] = useState([
     {
       username: 'user',

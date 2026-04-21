@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useContext } from 'react';
+import { ThemeContext } from '../contexts/ThemeContext';
 import {
   Box,
   Container,
@@ -44,8 +45,6 @@ const markdownCodeComponent = ({ inline, className, children, ...props }) => {
  * MarkdownEditorScreen, which wraps this component.
  */
 const MarkdownEditorLayout = ({
-  currentTheme,
-  darkMode,
   backButtonLabel,
   onBack,
   title,
@@ -68,6 +67,7 @@ const MarkdownEditorLayout = ({
   /** Optional content below subtitle (e.g. model edit link). */
   headerExtra,
 }) => {
+  const { currentTheme, darkMode } = useContext(ThemeContext);
   const themeForProse = { ...currentTheme, darkMode };
   const proseSx = modelMarkdownProseSx(themeForProse);
 

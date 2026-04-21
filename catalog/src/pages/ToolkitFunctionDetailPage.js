@@ -6,23 +6,12 @@ import {
   Paper,
   Chip,
   Grid,
-  Divider,
-  Link,
   alpha,
   Tooltip,
   CircularProgress,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
   IconButton,
   Button,
   Alert,
-  Card,
-  CardContent,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
 } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
@@ -33,13 +22,8 @@ import {
   Language as LanguageIcon,
   Person as PersonIcon,
   Schedule as ScheduleIcon,
-  Info as InfoIcon,
-  ExpandMore as ExpandMoreIcon,
   Visibility as VisibilityIcon,
-  Book as BookIcon,
-  Build as BuildIcon,
   CheckCircle as CheckCircleIcon,
-  List as ListIcon,
   Edit as EditIcon,
 } from '@mui/icons-material';
 import { ThemeContext } from '../contexts/ThemeContext';
@@ -69,7 +53,7 @@ const ToolkitFunctionDetailPage = () => {
         } else {
           setError('Function not found');
         }
-      } catch (err) {
+      } catch {
         setError('Failed to load function data');
 
       } finally {

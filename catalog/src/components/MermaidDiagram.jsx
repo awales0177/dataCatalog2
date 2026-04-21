@@ -1,76 +1,123 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import mermaid from 'mermaid';
+import { ThemeContext } from '../contexts/ThemeContext';
+
+/** Mermaid themeVariables work best with simple colors; divider strings can be rgba. */
+function buildMermaidInit(darkMode, theme) {
+  const primary = theme?.primary || '#37ABBF';
+  const bg = theme?.background || (darkMode ? '#121212' : '#f8f9fa');
+  const card = theme?.card || (darkMode ? '#1e1e1e' : '#ffffff');
+  const text = theme?.text || (darkMode ? '#e8e8ea' : '#2c3e50');
+  const textSecondary = theme?.textSecondary || (darkMode ? '#9d9da3' : '#7f8c8d');
+  const borderSolid = darkMode ? '#424242' : '#d0d7de';
+
+  const flowchart = {
+    useMaxWidth: true,
+    htmlLabels: true,
+  };
+
+  if (!darkMode) {
+    return {
+      startOnLoad: false,
+      securityLevel: 'loose',
+      theme: 'default',
+      themeVariables: {
+        primaryColor: primary,
+        primaryTextColor: '#fff',
+        primaryBorderColor: primary,
+        lineColor: primary,
+        secondaryColor: '#eef5f6',
+        tertiaryColor: card,
+        mainBkg: card,
+        textColor: text,
+        border1: borderSolid,
+        clusterBkg: '#e8f4f6',
+        edgeLabelBackground: card,
+        titleColor: text,
+        tertiaryTextColor: textSecondary,
+      },
+      flowchart,
+    };
+  }
+
+  return {
+    startOnLoad: false,
+    securityLevel: 'loose',
+    theme: 'dark',
+    themeVariables: {
+      darkMode: true,
+      background: bg,
+      mainBkg: card,
+      primaryColor: card,
+      primaryTextColor: text,
+      primaryBorderColor: primary,
+      lineColor: primary,
+      secondaryColor: bg,
+      secondaryTextColor: text,
+      tertiaryColor: card,
+      textColor: text,
+      tertiaryTextColor: textSecondary,
+      border1: borderSolid,
+      clusterBkg: '#1a2e32',
+      edgeLabelBackground: card,
+      titleColor: text,
+    },
+    flowchart,
+  };
+}
 
 const MermaidDiagram = ({ children, className }) => {
   const mermaidRef = useRef(null);
-  const [diagramId] = useState(() => `mermaid-${Math.random().toString(36).substr(2, 9)}`);
-  const [isInitialized, setIsInitialized] = useState(false);
+  const [diagramId] = useState(() => `mermaid-${Math.random().toString(36).slice(2, 11)}`);
+  const renderNonce = useRef(0);
+  const themeCtx = useContext(ThemeContext);
+  const darkMode = Boolean(themeCtx?.darkMode);
+  const currentTheme = themeCtx?.currentTheme;
 
-  // Initialize mermaid once
-  useEffect(() => {
-    if (!isInitialized) {
-      mermaid.initialize({
-        startOnLoad: false,
-        theme: 'default',
-        securityLevel: 'loose',
-        flowchart: {
-          useMaxWidth: true,
-          htmlLabels: true,
-        },
-        themeVariables: {
-          primaryColor: '#37ABBF',
-          primaryTextColor: '#fff',
-          primaryBorderColor: '#37ABBF',
-          lineColor: '#37ABBF',
-          secondaryColor: '#f4f4f4',
-          tertiaryColor: '#fff',
-        },
-      });
-      setIsInitialized(true);
-    }
-  }, [isInitialized]);
+  const initConfig = useMemo(
+    () => buildMermaidInit(darkMode, currentTheme),
+    [darkMode, currentTheme]
+  );
 
   useEffect(() => {
-    if (!mermaidRef.current || !children || !isInitialized) return;
+    const el = mermaidRef.current;
+    if (!el || !children) return;
     if (!className || !className.includes('language-mermaid')) return;
 
-    // Convert children to string (handle both string and array)
-    const mermaidCode = Array.isArray(children)
-      ? children.join('')
-      : String(children);
-    
+    const mermaidCode = Array.isArray(children) ? children.join('') : String(children);
     const trimmedCode = mermaidCode.trim();
-    
     if (!trimmedCode) return;
 
-    // Clear previous content
-    mermaidRef.current.innerHTML = '';
+    const renderId = `${diagramId}-${++renderNonce.current}`;
+    let cancelled = false;
 
-    // Render the mermaid diagram
+    mermaid.initialize(initConfig);
+
     mermaid
-      .render(diagramId, trimmedCode)
+      .render(renderId, trimmedCode, el)
       .then((result) => {
-        if (mermaidRef.current) {
-          mermaidRef.current.innerHTML = result.svg;
-          // Make SVG responsive
-          const svg = mermaidRef.current.querySelector('svg');
-          if (svg) {
-            svg.style.maxWidth = '100%';
-            svg.style.height = 'auto';
-            svg.style.display = 'block';
-            svg.style.margin = '0 auto';
-          }
+        if (cancelled || !mermaidRef.current) return;
+        mermaidRef.current.innerHTML = result.svg;
+        const svg = mermaidRef.current.querySelector('svg');
+        if (svg) {
+          svg.style.maxWidth = '100%';
+          svg.style.height = 'auto';
+          svg.style.display = 'block';
+          svg.style.margin = '0 auto';
         }
       })
       .catch((err) => {
         console.error('Mermaid rendering error:', err);
-        if (mermaidRef.current) {
-          mermaidRef.current.innerHTML = `<div style="color: #f44336; padding: 10px; border: 1px solid #f44336; border-radius: 4px; background: rgba(244, 67, 54, 0.1);">Error rendering Mermaid diagram: ${err.message}</div>`;
-        }
+        if (cancelled || !mermaidRef.current) return;
+        const msg = err?.message || String(err);
+        mermaidRef.current.innerHTML = `<div style="color: #f48fb1; padding: 10px; border: 1px solid rgba(244, 143, 177, 0.5); border-radius: 4px; background: rgba(244, 143, 177, 0.08);">Error rendering Mermaid diagram: ${msg}</div>`;
       });
-  }, [children, className, diagramId, isInitialized]);
 
-  // Only render if this is a mermaid code block
+    return () => {
+      cancelled = true;
+    };
+  }, [children, className, diagramId, initConfig]);
+
   if (!className || !className.includes('language-mermaid')) {
     return null;
   }

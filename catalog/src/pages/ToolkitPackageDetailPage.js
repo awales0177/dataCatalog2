@@ -7,7 +7,6 @@ import {
   Chip,
   Grid,
   alpha,
-  Tooltip,
   CircularProgress,
   IconButton,
   Button,
@@ -35,7 +34,7 @@ import { useAuth } from '../contexts/AuthContext';
 import DeleteModal from '../components/DeleteModal';
 
 const ToolkitPackageDetailPage = () => {
-  const { currentTheme, darkMode } = useContext(ThemeContext);
+  const { currentTheme } = useContext(ThemeContext);
   const { packageId } = useParams();
   const navigate = useNavigate();
   const { canEdit } = useAuth();
@@ -117,7 +116,7 @@ const ToolkitPackageDetailPage = () => {
         } else {
           setError('Package not found');
         }
-      } catch (err) {
+      } catch {
         setError('Failed to load package data');
       } finally {
         setLoading(false);
@@ -486,7 +485,6 @@ const ToolkitPackageDetailPage = () => {
         title="Delete Package"
         itemName={packageData?.name}
         itemType="package"
-        theme={currentTheme}
         isDeleting={deleting}
         confirmationText={packageData?._isInPackagesArray ? `delete ${packageData?.name}` : undefined}
       >

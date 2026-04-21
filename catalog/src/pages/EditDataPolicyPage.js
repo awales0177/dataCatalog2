@@ -16,7 +16,6 @@ import {
   Alert,
   CircularProgress,
   alpha,
-  InputAdornment,
   Chip,
   Autocomplete,
 } from '@mui/material';
@@ -24,7 +23,6 @@ import {
   Save as SaveIcon,
   ArrowBack as ArrowBackIcon,
   Delete as DeleteIcon,
-  Person as PersonIcon,
 } from '@mui/icons-material';
 import { ThemeContext } from '../contexts/ThemeContext';
 import { fetchData, createDataPolicy, updateDataPolicy, deleteDataPolicy } from '../services/api';
@@ -38,7 +36,7 @@ const EditDataPolicyPage = () => {
   const { currentTheme } = useContext(ThemeContext);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] = useState(false);
+  const [, setDeleting] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   
@@ -94,8 +92,7 @@ const EditDataPolicyPage = () => {
             navigate('/standards');
           }
         }
-      } catch (error) {
-
+      } catch {
         setSnackbar({ open: true, message: 'Error loading standard', severity: 'error' });
       } finally {
         setLoading(false);
@@ -133,8 +130,7 @@ const EditDataPolicyPage = () => {
         setSnackbar({ open: true, message: 'Standard updated successfully', severity: 'success' });
       }
       navigate('/standards');
-    } catch (error) {
-
+    } catch {
       setSnackbar({ open: true, message: 'Error saving standard', severity: 'error' });
     } finally {
       setSaving(false);
@@ -147,8 +143,7 @@ const EditDataPolicyPage = () => {
       await deleteDataPolicy(dataPolicyApiRef(editedPolicy));
       setSnackbar({ open: true, message: 'Standard deleted successfully', severity: 'success' });
       navigate('/standards');
-    } catch (error) {
-
+    } catch {
       setSnackbar({ open: true, message: 'Error deleting standard', severity: 'error' });
     } finally {
       setDeleting(false);
@@ -158,11 +153,6 @@ const EditDataPolicyPage = () => {
 
   const handleCancel = () => {
     navigate('/standards');
-  };
-
-  const getStatusColor = (status) => {
-    const statusObj = statuses.find(s => s.value === status);
-    return statusObj ? statusObj.color : '#9e9e9e';
   };
 
   if (loading) {
@@ -285,7 +275,6 @@ const EditDataPolicyPage = () => {
                 <TeamSelector
                   selectedTeams={editedPolicy?.owner || []}
                   onTeamsChange={(teams) => handleFieldChange('owner', teams)}
-                  currentTheme={currentTheme}
                   label="Standard owner"
                   maxSelections={1}
                   placeholder="No team selected"
@@ -433,7 +422,6 @@ const EditDataPolicyPage = () => {
         title="Delete data standard"
         itemName={editedPolicy?.name}
         itemType="data standard"
-        theme={currentTheme}
       >
         <Typography variant="body2" sx={{ color: currentTheme.textSecondary }}>
           This will permanently delete the standard. This action cannot be undone.

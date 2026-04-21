@@ -57,9 +57,8 @@ function generateSqlFromNaturalLanguage(question, fullTableName, columns) {
   return sql + ';';
 }
 
-const QueryEngine = ({ selectedContext, currentTheme, darkMode, minimal = false }) => {
-  const { currentTheme: contextTheme } = useContext(ThemeContext);
-  const theme = currentTheme || contextTheme;
+const QueryEngine = ({ selectedContext, minimal = false }) => {
+  const { currentTheme: theme, darkMode } = useContext(ThemeContext);
   const isLocked = selectedContext?.isLocked === true;
   const [sqlValue, setSqlValue] = useState('');
   const [running, setRunning] = useState(false);
@@ -138,7 +137,7 @@ const QueryEngine = ({ selectedContext, currentTheme, darkMode, minimal = false 
             handleNlClose();
             return;
           }
-        } catch (apiErr) {
+        } catch {
           // Fall back to client-side generation
         }
       }

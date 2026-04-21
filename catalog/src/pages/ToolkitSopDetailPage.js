@@ -36,7 +36,7 @@ const ToolkitSopDetailPage = () => {
         } else {
           setError('SOP not found');
         }
-      } catch (e) {
+      } catch {
         setError('Failed to load SOP');
       } finally {
         setLoading(false);

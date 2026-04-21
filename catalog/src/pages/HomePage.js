@@ -507,7 +507,7 @@ const HomePage = () => {
                 key={`${item.searchType}-${item.id}`}
                 item={item}
                 pinCatalog={pinCatalog}
-                currentTheme={currentTheme}
+                
                 onUnpin={handleUnpin}
                 onOpenPinned={openPinned}
                 canEditGlossary={canEditGlossary}

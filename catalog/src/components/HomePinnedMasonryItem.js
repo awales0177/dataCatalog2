@@ -1,4 +1,5 @@
-import React, { memo, useCallback } from 'react';
+import React, { memo, useCallback, useContext } from 'react';
+import { ThemeContext } from '../contexts/ThemeContext';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -48,12 +49,12 @@ function getTypeIcon(type) {
 function HomePinnedMasonryItem({
   item,
   pinCatalog,
-  currentTheme,
   onUnpin,
   onOpenPinned,
   canEditGlossary,
 }) {
   const navigate = useNavigate();
+  const { currentTheme } = useContext(ThemeContext);
 
   const handleUnpinClick = useCallback(
     (e) => {
@@ -101,7 +102,7 @@ function HomePinnedMasonryItem({
       staticList.find((m) => String(m.uuid || m.shortName || m.id) === String(item.id)) ||
       pinCatalog.apiModels.find((m) => entityMatchesPinId(m, item.id));
     if (model) {
-      return pinShell(<DataModelCard model={model} currentTheme={currentTheme} />);
+      return pinShell(<DataModelCard model={model} />);
     }
   }
 
@@ -111,7 +112,6 @@ function HomePinnedMasonryItem({
       return pinShell(
         <ProductAgreementCard
           agreement={agreement}
-          currentTheme={currentTheme}
           applications={pinCatalog.applications}
         />
       );
@@ -124,7 +124,7 @@ function HomePinnedMasonryItem({
     );
     if (domain) {
       return pinShell(
-        <DomainCard domain={domain} onClick={() => onOpenPinned(item)} currentTheme={currentTheme} />
+        <DomainCard domain={domain} onClick={() => onOpenPinned(item)} />
       );
     }
   }
@@ -138,7 +138,7 @@ function HomePinnedMasonryItem({
           : `/applications/edit/${encodeURIComponent(application.uuid || application.id)}`;
       return pinShell(
         <Box onClick={() => navigate(target)} sx={{ cursor: 'pointer' }}>
-          <ApplicationCard application={application} currentTheme={currentTheme} />
+          <ApplicationCard application={application} />
         </Box>
       );
     }
@@ -151,7 +151,6 @@ function HomePinnedMasonryItem({
         <Box onClick={() => onOpenPinned(item)} sx={{ cursor: 'pointer' }}>
           <DataPolicyCard
             policy={policy}
-            currentTheme={currentTheme}
             sx={{ height: 'auto', minHeight: 0 }}
           />
         </Box>
@@ -166,7 +165,6 @@ function HomePinnedMasonryItem({
         <Box onClick={() => onOpenPinned(item)} sx={{ cursor: 'pointer' }}>
           <GlossaryCard
             term={term}
-            currentTheme={currentTheme}
             dataModels={pinCatalog.apiModels}
             canEdit={canEditGlossary}
           />
@@ -182,7 +180,6 @@ function HomePinnedMasonryItem({
         <Box onClick={() => onOpenPinned(item)} sx={{ cursor: 'pointer' }}>
           <GlossaryCard
             term={lexiconTermForGlossaryCard(lex)}
-            currentTheme={currentTheme}
             dataModels={pinCatalog.apiModels}
             canEdit={false}
           />
@@ -194,7 +191,7 @@ function HomePinnedMasonryItem({
   if (item.searchType === 'toolkit') {
     const tkItem = findToolkitItemForPin(pinCatalog.toolkit, item);
     if (tkItem) {
-      return pinShell(<ToolkitPinnedCard pin={item} item={tkItem} currentTheme={currentTheme} />);
+      return pinShell(<ToolkitPinnedCard pin={item} item={tkItem} />);
     }
   }
 

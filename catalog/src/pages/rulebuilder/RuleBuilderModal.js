@@ -20,9 +20,8 @@ import { fetchModels } from '../../services/api';
 import ModelRuleBuilder from '../../components/ModelRuleBuilder';
 import { fontStackSans } from '../../theme/theme';
 
-const RuleBuilderModal = ({ open, onClose, currentTheme, darkMode }) => {
-  const { currentTheme: contextTheme } = useContext(ThemeContext);
-  const theme = currentTheme || contextTheme;
+const RuleBuilderModal = ({ open, onClose }) => {
+  const { currentTheme: theme, darkMode } = useContext(ThemeContext);
 
   const [models, setModels] = useState([]);
   const [selectedModel, setSelectedModel] = useState(null);

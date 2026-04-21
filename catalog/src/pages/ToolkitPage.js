@@ -30,6 +30,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { normalizeTechnologyStatus } from '../utils/toolkitStatus';
 import { workbenchPath, workbenchCanonicalRef } from '../utils/toolkitWorkbench';
 
+const EMPTY_TOOLKIT_SLICE = [];
+
 const TECH_STATUS_ORDER = ['production', 'development', 'evaluated'];
 
 function toolkitCardStatusChips(toolkit) {
@@ -108,7 +110,7 @@ const ToolkitPage = () => {
           .map((key) => {
             try {
               return JSON.parse(localStorage.getItem(key));
-            } catch (e) {
+            } catch {
               return null;
             }
           })
@@ -132,7 +134,7 @@ const ToolkitPage = () => {
             toolkits: mergedToolkits,
           },
         });
-      } catch (err) {
+      } catch {
         setError('Failed to load toolkit data');
       } finally {
         setLoading(false);
@@ -142,9 +144,18 @@ const ToolkitPage = () => {
     loadData();
   }, []);
 
-  const toolkits = toolkitData?.toolkit?.toolkits || [];
-  const packages = toolkitData?.toolkit?.packages || [];
-  const containers = toolkitData?.toolkit?.containers || [];
+  const toolkits = useMemo(
+    () => toolkitData?.toolkit?.toolkits ?? EMPTY_TOOLKIT_SLICE,
+    [toolkitData]
+  );
+  const packages = useMemo(
+    () => toolkitData?.toolkit?.packages ?? EMPTY_TOOLKIT_SLICE,
+    [toolkitData]
+  );
+  const containers = useMemo(
+    () => toolkitData?.toolkit?.containers ?? EMPTY_TOOLKIT_SLICE,
+    [toolkitData]
+  );
 
   const searchLower = searchTerm.trim().toLowerCase();
 

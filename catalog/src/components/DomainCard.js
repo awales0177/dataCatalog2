@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useContext } from 'react';
+import { ThemeContext } from '../contexts/ThemeContext';
 import {
   Box,
   Paper,
@@ -31,7 +32,8 @@ import {
   Apartment as PropertyIcon,
 } from '@mui/icons-material';
 
-const DomainCard = ({ domain, onClick, currentTheme }) => {
+const DomainCard = ({ domain, onClick }) => {
+  const { currentTheme } = useContext(ThemeContext);
   const getDomainIcon = (domainName) => {
     const name = domainName.toLowerCase();
     if (name.includes('customer')) return <PeopleIcon sx={{ color: currentTheme.text, fontSize: 24 }} />;

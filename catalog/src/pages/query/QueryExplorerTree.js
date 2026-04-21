@@ -126,11 +126,8 @@ const QueryExplorerTree = ({
   loading,
   onSelectTable,
   selectedTableKey,
-  currentTheme,
-  darkMode,
 }) => {
-  const { currentTheme: contextTheme } = useContext(ThemeContext);
-  const theme = currentTheme || contextTheme;
+  const { currentTheme: theme, darkMode } = useContext(ThemeContext);
   const tree = buildModelDatasetTree(modelsResponse, datasetsPayload);
   const [expandedModels, setExpandedModels] = useState({});
   const [expandedDatasets, setExpandedDatasets] = useState({});

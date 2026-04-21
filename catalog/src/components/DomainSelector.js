@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import {
   Box,
   Button,
@@ -14,14 +14,15 @@ import {
   Add as AddIcon,
 } from '@mui/icons-material';
 import { fetchData } from '../services/api';
+import { ThemeContext } from '../contexts/ThemeContext';
 
-const DomainSelector = ({ 
-  selectedDomains = [], 
-  onDomainsChange, 
-  currentTheme,
+const DomainSelector = ({
+  selectedDomains = [],
+  onDomainsChange,
   label = 'Domains',
-  showLabel = true 
+  showLabel = true
 }) => {
+  const { currentTheme } = useContext(ThemeContext);
   const [domainsData, setDomainsData] = useState([]);
   const [showSelectionDialog, setShowSelectionDialog] = useState(false);
   const [availableOptions, setAvailableOptions] = useState([]);
@@ -31,7 +32,7 @@ const DomainSelector = ({
       try {
         const response = await fetchData('domains');
         setDomainsData(response.domains || []);
-      } catch (error) {
+      } catch {
         // Handle error silently or show user notification
       }
     };

@@ -5,9 +5,7 @@ import {
   Typography,
   TextField,
   InputAdornment,
-  Chip,
   Grid,
-  Badge,
   Fab,
   Snackbar,
   Alert,
@@ -15,17 +13,7 @@ import {
 import {
   Search as SearchIcon,
   Add as AddIcon,
-  Delete as DeleteIcon,
-  Security as SecurityIcon,
-  Storage as StorageIcon,
-  Assessment as AssessmentIcon,
   Policy as PolicyIcon,
-  Schedule as ScheduleIcon,
-  Person as PersonIcon,
-  Flag as FlagIcon,
-  CheckCircle as CheckCircleIcon,
-  Warning as WarningIcon,
-  Error as ErrorIcon,
 } from '@mui/icons-material';
 import { ThemeContext } from '../contexts/ThemeContext';
 import { fetchData } from '../services/api';
@@ -48,7 +36,7 @@ const DataPoliciesPage = () => {
         const data = await fetchData('policies');
         setPolicies(data.policies || []);
         setError(null);
-      } catch (err) {
+      } catch {
         setError('Failed to load data standards');
         // Handle error silently
       } finally {
@@ -76,28 +64,6 @@ const DataPoliciesPage = () => {
 
     setFilteredPolicies(filtered);
   }, [searchTerm, policies]);
-
-  const getPolicyTypeIcon = (type) => {
-    switch (type) {
-      case 'retention':
-        return <StorageIcon />;
-      case 'quality':
-        return <AssessmentIcon />;
-      case 'access':
-        return <SecurityIcon />;
-      case 'compliance':
-        return <PolicyIcon />;
-      default:
-        return <PolicyIcon />;
-    }
-  };
-
-  const policyTypes = [
-    { type: 'retention', label: 'Retention', icon: <StorageIcon />, color: '#37ABBF' },
-    { type: 'quality', label: 'Quality', icon: <AssessmentIcon />, color: '#4caf50' },
-    { type: 'access', label: 'Access', icon: <SecurityIcon />, color: '#ff9800' },
-    { type: 'compliance', label: 'Compliance', icon: <PolicyIcon />, color: '#f44336' }
-  ];
 
   if (loading) {
     return (

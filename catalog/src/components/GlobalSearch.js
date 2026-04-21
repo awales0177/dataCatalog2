@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext, useCallback } from 'react';
+import { ThemeContext } from '../contexts/ThemeContext';
 import {
   Dialog,
   DialogTitle,
@@ -11,12 +12,10 @@ import {
   Typography,
   Box,
   Chip,
-  CircularProgress,
   Divider,
   IconButton,
   InputAdornment,
   Paper,
-  Badge
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -39,7 +38,8 @@ import {
   getSearchTypeLabel,
 } from '../utils/catalogSearchNavigation';
 
-const GlobalSearch = ({ open, onClose, currentTheme, darkMode }) => {
+const GlobalSearch = ({ open, onClose }) => {
+  const { currentTheme, darkMode } = useContext(ThemeContext);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
@@ -60,19 +60,18 @@ const GlobalSearch = ({ open, onClose, currentTheme, darkMode }) => {
     }
   }, [open]);
 
-  // Load search stats on mount
-  useEffect(() => {
-    loadSearchStats();
-  }, []);
-
-  const loadSearchStats = async () => {
+  const loadSearchStats = useCallback(async () => {
     try {
       const stats = await getSearchStats();
       setSearchStats(stats);
-    } catch (error) {
-
+    } catch {
+      /* ignore */
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadSearchStats();
+  }, [loadSearchStats]);
 
   const getTypeIcon = (type) => {
     const iconMap = {
@@ -86,19 +85,6 @@ const GlobalSearch = ({ open, onClose, currentTheme, darkMode }) => {
       'glossary': <LexiconIcon />
     };
     return iconMap[type] || <SearchIcon />;
-  };
-
-  const getTypeColor = (type) => {
-    const colorMap = {
-      'models': 'primary',
-      'dataAgreements': 'secondary',
-      'domains': 'success',
-      'applications': 'info',
-      'toolkit': 'error',
-      'policies': 'default',
-      'lexicon': 'primary'
-    };
-    return colorMap[type] || 'default';
   };
 
   const handleSearch = async (searchQuery) => {
@@ -121,8 +107,7 @@ const GlobalSearch = ({ open, onClose, currentTheme, darkMode }) => {
       setHasSearched(true);
       // Clear skeleton when results arrive
       setShowSkeleton(false);
-    } catch (error) {
-
+    } catch {
       setResults([]);
       setHasSearched(true);
       setShowSkeleton(false);
@@ -140,8 +125,8 @@ const GlobalSearch = ({ open, onClose, currentTheme, darkMode }) => {
     try {
       const data = await getSearchSuggestions(searchQuery, 10);
       setSuggestions(data.suggestions || []);
-    } catch (error) {
-
+    } catch {
+      /* ignore */
     }
   };
 
@@ -471,7 +456,7 @@ const GlobalSearch = ({ open, onClose, currentTheme, darkMode }) => {
             animation: 'fadeIn 0.3s ease-in-out'
           }}>
             <Typography variant="body1" sx={{ color: currentTheme?.textSecondary || '#7f8c8d' }}>
-              No results found for "{query}"
+              No results found for &ldquo;{query}&rdquo;
             </Typography>
             <Typography variant="body2" sx={{ mt: 1, color: currentTheme?.textSecondary || '#7f8c8d' }}>
               Try different keywords or check your spelling

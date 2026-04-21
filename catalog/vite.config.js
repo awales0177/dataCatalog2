@@ -1,14 +1,15 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
-/** Backend for same-origin `/api` in dev/preview (Docker: e.g. host.docker.internal or compose service). */
-const apiProxyTarget = process.env.VITE_API_PROXY_TARGET || 'http://127.0.0.1:8000';
-
 // https://vitejs.dev/config/
 export default defineConfig({
   // Some dependencies still reference Node's `global`; map it for the browser bundle.
   define: {
     global: 'globalThis',
+  },
+  resolve: {
+    // One React instance for the whole app (avoids "Invalid hook call" / null dispatcher in dev).
+    dedupe: ['react', 'react-dom'],
   },
   plugins: [
     react({
@@ -20,22 +21,9 @@ export default defineConfig({
     host: true,
     port: 3000,
     strictPort: true,
-    // UI on :3000, FastAPI on :8000 — same-origin `/api` from the browser (see api.js).
-    proxy: {
-      '/api': {
-        target: apiProxyTarget,
-        changeOrigin: true,
-      },
-    },
   },
   preview: {
     port: 3000,
-    proxy: {
-      '/api': {
-        target: apiProxyTarget,
-        changeOrigin: true,
-      },
-    },
   },
   esbuild: {
     loader: 'jsx',
@@ -43,6 +31,7 @@ export default defineConfig({
     exclude: [],
   },
   optimizeDeps: {
+    include: ['react', 'react-dom', '@emotion/react', '@emotion/styled'],
     esbuildOptions: {
       loader: {
         '.js': 'jsx',

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, useMemo } from 'react';
+import React, { useState, useEffect, useContext, useMemo, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -6,13 +6,11 @@ import {
   TextField,
   Autocomplete,
   Chip,
-  IconButton,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
   Paper,
-  Tooltip,
   Fab,
   FormControl,
   InputLabel,
@@ -259,12 +257,27 @@ const ModelRuleBuilder = ({
     });
   }, [catalogLineageEntries, masterListSearch, applications]);
 
-  // Load rules when model is selected
+  const loadRules = useCallback(async () => {
+    if (!selectedModel) return;
+    try {
+      setLoading(true);
+      const data = await getRulesForModel(modelApiRef(selectedModel));
+      setRules(data.rules || []);
+    } catch (error) {
+      console.error('Error loading rules:', error);
+      const errorMessage = error.message || 'Failed to load rules';
+      setSnackbar({ open: true, message: errorMessage, severity: 'error' });
+      setRules([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedModel]);
+
   useEffect(() => {
     if (selectedModel) {
       loadRules();
     }
-  }, [selectedModel]);
+  }, [selectedModel, loadRules]);
 
   useEffect(() => {
     let cancelled = false;
@@ -280,22 +293,6 @@ const ModelRuleBuilder = ({
       cancelled = true;
     };
   }, []);
-
-  const loadRules = async () => {
-    if (!selectedModel) return;
-    try {
-      setLoading(true);
-      const data = await getRulesForModel(modelApiRef(selectedModel));
-      setRules(data.rules || []);
-    } catch (error) {
-      console.error('Error loading rules:', error);
-      const errorMessage = error.message || 'Failed to load rules';
-      setSnackbar({ open: true, message: errorMessage, severity: 'error' });
-      setRules([]);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const openLibraryAttach = async () => {
     setLibraryAttachOpen(true);
@@ -1088,7 +1085,6 @@ const ModelRuleBuilder = ({
               onTeamsChange={(teams) =>
                 setRuleForm({ ...ruleForm, maintainer: teams.length > 0 ? teams[0] : '' })
               }
-              currentTheme={currentTheme}
               label="Maintainer"
               showLabel
               maxSelections={1}
@@ -1773,7 +1769,6 @@ const ModelRuleBuilder = ({
         title="Delete rule"
         itemName={ruleDeleteTarget?.name?.trim() || `Rule ${ruleDeleteTarget?.id ?? ''}`}
         itemType="rule"
-        theme={currentTheme}
       />
 
       {/* Snackbar */}

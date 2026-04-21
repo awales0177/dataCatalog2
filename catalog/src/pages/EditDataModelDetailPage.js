@@ -3,9 +3,7 @@ import {
   Box,
   Typography,
   Paper,
-  Chip,
   Grid,
-  Divider,
   alpha,
   Tooltip,
   CircularProgress,
@@ -21,35 +19,29 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
-  List,
-  ListItem,
-  ListItemText,
   Alert,
   Snackbar,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
 } from '@mui/material';
-import DeleteModal from '../components/DeleteModal';
+import {
+  UnsavedChangesDialog,
+  ShortNameChangeDialog,
+  SelectionDialog,
+  ToolkitToolPickerDialog,
+  DeleteFieldModal,
+  DeleteModelModal as DeleteModelModalDialog,
+} from './EditModelDialogs';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   ArrowBack as ArrowBackIcon,
   Save as SaveIcon,
   Cancel as CancelIcon,
-  Edit as EditIcon,
-  Lock as LockIcon,
-  LockOpen as LockOpenIcon,
   Add as AddIcon,
   Delete as DeleteIcon,
   DeleteForever as DeleteForeverIcon,
   ExpandMore as ExpandMoreIcon,
-  HelpOutline as HelpOutlineIcon,
   MenuBook as MenuBookIcon,
 } from '@mui/icons-material';
-import { GoVerified } from "react-icons/go";
 import { fetchData, updateModel, createModel, deleteModel } from '../services/api';
-import { formatDate } from '../utils/themeUtils';
 import cacheService from '../services/cache';
 import ChangelogEditor from '../components/ChangelogEditor';
 import DomainSelector from '../components/DomainSelector';
@@ -154,8 +146,7 @@ const EditDataModelDetailPage = () => {
         } else {
           setError('Model not found');
         }
-      } catch (error) {
-        // Handle error silently
+      } catch {
         setError('Failed to load model');
       } finally {
         setLoading(false);
@@ -166,7 +157,7 @@ const EditDataModelDetailPage = () => {
 
 
     // No need to manipulate browser history - we'll handle navigation differently
-  }, [modelId]);
+  }, [modelId, navigate]);
 
   // Handle browser back button to go back one step
   useEffect(() => {
@@ -194,7 +185,7 @@ const EditDataModelDetailPage = () => {
       window.removeEventListener('popstate', handlePopState);
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
-  }, [navigate, model, editedModel]);
+  }, [navigate, model, editedModel, modelId]);
 
   // Cleanup timeout on unmount
   useEffect(() => {
@@ -290,8 +281,7 @@ const EditDataModelDetailPage = () => {
       } else {
         setShortNameError('');
       }
-    } catch (error) {
-      // Handle error silently
+    } catch {
       setShortNameError('Error checking availability');
     } finally {
       setCheckingShortName(false);
@@ -549,8 +539,8 @@ const EditDataModelDetailPage = () => {
           setEditedModel(JSON.parse(JSON.stringify(foundModel)));
         }
       }
-    } catch (error) {
-      // Handle error silently
+    } catch {
+      /* ignore refresh errors */
     }
   };
 
@@ -1124,7 +1114,6 @@ const EditDataModelDetailPage = () => {
                   users: newUsers
                 }));
               }}
-              currentTheme={currentTheme}
               label="Users"
               showLabel={true}
               placeholder="No users selected"
@@ -1145,7 +1134,6 @@ const EditDataModelDetailPage = () => {
                   referenceData: newReferenceData
                 }));
               }}
-              currentTheme={currentTheme}
               label="Reference Data"
               showLabel={true}
             />
@@ -1543,7 +1531,6 @@ const EditDataModelDetailPage = () => {
                     specMaintainer: teams.length > 0 ? teams[0] : ''
                   }));
                 }}
-                currentTheme={currentTheme}
                 label="Spec Maintainer"
                 showLabel={true}
                 maxSelections={1}
@@ -1601,7 +1588,6 @@ const EditDataModelDetailPage = () => {
                     domain: newDomains
                   }));
                 }}
-                currentTheme={currentTheme}
                 label="Domains"
               />
             </Box>
@@ -1635,7 +1621,6 @@ const EditDataModelDetailPage = () => {
               changelog: newChangelog
             }));
           }}
-          currentTheme={currentTheme}
         />
 
         {/* Markdown documentation (multi-tab, GFM + mermaid in view mode) */}
@@ -1730,324 +1715,55 @@ const EditDataModelDetailPage = () => {
         </Box>
       </Paper>
 
-      {/* Save Confirmation Dialog */}
-      <Dialog 
-        open={showSaveDialog} 
+      <UnsavedChangesDialog
+        open={showSaveDialog}
         onClose={() => setShowSaveDialog(false)}
-        PaperProps={{
-          sx: {
-            bgcolor: currentTheme.card,
-            color: currentTheme.text,
-            border: `1px solid ${currentTheme.border}`
-          }
-        }}
-      >
-        <DialogTitle sx={{ color: currentTheme.text }}>Unsaved Changes</DialogTitle>
-        <DialogContent sx={{ color: currentTheme.text }}>
-          <Typography sx={{ color: currentTheme.text }}>
-            You have unsaved changes. Are you sure you want to discard them?
-          </Typography>
-        </DialogContent>
-                  <DialogActions>
-            <Button onClick={() => setShowSaveDialog(false)} sx={{ color: currentTheme.text }}>
-              Continue Editing
-            </Button>
-            <Button onClick={goToViewMode} color="error">
-              Discard Changes
-            </Button>
-          </DialogActions>
-      </Dialog>
+        onDiscard={goToViewMode}
+      />
 
-      <DeleteModal
+      <DeleteFieldModal
         open={showDeleteDialog.open}
         onClose={handleDeleteCanceled}
         onConfirm={handleDeleteConfirmed}
-        confirmMode="simple"
-        title="Confirm deletion"
-        itemType={
-          showDeleteDialog.isTool
-            ? 'tool'
-            : String(showDeleteDialog.label || 'item').toLowerCase()
-        }
-        itemName={
-          showDeleteDialog.isTool
-            ? showDeleteDialog.toolName
-            : showDeleteDialog.displayName || 'this entry'
-        }
-        theme={currentTheme}
+        label={showDeleteDialog.label}
+        displayName={showDeleteDialog.displayName}
+        isTool={showDeleteDialog.isTool}
+        toolName={showDeleteDialog.toolName}
       />
 
-              {/* ShortName Change Confirmation Dialog */}
-        <Dialog
-          open={showShortNameChangeDialog}
-          onClose={() => setShowShortNameChangeDialog(false)}
-          aria-labelledby="shortname-change-dialog-title"
-          maxWidth="sm"
-          fullWidth
-          PaperProps={{
-            sx: {
-              bgcolor: currentTheme.card,
-              color: currentTheme.text,
-              border: `1px solid ${currentTheme.border}`
-            }
-          }}
-        >
-          <DialogTitle id="shortname-change-dialog-title" sx={{ color: currentTheme.text }}>
-            Confirm ShortName Change
-          </DialogTitle>
-          <DialogContent sx={{ color: currentTheme.text }}>
-            <Typography sx={{ mb: 2 }}>
-              You are about to change the shortName from <strong>"{model?.shortName}"</strong> to <strong>"{editedModel.shortName}"</strong>.
-            </Typography>
-            
-            <Box sx={{ mb: 3, p: 2, bgcolor: 'warning.light', borderRadius: 1 }}>
-              <Typography variant="subtitle2" sx={{ color: 'warning.dark', mb: 1, fontWeight: 'bold' }}>
-                ⚠️ Important: Choose how to handle existing agreements
-              </Typography>
-              
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={updateAssociatedLinks}
-                    onChange={(e) => setUpdateAssociatedLinks(e.target.checked)}
-                    color="warning"
-                  />
-                }
-                label={
-                  <Box>
-                    <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
-                      Update associated agreements
-                    </Typography>
-                    <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                      All existing agreements will be updated to reference the new shortName
-                    </Typography>
-                  </Box>
-                }
-                sx={{ mb: 1 }}
-              />
-              
-              {!updateAssociatedLinks && (
-                <Box sx={{ mt: 2, p: 2, bgcolor: 'info.light', borderRadius: 1 }}>
-                  <Typography variant="body2" sx={{ color: 'info.dark', fontWeight: 'bold' }}>
-                    ℹ️ Note: Existing agreements will continue to reference "{model?.shortName}"
-                  </Typography>
-                  <Typography variant="caption" sx={{ color: 'info.dark', display: 'block', mt: 0.5 }}>
-                    This creates a redirect scenario where both old and new shortNames work
-                  </Typography>
-                </Box>
-              )}
-            </Box>
-            
-            <Typography sx={{ mb: 2 }}>
-              This will:
-            </Typography>
-            <Box component="ul" sx={{ pl: 2, mb: 2 }}>
-                              <Typography component="li">Change the URL for this model to /models/{modelApiRef(editedModel)}</Typography>
-              {updateAssociatedLinks && (
-                <Typography component="li">Update all agreements that reference this model</Typography>
-              )}
-              <Typography component="li">Require updating any external references to use the new shortName</Typography>
-            </Box>
-            <Typography sx={{ color: 'warning.main', fontWeight: 'bold' }}>
-              Are you sure you want to proceed?
-            </Typography>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setShowShortNameChangeDialog(false)} color="primary">
-              Cancel
-            </Button>
-            <Button onClick={handleShortNameChangeConfirmed} color="warning" variant="contained">
-              {updateAssociatedLinks ? 'Yes, Change ShortName & Update Links' : 'Yes, Change ShortName Only'}
-            </Button>
-          </DialogActions>
-        </Dialog>
+      <ShortNameChangeDialog
+        open={showShortNameChangeDialog}
+        onClose={() => setShowShortNameChangeDialog(false)}
+        model={model}
+        editedModel={editedModel}
+        updateAssociatedLinks={updateAssociatedLinks}
+        onUpdateAssociatedLinksChange={setUpdateAssociatedLinks}
+        onConfirm={handleShortNameChangeConfirmed}
+      />
 
-        {/* Selection Dialog for Domains and Reference Data */}
-        <Dialog
-          open={showSelectionDialog}
-          onClose={() => setShowSelectionDialog(false)}
-          aria-labelledby="selection-dialog-title"
-          maxWidth="sm"
-          fullWidth
-          PaperProps={{
-            sx: {
-              bgcolor: currentTheme.card,
-              color: currentTheme.text,
-              border: `1px solid ${currentTheme.border}`
-            }
-          }}
-        >
-          <DialogTitle id="selection-dialog-title" sx={{ color: currentTheme.text }}>
-            📚 Select Reference Data
-          </DialogTitle>
-          <DialogContent sx={{ color: currentTheme.text }}>
-            <Box sx={{ mb: 2, p: 2, bgcolor: 'info.light', borderRadius: 1, border: '1px solid', borderColor: 'info.main' }}>
-              <Typography variant="body2" sx={{ color: 'info.dark', fontSize: '0.875rem' }}>
-                ℹ️ <strong>Note:</strong> Selected items will be read-only and cannot be manually edited. 
-                Use the delete button to remove items if needed.
-              </Typography>
-            </Box>
-            <Typography sx={{ mb: 2 }}>
-              Choose from available reference data items:
-            </Typography>
-            
-            <Box sx={{ maxHeight: 300, overflow: 'auto' }}>
-              {availableOptions.map((option, index) => (
-                <Button
-                  key={index}
-                  fullWidth
-                  variant="outlined"
-                  onClick={() => handleSelectionConfirm(option.value)}
-                  sx={{
-                    mb: 1,
-                    justifyContent: 'flex-start',
-                    textAlign: 'left',
-                    color: currentTheme.text,
-                    borderColor: currentTheme.border,
-                    '&:hover': {
-                      bgcolor: currentTheme.primary,
-                      color: currentTheme.background,
-                      borderColor: currentTheme.primary,
-                    }
-                  }}
-                >
-                  {option.label}
-                </Button>
-              ))}
-            </Box>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setShowSelectionDialog(false)} sx={{ color: currentTheme.text }}>
-              Cancel
-            </Button>
-          </DialogActions>
-        </Dialog>
+      <SelectionDialog
+        open={showSelectionDialog}
+        onClose={() => setShowSelectionDialog(false)}
+        availableOptions={availableOptions}
+        onSelect={handleSelectionConfirm}
+      />
 
-        <Dialog
-          open={toolkitToolPickerOpen}
-          onClose={() => {
-            setToolkitToolPickerOpen(false);
-            setToolkitToolSearch('');
-          }}
-          maxWidth="sm"
-          fullWidth
-          PaperProps={{
-            sx: {
-              bgcolor: currentTheme.card,
-              color: currentTheme.text,
-              border: `1px solid ${currentTheme.border}`,
-            },
-          }}
-        >
-          <DialogTitle sx={{ color: currentTheme.text, display: 'flex', alignItems: 'center', gap: 1 }}>
-            <AddIcon />
-            Link tool from toolkit
-          </DialogTitle>
-          <DialogContent sx={{ color: currentTheme.text }}>
-            <Typography variant="body2" sx={{ mb: 2, color: currentTheme.textSecondary }}>
-              Choose a technology from the toolkit workbench. The link uses documentation or GitHub when
-              available; otherwise it opens the technology page in this catalog.
-            </Typography>
-            <TextField
-              size="small"
-              fullWidth
-              placeholder="Search toolkit or technology…"
-              value={toolkitToolSearch}
-              onChange={(e) => setToolkitToolSearch(e.target.value)}
-              sx={{
-                mb: 2,
-                '& .MuiOutlinedInput-root': {
-                  color: currentTheme.text,
-                  '& fieldset': { borderColor: currentTheme.border },
-                },
-                '& .MuiInputLabel-root': { color: currentTheme.textSecondary },
-              }}
-            />
-            <Box sx={{ maxHeight: 360, overflow: 'auto' }}>
-              {filteredToolkitTechOptions.length === 0 ? (
-                <Typography variant="body2" sx={{ color: currentTheme.textSecondary, py: 2 }}>
-                  {toolkitTechOptions.length === 0
-                    ? 'No technologies found in the toolkit catalog.'
-                    : 'No matches. Try a different search.'}
-                </Typography>
-              ) : (
-                filteredToolkitTechOptions.map((opt) => (
-                  <Button
-                    key={`${opt.toolkitId}:${opt.technologyId}`}
-                    fullWidth
-                    variant="outlined"
-                    onClick={() => addToolkitToolFromCatalog(opt)}
-                    sx={{
-                      mb: 1,
-                      py: 1.25,
-                      justifyContent: 'flex-start',
-                      textAlign: 'left',
-                      flexDirection: 'column',
-                      alignItems: 'flex-start',
-                      color: currentTheme.text,
-                      borderColor: currentTheme.border,
-                      '&:hover': {
-                        bgcolor: currentTheme.primary,
-                        color: currentTheme.background,
-                        borderColor: currentTheme.primary,
-                      },
-                    }}
-                  >
-                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                      {opt.label}
-                    </Typography>
-                    <Typography
-                      variant="caption"
-                      sx={{
-                        display: 'block',
-                        mt: 0.5,
-                        opacity: 0.85,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        maxWidth: '100%',
-                      }}
-                    >
-                      {opt.url}
-                    </Typography>
-                  </Button>
-                ))
-              )}
-            </Box>
-          </DialogContent>
-          <DialogActions>
-            <Button
-              onClick={() => {
-                setToolkitToolPickerOpen(false);
-                setToolkitToolSearch('');
-              }}
-              sx={{ color: currentTheme.text }}
-            >
-              Cancel
-            </Button>
-          </DialogActions>
-        </Dialog>
+      <ToolkitToolPickerDialog
+        open={toolkitToolPickerOpen}
+        onClose={() => { setToolkitToolPickerOpen(false); setToolkitToolSearch(''); }}
+        search={toolkitToolSearch}
+        onSearchChange={setToolkitToolSearch}
+        filteredOptions={filteredToolkitTechOptions}
+        allOptions={toolkitTechOptions}
+        onSelect={addToolkitToolFromCatalog}
+      />
 
-        {/* Delete Model Modal */}
-        <DeleteModal
-          open={showDeleteModelModal}
-          onClose={() => setShowDeleteModelModal(false)}
-          onConfirm={confirmDeleteModel}
-          title="Delete Model"
-          itemName={model?.name}
-          itemType="model"
-          theme={currentTheme}
-        >
-          <Typography sx={{ mb: 2 }}>
-            This will:
-          </Typography>
-          <Box component="ul" sx={{ pl: 2, mb: 3 }}>
-            <Typography component="li">Permanently delete the model "{model?.name}"</Typography>
-            <Typography component="li">Remove all model data and configurations</Typography>
-            <Typography component="li">Break any existing agreements that reference this model</Typography>
-            <Typography component="li">Require manual cleanup of external references</Typography>
-          </Box>
-        </DeleteModal>
+      <DeleteModelModalDialog
+        open={showDeleteModelModal}
+        onClose={() => setShowDeleteModelModal(false)}
+        onConfirm={confirmDeleteModel}
+        modelName={model?.name}
+      />
 
       {/* Snackbar for notifications */}
       <Snackbar

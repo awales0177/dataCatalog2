@@ -90,7 +90,7 @@ export const calculateModelScore = (model) => {
 };
 
 // Get quality color based on score
-export const getModelQualityColor = (score, darkMode = false) => {
+export const getModelQualityColor = (score, _darkMode = false) => {
   if (score >= 90) return '#4CAF50'; // Green
   if (score >= 75) return '#8BC34A'; // Light Green
   if (score >= 60) return '#FFC107'; // Amber

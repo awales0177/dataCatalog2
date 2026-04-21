@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import {
   Box,
-  Container,
   Typography,
   Paper,
   Grid,
@@ -16,7 +15,6 @@ import {
   Alert,
   Snackbar,
   CircularProgress,
-  Divider,
   alpha,
   Switch,
   FormControlLabel,
@@ -49,7 +47,7 @@ const EditToolkitFunctionPage = () => {
   const { currentTheme } = useContext(ThemeContext);
   const { functionId } = useParams();
   const navigate = useNavigate();
-  const [functionData, setFunctionData] = useState(null);
+  const [, setFunctionData] = useState(null);
   const [editedFunction, setEditedFunction] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -65,8 +63,6 @@ const EditToolkitFunctionPage = () => {
   const [importedFunctions, setImportedFunctions] = useState([]);
   const [importError, setImportError] = useState(null);
   const [importSuggestions, setImportSuggestions] = useState([]);
-  const [selectedFunctions, setSelectedFunctions] = useState(new Set());
-
   const isNewFunction = !functionId || functionId === 'new';
 
   useEffect(() => {
@@ -109,7 +105,7 @@ const EditToolkitFunctionPage = () => {
             setError('Function not found');
           }
         }
-      } catch (err) {
+      } catch {
         setError('Failed to load function data');
         // Handle error silently
       } finally {
@@ -394,7 +390,6 @@ const EditToolkitFunctionPage = () => {
     setImportBulkMode(false);
     setImportError(null);
     setImportSuggestions([]);
-    setSelectedFunctions(new Set());
   };
 
   const handleAddAllFunctions = async () => {
@@ -723,7 +718,6 @@ const EditToolkitFunctionPage = () => {
                   onTeamsChange={(teams) => {
                     handleFieldChange('author', teams.length > 0 ? teams[0] : '');
                   }}
-                  currentTheme={currentTheme}
                   label="Maintainer"
                   showLabel={true}
                   maxSelections={1}
@@ -1283,7 +1277,6 @@ const EditToolkitFunctionPage = () => {
         title="Delete Function"
         itemName={editedFunction?.displayName || editedFunction?.name}
         itemType="function"
-        theme={currentTheme}
       >
         <Typography sx={{ mb: 2 }}>
           This will:

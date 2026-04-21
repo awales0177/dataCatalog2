@@ -6,24 +6,16 @@ import {
   InputAdornment,
   Typography,
   Container,
-  Paper,
   CircularProgress,
   Alert,
   Fab,
-  useTheme,
   Tabs,
   Tab,
   Badge,
-  alpha,
 } from '@mui/material';
 import {
   Search as SearchIcon,
   Add as AddIcon,
-  Assignment as AssignmentIcon,
-  PlayArrow as PlayArrowIcon,
-  RateReview as RateReviewIcon,
-  Schedule as ScheduleIcon,
-  CheckCircle as CheckCircleIcon,
 } from '@mui/icons-material';
 import { ThemeContext } from '../contexts/ThemeContext';
 import { fetchAgreements, fetchData } from '../services/api';
@@ -43,8 +35,6 @@ const ProductAgreementsPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTab, setSelectedTab] = useState(0);
   const [page, setPage] = useState(1);
-  const theme = useTheme();
-
   useEffect(() => {
     const loadAgreements = async () => {
       try {
@@ -58,7 +48,7 @@ const ProductAgreementsPage = () => {
         setAllAgreements(validAgreements);
         setApplications(appData?.applications || []);
         setError(null);
-      } catch (err) {
+      } catch {
         setError('Failed to load agreements');
       } finally {
         setLoading(false);
@@ -248,27 +238,6 @@ const ProductAgreementsPage = () => {
     navigate('/agreements/create');
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'active':
-        return '#4caf50';
-      case 'in_progress':
-        return '#37ABBF';
-      case 'in_review':
-        return '#ff9800';
-      case 'expired':
-        return '#f44336';
-      default:
-        return '#9e9e9e';
-    }
-  };
-
-  const getStatusLabel = (status) => {
-    return status.split('_').map(word => 
-      word.charAt(0).toUpperCase() + word.slice(1)
-    ).join(' ');
-  };
-
   const totalPages = Math.ceil(filteredAgreements.length / ITEMS_PER_PAGE);
   const paginatedAgreements = filteredAgreements.slice(
     (page - 1) * ITEMS_PER_PAGE,
@@ -388,7 +357,7 @@ const ProductAgreementsPage = () => {
               },
             }}
           >
-            {uniqueOwners.map((owner, index) => (
+            {uniqueOwners.map((owner) => (
               <Tab
                 key={owner}
                 label={
@@ -435,7 +404,6 @@ const ProductAgreementsPage = () => {
           <Grid item xs={12} sm={6} md={4} lg={3} key={agreement.id}>
             <ProductAgreementCard
               agreement={agreement}
-              currentTheme={currentTheme}
               applications={applications}
             />
           </Grid>
@@ -447,7 +415,6 @@ const ProductAgreementsPage = () => {
           count={Math.max(totalPages, 1)}
           page={page}
           onChange={handlePageChange}
-          currentTheme={currentTheme}
         />
       </Box>
 

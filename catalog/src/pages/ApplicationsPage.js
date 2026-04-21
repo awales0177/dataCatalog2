@@ -13,7 +13,6 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Chip,
   alpha,
 } from '@mui/material';
 import {
@@ -69,7 +68,7 @@ const ApplicationsPage = () => {
         const data = await fetchData('applications');
         setApplications(data.applications || []);
         setError(null);
-      } catch (err) {
+      } catch {
         setError('Failed to load data');
         // Handle error silently
       } finally {
@@ -247,7 +246,6 @@ const ApplicationsPage = () => {
             <Grid item xs={12} sm={6} md={4} lg={3} key={application.uuid || application.id}>
             <ApplicationCard
               application={application}
-              currentTheme={currentTheme}
               onEdit={handleEditApplication}
             />
           </Grid>
@@ -259,7 +257,6 @@ const ApplicationsPage = () => {
           count={Math.max(totalPages, 1)}
           page={currentPage}
           onChange={handlePageChange}
-          currentTheme={currentTheme}
         />
       </Box>
 

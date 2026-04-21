@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useContext } from 'react';
+import { ThemeContext } from '../contexts/ThemeContext';
 import {
   Box,
   Dialog,
@@ -35,7 +36,8 @@ import {
   Apartment as PropertyIcon,
 } from '@mui/icons-material';
 
-const DomainModal = ({ domain, open, onClose, currentTheme }) => {
+const DomainModal = ({ domain, open, onClose }) => {
+  const { currentTheme } = useContext(ThemeContext);
   if (!domain) return null;
 
   const getDomainIcon = (domainName) => {

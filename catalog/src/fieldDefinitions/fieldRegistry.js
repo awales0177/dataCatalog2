@@ -75,10 +75,6 @@ export const FIELD_REGISTRY = {
     label: 'Maintainer',
     description: 'Team or application responsible for this technology in the workbench.',
   },
-  'toolkit.technology.deployedTo': {
-    label: 'Deployed to',
-    description: 'Environment or platform where this technology is deployed or available.',
-  },
   'toolkit.technology.lastUpdated': {
     label: 'Last updated',
     description: 'When this technology entry was last updated.',
@@ -90,7 +86,7 @@ export const FIELD_REGISTRY = {
   'toolkit.technology.rolesSection': {
     label: 'Roles',
     description:
-      'Operational context for this technology: who maintains it, where it runs, when it was last updated, and which version is in use.',
+      'Operational context for this technology: who maintains it, when it was last updated, and which version is in use.',
   },
   'toolkit.technology.links': {
     label: 'Links',

@@ -35,7 +35,7 @@ const EditApplicationPage = () => {
   
   
   // State management
-  const [application, setApplication] = useState(null);
+  const [, setApplication] = useState(null);
   const [editedApplication, setEditedApplication] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -80,8 +80,7 @@ const EditApplicationPage = () => {
           setApplication(app);
           setEditedApplication(deepClone(app));
         }
-      } catch (error) {
-        // Handle error silently
+      } catch {
         setSnackbar({ open: true, message: 'Failed to load application', severity: 'error' });
       } finally {
         setLoading(false);
@@ -120,8 +119,7 @@ const EditApplicationPage = () => {
       setTimeout(() => {
         navigate('/applications');
       }, 1500);
-    } catch (error) {
-      // Handle error silently
+    } catch {
       setSnackbar({ open: true, message: 'Failed to save application', severity: 'error' });
     } finally {
       setSaving(false);
@@ -141,8 +139,7 @@ const EditApplicationPage = () => {
       setTimeout(() => {
         navigate('/applications');
       }, 1500);
-    } catch (error) {
-      // Handle error silently
+    } catch {
       setSnackbar({ open: true, message: 'Failed to delete application', severity: 'error' });
     }
   };
@@ -361,7 +358,6 @@ const EditApplicationPage = () => {
             <RoleSelector
               selectedRoles={editedApplication?.roles || []}
               onRolesChange={(roles) => setEditedApplication(prev => ({ ...prev, roles }))}
-              currentTheme={currentTheme}
               label="Roles"
               showLabel={true}
               placeholder="No roles selected"
@@ -377,7 +373,6 @@ const EditApplicationPage = () => {
                   domains: newDomains
                 }));
               }}
-              currentTheme={currentTheme}
               label="Domains"
             />
           </Grid>
@@ -437,7 +432,6 @@ const EditApplicationPage = () => {
         title="Delete Application"
         itemName={editedApplication?.name}
         itemType="application"
-        theme={currentTheme}
       >
         <Typography sx={{ mb: 2 }}>
           This will:

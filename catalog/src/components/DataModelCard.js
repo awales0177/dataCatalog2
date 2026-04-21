@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
+import { ThemeContext } from '../contexts/ThemeContext';
 import {
   Card,
   CardContent,
@@ -19,8 +20,8 @@ import { GoVerified } from "react-icons/go";
 import { trackModelClick } from '../services/api';
 import { modelApiRef } from '../utils/catalogModelLookup';
 
-// DataModelCard component for displaying individual data model information
-const DataModelCard = ({ model, currentTheme }) => {
+const DataModelCard = ({ model }) => {
+  const { currentTheme } = useContext(ThemeContext);
   const navigate = useNavigate();
   const [clickCount, setClickCount] = useState(model.meta?.clickCount || 0);
 

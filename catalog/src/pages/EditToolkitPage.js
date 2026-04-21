@@ -342,6 +342,7 @@ const EditToolkitPage = () => {
       if (t.name === name && t.description === description) return prev;
       return [{ ...t, name, description }];
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- sync only when name/description change, not whole toolkit object
   }, [isMultiTech, editedToolkit?.name, editedToolkit?.description]);
 
   const selectedTech = useMemo(() => {
@@ -1076,7 +1077,6 @@ const EditToolkitPage = () => {
           onTeamsChange={(teams) => {
             updateSelectedTechField('maintainerTeamId', teams.length > 0 ? teams[0] : '');
           }}
-          currentTheme={currentTheme}
           label="Maintainer"
           showLabel={true}
           maxSelections={1}
@@ -1806,7 +1806,6 @@ const EditToolkitPage = () => {
         title="Delete toolkit"
         itemName={editedToolkit.displayName || editedToolkit.name || 'toolkit'}
         itemType="toolkit"
-        theme={currentTheme}
       >
         <Typography sx={{ mb: 2 }}>This will:</Typography>
         <Box component="ul" sx={{ pl: 2, mb: 0 }}>

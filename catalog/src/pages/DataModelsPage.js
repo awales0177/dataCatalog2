@@ -158,7 +158,7 @@ const DataModelsPage = () => {
         setAllModels(data.models || []);
         setFilteredModels(data.models || []);
         setError(null);
-      } catch (err) {
+      } catch {
         setError('Failed to load data models');
       } finally {
         setLoading(false);
@@ -576,7 +576,6 @@ const DataModelsPage = () => {
                   model={model}
                   isFavorite={favorites.includes(model.id)}
                   onFavoriteToggle={handleFavoriteToggle}
-                  currentTheme={currentTheme}
                 />
               </Grid>
             ))}
@@ -601,35 +600,30 @@ const DataModelsPage = () => {
                   label="Name"
                   sortBy={sortBy}
                   onSort={handleTableColumnSort}
-                  currentTheme={currentTheme}
                 />
                 <DataModelsSortableHeadCell
                   column="shortName"
                   label="Short name"
                   sortBy={sortBy}
                   onSort={handleTableColumnSort}
-                  currentTheme={currentTheme}
                 />
                 <DataModelsSortableHeadCell
                   column="domain"
                   label="Domain"
                   sortBy={sortBy}
                   onSort={handleTableColumnSort}
-                  currentTheme={currentTheme}
                 />
                 <DataModelsSortableHeadCell
                   column="tier"
                   label="Tier"
                   sortBy={sortBy}
                   onSort={handleTableColumnSort}
-                  currentTheme={currentTheme}
                 />
                 <DataModelsSortableHeadCell
                   column="updated"
                   label="Updated"
                   sortBy={sortBy}
                   onSort={handleTableColumnSort}
-                  currentTheme={currentTheme}
                 />
                 <DataModelsSortableHeadCell
                   column="verified"
@@ -637,7 +631,6 @@ const DataModelsPage = () => {
                   align="center"
                   sortBy={sortBy}
                   onSort={handleTableColumnSort}
-                  currentTheme={currentTheme}
                 />
                 <TableCell
                   align="right"
@@ -785,7 +778,7 @@ const DataModelsPage = () => {
       )}
 
       <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
-        <Pagination count={Math.max(totalPages, 1)} page={page} onChange={handlePageChange} currentTheme={currentTheme} />
+        <Pagination count={Math.max(totalPages, 1)} page={page} onChange={handlePageChange} />
       </Box>
 
       <Fab

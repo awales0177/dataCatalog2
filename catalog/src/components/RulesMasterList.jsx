@@ -633,7 +633,6 @@ const RulesMasterList = () => {
             onTeamsChange={(teams) =>
               setLibraryForm({ ...libraryForm, maintainer: teams.length > 0 ? teams[0] : '' })
             }
-            currentTheme={currentTheme}
             label="Maintainer"
             showLabel
             maxSelections={1}
@@ -757,7 +756,6 @@ const RulesMasterList = () => {
             onTeamsChange={(teams) =>
               setEditForm({ ...editForm, maintainer: teams.length > 0 ? teams[0] : '' })
             }
-            currentTheme={currentTheme}
             label="Maintainer"
             showLabel
             maxSelections={1}
@@ -904,7 +902,6 @@ const RulesMasterList = () => {
         title="Delete rule"
         itemName={editingRule?.name?.trim() || (editingRule?.id ? `Rule ${editingRule.id}` : '')}
         itemType="rule"
-        theme={currentTheme}
       />
 
       <Snackbar

@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useContext, useEffect, useCallback } from 'react';
 import {
   Box,
   Container,
@@ -17,13 +17,7 @@ import {
   InputLabel,
   Grid,
   Paper,
-  Divider,
-  Tooltip,
   CircularProgress,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   alpha,
 } from '@mui/material';
 import DeleteModal from '../components/DeleteModal';
@@ -46,7 +40,6 @@ import {
   deleteAgreement,
   fetchDataPoliciesList,
 } from '../services/api';
-import cacheService from '../services/cache';
 import ChangelogEditor from '../components/ChangelogEditor';
 import TeamSelector from '../components/TeamSelector';
 import ModelSelector from '../components/ModelSelector';
@@ -89,8 +82,6 @@ const EditAgreementPage = () => {
     itemPreview: '',
   });
 
-  const [newChangelogVersion, setNewChangelogVersion] = useState('');
-  const [newChangelogChanges, setNewChangelogChanges] = useState('');
   
   // Data policies state
   const [dataPolicies, setDataPolicies] = useState([]);
@@ -99,50 +90,15 @@ const EditAgreementPage = () => {
   // Data models state
   const [dataModels, setDataModels] = useState([]);
   const [modelsLoading, setModelsLoading] = useState(true);
-  
 
-
-
-  const handleAddChangelogItem = (path) => {
-    
-    if (newChangelogVersion.trim() && newChangelogChanges.trim()) {
-      // Generate current timestamp in ISO format
-      const currentDate = new Date().toISOString();
-      
-      
-      setEditedAgreement(prev => {
-        const newAgreement = { ...prev };
-        const pathArray = path.split('.');
-        let current = newAgreement;
-        
-        
-        for (let i = 0; i < pathArray.length; i++) {
-          if (!current[pathArray[i]]) {
-            current[pathArray[i]] = [];
-          }
-          current = current[pathArray[i]];
-        }
-        
-        if (Array.isArray(current)) {
-          current.push({
-            version: newChangelogVersion.trim(),
-            date: currentDate,
-            changes: [newChangelogChanges.trim()]
-          });
-        } else {
-        }
-        
-        return newAgreement;
-      });
-      
-      setNewChangelogVersion('');
-      setNewChangelogChanges('');
-    } else {
-
-
-
+  const hasChanges = useCallback(() => {
+    if (!agreement || !editedAgreement) return false;
+    if (isNewAgreement) {
+      return Boolean(editedAgreement.name && editedAgreement.description);
     }
-  };
+    return JSON.stringify(agreement) !== JSON.stringify(editedAgreement);
+  }, [agreement, editedAgreement, isNewAgreement]);
+
 
   // Load agreement data
   useEffect(() => {
@@ -224,8 +180,7 @@ const EditAgreementPage = () => {
               });
               navigate('/agreements');
             }
-          } catch (error) {
-
+          } catch {
             setSnackbar({
               open: true,
               message: 'Failed to load agreement',
@@ -290,7 +245,8 @@ const EditAgreementPage = () => {
         location: normalized,
       }));
     }
-  }, [editedAgreement?.id]); // Only run when agreement ID changes, not on every location change
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally only when agreement identity changes
+  }, [editedAgreement?.id]);
 
   // Handle browser back button
   useEffect(() => {
@@ -317,7 +273,7 @@ const EditAgreementPage = () => {
 
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  });
+  }, [hasChanges]);
 
   // Fetch data policies
   useEffect(() => {
@@ -351,31 +307,6 @@ const EditAgreementPage = () => {
     }
   }, [editedAgreement]);
 
-  const hasChanges = () => {
-    if (!agreement || !editedAgreement) return false;
-    if (isNewAgreement) {
-      return editedAgreement.name && editedAgreement.description;
-    }
-    
-
-
-
-
-
-    
-    // Simple but effective comparison
-    const originalStr = JSON.stringify(agreement);
-    const editedStr = JSON.stringify(editedAgreement);
-    const hasChanged = originalStr !== editedStr;
-    
-
-    if (hasChanged) {
-
-
-    }
-    
-    return hasChanged;
-  };
 
   const handleFieldChange = (path, value) => {
     setEditedAgreement(prev => {
@@ -784,8 +715,8 @@ const EditAgreementPage = () => {
         }, 1500);
       } else {
         // Update existing agreement
-        const result = await updateAgreement(finalAgreementId, updatedAgreement);
-        
+        await updateAgreement(finalAgreementId, updatedAgreement);
+
         // Update local agreement
         setAgreement(updatedAgreement);
         
@@ -1031,7 +962,6 @@ const EditAgreementPage = () => {
         <TeamSelector
           selectedTeams={value || []}
           onTeamsChange={handleConsumersChange}
-          currentTheme={currentTheme}
           label={label}
           showLabel={true}
           placeholder="No consumers selected"
@@ -1068,7 +998,6 @@ const EditAgreementPage = () => {
         <TeamSelector
           selectedTeams={value || []}
           onTeamsChange={handleProducersChange}
-          currentTheme={currentTheme}
           label={label}
           showLabel={true}
           placeholder="No producers selected"
@@ -1276,7 +1205,7 @@ const EditAgreementPage = () => {
     );
   };
 
-  const renderField = (path, value, label, type = 'text', options = null, isRequired = false, fieldType = null) => {
+  const renderField = (path, value, label, type = 'text', options = null, isRequired = false, _fieldType = null) => {
     
     
     // ALWAYS handle location fields with renderLocationField, regardless of data type
@@ -1296,7 +1225,6 @@ const EditAgreementPage = () => {
                 changelog: newChangelog
               }));
             }}
-            currentTheme={currentTheme}
           />
         );
       }
@@ -1402,15 +1330,9 @@ const EditAgreementPage = () => {
                 changelog: newChangelog
               }));
             }}
-            currentTheme={currentTheme}
           />
         );
       }
-      
-      // Special styling for todo field
-      const isSpecialField = path === 'todo';
-      
-
       
       // Skip location fields - they should be handled by renderLocationField
       if (path === 'location' || path.startsWith('location.')) {
@@ -1737,7 +1659,6 @@ const EditAgreementPage = () => {
             <TeamSelector
               selectedTeams={editedAgreement.owner || []}
               onTeamsChange={(teams) => handleFieldChange('owner', teams)}
-              currentTheme={currentTheme}
               label="Agreement Owner *"
               showLabel={true}
               maxSelections={1}
@@ -1778,7 +1699,6 @@ const EditAgreementPage = () => {
             <ModelSelector
               selectedModel={editedAgreement.modelShortName}
               onModelChange={(value) => handleFieldChange('modelShortName', value)}
-              currentTheme={currentTheme}
               label="Model Short Name"
               models={dataModels}
               loading={modelsLoading}
@@ -1958,7 +1878,6 @@ const EditAgreementPage = () => {
         title="Remove list item"
         itemType={String(deleteArrayItem.label || 'item').toLowerCase()}
         itemName={deleteArrayItem.itemPreview || 'this entry'}
-        theme={currentTheme}
       />
 
       {/* Delete Agreement Modal */}
@@ -1969,7 +1888,6 @@ const EditAgreementPage = () => {
         title="Delete Agreement"
         itemName={agreement?.name}
         itemType="agreement"
-        theme={currentTheme}
       >
         <Box sx={{ p: 2, bgcolor: currentTheme.darkMode ? 'rgba(255, 0, 0, 0.1)' : 'rgba(255, 0, 0, 0.05)', borderRadius: 1, mb: 2 }}>
           <Typography variant="h6" sx={{ color: 'error.main', mb: 1 }}>

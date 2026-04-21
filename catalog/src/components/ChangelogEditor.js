@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import {
   Box,
   Typography,
@@ -14,13 +14,14 @@ import {
   Delete as DeleteIcon,
   ExpandMore as ExpandMoreIcon,
 } from '@mui/icons-material';
+import { ThemeContext } from '../contexts/ThemeContext';
 
-const ChangelogEditor = ({ 
-  value = [], 
-  onChange, 
-  label = "Changelog",
-  currentTheme 
+const ChangelogEditor = ({
+  value = [],
+  onChange,
+  label = "Changelog"
 }) => {
+  const { currentTheme } = useContext(ThemeContext);
   const handleAddChangelogItem = () => {
     const newItem = {
       version: '',

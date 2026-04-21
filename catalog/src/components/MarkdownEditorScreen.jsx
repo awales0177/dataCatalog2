@@ -17,7 +17,7 @@ const MarkdownEditorScreen = ({
   /** Props forwarded to MarkdownEditorLayout (currentTheme / darkMode injected here). */
   layout,
 }) => {
-  const { currentTheme, darkMode } = useContext(ThemeContext);
+  const { currentTheme } = useContext(ThemeContext);
 
   if (loading) {
     return (
@@ -43,8 +43,6 @@ const MarkdownEditorScreen = ({
   return (
     <>
       <MarkdownEditorLayout
-        currentTheme={currentTheme}
-        darkMode={darkMode}
         {...layout}
       />
       <Snackbar

@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect, useMemo } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   Box,
@@ -13,29 +13,17 @@ import {
   Button,
   Fab,
   Autocomplete,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemSecondaryAction,
-  Divider,
   Snackbar,
   Tooltip,
-  Collapse,
   alpha,
   Grid,
 } from '@mui/material';
 import {
   Search as SearchIcon,
   Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
   MenuBook as MenuBookIcon,
-  Description as DescriptionIcon,
-  Cancel as CancelIcon,
   DataObject as DataObjectIcon,
   Code as CodeIcon,
-  ExpandMore as ExpandMoreIcon,
-  ExpandLess as ExpandLessIcon,
 } from '@mui/icons-material';
 import { ThemeContext } from '../contexts/ThemeContext';
 import { fetchData } from '../services/api';
@@ -52,7 +40,7 @@ const GlossaryPage = () => {
   const { currentTheme, darkMode } = useContext(ThemeContext);
   const { canCreate } = useAuth();
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
   const [originalData, setOriginalData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
@@ -62,7 +50,6 @@ const GlossaryPage = () => {
   const [selectedModelFilter, setSelectedModelFilter] = useState(null);
   const [dataModels, setDataModels] = useState([]);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
-  const [expandedTerms, setExpandedTerms] = useState(new Set());
   const [selectedTerm, setSelectedTerm] = useState(null);
 
   useEffect(() => {
@@ -71,7 +58,7 @@ const GlossaryPage = () => {
         const data = await fetchData('glossary');
         setOriginalData(data.terms || []);
         setError(null);
-      } catch (err) {
+      } catch {
         setError('Failed to load glossary');
         setOriginalData([]);
       } finally {
@@ -99,17 +86,6 @@ const GlossaryPage = () => {
       setSearchQuery(urlSearch);
     }
   }, [searchParams, searchQuery]);
-
-  // Get unique categories
-  const availableCategories = useMemo(() => {
-    const categories = new Set();
-    originalData.forEach(term => {
-      if (term.category) {
-        categories.add(term.category);
-      }
-    });
-    return Array.from(categories).sort();
-  }, [originalData]);
 
   // Get filter options
   const getFilterOptions = () => {
@@ -171,18 +147,6 @@ const GlossaryPage = () => {
   };
 
   const hasActiveFilters = searchQuery || selectedCategoryFilter || selectedModelFilter;
-
-  const toggleTermExpansion = (termId) => {
-    setExpandedTerms(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(termId)) {
-        newSet.delete(termId);
-      } else {
-        newSet.add(termId);
-      }
-      return newSet;
-    });
-  };
 
   const handleTermClick = (term) => {
     setSelectedTerm(term);
@@ -524,7 +488,7 @@ const GlossaryPage = () => {
                         }
                       }}
                     >
-                      <GlossaryCard term={term} currentTheme={currentTheme} dataModels={dataModels} canEdit={canCreate} />
+                      <GlossaryCard term={term} dataModels={dataModels} canEdit={canCreate} />
                     </Box>
                   </Grid>
                 ))}
@@ -720,7 +684,7 @@ const GlossaryPage = () => {
                   <ReactMarkdown
                     remarkPlugins={[remarkGfm, remarkEmoji]}
                     components={{
-                      code({ node, inline, className, children, ...props }) {
+                      code({ node: _node, inline, className, children, ...props }) {
                         const match = /language-(\w+)/.exec(className || '');
                         const isMermaid = match && match[1] === 'mermaid';
                         

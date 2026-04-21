@@ -24,7 +24,6 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
-  Button,
   Stack,
 } from '@mui/material';
 import { useParams, useNavigate, Link } from 'react-router-dom';
@@ -35,7 +34,6 @@ import {
   ExpandMore as ExpandMoreIcon,
   ArrowForward as ArrowForwardIcon,
   VerifiedUser as VerifiedUserIcon,
-  WorkspacePremium as CrownIcon,
   Construction as WrenchIcon,
   Schedule as ScheduleIcon,
   Group as GroupIcon,
@@ -557,8 +555,7 @@ const ProductAgreementDetailPage = () => {
 
         setAgreement(agreement);
         setModel(model);
-      } catch (error) {
-
+      } catch {
         setError('Failed to load agreement details');
       } finally {
         setLoading(false);
@@ -1616,7 +1613,7 @@ const ProductAgreementDetailPage = () => {
                   if (Array.isArray(agreement.location)) {
                     // New array format: [{ bucket, description }, ...]
                     return agreement.location.map((loc, index) => {
-                      const { icon: IconComponent, label, description } = parseLocation(loc);
+                      const { label, description } = parseLocation(loc);
                       return (
                         <ListItem key={index} sx={{ py: 0.5, bgcolor: 'transparent', alignItems: 'center' }}>
                           <ListItemIcon sx={{ minWidth: 30, display: 'flex', alignItems: 'center' }}>
@@ -1632,7 +1629,7 @@ const ProductAgreementDetailPage = () => {
                   } else if (agreement.location && typeof agreement.location === 'object') {
                     // Old object format: { key: description } - convert to array format for display
                     return Object.entries(agreement.location).map(([loc, desc], index) => {
-                      const { icon: IconComponent, label } = parseLocation(loc);
+                      const { label } = parseLocation(loc);
                       return (
                         <ListItem key={index} sx={{ py: 0.5, bgcolor: 'transparent', alignItems: 'center' }}>
                           <ListItemIcon sx={{ minWidth: 30, display: 'flex', alignItems: 'center' }}>
@@ -1647,7 +1644,7 @@ const ProductAgreementDetailPage = () => {
                     });
                   } else {
                     // Fallback for string or null/undefined
-                    const { icon: IconComponent, label, description } = parseLocation(agreement.location);
+                    const { label, description } = parseLocation(agreement.location);
                     return (
                       <ListItem sx={{ py: 0.5, bgcolor: 'transparent', alignItems: 'center' }}>
                         <ListItemIcon sx={{ minWidth: 30, display: 'flex', alignItems: 'center' }}>

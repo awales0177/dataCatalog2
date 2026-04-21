@@ -12,11 +12,9 @@ import {
   Select,
   MenuItem,
   Chip,
-  IconButton,
   Alert,
   Snackbar,
   CircularProgress,
-  Divider,
   alpha,
 } from '@mui/material';
 import DeleteModal from '../components/DeleteModal';
@@ -26,7 +24,6 @@ import {
   ArrowBack as ArrowBackIcon,
   Save as SaveIcon,
   Cancel as CancelIcon,
-  Add as AddIcon,
   Delete as DeleteIcon,
   Cloud as CloudIcon,
 } from '@mui/icons-material';
@@ -37,7 +34,7 @@ const EditToolkitInfrastructurePage = () => {
   const { currentTheme } = useContext(ThemeContext);
   const { infrastructureId } = useParams();
   const navigate = useNavigate();
-  const [infrastructureData, setInfrastructureData] = useState(null);
+  const [, setInfrastructureData] = useState(null);
   const [editedInfrastructure, setEditedInfrastructure] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -90,7 +87,7 @@ const EditToolkitInfrastructurePage = () => {
             setError('Infrastructure not found');
           }
         }
-      } catch (err) {
+      } catch {
         setError('Failed to load infrastructure data');
       } finally {
         setLoading(false);
@@ -145,7 +142,7 @@ const EditToolkitInfrastructurePage = () => {
 
       if (isNewInfrastructure) {
         // Remove ID from payload - API will auto-generate it
-        const { id, ...infrastructureWithoutId } = infrastructureToSave;
+        const { id: _id, ...infrastructureWithoutId } = infrastructureToSave;
         
         const result = await createToolkitComponent({
           ...infrastructureWithoutId,

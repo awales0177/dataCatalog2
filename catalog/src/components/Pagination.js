@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useContext } from 'react';
+import { ThemeContext } from '../contexts/ThemeContext';
 import { Pagination as MuiPagination, Box, alpha } from '@mui/material';
 
-const Pagination = ({ count, page, onChange, currentTheme }) => {
+const Pagination = ({ count, page, onChange }) => {
+  const { currentTheme } = useContext(ThemeContext);
   const hasEnoughItems = count > 1;
 
   return (

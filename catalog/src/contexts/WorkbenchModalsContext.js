@@ -18,12 +18,10 @@ import {
   workbenchModalFlagsFromPath,
 } from '../constants/workbenchPaths';
 import { getHomeCarouselDisable } from '../utils/disableConfig';
-import { ThemeContext } from './ThemeContext';
 
 const WorkbenchModalsContext = createContext(null);
 
 export function WorkbenchModalsProvider({ children }) {
-  const { currentTheme, darkMode } = useContext(ThemeContext);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -152,8 +150,7 @@ export function WorkbenchModalsProvider({ children }) {
       <QueryModal
         open={queryOpen}
         onClose={closeQuery}
-        currentTheme={currentTheme}
-        darkMode={darkMode}
+
         splitMode={splitQueryAndModeling}
         onOpenModeling={openStudio}
         modelingOpen={modelingOpen}
@@ -161,8 +158,7 @@ export function WorkbenchModalsProvider({ children }) {
       <ModelingModal
         open={modelingOpen}
         onClose={closeModeling}
-        currentTheme={currentTheme}
-        darkMode={darkMode}
+
         splitMode={splitQueryAndModeling}
         onOpenQuery={openStudio}
         queryOpen={queryOpen}
@@ -170,8 +166,7 @@ export function WorkbenchModalsProvider({ children }) {
       <RuleBuilderModal
         open={Boolean(ruleBuilderOpen)}
         onClose={closeRuleBuilder}
-        currentTheme={currentTheme}
-        darkMode={darkMode}
+
       />
       <ReferenceDataHubModal open={referenceHubOpen} onClose={closeReferenceHub} />
     </WorkbenchModalsContext.Provider>

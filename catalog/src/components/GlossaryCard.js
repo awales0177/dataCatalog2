@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useContext } from 'react';
+import { ThemeContext } from '../contexts/ThemeContext';
 import {
   Card,
   CardContent,
@@ -18,7 +19,8 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { glossaryTermApiRef } from '../utils/catalogModelLookup';
 
-const GlossaryCard = ({ term, currentTheme, dataModels = [], canEdit = false }) => {
+const GlossaryCard = ({ term, dataModels = [], canEdit = false }) => {
+  const { currentTheme } = useContext(ThemeContext);
   const navigate = useNavigate();
   return (
     <Card sx={{ overflow: 'hidden' }}>

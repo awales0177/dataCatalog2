@@ -786,7 +786,7 @@
       "meta": {
         "tier": "silver",
         "verified": true,
-        "clickCount": 3
+        "clickCount": 4
       },
       "resources": {
         "code": "https://github.com/org/cultural-programs",
@@ -863,13 +863,12 @@
       "version": "1.1.0",
       "description": "Agricultural program management and tracking",
       "extendedDescription": "The Agricultural Programs model manages comprehensive agricultural program data. It includes schemas for program planning, resource allocation, and progress tracking. The model supports crop management, livestock tracking, and equipment maintenance. It includes features for weather monitoring, soil analysis, and pest control. The model also handles integration with market systems, supply chain platforms, and regulatory compliance tools.",
-      "lastUpdated": "2026-04-19 22:21:47",
+      "lastUpdated": "2026-04-20 23:28:15",
       "specMaintainer": "Emma Davis",
       "maintainerEmail": "emma.davis@example.com",
       "domain": [
         "Agriculture",
-        "Operations",
-        "Analytics"
+        "Operations"
       ],
       "meta": {
         "tier": "bronze",
@@ -911,6 +910,19 @@
               "field": "resources.tools",
               "oldValue": "{tool1, tool2, tool3}",
               "newValue": "{AWS Textract, Kubeflow}"
+            }
+          ]
+        },
+        {
+          "version": "1.1.0",
+          "timestamp": "2026-04-21T03:28:15.013Z",
+          "updatedBy": "user",
+          "changeDescription": "Updated domain",
+          "fieldChanges": [
+            {
+              "field": "domain",
+              "oldValue": "[Agriculture, Operations, Analytics]",
+              "newValue": "[Agriculture, Operations]"
             }
           ]
         }

@@ -4,15 +4,11 @@ import {
   Container,
   Typography,
   Paper,
-  Chip,
   Grid,
   IconButton,
   Alert,
   Tooltip,
   CircularProgress,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
   List,
   ListItem,
   ListItemText,
@@ -130,16 +126,6 @@ const ToolkitDetailPage = () => {
       cancelled = true;
     };
   }, []);
-
-  // Helper function to convert icon filename to readable label
-  const getIconLabel = (filename) => {
-    // Remove extension and convert kebab-case to Title Case
-    const name = filename.replace(/\.[^/.]+$/, ''); // Remove extension
-    return name
-      .split('-')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
-  };
 
   const allIcons = TOOLKIT_EVAL_ICONS;
 
@@ -391,7 +377,7 @@ const ToolkitDetailPage = () => {
         } else {
           setError('Toolkit not found');
         }
-      } catch (err) {
+      } catch {
         setError('Failed to load toolkit data');
       } finally {
         setLoading(false);
@@ -468,7 +454,7 @@ const ToolkitDetailPage = () => {
   };
 
   const confirmRankChange = async () => {
-    const { techId, currentIndex, newIndex } = rankChangeDialog;
+    const { currentIndex, newIndex } = rankChangeDialog;
 
     const nonEvaluatedTechs = technologies
       .filter((t) => !isEvaluatedTech(t))
@@ -1208,19 +1194,7 @@ const ToolkitDetailPage = () => {
                             {maintainerDisplayForTech(selectedTech)}
                           </Typography>
                         </Box>
-                        
-                        {/* Deployed to */}
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}>
-                            <Typography variant="caption" sx={{ color: currentTheme.textSecondary, fontWeight: 500 }}>
-                              Deployed to:
-                            </Typography>
-                          </Box>
-                          <Typography variant="caption" sx={{ color: currentTheme.text }}>
-                            {selectedTech.deployedTo || selectedTech.deployment || 'N/A'}
-                          </Typography>
-                        </Box>
-                        
+
                         {/* Last Updated */}
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25 }}>
@@ -1538,7 +1512,7 @@ const ToolkitDetailPage = () => {
                           <ReactMarkdown
                             remarkPlugins={[remarkGfm, remarkEmoji]}
                             components={{
-                              code({ node, inline, className, children, ...props }) {
+                              code({ node: _node, inline, className, children, ...props }) {
                                 const match = /language-(\w+)/.exec(className || '');
                                 const isMermaid = match && match[1] === 'mermaid';
                                 

@@ -12,11 +12,9 @@ import {
   Select,
   MenuItem,
   Chip,
-  IconButton,
   Alert,
   Snackbar,
   CircularProgress,
-  Divider,
   alpha,
 } from '@mui/material';
 import DeleteModal from '../components/DeleteModal';
@@ -26,7 +24,6 @@ import {
   ArrowBack as ArrowBackIcon,
   Save as SaveIcon,
   Cancel as CancelIcon,
-  Add as AddIcon,
   Delete as DeleteIcon,
   Storage as StorageIcon,
 } from '@mui/icons-material';
@@ -37,7 +34,7 @@ const EditToolkitContainerPage = () => {
   const { currentTheme } = useContext(ThemeContext);
   const { containerId } = useParams();
   const navigate = useNavigate();
-  const [containerData, setContainerData] = useState(null);
+  const [, setContainerData] = useState(null);
   const [editedContainer, setEditedContainer] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -89,7 +86,7 @@ const EditToolkitContainerPage = () => {
             setError('Container not found');
           }
         }
-      } catch (err) {
+      } catch {
         setError('Failed to load container data');
       } finally {
         setLoading(false);
@@ -144,7 +141,7 @@ const EditToolkitContainerPage = () => {
 
       if (isNewContainer) {
         // Remove ID from payload - API will auto-generate it
-        const { id, ...containerWithoutId } = containerToSave;
+        const { id: _id, ...containerWithoutId } = containerToSave;
         
         const result = await createToolkitComponent({
           ...containerWithoutId,
@@ -464,7 +461,6 @@ const EditToolkitContainerPage = () => {
                   onTeamsChange={(teams) => {
                     handleFieldChange('author', teams.length > 0 ? teams[0] : '');
                   }}
-                  currentTheme={currentTheme}
                   label="Author"
                   showLabel={true}
                   maxSelections={1}
@@ -876,7 +872,6 @@ const EditToolkitContainerPage = () => {
         title="Delete Container"
         itemName={editedContainer?.name}
         itemType="container"
-        theme={currentTheme}
       />
 
       {/* Snackbar */}

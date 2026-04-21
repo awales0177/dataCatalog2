@@ -112,7 +112,7 @@ function getAgreementStatusColor(status) {
   }
 }
 
-function AgreementMiniCard({ agreement, currentTheme, navigate }) {
+function AgreementMiniCard({ agreement, navigate }) {
   const statusColor = getAgreementStatusColor(agreement.status);
   const statusLabel = (agreement.status || 'unknown')
     .split('_')
@@ -120,7 +120,6 @@ function AgreementMiniCard({ agreement, currentTheme, navigate }) {
     .join(' ');
   return (
     <MiniCard
-      currentTheme={currentTheme}
       title={agreement.name}
       description={agreement.description?.trim() || 'No description available'}
       descriptionLines={3}
@@ -993,7 +992,6 @@ const DataModelDetailPage = () => {
                   return (
                     <MiniCard
                       key={`${toolName}-${index}`}
-                      currentTheme={currentTheme}
                       title={toolName}
                       description={toolDescription}
                       descriptionVariant={techDescription ? 'body2' : 'caption'}
@@ -1046,7 +1044,6 @@ const DataModelDetailPage = () => {
                 loading={rulesListLoading}
                 readOnly
                 expandResetKey={modelApiRef(model)}
-                currentTheme={currentTheme}
                 darkMode={currentTheme.darkMode}
                 applications={applications}
                 emptyMessage="No rules for this model yet."
@@ -1087,7 +1084,6 @@ const DataModelDetailPage = () => {
                       <Box sx={{ flex: 1, maxWidth: 'calc(50% - 8px)' }}>
                         <AgreementMiniCard
                           agreement={agreements[currentAgreementIndex]}
-                          currentTheme={currentTheme}
                           navigate={navigate}
                         />
                       </Box>
@@ -1095,7 +1091,6 @@ const DataModelDetailPage = () => {
                         <Box sx={{ flex: 1, maxWidth: 'calc(50% - 8px)' }}>
                           <AgreementMiniCard
                             agreement={agreements[currentAgreementIndex + 1]}
-                            currentTheme={currentTheme}
                             navigate={navigate}
                           />
                         </Box>
@@ -1145,7 +1140,6 @@ const DataModelDetailPage = () => {
                     <Grid item xs={12} sm={6} key={agreement.id}>
                       <AgreementMiniCard
                         agreement={agreement}
-                        currentTheme={currentTheme}
                         navigate={navigate}
                       />
                     </Grid>

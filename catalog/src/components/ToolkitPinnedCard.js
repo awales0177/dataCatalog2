@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useContext } from 'react';
+import { ThemeContext } from '../contexts/ThemeContext';
 import { Box, Card, CardContent, Typography, Chip, alpha } from '@mui/material';
 import { ViewModule as ResourceIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
@@ -62,8 +63,9 @@ export function inferToolkitSubtypeFromPath(path) {
 /**
  * Same visuals as ToolkitPage: workbench card for hub toolkits, unified resource card for packages/containers/functions/infrastructure.
  */
-const ToolkitPinnedCard = ({ pin, item, currentTheme }) => {
+const ToolkitPinnedCard = ({ pin, item }) => {
   const navigate = useNavigate();
+  const { currentTheme } = useContext(ThemeContext);
   if (!item) return null;
 
   const subtype = pin.toolkitSubtype || inferToolkitSubtypeFromPath(pin.path);

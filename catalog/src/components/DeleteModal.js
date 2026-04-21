@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -9,6 +9,7 @@ import {
   TextField,
   Box,
 } from '@mui/material';
+import { ThemeContext } from '../contexts/ThemeContext';
 
 const DeleteModal = ({
   open,
@@ -20,9 +21,9 @@ const DeleteModal = ({
   confirmationText = null,
   /** 'typed' requires matching phrase; 'simple' is Cancel / Delete only. */
   confirmMode = 'typed',
-  theme,
   children
 }) => {
+  const { currentTheme: theme } = useContext(ThemeContext);
   const [confirmation, setConfirmation] = useState('');
   const [canDelete, setCanDelete] = useState(false);
 
@@ -62,10 +63,10 @@ const DeleteModal = ({
       fullWidth
       PaperProps={{
         sx: {
-          bgcolor: theme.card,
+          bgcolor: theme?.darkMode ? theme?.background : theme?.card,
           color: theme.text,
-          border: `1px solid ${theme.border}`
-        }
+          border: `1px solid ${theme.border}`,
+        },
       }}
     >
       <DialogTitle sx={{ color: theme.text }}>
@@ -127,10 +128,7 @@ const DeleteModal = ({
       </DialogContent>
       
       <DialogActions>
-        <Button 
-          onClick={handleClose} 
-          sx={{ color: theme.textSecondary }}
-        >
+        <Button onClick={handleClose} color="inherit">
           Cancel
         </Button>
         <Button
@@ -138,17 +136,6 @@ const DeleteModal = ({
           color="error"
           variant="contained"
           disabled={!canDelete}
-          sx={{
-            bgcolor: '#f44336',
-            color: 'white',
-            '&:hover': {
-              bgcolor: '#d32f2f',
-            },
-            '&:disabled': {
-              bgcolor: '#ccc',
-              color: '#666',
-            },
-          }}
         >
           Delete {itemType}
         </Button>

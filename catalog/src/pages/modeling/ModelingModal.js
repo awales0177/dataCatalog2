@@ -4,7 +4,7 @@
  * Right: Simple data model – drag and drop tables/schemas to build a model.
  */
 
-import React, { useState, useEffect, useMemo, useContext, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useContext, useCallback, useRef } from 'react';
 import {
   Dialog,
   Box,
@@ -25,6 +25,12 @@ import {
   MenuItem,
   useMediaQuery,
   Tooltip,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import {
@@ -37,9 +43,12 @@ import {
   DeleteOutline as DeleteIcon,
 } from '@mui/icons-material';
 import { ThemeContext } from '../../contexts/ThemeContext';
+import { getHomeCarouselDisable } from '../../utils/disableConfig';
 import modelsData from '../../data/models.json';
 import { fetchCatalogDatasets } from '../../services/api';
 import { fontStackSans, fontStackMono } from '../../theme/theme';
+import { getTargetFieldsForCatalogModel } from './modelingLogicalFields';
+import ModelingRelationshipGraph from './ModelingRelationshipGraph.jsx';
 
 // Same table icon as query sidebar – purple table SVG
 const TableLogo = ({ size = 16 }) => (
@@ -73,6 +82,37 @@ function formatMappingTablesSubtitle(m, maxLen = 80) {
   const s = parts.join(', ');
   if (s.length <= maxLen) return s || '—';
   return `${s.slice(0, maxLen - 1)}…`;
+}
+
+function getColumnsForTableItem(item, datasets) {
+  if (!item || !Array.isArray(datasets)) return [];
+  const ds = datasets.find((d) => d.id === item.datasetId);
+  const table = ds?.tables?.find((t) => t.name === item.tableName);
+  return Array.isArray(table?.columns) ? table.columns : [];
+}
+
+function columnDisplayLabel(col) {
+  if (col && typeof col === 'object') {
+    return [col.name, col.type].filter(Boolean).join(' · ') || String(col.name ?? '');
+  }
+  return String(col ?? '');
+}
+
+function columnSourceName(col) {
+  if (col && typeof col === 'object') return col.name != null ? String(col.name) : '';
+  return String(col ?? '');
+}
+
+function buildColumnMappingsForItem(item, draftByItemId, datasets) {
+  const srcCols = getColumnsForTableItem(item, datasets);
+  const m = draftByItemId[item.id] || {};
+  return srcCols
+    .map((col) => {
+      const source = columnSourceName(col);
+      if (!source) return null;
+      return { source, target: m[source] || '' };
+    })
+    .filter(Boolean);
 }
 
 /** Small off-screen preview so the browser doesn’t use the full row as the drag ghost */
@@ -135,14 +175,11 @@ function createTableDragPreview(tableName, { darkMode, primary, textColor }) {
 const ModelingModal = ({
   open,
   onClose,
-  currentTheme,
-  darkMode,
   splitMode = false,
   onOpenQuery,
   queryOpen = false,
 }) => {
-  const { currentTheme: contextTheme } = useContext(ThemeContext);
-  const theme = currentTheme || contextTheme;
+  const { currentTheme: theme, darkMode } = useContext(ThemeContext);
   const muiTheme = useTheme();
   const isMdUp = useMediaQuery(muiTheme.breakpoints.up('md'));
   const isSplit = Boolean(splitMode) && isMdUp;
@@ -157,6 +194,9 @@ const ModelingModal = ({
   const [selectedMappingId, setSelectedMappingId] = useState(null);
   /** Data model shortName from models.json */
   const [selectedCatalogModelShortName, setSelectedCatalogModelShortName] = useState('');
+  /** Per dropped table id → (source column name → target logical field) */
+  const [draftColumnMappings, setDraftColumnMappings] = useState({});
+  const draftShortNameRef = useRef('');
   const [dropMessage, setDropMessage] = useState({ severity: 'warning', text: '' });
 
   const catalogModels = useMemo(() => {
@@ -169,6 +209,20 @@ const ModelingModal = ({
         })
       );
   }, []);
+
+  const currentMapping = selectedMappingId ? savedMappings.find((m) => m.id === selectedMappingId) : null;
+
+  const effectiveModelShortName =
+    (selectedCatalogModelShortName && String(selectedCatalogModelShortName)) ||
+    (currentMapping && String(currentMapping.modelShortName || '')) ||
+    '';
+
+  const targetFieldsForModel = useMemo(() => {
+    const m = catalogModels.find(
+      (x) => String(x.shortName).toLowerCase() === String(effectiveModelShortName).toLowerCase()
+    );
+    return getTargetFieldsForCatalogModel(m);
+  }, [catalogModels, effectiveModelShortName]);
 
   useEffect(() => {
     try {
@@ -194,6 +248,8 @@ const ModelingModal = ({
     setModelItems([]);
     setSelectedMappingId(null);
     setSelectedCatalogModelShortName('');
+    setDraftColumnMappings({});
+    draftShortNameRef.current = '';
     setExpandedDatasets({});
     setExpandedTables({});
     fetchCatalogDatasets()
@@ -210,6 +266,48 @@ const ModelingModal = ({
       cancelled = true;
     };
   }, [open]);
+
+  useEffect(() => {
+    if (!effectiveModelShortName || modelItems.length === 0 || targetFieldsForModel.length === 0) {
+      if (!effectiveModelShortName) {
+        setDraftColumnMappings({});
+        draftShortNameRef.current = '';
+      }
+      return;
+    }
+    const shortChanged = draftShortNameRef.current !== effectiveModelShortName;
+    draftShortNameRef.current = effectiveModelShortName;
+
+    setDraftColumnMappings((prev) => {
+      const base = shortChanged ? {} : { ...prev };
+      const next = { ...base };
+      for (const item of modelItems) {
+        const cols = getColumnsForTableItem(item, datasets);
+        const row = shortChanged ? {} : { ...(next[item.id] || {}) };
+        for (const col of cols) {
+          const name = columnSourceName(col);
+          if (!name) continue;
+          if (row[name] === undefined || row[name] === '') {
+            const match = targetFieldsForModel.find(
+              (t) => t.toLowerCase() === name.replace(/\s+/g, '_').toLowerCase()
+            );
+            row[name] = match || row[name] || '';
+          }
+        }
+        const nameSet = new Set(
+          cols.map((c) => columnSourceName(c)).filter(Boolean)
+        );
+        for (const k of Object.keys(row)) {
+          if (!nameSet.has(k)) delete row[k];
+        }
+        next[item.id] = row;
+      }
+      for (const k of Object.keys(next)) {
+        if (!modelItems.some((i) => i.id === k)) delete next[k];
+      }
+      return next;
+    });
+  }, [effectiveModelShortName, modelItems, datasets, targetFieldsForModel]);
 
   const tree = useMemo(() => {
     return datasets
@@ -350,6 +448,7 @@ const ModelingModal = ({
       tables: modelItems.map((item) => ({
         tableName: item.tableName,
         tableLabel: getItemLabel(item),
+        columnMappings: buildColumnMappingsForItem(item, draftColumnMappings, datasets),
       })),
     };
     const next = [...savedMappings, mapping];
@@ -364,15 +463,26 @@ const ModelingModal = ({
   const openMapping = (mapping) => {
     const m = migrateMappingToTables(mapping);
     const tables = mappingTablesList(m);
-    setModelItems(
-      tables.map((t, i) => ({
-        id: `${m.id}-row-${i}-${t.tableName}`,
-        type: 'table',
-        datasetId: m.datasetId,
-        tableName: t.tableName,
-        label: t.tableLabel || t.tableName,
-      }))
-    );
+    const items = tables.map((t, i) => ({
+      id: `${m.id}-row-${i}-${t.tableName}`,
+      type: 'table',
+      datasetId: m.datasetId,
+      tableName: t.tableName,
+      label: t.tableLabel || t.tableName,
+    }));
+    const nextDraft = {};
+    tables.forEach((t, i) => {
+      const id = items[i].id;
+      nextDraft[id] = {};
+      if (Array.isArray(t.columnMappings)) {
+        for (const cm of t.columnMappings) {
+          if (cm?.source) nextDraft[id][cm.source] = cm.target || '';
+        }
+      }
+    });
+    draftShortNameRef.current = String(m.modelShortName || '');
+    setDraftColumnMappings(nextDraft);
+    setModelItems(items);
     setSelectedMappingId(m.id);
   };
 
@@ -386,10 +496,57 @@ const ModelingModal = ({
     if (selectedMappingId === id) {
       setModelItems([]);
       setSelectedMappingId(null);
+      setDraftColumnMappings({});
+      draftShortNameRef.current = '';
     }
   };
 
-  const currentMapping = selectedMappingId ? savedMappings.find((m) => m.id === selectedMappingId) : null;
+  const setDraftTarget = useCallback((itemId, sourceCol, targetVal) => {
+    setDraftColumnMappings((prev) => ({
+      ...prev,
+      [itemId]: { ...(prev[itemId] || {}), [sourceCol]: targetVal },
+    }));
+  }, []);
+
+  const updateSavedMappingColumns = () => {
+    if (!currentMapping || !effectiveModelShortName || modelItems.length < 1) return;
+    const dm = catalogModels.find(
+      (m) => String(m.shortName).toLowerCase() === String(effectiveModelShortName).toLowerCase()
+    );
+    if (!dm) return;
+    const updated = {
+      ...currentMapping,
+      modelName: dm.name || dm.shortName,
+      modelShortName: dm.shortName,
+      tables: modelItems.map((item) => ({
+        tableName: item.tableName,
+        tableLabel: getItemLabel(item),
+        columnMappings: buildColumnMappingsForItem(item, draftColumnMappings, datasets),
+      })),
+    };
+    const next = savedMappings.map((x) => (x.id === currentMapping.id ? updated : x));
+    setSavedMappings(next);
+    try {
+      localStorage.setItem(MAPPINGS_STORAGE_KEY, JSON.stringify(next));
+    } catch (_) {}
+  };
+
+  const selectControlSx = {
+    minWidth: 200,
+    '& .MuiInputBase-root': {
+      bgcolor: darkMode ? 'rgba(255,255,255,0.08)' : '#fff',
+      color: theme?.text,
+    },
+    '& .MuiOutlinedInput-notchedOutline': {
+      borderColor: darkMode ? 'rgba(255,255,255,0.2)' : undefined,
+    },
+    '& .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline': {
+      borderColor: darkMode ? 'rgba(255, 255, 255, 0.35)' : undefined,
+    },
+    '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
+      borderColor: theme?.primary || '#0b87b4',
+    },
+  };
 
   return (
     <Dialog
@@ -468,7 +625,10 @@ const ModelingModal = ({
             </Typography>
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexShrink: 0 }}>
-            {onOpenQuery && !queryOpen && (
+            {onOpenQuery &&
+              !queryOpen &&
+              !getHomeCarouselDisable('studio').disabled &&
+              !getHomeCarouselDisable('modeling').disabled && (
               <Tooltip title="Open query workbench side-by-side on wide screens">
                 <Button
                   size="small"
@@ -727,6 +887,14 @@ const ModelingModal = ({
                 {dropMessage.text}
               </Alert>
             ) : null}
+            {modelItems.length > 0 ? (
+              <ModelingRelationshipGraph
+                modelItems={modelItems}
+                datasets={datasets}
+                darkMode={darkMode}
+                theme={theme}
+              />
+            ) : null}
             {modelItems.length === 0 ? (
               <Paper
                 elevation={0}
@@ -886,10 +1054,121 @@ const ModelingModal = ({
                       onClick={saveMapping}
                       disabled={!selectedCatalogModelShortName || modelItems.length < 1 || catalogModels.length === 0}
                     >
-                      Map
+                      Save
                     </Button>
                   </Box>
                 )}
+                {modelItems.length > 0 && effectiveModelShortName && targetFieldsForModel.length > 0 ? (
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 0.5 }}>
+                    <Box>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 600, color: theme?.text, mb: 0.5 }}>
+                        Source → target columns
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: darkMode ? 'rgba(255,255,255,0.55)' : theme?.textSecondary, display: 'block' }}>
+                        Map each physical column to a logical field on{' '}
+                        <strong>{catalogModels.find((x) => x.shortName === effectiveModelShortName)?.name || effectiveModelShortName}</strong>.
+                        Unmapped columns are stored with an empty target.
+                      </Typography>
+                    </Box>
+                    {modelItems.map((item) => {
+                      const cols = getColumnsForTableItem(item, datasets);
+                      return (
+                        <Paper
+                          key={item.id}
+                          elevation={0}
+                          sx={{
+                            p: 1.5,
+                            borderRadius: 1,
+                            bgcolor: darkMode ? '#1c1c20' : theme?.card,
+                            border: `1px solid ${darkMode ? 'rgba(255,255,255,0.12)' : theme?.border || '#e0e0e0'}`,
+                          }}
+                        >
+                          <Typography variant="body2" sx={{ fontWeight: 600, color: theme?.text, mb: 1, display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                            <TableLogo size={16} />
+                            {getItemLabel(item)}
+                          </Typography>
+                          {cols.length === 0 ? (
+                            <Typography variant="caption" sx={{ color: theme?.textSecondary }}>
+                              No columns in catalog for this table. Expand it on the left after datasets load.
+                            </Typography>
+                          ) : (
+                            <TableContainer>
+                              <Table size="small" sx={{ '& .MuiTableCell-root': { borderColor: darkMode ? 'rgba(255,255,255,0.1)' : undefined } }}>
+                                <TableHead>
+                                  <TableRow>
+                                    <TableCell sx={{ color: theme?.textSecondary, fontWeight: 600 }}>Source column</TableCell>
+                                    <TableCell sx={{ color: theme?.textSecondary, fontWeight: 600, minWidth: 200 }}>
+                                      Target field
+                                    </TableCell>
+                                  </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                  {cols.map((col) => {
+                                    const src = columnSourceName(col);
+                                    if (!src) return null;
+                                    const val = draftColumnMappings[item.id]?.[src] ?? '';
+                                    return (
+                                      <TableRow key={src}>
+                                        <TableCell sx={{ color: theme?.text, fontFamily: fontStackMono, fontSize: '0.8rem' }}>
+                                          {columnDisplayLabel(col)}
+                                        </TableCell>
+                                        <TableCell>
+                                          <FormControl size="small" fullWidth sx={selectControlSx}>
+                                            <Select
+                                              value={val}
+                                              onChange={(e) => setDraftTarget(item.id, src, e.target.value)}
+                                              displayEmpty
+                                              inputProps={{ 'aria-label': `Target for ${src}` }}
+                                              MenuProps={{
+                                                PaperProps: {
+                                                  sx: {
+                                                    maxHeight: 280,
+                                                    bgcolor: darkMode ? '#2a2a2e' : theme?.card,
+                                                    '& .MuiMenuItem-root': { color: theme?.text },
+                                                  },
+                                                },
+                                              }}
+                                            >
+                                              <MenuItem value="">
+                                                <em>Unmapped</em>
+                                              </MenuItem>
+                                              {targetFieldsForModel.map((tf) => (
+                                                <MenuItem key={tf} value={tf}>
+                                                  {tf}
+                                                </MenuItem>
+                                              ))}
+                                            </Select>
+                                          </FormControl>
+                                        </TableCell>
+                                      </TableRow>
+                                    );
+                                  })}
+                                </TableBody>
+                              </Table>
+                            </TableContainer>
+                          )}
+                        </Paper>
+                      );
+                    })}
+                    {currentMapping ? (
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        startIcon={<SaveIcon />}
+                        onClick={updateSavedMappingColumns}
+                        sx={{
+                          alignSelf: 'flex-start',
+                          textTransform: 'none',
+                          fontWeight: 600,
+                          borderColor: theme?.primary,
+                          color: theme?.primary,
+                        }}
+                      >
+                        Update column mapping
+                      </Button>
+                    ) : null}
+                  </Box>
+                ) : null}
               </Box>
             )}
           </Box>

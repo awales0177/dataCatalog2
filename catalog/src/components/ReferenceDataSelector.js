@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import {
   Box,
   Button,
@@ -14,14 +14,15 @@ import {
   Add as AddIcon,
 } from '@mui/icons-material';
 import referenceDataJson from '../data/reference.json';
+import { ThemeContext } from '../contexts/ThemeContext';
 
-const ReferenceDataSelector = ({ 
-  selectedReferenceData = [], 
-  onReferenceDataChange, 
-  currentTheme,
+const ReferenceDataSelector = ({
+  selectedReferenceData = [],
+  onReferenceDataChange,
   label = 'Reference Data',
-  showLabel = true 
+  showLabel = true
 }) => {
+  const { currentTheme } = useContext(ThemeContext);
   const [referenceData, setReferenceData] = useState([]);
   const [showSelectionDialog, setShowSelectionDialog] = useState(false);
   const [availableOptions, setAvailableOptions] = useState([]);
@@ -30,7 +31,7 @@ const ReferenceDataSelector = ({
     const loadReferenceData = () => {
       try {
         setReferenceData(referenceDataJson.items || []);
-      } catch (error) {
+      } catch {
         // Handle error silently or show user notification
       }
     };

@@ -6,23 +6,12 @@ import {
   Paper,
   Chip,
   Grid,
-  Divider,
-  Link,
   alpha,
   Tooltip,
   CircularProgress,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
   IconButton,
   Button,
   Alert,
-  Card,
-  CardContent,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
 } from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
@@ -32,13 +21,8 @@ import {
   Download as DownloadIcon,
   Person as PersonIcon,
   Schedule as ScheduleIcon,
-  Info as InfoIcon,
-  ExpandMore as ExpandMoreIcon,
   Visibility as VisibilityIcon,
-  Book as BookIcon,
-  Build as BuildIcon,
   CheckCircle as CheckCircleIcon,
-  List as ListIcon,
   Edit as EditIcon,
 } from '@mui/icons-material';
 import { ThemeContext } from '../contexts/ThemeContext';
@@ -68,7 +52,7 @@ const ToolkitInfrastructureDetailPage = () => {
         } else {
           setError('Infrastructure not found');
         }
-      } catch (err) {
+      } catch {
         setError('Failed to load infrastructure data');
       } finally {
         setLoading(false);

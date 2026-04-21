@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useContext } from 'react';
+import { ThemeContext } from '../contexts/ThemeContext';
 import {
   Box,
   Card,
@@ -33,8 +34,9 @@ const getStatusColor = (status) => {
   }
 };
 
-const DataPolicyCard = ({ policy, currentTheme, sx: sxProp }) => {
+const DataPolicyCard = ({ policy, sx: sxProp }) => {
   const navigate = useNavigate();
+  const { currentTheme } = useContext(ThemeContext);
   const statusColor = getStatusColor(policy.status);
   const tags = Array.isArray(policy.tags) ? policy.tags : [];
 

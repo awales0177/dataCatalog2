@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useContext } from 'react';
+import { ThemeContext } from '../contexts/ThemeContext';
 import {
   Card,
   CardContent,
@@ -14,8 +15,9 @@ import FactoryIcon from '@mui/icons-material/Factory';
 import HandshakeOutlinedIcon from '@mui/icons-material/HandshakeOutlined';
 import { getProducerTeamImageSrc } from '../utils/producerTeamImage';
 
-const ProductAgreementCard = ({ agreement, currentTheme, applications = [] }) => {
+const ProductAgreementCard = ({ agreement, applications = [] }) => {
   const navigate = useNavigate();
+  const { currentTheme } = useContext(ThemeContext);
   const dark = Boolean(currentTheme?.darkMode);
   const primary = currentTheme.primary;
 

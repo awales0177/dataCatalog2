@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import {
   Box,
   Button,
@@ -16,16 +16,17 @@ import {
   Groups as GroupsIcon,
 } from '@mui/icons-material';
 import { fetchData } from '../services/api';
+import { ThemeContext } from '../contexts/ThemeContext';
 
-const TeamSelector = ({ 
-  selectedTeams = [], 
-  onTeamsChange, 
-  currentTheme,
+const TeamSelector = ({
+  selectedTeams = [],
+  onTeamsChange,
   label = 'Teams',
   showLabel = true,
   maxSelections = null,
-  placeholder = 'No teams selected'
+  placeholder: _placeholder = 'No teams selected',
 }) => {
+  const { currentTheme } = useContext(ThemeContext);
   const [teamsData, setTeamsData] = useState([]);
   const [showSelectionDialog, setShowSelectionDialog] = useState(false);
   const [availableOptions, setAvailableOptions] = useState([]);
@@ -35,19 +36,13 @@ const TeamSelector = ({
       try {
         const response = await fetchData('applications');
         setTeamsData(response.applications || []);
-      } catch (error) {
+      } catch {
         // Handle error silently or show user notification
       }
     };
 
     loadTeams();
   }, []);
-
-  const handleTeamChange = (index, newValue) => {
-    const newTeams = [...selectedTeams];
-    newTeams[index] = newValue;
-    onTeamsChange(newTeams);
-  };
 
   const handleDeleteTeam = (indexToDelete) => {
     const newTeams = selectedTeams.filter((_, index) => index !== indexToDelete);

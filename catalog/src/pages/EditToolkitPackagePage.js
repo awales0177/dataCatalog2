@@ -8,7 +8,6 @@ import {
   Button,
   TextField,
   Chip,
-  IconButton,
   Alert,
   Snackbar,
   CircularProgress,
@@ -31,8 +30,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { 
   ArrowBack as ArrowBackIcon,
   Save as SaveIcon,
-  Cancel as CancelIcon,
-  Delete as DeleteIcon,
   Code as CodeIcon,
   AutoAwesome as AutoAwesomeIcon,
 } from '@mui/icons-material';
@@ -45,7 +42,7 @@ const EditToolkitPackagePage = () => {
   const { packageId } = useParams();
   const navigate = useNavigate();
   const { canEdit } = useAuth();
-  const [packageData, setPackageData] = useState(null);
+  const [, setPackageData] = useState(null);
   const [editedPackage, setEditedPackage] = useState(null);
   const [loading, setLoading] = useState(true);
   
@@ -64,7 +61,7 @@ const EditToolkitPackagePage = () => {
   const [importedFunctions, setImportedFunctions] = useState([]);
   const [importError, setImportError] = useState(null);
   const [selectedImportFunctions, setSelectedImportFunctions] = useState(new Set());
-  const [pendingFunctions, setPendingFunctions] = useState([]); // Functions to be created on save
+  const [, setPendingFunctions] = useState([]); // Functions to be created on save
   const [pendingFunctionMap, setPendingFunctionMap] = useState(new Map()); // Map of temp ID to function object
 
   useEffect(() => {

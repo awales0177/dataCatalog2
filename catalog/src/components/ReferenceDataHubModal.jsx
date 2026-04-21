@@ -111,7 +111,7 @@ function refSqlSlug(s) {
   );
 }
 
-function ReferenceDatasetOriginBanner({ item, border, theme, darkMode, onExportExcel, onImportExcelClick }) {
+function ReferenceDatasetOriginBanner({ item, border, theme, onExportExcel, onImportExcelClick }) {
   const o = datasetOriginMeta(item);
   return (
     <Box
@@ -511,7 +511,6 @@ const ReferenceDataHubModal = ({ open, onClose }) => {
                       item={selectedRef}
                       border={border}
                       theme={theme}
-                      darkMode={darkMode}
                       onExportExcel={handleExportExcel}
                       onImportExcelClick={handleImportExcelClick}
                     />

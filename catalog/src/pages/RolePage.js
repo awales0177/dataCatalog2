@@ -17,7 +17,6 @@ import {
   Visibility as EyeIcon,
   Edit as EditIcon,
   Diamond as CrownIcon,
-  Security as SecurityIcon
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -28,7 +27,7 @@ const RolePage = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   
-  const { changeRole, switchRole, isAuthenticated, setAuthData, user } = useAuth();
+  const { switchRole, isAuthenticated, setAuthData, user } = useAuth();
   const { currentTheme } = useContext(ThemeContext);
   const navigate = useNavigate();
   const location = useLocation();
@@ -122,11 +121,6 @@ const RolePage = () => {
     { value: 'editor', label: 'Editor', icon: <EditIcon />, color: 'secondary', description: 'Full access to create, edit, and delete' },
     { value: 'admin', label: 'Admin', icon: <CrownIcon />, color: 'error', description: 'All permissions including user management' }
   ];
-
-  const getRoleIcon = (role) => {
-    const roleData = availableRoles.find(r => r.value === role);
-    return roleData ? roleData.icon : <SecurityIcon />;
-  };
 
   return (
     <Dialog

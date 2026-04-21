@@ -88,6 +88,9 @@ export function catalogThemeColorTransitionOverrides() {
     MuiPaper: {
       styleOverrides: {
         root: ({ theme }) => ({
+          // MUI dark + elevation applies a white gradient overlay on Paper (see @mui/material/Paper);
+          // that reads as flat muddy gray on dialogs. Cards already clear this; align all Paper.
+          backgroundImage: 'none',
           transition: theme.transitions.create(
             ['background-color', 'border-color', 'color', 'box-shadow'],
             {

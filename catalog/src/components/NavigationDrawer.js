@@ -361,8 +361,13 @@ const NavigationDrawer = ({
         const st = getHomeCarouselDisable(item.action);
         const handleClick = getWorkbenchCarouselHandler(item);
         const isClickable = Boolean(handleClick) && !st.disabled;
+        const tooltipTitle = st.disabled
+          ? st.comingSoon
+            ? `${item.alt} — Coming soon`
+            : `${item.alt} — Unavailable`
+          : `${item.alt}: ${item.description}`;
         return (
-          <Tooltip key={idx} title={`${item.alt}: ${item.description}`} placement={compact ? 'top' : 'right'}>
+          <Tooltip key={idx} title={tooltipTitle} placement={compact ? 'top' : 'right'}>
             <Box
               role={isClickable ? 'button' : undefined}
               tabIndex={isClickable ? 0 : undefined}

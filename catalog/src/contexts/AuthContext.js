@@ -28,7 +28,7 @@ export const AuthProvider = ({ children }) => {
         setToken(storedToken);
         setUser(userData);
         setCurrentRole(userData.currentRole || 'reader');
-      } catch (error) {
+      } catch {
         // Clear corrupted data
         localStorage.removeItem('authToken');
         localStorage.removeItem('user');

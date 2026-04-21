@@ -4,7 +4,7 @@
  * Workbench carousel / home tile actions disabled for this deployment.
  * Keys match {@link ../constants/workbenchCarousel.js} `action` and home workspace tile mapping.
  */
-const DISABLED_CAROUSEL_ACTIONS = new Set(['query', 'modeling', 'referenceHub', 'studio']);
+const DISABLED_CAROUSEL_ACTIONS = new Set(['query', 'referenceHub', 'studio', 'modeling']);
 
 /** Stub: UUX reads `disable.json`; sidebar nav items use id. */
 export function getSidebarDisable(_id) {

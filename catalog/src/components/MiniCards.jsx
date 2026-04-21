@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useContext } from 'react';
+import { ThemeContext } from '../contexts/ThemeContext';
 import { Paper, Box, Typography } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import { catalogInteractivePaperSx, catalogStaticPaperSx } from '../theme/catalogSurfaces';
@@ -9,7 +10,6 @@ import { Link as RouterLink } from 'react-router-dom';
  * Use for model Tools tab, Product agreements, etc.
  */
 export default function MiniCard({
-  currentTheme,
   title,
   description,
   avatar,
@@ -28,6 +28,7 @@ export default function MiniCard({
   descriptionSx = {},
   sx: sxProp = {},
 }) {
+  const { currentTheme } = useContext(ThemeContext);
   const clickable = Boolean(to || href || onClick);
   const darkMode = Boolean(currentTheme?.darkMode);
 
